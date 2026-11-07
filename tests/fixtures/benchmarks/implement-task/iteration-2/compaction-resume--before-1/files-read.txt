@@ -1,0 +1,20 @@
+/tmp/itbench2/runs/compaction-resume-prior1/prompt.txt
+/tmp/itbench2/runs/compaction-resume-prior1/p.skill-after-compaction.md
+/tmp/itbench2/arm-561/skills/implement-task/SKILL.md
+/tmp/itbench2/runs/compaction-resume-prior1/p/siegard.json
+/tmp/itbench2/runs/compaction-resume-prior1/p/work/lending/task/fees/compute-late-fee.md
+/tmp/itbench2/runs/compaction-resume-prior1/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/itbench2/runs/compaction-resume-prior1/p/app/lending/fees.py
+/tmp/itbench2/runs/compaction-resume-prior1/p/app/standard.yaml
+/tmp/itbench2/runs/compaction-resume-prior1/p/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/itbench2/runs/compaction-resume-prior1/p/spec/rules/lending/late-fee-per-overdue-day.log.md
+/tmp/itbench2/runs/compaction-resume-prior1/p/app/tests/conftest.py
+/tmp/itbench2/runs/compaction-resume-prior1/p/app/tests/test_loans.py
+/tmp/itbench2/runs/compaction-resume-prior1/p/app/lending/loans.py
+/tmp/itbench2/arm-561/agents/test-author.md
+/tmp/itbench2/arm-561/skills/implement-task/references/records.md
+/tmp/itbench2/runs/compaction-resume-prior1/p/delivery/lending/proof/fees/compute-late-fee.md
+/tmp/itbench2/arm-561/skills/implement-task/references/finish.md
+/tmp/itbench2/arm-561/skills/implement-task/references/report.md
+/tmp/itbench2/arm-561/schemas/handoff.json
+/tmp/itbench2/arm-561/skills/review-change/SKILL.md (grep of its required inputs only)

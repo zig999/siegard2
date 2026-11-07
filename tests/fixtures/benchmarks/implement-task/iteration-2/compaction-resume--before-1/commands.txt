@@ -1,0 +1,12 @@
+python3 -B /tmp/itbench2/arm-561/bin/run.py /tmp/itbench2/runs/compaction-resume-prior1/p/delivery/lending --run fees-compute-late-fee-suite --cwd /tmp/itbench2/runs/compaction-resume-prior1/p/app --excerpt 40 --timeout-seconds 120 --step 'build=python3 -m compileall -q lending' --step 'test=python3 -m pytest -q tests'  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/deliver.py --contract proof  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/deliver.py --write-proof /tmp/itbench2/runs/compaction-resume-prior1/p/delivery/lending task/fees/compute-late-fee --target app --run run/fees-compute-late-fee-suite --standard standard.yaml --standard-file /tmp/itbench2/runs/compaction-resume-prior1/p/app/standard.yaml --from-text /tmp/itbench2/runs/compaction-resume-prior1/out/proof-return.yaml  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/deliver.py --unrecorded /tmp/itbench2/runs/compaction-resume-prior1/p/app /tmp/itbench2/runs/compaction-resume-prior1/p/delivery/lending/implementation/fees/compute-late-fee.md /tmp/itbench2/runs/compaction-resume-prior1/p/delivery/lending/proof/fees/compute-late-fee.md  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/deliver.py /tmp/itbench2/runs/compaction-resume-prior1/p/delivery/lending /tmp/itbench2/runs/compaction-resume-prior1/p/work/lending /tmp/itbench2/runs/compaction-resume-prior1/p/app /tmp/itbench2/runs/compaction-resume-prior1/p/spec  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/trace.py --bind-record /tmp/itbench2/runs/compaction-resume-prior1/p/app /tmp/itbench2/runs/compaction-resume-prior1/p/spec /tmp/itbench2/runs/compaction-resume-prior1/p/delivery/lending/implementation/fees/compute-late-fee.md  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/handoff.py --help  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/handoff.py --prepare --skill implement-task --project /tmp/itbench2/runs/compaction-resume-prior1/p --slug lending --target app --language pt-BR  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/handoff.py --save-report /tmp/itbench2/runs/compaction-resume-prior1/p/.git/siegard/handoff/20261107T144711Z-implement-task.md  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/handoff.py --render /tmp/itbench2/runs/compaction-resume-prior1/out/handoff.json  # exit 1 (block 745 chars over ceiling 600; prose shortened)
+python3 -B /tmp/itbench2/arm-561/bin/handoff.py --render /tmp/itbench2/runs/compaction-resume-prior1/out/handoff.json  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/handoff.py --render /tmp/itbench2/runs/compaction-resume-prior1/out/handoff.json  # exit 0 (re-rendered into report.md)

@@ -1,0 +1,20 @@
+{
+  "contract_version": "siegard-run/2",
+  "run": "run/fees-compute-late-fee-build",
+  "cwd": "/tmp/itbench2/runs/compaction-resume-prior1/p/app",
+  "timeout_seconds": 60,
+  "outcome": "passed",
+  "failed_step": null,
+  "steps": [
+    {
+      "name": "build",
+      "command": "python3 -m compileall -q lending",
+      "outcome": "passed",
+      "exit_code": 0,
+      "output": "build.log",
+      "started_at": "2026-11-07T14:46:04.636+00:00",
+      "ended_at": "2026-11-07T14:46:04.675+00:00"
+    }
+  ],
+  "combined_output": "run.log"
+}

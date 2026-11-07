@@ -1,0 +1,187 @@
+{
+ "name": "reading-quiz",
+ "what": "A reader holding only the skill, its references and its three agents answers what the text requires at the points it states the least plainly. Each question has one answer the text decides; the options are shuffled per question by its id.",
+ "kind": "quiz",
+ "questions": [
+  {
+   "id": 1,
+   "q": "At step 1, which of the plan's inventory nodes are handed to the task-implementer?",
+   "options": [
+    "Only those whose `area` reaches where the task lands",
+    "Every inventory node, since the implementer filters them by area itself",
+    "Those whose `area` reaches where the task lands, plus every inventory node the epic names",
+    "Those whose `modules` name a file the task touches"
+   ]
+  },
+  {
+   "id": 2,
+   "q": "Who puts the SHA-256 pin of the task file on the implementation record?",
+   "options": [
+    "`deliver.py --write-implementation` stamps it from the task file it is handed",
+    "`deliver.py --write-implementation` stamps it from the pin plan.json holds for the task",
+    "You compute it with sha256sum and pass it in on the write",
+    "The task-implementer returns it under `task` in its mapping"
+   ]
+  },
+  {
+   "id": 3,
+   "q": "The task file's `## Notes` carries an entry opening `BLOCKING, from the specification —`. What happens?",
+   "options": [
+    "Stop before anything is written; quote the entries from the task file; hand a /plan-work and an /analyse invocation; the choice is the person's own decision and no door is recommended",
+    "Stop before anything is written; quote the entries as the `--outstanding` report printed them; hand a /plan-work and an /analyse invocation; no door is recommended",
+    "Stop before anything is written; quote the entries from the task file; hand a /plan-work and an /analyse invocation, recommending /plan-work as derived",
+    "Spawn the implementer, and stop when it returns naming the note; hand a /plan-work and an /analyse invocation"
+   ]
+  },
+  {
+   "id": 4,
+   "q": "The suite is red; the diagnosis's cause is `test`; the failing test is one the proof of an earlier task names; none of this delivery's files is named by that task's implementation record. What happens?",
+   "options": [
+    "No proof is written; the report hands the proof-only re-delivery over the owning task, which runs only after the person commits this delivery",
+    "No proof is written; the report hands the proof-only re-delivery over the owning task, runnable at once",
+    "The test-author is sent the red and rewrites that test whole into this delivery's proof",
+    "No proof is written; the report hands a full re-delivery of the owning task"
+   ]
+  },
+  {
+   "id": 5,
+   "q": "Same red as before, but one of this delivery's files IS named by the owning task's implementation record. What happens?",
+   "options": [
+    "The test-author rewrites that test whole against the nodes as they stand; it joins this proof's tests; the proof's notes name the owning task; the suite runs again",
+    "The test-author rewrites that test whole; it stays in the owning task's proof; the suite runs again",
+    "No proof is written; the report hands the proof-only re-delivery over the owning task",
+    "The test-author narrows that test's assertion to what still holds; the suite runs again"
+   ]
+  },
+  {
+   "id": 6,
+   "q": "The diagnosis returns cause `setup` for the second consecutive suite run. What happens?",
+   "options": [
+    "Stop: the report quotes both diagnoses and hands the rerun invocation",
+    "Run the suite a third time under the next name",
+    "Send the red to the task-implementer as an environment fix",
+    "Stop: the report quotes the last diagnosis and hands /plan-work"
+   ]
+  },
+  {
+   "id": 7,
+   "q": "The build is red and every path the implementer says the fix lies in is one `project.py --declared-tests` calls a declared test. What happens?",
+   "options": [
+    "Step 5 runs ahead of the implementation record: the test-author is handed the implementer's transcript and the red build, writes the proof whole with those files, and the build runs again",
+    "The test-author rewrites only those test files; the implementation record is written first, over the red build",
+    "Stop, logged as outside-task, handing /plan-work",
+    "The task-implementer edits those files, since it is the one that named them"
+   ]
+  },
+  {
+   "id": 8,
+   "q": "The implementer returns no mapping, saying every criterion is already met by files X, and `trace.py --encodes` shows every node the task implements bound to X. What does the report hand?",
+   "options": [
+    "Stop: /plan-work over the slug naming the task and X (to carry `stands`) is the recommended door, derived; /reconcile over X is handed too",
+    "Stop: /reconcile over X is the recommended door; /plan-work is handed too",
+    "Write the implementation record now with `stands` listing X",
+    "Stop: both doors are handed as the person's own decision, with neither recommended"
+   ]
+  },
+  {
+   "id": 9,
+   "q": "A record already sits at the task's path, and `run/` already holds `fees-compute-late-fee-build`. What is the new build run named?",
+   "options": [
+    "The next free `-N` suffix the delivery root's `run/` does not hold",
+    "Always `-2`, since this is the second delivery",
+    "The same name, rewritten in place with `--replace`",
+    "A `-redelivery` suffix"
+   ]
+  },
+  {
+   "id": 10,
+   "q": "The build is red and the task-implementer that wrote the source has returned and can still be reached. What goes back to it, and what does it return?",
+   "options": [
+    "What the run printed goes to that same subagent, which returns the whole mapping, revised",
+    "What the run printed goes to that same subagent, which returns only the entries that changed",
+    "A fresh implementer is spawned with the same block plus what the run printed",
+    "You patch the file yourself and rerun the build"
+   ]
+  },
+  {
+   "id": 11,
+   "q": "The bind prints a stale-bindings receipt. What does the report do with it?",
+   "options": [
+    "Quotes it verbatim and hands one /reconcile invocation over every path it names, for the case where no /review-change follows, runnable only after the person commits",
+    "Quotes it verbatim and hands one /reconcile invocation per file it names",
+    "Quotes it verbatim and recommends /reconcile over /review-change",
+    "Runs /reconcile over the paths before reporting"
+   ]
+  },
+  {
+   "id": 12,
+   "q": "A task declares `produces`, and `deliver.py --reach` says no rule reaches any file it wrote. What does the build run?",
+   "options": [
+    "Only the step whose role is install, where the registry declares one",
+    "Every build-phase step, but not the suite",
+    "Nothing at all",
+    "The whole build phase, because the task declared `produces`"
+   ]
+  },
+  {
+   "id": 13,
+   "q": "A spawned subagent stalls. What happens?",
+   "options": [
+    "Spawn it again under the same task, naming what the prior attempt left in place and what remains",
+    "Resume the stalled subagent where it stopped",
+    "Spawn it again with exactly the same block as the first time, and nothing else",
+    "Finish its work inline"
+   ]
+  },
+  {
+   "id": 14,
+   "q": "At a red build, who decides which of the paths the fix lies in are tests?",
+   "options": [
+    "`project.py --declared-tests`",
+    "The task-implementer",
+    "`deliver.py --reach`",
+    "The test-author"
+   ]
+  },
+  {
+   "id": 15,
+   "q": "Which subagents are the producers a red run goes back to?",
+   "options": [
+    "task-implementer and test-author",
+    "task-implementer, test-author and failure-diagnostician",
+    "task-implementer only",
+    "failure-diagnostician and test-author"
+   ]
+  },
+  {
+   "id": 16,
+   "q": "The suite run is red at a step before the suite-role step, a lint naming a file just written. What happens?",
+   "options": [
+    "No diagnosis is owed: the red goes back to the producer whose file the log names",
+    "The failure-diagnostician is spawned, as on every red of the suite run",
+    "The red always goes back to the task-implementer",
+    "The red always goes back to the test-author"
+   ]
+  },
+  {
+   "id": 17,
+   "q": "The implementer stops because the specification is silent on a fact the work needs. What does the report end with?",
+   "options": [
+    "No record; the report hands /analyse with the fact as the question and /plan-work's decided-fact increment, and which one is the person's",
+    "No record; the report hands only /plan-work's decided-fact increment",
+    "The record is written with the chosen value disclosed as an inference",
+    "No record; the report hands /analyse, recommended as derived"
+   ]
+  },
+  {
+   "id": 18,
+   "q": "What is the last-forty-lines excerpt `run.py --excerpt 40` prints used for?",
+   "options": [
+    "It goes back to a producer and is what the report quotes; it is never a diagnosis's input",
+    "It is the failure-diagnostician's input",
+    "It is pasted into the record's `## Notes`",
+    "It goes back to a producer, and the report quotes the full log instead"
+   ]
+  }
+ ]
+}

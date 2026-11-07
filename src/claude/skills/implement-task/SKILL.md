@@ -1,12 +1,11 @@
 ---
 name: implement-task
-description: Writes the source one planned task requires and the tests that prove it, installs what the project's own standard authorizes, runs the steps that standard declares until the project builds and its suite passes, records both nodes under a delivery root — what was written, every criterion answered, every specification node the task implements accounted for, every inference, every departure, every run captured — validates the delivery against the plan, binds every node it encoded into the target's trace, and derives delivery.json. Use when a request asks to implement, build, code or deliver a task the plan already holds. Not for planning or decomposing work (that is /plan-work), not for analysing domain material (that is /analyse), not for reviewing or judging what was written (that is /review-change), and never for more than one task.
+description: Use when a request asks to implement, build, code or deliver one task the plan already holds. Writes the task's source and the tests that prove it through two subagents, runs the install, build and suite steps the project's standard declares through bin/run.py, writes and validates the implementation and proof records, binds the trace, and hands /review-change. Not for planning or decomposing work (/plan-work), analysing domain material (/analyse), reviewing what was written (/review-change), or more than one task.
 effort: medium
 ---
 
 You carry one planned task from the plan into written source and the tests that prove it, and
-you stop. One invocation, one task: two tasks in one invocation is two deliveries nobody can
-review apart.
+you stop. One invocation delivers one task, so each delivery can be reviewed on its own.
 
 ## Progress checklist
 
@@ -35,89 +34,97 @@ its step is reached, before acting on it.
 - [ ] 9 Report: handoff.py --prepare; read references/report.md; --save-report, --render; stop
 ```
 
+## Terms
+
+- **You** run this skill: the session that executes every step below.
+- **Subagent** — an agent you spawn. **The producers** are the two that write what a delivery is
+  made of: `task-implementer` writes the source and `test-author` the tests. The
+  `failure-diagnostician` reads a red suite and writes nothing.
+- **Re-enter** — send a subagent that has returned a new message in its own context, instead of
+  spawning a fresh one. `references/delegation.md` says when.
+- **Stop** — you end the invocation: nothing more is written, and the report says why.
+- **Refusal** — a script's non-zero exit naming what it refused. Quote it verbatim; never work
+  around it.
+- **Door** — an invocation of another entry point that the report hands the person, filled with
+  everything you know and ready to paste. Taking it is the person's.
+
 ## Required inputs
 
 A missing input is a stop, not a default:
 
-1. **the task** — which one, by identifier. Named by the human, or named in a request that
-   names exactly one; a request that names several is a stop, and the answer is to ask which.
-   Choosing for the human is choosing what gets built — but a set of one holds no choice: a
-   request that names none is a stop unless the deliverable set the situate step computes holds
-   exactly one task, which is then decided and disclosed in the report, never asked.
-2. **the project root** — where `siegard.json` lives, named by the human. «Where the invocation
+1. **the task** — which one, by identifier, named by the person or by a request that names
+   exactly one. A request naming several is a stop that asks which. A request naming none is a
+   stop unless the deliverable set step 1 computes holds exactly one task; that task is then
+   decided and disclosed in the report, never asked.
+2. **the project root** — where `siegard.json` lives, named by the person. «Where the invocation
    names none, the project root is the git toplevel of the session's working directory, as
    `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
    (SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run
    below, and its `project_root:` line is the root. Its refusal is a stop.
-3. **the target** — which of the project's target source roots this task delivers into, by the
-   key `siegard.json`'s `targets` names it. Where `targets` declares exactly one key and the
-   invocation names none, that key is the target: decided and disclosed, never asked.
-4. **the initiative's slug** — the plan holding the task, and the delivery root its records are
-   written into: both are `<slug>` under the project's `work_root` and `delivery_root`
-   respectively. Absent, it is created empty for the delivery side; the work side must already
-   hold the task. Where the invocation names none and the project's `work_root` holds exactly
-   one initiative without `closure.md`, that is the slug: decided and disclosed, never asked. A work root holding `closure.md` is a different matter: the plan is history,
-   its initiative is over, and writing new source against it is a stop. Reviewing what it
-   already delivered is not — that is `/review-change`'s, and it stays possible for as long as
-   the records do.
+3. **the target** — which of the project's target source roots this task delivers into, by its
+   key in `siegard.json`'s `targets`. Where `targets` declares exactly one key and the invocation
+   names none, that key is the target: decided and disclosed, never asked.
+4. **the initiative's slug** — `<slug>` names both the plan under the project's `work_root` and
+   the delivery root under its `delivery_root`. The work side must already hold the task; the
+   delivery side is created empty where absent. Where the invocation names none and `work_root`
+   holds exactly one initiative without `closure.md`, that is the slug: decided and disclosed,
+   never asked. A work root holding `closure.md` is a closed plan, and writing new source
+   against it is a stop; reviewing what it delivered stays `/review-change`'s.
 
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
-`specification_root`, `targets`, `work_root` and `delivery_root` answer only from here: naming
-one of these in the invocation instead has no effect, and where the file does not declare one,
-that is a stop, not a question to work around — the report carries the `/siegard-config`
-invocation ready to paste, naming the project root and every field missing. From here on, "the
-work root" means `work_root/<the initiative's slug>`; "the delivery root" means
-`delivery_root/<the initiative's slug>`; "the target source root" means `targets[<the target>]`;
-"the specification root" means `specification_root` as resolved, required exactly as the plan
-validator requires it — while the plan is live, and ignored once it is closed.
+`specification_root`, `targets`, `work_root` and `delivery_root` answer only from here; naming one
+in the invocation has no effect. A field the file does not declare is a stop, and the report
+carries the `/siegard-config` invocation ready to paste, naming the project root and every
+missing field. From here on:
 
-Absent inputs stop once, together: one stop naming everything missing — the task among them, where
-the request named none and the situate step's deliverable set holds more than one — so the human
-answers once, never a question at a time. An input a singleton decided is not missing; the report
-disclosing it is what replaces the question. One optional input, **the project's standard**,
-resolves as `references/standard.md` states; read it before that stop, which the standard can join.
+- "the work root" is `work_root/<slug>`;
+- "the delivery root" is `delivery_root/<slug>`;
+- "the target source root" is `targets[<the target>]`;
+- "the specification root" is `specification_root` as resolved, required exactly as the plan
+  validator requires it — while the plan is live, and ignored once it is closed.
+
+Absent inputs stop once, together: one stop names everything missing, including the task where
+the request named none and step 1's deliverable set holds more than one. An input a singleton
+decided is not missing; the report discloses it instead of asking. One optional input, **the
+project's standard**, resolves as `references/standard.md` states; read it before that stop,
+which the standard can join.
 
 ## Before anything: the plan
 
-Nothing is written over a plan that does not hold together. Run:
+Run:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check <work-root> <specification-root>
 ```
 
-Anything but a clean pass is a stop: report the output verbatim and go no further. A plan with
-problems is fixed through `/plan-work`; a stale index is rederived by whoever owns the plan.
-Neither repair is this invocation's to make — delivering never writes into the work root, and
-never into the specification root either.
+Anything but a clean pass is a stop: report the output verbatim. A plan with problems is fixed
+through `/plan-work`, and a stale index by whoever owns the plan; you never write into the work
+root or the specification root.
 
-The pin the implementation record carries is the SHA-256 of the task's own file:
-`sha256:<hexdigest>`, computable as `sha256sum <work-root>/task/<epic>/<slug>.md`, and stamped by
-the writer step 4 runs rather than typed. It pins the task
-and not the plan's index, because a record answers one task and that is what it should be held to —
-and because pinning the index would make every record in the root stale whenever any unrelated task
-is added, which no entry point here is allowed to go and fix. The proof carries no task pin: what it
-pins is the implementation record itself, and step 6 says why.
+The implementation record pins the task by the SHA-256 of the task's own file,
+`sha256:<hexdigest>`, computable as `sha256sum <work-root>/task/<epic>/<slug>.md`.
+`deliver.py --write-implementation` (step 4) stamps it; you never type it. The pin covers the
+task and not the plan's index, so adding an unrelated task stales no record. The proof carries no
+task pin: it pins the implementation record, as `references/records.md` states.
 
 ## Before anything: the tree
 
-The review is `git diff`, and a diff only says what this invocation did when the tree starts
-clean. Before any write, `git status --porcelain -- <delivery-root> <target-source-root>
-<work-root>/task/<epic>/<slug>.md` must print nothing — the pathspec is the point: the stop's
-scope is the roots this invocation writes, plus the one file it reads and pins. A pending change
-elsewhere in the work root — a sibling task still being drafted, an epic for a later increment —
-is somebody else's work in progress, not a reason this delivery cannot be reviewed; the task file
-this invocation is about to build against and hash into the implementation record is different in
-kind, because `/plan-work` already told a person to review that diff and stop there, and a pin
-taken before that review happened is a hash of something nobody looked at. Output is a stop:
-report what is pending and go no further — committing, discarding or overriding is the human's
-decision, never this skill's. A root not under git control is the same stop: without git there is
-no review, and source is the one thing here nobody can review any other way.
+Before any write, this must print nothing:
+
+```
+git status --porcelain -- <delivery-root> <target-source-root> <work-root>/task/<epic>/<slug>.md
+```
+
+The review is `git diff`, and a diff shows only this delivery when these paths start clean. The
+pathspec is the roots you write plus the one task file you read and pin; a pending change
+elsewhere in the work root is somebody else's work in progress and does not stop you. Output is a
+stop: report what is pending. Committing, discarding or overriding it is the person's decision. A
+root not under git control is the same stop.
 
 ## Read the contract
 
 `${CLAUDE_PLUGIN_ROOT}/schemas/delivery-node.json` is the single home of what a delivery node may
-and must declare — the kinds, the fields each kind requires, and one example per kind. Most of it
-belongs to kinds nobody you spawn this run will write, so none of them is handed the file. Run:
+and must declare. Run:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --contract implementation
@@ -125,41 +132,29 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --contract proof
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --contract finding
 ```
 
-Each prints one self-contained slice — the fields that kind admits, or that `$defs` entry, with
-every `$ref` already inlined — and that is what step 3, step 5 and the diagnosis below hand to
-their subagent, verbatim, in place of the file's path. Do not work from memory of any of them,
-and do not restate them: what you remember is not what the validator will apply.
+Each prints one self-contained slice with every `$ref` inlined. Steps 3 and 5 and the diagnosis
+hand their subagent the slice pasted whole, never the file's path. Do not work from memory of a
+slice and do not restate one: the validator applies the slice, not your memory of it.
 
-`${CLAUDE_PLUGIN_ROOT}` is set where this skill runs as an installed plugin. Where it is not,
-the plugin root is the directory that holds `schemas/` and `bin/` side by side — in a vendored
-install, the `.claude/` directory this skill's tree sits under. Every path below resolves the
-same way.
+`${CLAUDE_PLUGIN_ROOT}` is set where this skill runs as an installed plugin. Where it is not, the
+plugin root is the directory that holds `schemas/` and `bin/` side by side — in a vendored install,
+the `.claude/` directory this skill's tree sits under. Every path below resolves the same way.
 
-## This invocation runs, and every run it makes is captured
+## Every run is captured
 
-What it hands over is a project that installs and builds, not source alone. Source nobody executed
-is source whose every rule a tool decides went unanswered, and a rule a project's own registry
-names Zod for cannot be followed by a session that never saw Zod's types.
+You hand over a project that installs and builds, not source alone. **Nothing here is run by
+narration.** Every execution goes through `${CLAUDE_PLUGIN_ROOT}/bin/run.py`, with the commands
+the project's registry declares, into a directory under the delivery root's `run/`. A command run
+any other way did not happen: what it printed exists only in a conversation. `--excerpt 40` on
+each run bounds what a red one hands you; `references/red-build.md` says what is done with it.
 
-**Nothing here is run by narration.** Every execution goes through
-`${CLAUDE_PLUGIN_ROOT}/bin/run.py`, with the commands the project's registry declares, into a
-directory under the delivery root's `run/`. A command run any other way did not happen: what it
-printed exists in a conversation, which is not state, and the record would rest on it. `--excerpt
-40` on each of those runs bounds what a red one hands you; `references/red-build.md` says what is
-done with it.
+`run.py` refuses a run name that already exists, so every attempt keeps its own directory and
+log, and the record points at the one that passed. Iterating is allowed because every attempt
+stays readable.
 
-That capture is why this invocation may run at all: a session that could run the suite it just
-wrote would otherwise iterate quietly until the suite went green, and what failed on the way would
-exist nowhere. `run.py` refuses to write a run under a name that already
-exists, so a session that tried four times leaves four directories with four verbatim logs, and
-the record points at the one that passed while the three that did not keep their names. Iterating
-is not forbidden here. It is recorded, and recorded is stronger than forbidden: everything the
-producer saw is readable by somebody else.
-
-**The skill runs; the agents do not.** No agent this framework ships holds a shell, and none gains
-one here. Writing source stays the `task-implementer`'s even when a run comes back red: a failure
-goes back to the agent with what the run printed, and the source is written again. A skill that
-patched a file to make a build pass would be the writer that nobody separated from the witness.
+**You run; the subagents do not.** No agent this framework ships holds a shell. Writing source
+stays the `task-implementer`'s even when a run comes back red: the failure goes back to it, and you
+never patch a file to make a run pass.
 
 ## The order
 
@@ -167,112 +162,88 @@ patched a file to make a build pass would be the writer that nobody separated fr
 situate → set up → implement → build → prove → suite → validate → bind → report → stop
 ```
 
-Two of these steps are another judge's. Writing the source and writing what proves it are delegated
-to the subagents this framework ships, each in a clean context, and the judgment of each step lives
-in the agent's file — not here, and not in your memory of it. Delegating means spawning the subagent
-by its plugin-scoped name — `siegard:<agent-name>` — never the bare form, which a consumer's own
-`.claude/agents/` can shadow — and reading the agent's file yourself is the fallback, never the
-delegation. The separation between the two is the point of the arrangement: an implementation and
-its tests written in one pass agree by construction, including where both are wrong. Only where the
-session cannot spawn subagents, read the agent's file under the plugin root's `agents/` directory
-and apply its discipline in place — the file stays the single home of that judgment — and the report
-must say which steps ran inline. Before the first spawn, read `references/delegation.md`: how to
-wait for a spawned subagent, what to do when one stalls, and how a red run goes back to one that
-returned.
+Steps 3 and 5 belong to the producers, each spawned in a clean context; the judgment of each lives
+in the agent's file, not here. Spawn a subagent by its plugin-scoped name, `siegard:<agent-name>`,
+never the bare form, which a consumer's own `.claude/agents/` can shadow. Code and tests written
+in one pass agree by construction, including where both are wrong, so the two stay separate. Only
+where the session cannot spawn subagents, read the agent's file under the plugin root's `agents/`
+directory and apply its discipline in place, and say in the report which steps ran inline. Before
+the first spawn, read `references/delegation.md`.
 
-The three steps that execute — set up, build, suite — run only where the standard names commands.
-Where none was named, or the registry declares none, they do not run, the report says so, and what
-this invocation hands over is source alone — a narrower answer, and never presented as a
-clean one.
+Set up, build and suite run only where the standard names commands. Where none was named, or the
+registry declares none, they do not run, the report says so, and you hand over source alone — a
+narrower answer, never presented as a clean one.
 
 ### 1. Situate
 
-One command answers where the task stands, and it validates the delivery on the way:
+One command answers where the task stands and validates the delivery on the way:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --outstanding <delivery-root> <work-root> <target-source-root> <specification-root>
 ```
 
-On an empty delivery root it reports every task without a record; on a populated one it also
-reports, per task, what each one waits on — the dependencies with no record yet, an artifact a task
-of this plan produces and the tree does not hold, and a standing blocking note — and then the set
-deliverable now. Anything but a clean run is a stop, reported verbatim: a delivery that does not
-hold together is not added to. Where the invocation named no task and the deliverable set holds
-exactly one, that one is the task — decided here and disclosed in the report; a set of more than
-one is the stop that asks which.
+It lists every task without a record and, per task, what it waits on — a dependency with no
+record yet, an artifact a task of this plan produces and the tree does not hold, a standing
+blocking note — then the set deliverable now. Anything but a clean run is a stop, reported
+verbatim. Where the invocation named no task and the deliverable set holds exactly one, that is
+the task, disclosed in the report; more than one is the stop that asks which.
 
-One of its lines is a refusal, and it is settled before anything is written:
+Two of its answers are stops before anything is written:
 
-- **A task this one builds on has no record.** Stop, and name it. A dependency is what has to be
-  delivered first — that is what the plan meant by declaring it — and the records are how that is
-  known, because no status field exists to ask.
-- **The named task is not in the plan.** Stop — and hand over the door, not just the wall: the
-  report ends with a `/plan-work` invocation filled with everything this invocation already knows
-  in the terms that skill actually takes — the project root, the target by its key, and the
-  initiative's slug — leaving only the scope for the human to state. Do not fill it with roots:
-  `/plan-work` reads `specification_root`, `targets` and `work_root` from the project file, and
-  naming one in the invocation has no effect there. A task the plan does not hold is planned into
-  it, never improvised past.
+- **A task this one builds on has no record.** Stop and name it: a dependency is delivered first.
+- **The named task is not in the plan.** Stop, and end the report with a `/plan-work` invocation
+  naming the project root, the target by its key and the slug, leaving only the scope for the
+  person to state. Name no roots in it: `/plan-work` reads them from the project file.
 
-A second refusal the report names and does not make. Open the task file here, before anything below
-is written, and read its `## Notes`: **an entry opening `BLOCKING, from the specification —` is a
-stop.** `references/blocking.md` says what the stop quotes and the two doors it hands.
+Then open the task file and read its `## Notes`: **an entry opening
+`BLOCKING, from the specification —` is a stop**, whether or not `--outstanding` listed it.
+`references/blocking.md` says what the stop quotes and the two doors it hands.
 
-A record already at the path this task computes to is a re-delivery, a task carrying `stands`
-delivers without writing source, and only the person names a proof-only re-delivery: for any of the
-three, read `references/redelivery.md` before anything is written.
+A record already at the path this task computes to makes this a re-delivery; a task carrying
+`stands` delivers without writing source; and only the person names a proof-only re-delivery. For
+any of the three, read `references/redelivery.md` before anything is written.
 
-Where a standard was named, take it in before anything is written. Which command depends on one
-field of the task file — already open from the note check above — read as a yes or a no:
-**does the task declare `produces`?**
-
-Where it does not, the tree is held to what the registry presupposes on the way in:
+Where a standard was named, check it before anything is written. The form depends on one field of
+the task file: **does the task declare `produces`?** Where it does not, the tree is also held to
+what the registry presupposes:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --against <target-source-root> --specification <specification-root>
 ```
 
-Where it does, drop `--against` and run the registry check alone:
+Where it does, drop `--against`:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --specification <specification-root>
 ```
 
-Either way, anything but a clean pass is a stop, reported verbatim. A clean pass prints each
-delivery phase — setup, build, suite — composed for `bin/run.py`, timeout included: **keep those
-three lines; they are the step lists the runs below paste in**, and the validator holds each
-captured run to exactly that selection, so a phase retyped from prose is a transcription error
-waiting for the refusal.
-
-What the first form refuses, and the registry's pin both records carry, are in
+Anything but a clean pass is a stop, reported verbatim. A clean pass prints each delivery phase —
+setup, build, suite — composed for `bin/run.py`, timeout included. **Keep those three lines; the
+runs below paste them in verbatim**, and the validator holds each captured run to exactly that
+selection. What the first form refuses, and the registry pin both records carry, are in
 `references/standard.md`; what `produces` drops is in `references/substrate.md`.
 
-Then read the rest of the task file — the notes were read above — and the plan's inventory nodes. `plan.json` lists every node the
-plan holds with its kind and its file, so the inventory is found there rather than by walking the
-root; pass on the ones whose `area` reaches where this task lands, and leave the rest — an
-inventory surveyed for another territory carries conventions this task has no business following.
-Read the epic only for what it covers. Read no other task: this invocation delivers one.
+Then read the rest of the task file and the plan's inventory nodes, found through `plan.json`,
+which lists every node with its kind and file. Hand the implementer only the inventory nodes whose
+`area` reaches where this task lands, and leave the rest out: an inventory of another territory
+carries conventions this task must not follow. Read the epic only for what it covers. Read no
+other task.
 
 ### 2. Set up
 
 Where the standard declares a command whose role is `install`, run it before anything is written,
-so the implementer reads the types of what this project already declares instead of guessing at
-them — which is the whole difference between following a rule that names a library and writing
-what a rule that names a library sounds like:
+so the implementer reads the types of what the project already declares:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-setup --cwd <target-source-root> --excerpt 40 <the setup phase the situate step's registry check printed>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-setup --cwd <target-source-root> --excerpt 40 <the setup phase step 1's registry check printed>
 ```
 
-Three cases skip it, and each is said in the report rather than worked around. The task
-`produces` the manifest: nothing is declared yet, and this project's first install is the build
-below. The registry declares no install: a project may hold several registries, and the one whose
-rules govern this task need not be the one that owns the manifest. No standard was named at all:
-then nothing here runs, and what this invocation hands over is source alone.
+Three cases skip it, and the report says which: the task `produces` the manifest, so the first
+install is the build below; the registry declares no install; or no standard was named, and you
+hand over source alone.
 
-A red setup is a stop, before a line is written. The run holds what the installer printed, and
-what it names — a registry nobody can reach, a lockfile that does not resolve against the manifest
-— is not this invocation's to guess at or to route around.
+A red setup is a stop before a line is written. What the installer printed — a registry nobody can
+reach, a lockfile that does not resolve — is not yours to guess at or route around.
 
 ### 3. Implement
 
@@ -298,60 +269,50 @@ earlier record:        <absolute path of the implementation record this re-deliv
 You write no file under the delivery root: return the record's content as text.
 ```
 
-Every path is absolute, and the contract slice is pasted rather than cited: a path resolves only
-where the delegation's own read scope reaches it, and a slice named instead of pasted is a
-delegation composing the record from memory of a shape the validator does not apply.
+Every path is absolute, because a path resolves only where the subagent's read scope reaches it.
+The slice is pasted, not cited. Two lines carry a rule of their own:
 
-Two of those lines carry a rule of their own. **Pass no reference the task did not name** — a
-delegation sent looking through `intake/` for something helpful is reading the scope, which is
-the one document this route exists to keep out of the writing — and a `reference` path that
-resolves to nothing is a stop, named, because guessing which file was meant is the guess the
-field exists to remove. **`authorized packages` is a whole list or an absent line**, never a
-selection: what it admits is what a human approved, and narrowing it here is this invocation
-deciding a manifest.
+- **Pass no reference the task did not name.** A subagent sent looking through `intake/` reads the
+  scope, which this route keeps out of the writing. A `reference` path that resolves to nothing is
+  a stop, named.
+- **`authorized packages` is the whole list or an absent line**, never a selection: it is what a
+  person approved, and narrowing it would be you deciding a manifest.
 
 A return that writes nothing because the work already stands is a stop with its doors, never an
 improvisation: read `references/implementer-returns.md`.
 
-**Every path the returned record names is relative to the target source root** — the directory
-the registry's commands run from — never to the repository around it. `produces` is held to
-`files` by spelling, and a registry scope reaches a file only under the same anchor, so a record
-spelling paths from the repository while the registry spells them from the target answers to no
-rule and satisfies no `produces`.
+**Every path the returned record names is relative to the target source root**, the directory the
+registry's commands run from, never to the repository around it: `produces` is matched to `files`
+by spelling, and a registry scope reaches a file only under that anchor.
 
 ### 4. Build
 
-Everything the registry declares except the step whose role is `suite`, in the order it declares
-them, with the install first so that whatever the implementer added to the manifest is real before
-anything reads it:
+Run every step the registry declares except the one whose role is `suite`, in its order, install
+first so whatever the implementer added to the manifest is real before anything reads it:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-build --cwd <target-source-root> --excerpt 40 <the build phase the situate step's registry check printed>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-build --cwd <target-source-root> --excerpt 40 <the build phase step 1's registry check printed>
 ```
 
-The timeout and the step list are the registry check's `build:` line, verbatim — composed by the
-same function that will hold the captured run to them, never re-derived from this paragraph.
-`run.py` stops at the first step that does not pass, so a tree that did not install is never
-type-checked and the log says which one it was. Where the step that failed is one the registry
-check listed as deciding a constraint, the red is that constraint's: name it beside the step when
-the run goes back to the producer and again in the report, so a reader meets the node the tree
-broke and not only the file.
+The timeout and the step list are the registry check's `build:` line, verbatim — the validator
+holds the run to that line. `run.py` stops at the first step that does not pass. Where that step
+is one the registry check listed as deciding a constraint, the red is that constraint's: name the
+constraint beside the step when the run goes back to the producer and again in the report.
 
-A task declaring `produces` runs less than that: read `references/substrate.md` before the run. A
-red build: read `references/red-build.md` and follow it — the retries, a red only a test answers,
-and a red no change to this task's own files answers.
+A task declaring `produces` may run less than that: read `references/substrate.md` before the run.
+A red build: read `references/red-build.md` and follow it — the retries, a red only a test
+answers, and a red no change to this task's own files answers.
 
-Write `implementation/<epic>/<slug>.md` through the writer, never by hand — the same epic and
-slug as the task, because the path is the identity and nothing else names which task a record
-answers:
+Write `implementation/<epic>/<slug>.md` through the writer, never by hand, with the task's epic and
+slug, because the path is what names the task a record answers:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --write-implementation <delivery-root> task/<epic>/<slug> --target <the target's key> --task-file <absolute path of work-root/task/<epic>/<slug>.md> --run run/<the build run that passed> --standard <the registry's path relative to the target source root> --standard-file <absolute path of the registry> --from <the delegation's transcript> [--what "…"]... [--note "…"]...
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --write-implementation <delivery-root> task/<epic>/<slug> --target <the target's key> --task-file <absolute path of work-root/task/<epic>/<slug>.md> --run run/<the build run that passed> --standard <the registry's path relative to the target source root> --standard-file <absolute path of the registry> --from <the subagent's transcript> [--what "…"]... [--note "…"]...
 ```
 
 What the writer reads, stamps and writes in the body is in `references/records.md`; read it before
-the first write. Where the agent stopped instead of writing, `references/implementer-returns.md`
-says what the report hands.
+the first write. Where the implementer stopped instead of writing,
+`references/implementer-returns.md` says what the report hands.
 
 ### 5. Prove
 
@@ -386,58 +347,54 @@ reproduction:          <how the failure is observed — omit unless the task's c
 You write no file under the delivery root: return the record's content as text.
 ```
 
-The same two rules hold as at step 3: every path absolute, the slice pasted rather than cited.
+The same two rules hold as at step 3: every path absolute, the slice pasted.
 
-The nodes are handed over because each is an obligation of the proof, not a reference: «Where a
-node the task implements states a fact a finite test decides, the proof carries a test that fails if
-that fact stops holding, whole, and names the node on that test» (SPEC-004 R10). The author reads
-the fact and decides whether a finite test decides it; a node it leaves without a test it names
-under `untested` with why, and a node under neither is what the report says is open.
+Each node is an obligation of the proof, not a reference: «Where a node the task implements states
+a fact a finite test decides, the proof carries a test that fails if that fact stops holding,
+whole, and names the node on that test» (SPEC-004 R10). The test-author decides whether a finite
+test decides each fact; a node it leaves without a test it names under `untested` with why, and a
+node under neither is one the report says is open.
 
-The `underdetermined` set was already read for you — the situate report quotes these entries per
-task, by their opening, so what you hand over is what a script found, and an entry the report
-carries and your collection lacks is your collection wrong rather than the report's. Quote them
-from the task file all the same, which is what holds them.
+`--outstanding` already quoted the `underdetermined` entries by their opening, so an entry it
+printed and your collection lacks is your collection wrong. Quote them from the task file all the
+same, which is what holds them.
 
 ### 6. Suite
 
-Every step the registry declares, in order, ending with the one whose role is `suite`:
+Run every step the registry declares, in order, ending with the one whose role is `suite`:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-suite --cwd <target-source-root> --excerpt 40 <the suite phase the situate step's registry check printed>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-suite --cwd <target-source-root> --excerpt 40 <the suite phase step 1's registry check printed>
 ```
 
-The timeout and the step list are the registry check's `suite:` line, verbatim, for the same
-reason the build's are.
-The checks run again here rather than only at the build, and the repetition is deliberate: a rule
-about where a test file sits or how it is named reaches files that did not exist when the build
-ran, so a build-only pass would leave every rule about tests decided by nothing. Each step that
-already passed passes again in seconds; the runner stops at the first that does not.
+The timeout and the step list are the registry check's `suite:` line, verbatim. The checks run
+again here because a rule about where a test sits or how it is named reaches files that did not
+exist at the build; a step that already passed passes again in seconds.
 
 A red suite: read `references/red-suite.md` and follow it — the diagnosis owed, the five ways out,
 and the one that is forbidden. Where the registry declares no command at all, this step does not
-run, the tests stand unexecuted, and the report says so — the narrow answer rather than a clean one.
-A task delivered as the substrate alone reaches neither this step nor the one before it, for the
-reason step 5 gives.
+run, the tests stand unexecuted, and the report says so. A task delivered as the substrate alone
+reaches neither this step nor step 5.
 
-Write `proof/<epic>/<slug>.md`, same epic and slug again, through the writer the same way:
+Write `proof/<epic>/<slug>.md`, same epic and slug, through the writer the same way:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --write-proof <delivery-root> task/<epic>/<slug> --target <the target's key> --run run/<the suite run that passed> --standard <the registry's path relative to the target source root> --standard-file <absolute path of the registry> --from <the delegation's transcript> [--what "…"]... [--note "…"]...
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --write-proof <delivery-root> task/<epic>/<slug> --target <the target's key> --run run/<the suite run that passed> --standard <the registry's path relative to the target source root> --standard-file <absolute path of the registry> --from <the subagent's transcript> [--what "…"]... [--note "…"]...
 ```
 
 The proof's stamps and its `--note` lines are in `references/records.md`.
 
 ### 7. Validate, and derive the delivery
 
-When both records are written, hold the tree to them first — every record this invocation
-wrote, and on a proof-only re-delivery the standing implementation record beside the new proof:
+When both records are written, hold the tree to them — every record you wrote, and on a
+proof-only re-delivery the standing implementation record beside the new proof:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --unrecorded <target-source-root> <implementation record> [<proof record>]
 ```
 
-How each printed path is named, and what `uncarried:` means, is in `references/finish.md`. Then run:
+How each printed path is named, and what `uncarried:` means, is in `references/finish.md`. Then
+run:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py <delivery-root> <work-root> <target-source-root> <specification-root>
@@ -453,8 +410,8 @@ Name the record you just wrote, once:
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --bind-record <target-source-root> <specification-root> <the implementation record>
 ```
 
-What the bind binds, refuses and may print — a stale-bindings receipt the report keeps whole — is in
-`references/finish.md`.
+What the bind binds, refuses and may print — a stale-bindings receipt the report keeps whole — is
+in `references/finish.md`.
 
 ### 9. Report, and stop
 
@@ -476,21 +433,17 @@ belongs to a person.
 ## What you never do
 
 - Write or edit `delivery.json` by hand.
-- Record a status, a readiness, an approval or a progress figure — those fields do not exist, and
-  prose does not get to hold what the contract refused.
-- Judge whether the work is correct, done well enough, or fit to merge. Nothing here carries a
-  ready flag: a producer that certified its own output would be the validator of its own work.
-- Run a command this project's registry does not declare, or compose one. Every step is the
-  registry's string, run through `bin/run.py`; a command invented here is this framework guessing
-  at a stack it ships no knowledge of, and the guess would be wrong in the project that mattered.
-- Write the tests in the context that wrote the source — the inline fallback is for a session that
+- Record a status, a readiness, an approval or a progress figure — the contract has no such field,
+  and prose does not hold one either.
+- Judge whether the work is correct, done well enough, or fit to merge: a producer that certified
+  its own output would be the validator of its own work.
+- Run a command the project's registry does not declare, or compose one. Every step is the
+  registry's string, run through `bin/run.py`.
+- Write the tests in the context that wrote the source. The inline fallback is for a session that
   cannot spawn subagents, is declared in the report, and still applies each agent's file.
-- Commit, stash, branch, or otherwise change the consumer's git state — a dirty tree is reported,
-  and what to do with it is the human's call.
-- Record which rules of the standard were in scope. That set derives from the pin and the files
-  written, both of which this root holds, so a stored list would be a second answer to a question
-  the root already answers — and the one nobody could check, because the producer would be writing
+- Commit, stash, branch, or otherwise change the consumer's git state. A dirty tree is reported,
+  and what to do with it is the person's call.
+- Record which rules of the standard were in scope: the pin and the files written already answer
   it.
-- Treat a disclosed departure as leave to depart. It says the departure was known and reasoned, and
-  it settles nothing: the review holds the same source to the same rules and is not shown what was
-  disclosed.
+- Treat a disclosed departure as leave to depart. Disclosure settles nothing: the review holds the
+  same source to the same rules and is not shown what was disclosed.

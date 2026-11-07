@@ -1,0 +1,89 @@
+{
+ "run": "first-delivery--before-1",
+ "case": "first-delivery",
+ "arm": "before: 5.61.0 (96b7f59)",
+ "subagent_tokens": 120481,
+ "seconds": 220.4,
+ "expectations": [
+  {
+   "text": "mechanical: the implementation record exists",
+   "passed": true,
+   "evidence": "delivery/lending/implementation/fees/compute-late-fee.md"
+  },
+  {
+   "text": "mechanical: the proof record exists",
+   "passed": true,
+   "evidence": "delivery/lending/proof/fees/compute-late-fee.md"
+  },
+  {
+   "text": "mechanical: deliver.py over the recorded delivery exits 0",
+   "passed": true,
+   "evidence": "derived /tmp/tmpc9pzqp9z/delivery/lending/delivery.json: 2 node(s), 3 edge(s), contract siegard-delivery/2"
+  },
+  {
+   "text": "mechanical: the proof's run passed and ran the suite step",
+   "passed": true,
+   "evidence": "run/fees-compute-late-fee-suite: passed ['build', 'test']"
+  },
+  {
+   "text": "mechanical: the trace binds rules/lending/late-fee-per-overdue-day to app/lending/fees.py",
+   "passed": true,
+   "evidence": "app/lending/fees.py"
+  },
+  {
+   "text": "mechanical: every test the proof names sits in the target",
+   "passed": true,
+   "evidence": "4/4 held; demonstrates rules/lending/late-fee-per-overdue-day: 1"
+  },
+  {
+   "text": "mechanical: the test an earlier delivery wrote is unchanged",
+   "passed": true,
+   "evidence": "identical"
+  },
+  {
+   "text": "mechanical: the report was saved through handoff.py --save-report",
+   "passed": true,
+   "evidence": "handoff.md"
+  },
+  {
+   "text": "mechanical: the report hands /review-change",
+   "passed": true,
+   "evidence": "/review-change"
+  },
+  {
+   "text": "reported: every path the run changed under the target is named by a record",
+   "passed": true,
+   "evidence": "changed ['lending/fees.py', 'tests/test_fees.py']; unnamed []"
+  },
+  {
+   "text": "reported: commands.txt shows --write-implementation",
+   "passed": true,
+   "evidence": "--write-implementation delivery/lending task/fees/compute-late-fee --target app --task-file .../work/lending/task/fees/compute-late-fee.md --run run/fees-compute-late-fee-build --standard standard.yam"
+  },
+  {
+   "text": "reported: commands.txt shows --write-proof",
+   "passed": true,
+   "evidence": "--write-proof delivery/lending task/fees/compute-late-fee --target app --run run/fees-compute-late-fee-suite --standard standard.yaml --standard-file .../app/standard.yaml --from-text test-author-retu"
+  },
+  {
+   "text": "reported: commands.txt shows --unrecorded",
+   "passed": true,
+   "evidence": "--unrecorded app delivery/lending/implementation/fees/compute-late-fee.md delivery/lending/proof/fees/compute-late-fee.md  # exit 0"
+  },
+  {
+   "text": "reported: commands.txt shows --bind-record",
+   "passed": true,
+   "evidence": "--bind-record app spec delivery/lending/implementation/fees/compute-late-fee.md  # exit 0"
+  },
+  {
+   "text": "reported: commands.txt shows --render",
+   "passed": true,
+   "evidence": "--render handoff.json  # exit 1 (block 713 chars over ceiling 600)"
+  },
+  {
+   "text": "reported: the run made no commit",
+   "passed": true,
+   "evidence": "commits added: 0"
+  }
+ ]
+}

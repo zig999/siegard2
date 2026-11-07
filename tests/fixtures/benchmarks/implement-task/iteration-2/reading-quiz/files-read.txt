@@ -1,0 +1,16 @@
+/tmp/itbench2/runs/reading-quiz-new1/prompt.txt
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/SKILL.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/blocking.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/delegation.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/finish.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/implementer-returns.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/records.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/red-build.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/red-suite.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/redelivery.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/report.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/standard.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/substrate.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/task-implementer.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/test-author.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/failure-diagnostician.md

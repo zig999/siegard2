@@ -1,0 +1,21 @@
+{
+ "files": 15,
+ "chars": 133555,
+ "skill_chars": 31478,
+ "sentences": 712,
+ "sentence_words_median": 25,
+ "sentence_words_p90": 52,
+ "sentence_words_max": 154,
+ "sentences_over_60_words": 34,
+ "prose_lines_over_100": 30,
+ "synonyms": {
+  "the person": 28,
+  "subagent": 18
+ },
+ "description_chars": {
+  "skill": 844,
+  "task-implementer": 567,
+  "test-author": 830,
+  "failure-diagnostician": 557
+ }
+}

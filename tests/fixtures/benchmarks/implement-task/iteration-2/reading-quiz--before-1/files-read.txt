@@ -1,0 +1,16 @@
+/tmp/itbench2/runs/reading-quiz-prior1/prompt.txt
+/tmp/itbench2/arm-561/skills/implement-task/SKILL.md
+/tmp/itbench2/arm-561/skills/implement-task/references/blocking.md
+/tmp/itbench2/arm-561/skills/implement-task/references/delegation.md
+/tmp/itbench2/arm-561/skills/implement-task/references/finish.md
+/tmp/itbench2/arm-561/skills/implement-task/references/implementer-returns.md
+/tmp/itbench2/arm-561/skills/implement-task/references/records.md
+/tmp/itbench2/arm-561/skills/implement-task/references/red-build.md
+/tmp/itbench2/arm-561/skills/implement-task/references/red-suite.md
+/tmp/itbench2/arm-561/skills/implement-task/references/redelivery.md
+/tmp/itbench2/arm-561/skills/implement-task/references/report.md
+/tmp/itbench2/arm-561/skills/implement-task/references/standard.md
+/tmp/itbench2/arm-561/skills/implement-task/references/substrate.md
+/tmp/itbench2/arm-561/agents/task-implementer.md
+/tmp/itbench2/arm-561/agents/test-author.md
+/tmp/itbench2/arm-561/agents/failure-diagnostician.md

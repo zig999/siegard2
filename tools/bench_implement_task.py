@@ -10,6 +10,11 @@ with the same `checks` this module defines, so a grading is never trusted, only 
 `reported:` expectation rests on what the agent wrote in `commands.txt`, or on `facts.json`
 written when the run was recorded, and is recorded, not recomputed.
 
+A `quiz` case runs nothing: the agent reads the skill, its references and its three agents, and
+answers each question by letter in `answers.json`. Every question's first option is the one the
+text decides; `quiz_options` shuffles them by the question's id, so the letter is fixed per
+question and never the same position throughout.
+
 A resumed case is a compaction: `setup` runs the skill's steps up to the one the case names
 through the framework's own writers, and cuts the skill where Claude Code re-attaches it.
 
@@ -70,12 +75,27 @@ def front(path: Path) -> dict:
     return yaml.safe_load(text.split("---", 2)[1]) if text.startswith("---") else {}
 
 
+AGENTS = ("task-implementer", "test-author", "failure-diagnostician")
+LETTERS = "abcd"
+
+
+def quiz_options(question: dict) -> tuple[list[str], str]:
+    """The question's options in the order the agent reads them, and the letter of the answer."""
+    import random
+    order = list(range(len(question["options"])))
+    random.Random(question["id"]).shuffle(order)
+    return [question["options"][i] for i in order], LETTERS[order.index(0)]
+
+
 def setup(name: str, project: Path, skill: Path) -> None:
     """The fixture project, committed once; for a resumed case, steps 1-4 run through the
     framework's writers and left uncommitted, and the skill cut where a compaction re-attaches it."""
     c = case(name)
     if project.exists():
         shutil.rmtree(project)
+    if c.get("kind") == "quiz":
+        project.mkdir(parents=True)
+        return
     shutil.copytree(FIXTURE, project, ignore=CACHES)
     git(project, "init", "-q")
     git(project, "add", "--", ".")
@@ -102,8 +122,30 @@ def setup(name: str, project: Path, skill: Path) -> None:
             text[: text.rfind("\n")], encoding="utf-8")
 
 
+def quiz_prompt(c: dict, out: Path, skill: Path) -> str:
+    plugin = skill.parent.parent.parent
+    files = [skill, *sorted((skill.parent / "references").glob("*.md")),
+             *(plugin / "agents" / f"{a}.md" for a in AGENTS)]
+    lines = []
+    for q in c["questions"]:
+        options, _ = quiz_options(q)
+        lines.append(f"{q['id']}. {q['q']}")
+        lines += [f"   {LETTERS[i]}) {o}" for i, o in enumerate(options)]
+    listing = "\n".join(f"- {f}" for f in files)
+    return (f"Read these files, whole, and nothing else:\n{listing}\n\nThey are the instructions "
+            f"of the `/implement-task` skill of a plugin, and of the three subagents it spawns. "
+            f"Answer each question below by what those files require — not by what you would do "
+            f"otherwise, and not by what another file might say. Each question has exactly one "
+            f"answer the files decide.\n\n" + "\n".join(lines) +
+            f"\n\nWrite {out}/answers.json: one JSON object mapping each question's number, as "
+            f"a string, to its letter, e.g. {{\"1\": \"a\"}}. Write {out}/files-read.txt: every "
+            f"file you read, one per line. Return the answers on one line.")
+
+
 def prompt(name: str, project: Path, out: Path, skill: Path) -> str:
     c = case(name)
+    if c.get("kind") == "quiz":
+        return quiz_prompt(c, out, skill)
     invocation = c["invocation"].format(project=project)
     keep = ("Never commit or change git state. Do not modify anything under "
             f"{REPO}.\n\nWhen done, save to {out}/: `report.md` (the full report and the handoff "
@@ -163,6 +205,15 @@ def checks(name: str, record: Path) -> list[dict]:
     facts = json.loads((record / "facts.json").read_text(encoding="utf-8")) if (record / "facts.json").exists() else {}
     proof = front(record / PROOF) if (record / PROOF).is_file() else {}
     out: list[tuple[str, bool, str]] = []
+    if c.get("kind") == "quiz":
+        answers = json.loads((record / "answers.json").read_text(encoding="utf-8")) \
+            if (record / "answers.json").is_file() else {}
+        for q in c["questions"]:
+            _, key = quiz_options(q)
+            given = str(answers.get(str(q["id"]), "")).strip().lower()
+            out.append((f"mechanical: question {q['id']} is answered {key}", given == key,
+                        f"answered {given or 'nothing'}"))
+        return [{"text": t, "passed": bool(p), "evidence": e} for t, p, e in out]
     for check in c["checks"]:
         kind, _, arg = check.partition(":")
         if kind == "implementation_written":
@@ -243,6 +294,15 @@ def record(name: str, project: Path, out: Path, dest: Path, arm: str,
     if dest.exists():
         raise SystemExit(f"cannot run: {dest} exists; a recorded run is never overwritten")
     dest.mkdir(parents=True)
+    if case(name).get("kind") == "quiz":
+        for f in ("answers.json", "files-read.txt"):
+            if (out / f).exists():
+                shutil.copy(out / f, dest / f)
+        grading = {"run": dest.name, "case": name, "arm": arm, "subagent_tokens": tokens,
+                   "seconds": seconds, "expectations": checks(name, dest)}
+        (dest / "grading.json").write_text(json.dumps(grading, indent=1, ensure_ascii=False) + "\n",
+                                           encoding="utf-8")
+        return grading
     for part in ("delivery", "work", "app"):
         if (project / part).is_dir():
             shutil.copytree(project / part, dest / part, ignore=CACHES)

@@ -1,0 +1,25 @@
+/tmp/itbench2/runs/first-delivery-new1/prompt.txt
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/SKILL.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/standard.md
+/home/siegfriedneto/.claude/projects/-home-siegfriedneto-projects-siegard2/8767d72d-23dd-44ce-b35e-ee61cb939375/tool-results/bs02bmo52.txt (deliver.py --contract output, persisted)
+/tmp/itbench2/runs/first-delivery-new1/p/work/lending/task/fees/compute-late-fee.md
+/tmp/itbench2/runs/first-delivery-new1/p/work/lending/plan.json
+/tmp/itbench2/runs/first-delivery-new1/p/work/lending/inventory/lending-app.md
+/tmp/itbench2/runs/first-delivery-new1/p/work/lending/epic/fees.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/delegation.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/task-implementer.md
+/tmp/itbench2/runs/first-delivery-new1/p/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/itbench2/runs/first-delivery-new1/p/app/standard.yaml
+/tmp/itbench2/runs/first-delivery-new1/p/app/lending/loans.py
+/tmp/itbench2/runs/first-delivery-new1/p/app/lending/__init__.py
+/tmp/itbench2/runs/first-delivery-new1/p/spec/domain/lending/loan.md
+/tmp/itbench2/runs/first-delivery-new1/p/spec/rules/lending/late-fee-per-overdue-day.log.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/records.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/test-author.md
+/tmp/itbench2/runs/first-delivery-new1/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/itbench2/runs/first-delivery-new1/p/app/tests/conftest.py
+/tmp/itbench2/runs/first-delivery-new1/p/app/tests/test_loans.py
+/tmp/itbench2/runs/first-delivery-new1/p/delivery/lending/run/fees-compute-late-fee-suite/test.log
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/finish.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/report.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/handoff.json

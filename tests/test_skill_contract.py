@@ -532,7 +532,7 @@ def test_a_skill_that_delegates_waits_for_the_harness_and_never_polls(skill):
     A session that sleeps, schedules wakeups, lists agents or messages the judge in between
     spends turns reading nothing; the text names the one signal and forbids the rest."""
     text = skill_corpus(skill)
-    assert "waits for that notification and nothing else" in text, \
+    assert re.search(r"waits? for that notification and nothing else", text), \
         f"{skill} never says what the session waits for"
     assert "never a `sleep`" in text, f"{skill} never forbids polling"
 
@@ -766,14 +766,14 @@ def test_a_build_red_only_a_test_can_answer_goes_to_the_test_author_before_the_r
     step = skill.split("### 4. Build", 1)[1].split("### 5. Prove", 1)[0]
     assert "references/red-build.md" in step, "step 4 no longer sends a red build there"
     build = reference_text("implement-task", "red-build")
-    assert "**A red only a test can answer is the test author's, and it is answered before the " \
+    assert "**A red only a test can answer is the test-author's, and it is answered before the " \
            "record.**" in build
     assert "bin/project.py <project-root> --declared-tests <the target's key>" in build
     assert "Step 5 runs now, ahead of the record" in build
     assert "the record is written over that run" in build
     assert build.index("A red only a test can answer") \
         < build.index("A red no change to this task's own files can answer")
-    assert "not a test the target declares, which the shape above hands the test author" in build
+    assert "not a test the target declares, which the shape above hands the test-author" in build
     prove = skill.split("### 5. Prove", 1)[1].split("### 6. Suite", 1)[0]
     assert "red build:" in prove
     assert "unless step 4 runs this step ahead of the record" in prove
@@ -877,7 +877,7 @@ def test_a_red_on_an_earlier_tasks_test_is_answered_by_the_shape_the_two_records
     assert "rewrites it whole — never trimmed, never narrowed" in suite
     assert "it joins this proof's `tests`" in suite
     redelivery = reference_text("implement-task", "redelivery").split(
-        "One narrower re-delivery exists, and only the human names it", 1)[1]
+        "One narrower re-delivery exists, and only the person names it", 1)[1]
     assert "Steps 3 and 4 do not run: the implementation record is not touched" in redelivery
     assert "trace.py --check --all <target-source-root>" in redelivery
     assert "read the findings that name a node the task implements" in redelivery

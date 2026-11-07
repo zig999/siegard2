@@ -245,7 +245,7 @@ def grading_of(record: Path) -> dict:
 
 def test_every_implement_task_case_names_only_checks_the_grader_knows(tmp_path):
     names = sorted(p.parent.name for p in IMPLEMENT_CASES.glob("*/case.json"))
-    assert names == ["compaction-resume", "first-delivery"]
+    assert names == ["compaction-resume", "first-delivery", "reading-quiz"]
     for name in names:
         project = tmp_path / name
         bench_implement_task.setup(name, project, bench_implement_task.SKILL)
@@ -328,3 +328,36 @@ def test_the_checklist_is_what_carries_a_resumed_delivery_to_its_end():
             f"{record.name} ran the old skill and met every mechanical expectation"
     for record in shipped:
         assert all(e["passed"] for e in grading_of(record)["expectations"]), record.name
+
+
+def test_the_reading_quiz_has_one_answer_per_question_spread_over_the_letters():
+    quiz = bench_implement_task.case("reading-quiz")
+    keys = [bench_implement_task.quiz_options(q)[1] for q in quiz["questions"]]
+    assert [q["id"] for q in quiz["questions"]] == list(range(1, len(keys) + 1))
+    assert all(len(q["options"]) == 4 for q in quiz["questions"])
+    assert len(set(keys)) == 4, f"the shuffled answers sit on {sorted(set(keys))} only"
+
+
+def runs_of(iteration: str, case_name: str, arm: str) -> list[dict]:
+    folder = IMPLEMENT / iteration
+    return [grading_of(p) for p in sorted(folder.iterdir()) if (p / "grading.json").is_file()
+            and grading_of(p)["case"] == case_name and grading_of(p)["arm"].startswith(arm)]
+
+
+def test_the_5_62_0_rewrite_reads_as_well_for_less():
+    """Iteration 2 compares the 5.62.0 rewrite with the 5.61.0 text it replaced, both read whole by
+    fresh agents. Reading: every quiz run of both arms answered every question as the text decides
+    — the quiz holds the rewrite to losing no meaning, and cannot show the old text misread.
+    Cost: the rewrite's quiz runs spent fewer tokens than every run of the old text, since the
+    agent reads all fifteen files once. Behaviour: the rewrite passes both delivery cases."""
+    before = runs_of("iteration-2", "reading-quiz", "before:")
+    shipped = runs_of("iteration-2", "reading-quiz", "shipped:")
+    assert len(before) >= 2 and len(shipped) >= 2
+    for grading in before + shipped:
+        failed = [e["text"] for e in grading["expectations"] if not e["passed"]]
+        assert not failed, f"{grading['run']}: {failed}"
+    assert max(g["subagent_tokens"] for g in shipped) < min(g["subagent_tokens"] for g in before), \
+        "the rewrite's quiz runs did not read for fewer tokens than the 5.61.0 text"
+    for case_name in ("first-delivery", "compaction-resume"):
+        for grading in runs_of("iteration-2", case_name, "shipped:"):
+            assert all(e["passed"] for e in grading["expectations"]), grading["run"]

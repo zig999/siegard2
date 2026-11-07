@@ -60,3 +60,43 @@ holds the newest iteration to the shipped skill passing every case.
 `--skill` points `setup` and `prompt` at another arm; `${CLAUDE_PLUGIN_ROOT}` is the directory three
 levels above it, so an old arm is a whole plugin tree (`git archive <commit> src/claude`). A change
 to the skill records a new iteration beside this one, never over it.
+
+# Iteration 2 (2026-11-07): 5.62.0, the writing pass over the skill, its references and three agents
+
+`before:` is `src/claude` at `96b7f59` (Siegard 5.61.0); `shipped:` is the working tree that became
+5.62.0. The change rewrites `SKILL.md`, its eleven references and `task-implementer`,
+`test-author` and `failure-diagnostician`: one term per concept (`the person`, `you`, `subagent`,
+`producer`, `re-enter`, `stop`, `refusal`, `door`, defined once under `## Terms`), the passages an
+audit named ambiguous rewritten, justification cut to at most one clause per rule, descriptions
+that name the trigger first, and prose wrapped at 100 columns. Rules, commands, citations and the
+order of steps are unchanged.
+
+A third case joins the two: `reading-quiz`, eighteen multiple-choice questions over the points the
+audit named ambiguous, each answered by an agent holding only the arm's fifteen files. Every wrong
+option differs from the right one in one plausible detail; options are shuffled per question.
+
+| run | case | arm | expectations | tokens | time |
+|---|---|---|---|---|---|
+| `reading-quiz` | quiz | shipped | 18/18 | 73.8k | 19 s |
+| `reading-quiz-2` | quiz | shipped | 18/18 | 73.6k | 17 s |
+| `reading-quiz--before-1` | quiz | before | 18/18 | 82.0k | 20 s |
+| `reading-quiz--before-2` | quiz | before | 18/18 | 82.1k | 21 s |
+| `first-delivery` | whole route | shipped | 16/16 | 115.5k | 3 m 31 s |
+| `first-delivery--before-1` | whole route | before | 16/16 | 120.5k | 3 m 40 s |
+| `compaction-resume` | resumed after step 4 | shipped | 15/15 | 89.1k | 2 m 48 s |
+| `compaction-resume--before-1` | resumed after step 4 | before | 15/15 | 88.1k | 2 m 15 s |
+
+## What the runs say
+
+- **The quiz cannot show the old text misread, and says so.** A first version with easy
+  distractors scored 18/18 on 5.61.0 twice and was discarded unrecorded; the recorded version,
+  with one-detail distractors, scored 18/18 on both arms. A reader holding the whole text resolves
+  the passages the audit called ambiguous. What the quiz holds is that the rewrite lost no meaning
+  at any of those eighteen points.
+- **Reading cost fell.** The fifteen files went from 133.6k to 102.6k characters; a whole read cost
+  the quiz agents 73.7k tokens against 82.0k, a 10% fall with a spread of 0.2k inside each arm.
+- **The text measures moved as claimed** (`text-metrics-5.61.0.json` against the shipped text,
+  held by `tests/test_text_metrics.py`).
+- **Behaviour held.** Both delivery cases pass every expectation on both arms; a whole delivery cost
+  115.5k tokens against 120.5k, and a resumed one 89.1k against 88.1k — one run each, within one
+  run's variation.

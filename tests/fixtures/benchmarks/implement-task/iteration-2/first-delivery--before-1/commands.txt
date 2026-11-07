@@ -1,0 +1,20 @@
+python3 -B /tmp/itbench2/arm-561/bin/project.py /tmp/itbench2/runs/first-delivery-prior1/p  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/plan.py --check work/lending spec  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/deliver.py --contract implementation  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/deliver.py --contract proof  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/deliver.py --contract finding  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/deliver.py --outstanding delivery/lending work/lending app spec  # exit 2 (delivery root absent; created empty, then rerun)
+python3 -B /tmp/itbench2/arm-561/bin/deliver.py --outstanding delivery/lending work/lending app spec  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/deliver.py --standard app/standard.yaml --against app --specification spec  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/run.py delivery/lending --run fees-compute-late-fee-build --cwd app --excerpt 40 --timeout-seconds 60 --step 'build=python3 -m compileall -q lending'  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/deliver.py --write-implementation delivery/lending task/fees/compute-late-fee --target app --task-file .../work/lending/task/fees/compute-late-fee.md --run run/fees-compute-late-fee-build --standard standard.yaml --standard-file .../app/standard.yaml --from-text implementer-return.yaml --note "..."  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/run.py delivery/lending --run fees-compute-late-fee-suite --cwd app --excerpt 40 --timeout-seconds 120 --step 'build=python3 -m compileall -q lending' --step 'test=python3 -m pytest -q tests'  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/deliver.py --write-proof delivery/lending task/fees/compute-late-fee --target app --run run/fees-compute-late-fee-suite --standard standard.yaml --standard-file .../app/standard.yaml --from-text test-author-return.yaml --note "..."  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/deliver.py --unrecorded app delivery/lending/implementation/fees/compute-late-fee.md delivery/lending/proof/fees/compute-late-fee.md  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/deliver.py delivery/lending work/lending app spec  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/trace.py --bind-record app spec delivery/lending/implementation/fees/compute-late-fee.md  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/handoff.py --prepare --skill implement-task --project /tmp/itbench2/runs/first-delivery-prior1/p --slug lending --target app --language pt-BR  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/handoff.py --help  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/handoff.py --save-report /tmp/itbench2/runs/first-delivery-prior1/p/.git/siegard/handoff/20261107T144750Z-implement-task.md  # exit 0
+python3 -B /tmp/itbench2/arm-561/bin/handoff.py --render handoff.json  # exit 1 (block 713 chars over ceiling 600)
+python3 -B /tmp/itbench2/arm-561/bin/handoff.py --render handoff.json  # exit 0
