@@ -1,0 +1,7 @@
+{"name": "change-populated-root",
+ "what": "A change given in the conversation over a populated root: situate, decide a state-machine change, disclose, no ledger.",
+ "material": null,
+ "conversation": "Um caso resolvido pode ser reaberto: ele volta para investigação quando o cliente informa que o problema voltou, mas só até 7 dias depois da resolução. Caso cancelado nunca pode ser reaberto. Cada reabertura precisa registrar o motivo informado pelo cliente.",
+ "seed": "tests/fixtures/spec-model", "resume_after_step": null,
+ "invocation": "/analyse {project} — {conversation}",
+ "checks": ["spec_sound", "no_open_marker", "transition:resolved->investigating", "terminal:cancelled", "new_decisions", "report_says_not_a_file", "handoff_saved", "no_commit"]}

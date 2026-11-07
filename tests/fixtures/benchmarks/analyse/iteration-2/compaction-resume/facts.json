@@ -1,0 +1,15 @@
+{
+ "commits_added": 0,
+ "logs_changed": [
+  "spec/domain/lending/_context.log.md",
+  "spec/domain/lending/copy.log.md",
+  "spec/domain/lending/loan.log.md",
+  "spec/domain/lending/member.log.md",
+  "spec/domain/lending/reservation.log.md",
+  "spec/rules/lending/late-fee-per-overdue-day.log.md",
+  "spec/rules/lending/renewal-extends-due-date-fourteen-days.log.md",
+  "spec/rules/lending/reserved-copy-blocks-renewal.log.md",
+  "spec/rules/lending/reserved-copy-held-three-days.log.md",
+  "spec/rules/lending/returned-reserved-copy-notifies-reserver.log.md"
+ ]
+}

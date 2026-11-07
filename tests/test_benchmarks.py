@@ -157,3 +157,66 @@ def test_each_scored_case_of_the_latest_iteration_says_what_the_corpus_expects(c
         assert score["log_entry"] is False
     if case == 7:
         assert "invoice-immutable" in score["names"]
+
+
+# ---------------------------------------------------------------- iteration 2 onward: cases
+# From iteration 2 a run names the case it ran (cases/<name>/case.json) and its grading is
+# produced by tools/bench_analyse.py; this module recomputes every expectation from the record
+# with the same checks, so a grading is re-read, never trusted. iteration-1 predates the cases
+# and stays under the tests above.
+
+sys.path.insert(0, str(REPO / "tools"))
+import bench_analyse  # noqa: E402
+
+CASES = ANALYSE / "cases"
+
+
+def case_runs() -> list[Path]:
+    return sorted(p for it in sorted(ANALYSE.glob("iteration-*")) if it.name != "iteration-1"
+                  for p in it.iterdir() if (p / "grading.json").is_file())
+
+
+def test_every_case_names_only_checks_the_grader_knows(tmp_path):
+    names = sorted(p.parent.name for p in CASES.glob("*/case.json"))
+    assert names == ["change-populated-root", "compaction-resume", "file-material-empty-root"]
+    for name in names:
+        project = tmp_path / name
+        bench_analyse.setup(name, project, bench_analyse.SKILL)
+        assert problems_of(project / "spec") == [], f"{name}: the seed does not validate"
+        (project / "report.md").write_text("", encoding="utf-8")
+        bench_analyse.checks(name, project)
+
+
+def test_the_resumed_case_cuts_the_skill_where_a_compaction_reattaches_it(tmp_path):
+    """The case exists to hold the skill to surviving a compaction: the cut must keep the
+    checklist that tells a resumed session to read the skill again, and must lose a later step."""
+    project = tmp_path / "compaction-resume"
+    bench_analyse.setup("compaction-resume", project, bench_analyse.SKILL)
+    cut = (tmp_path / "compaction-resume.skill-after-compaction.md").read_text(encoding="utf-8")
+    assert "## Progress checklist" in cut and "read `${CLAUDE_PLUGIN_ROOT}/skills/analyse/SKILL.md` again" in cut
+    assert "### 6. Report, and stop" not in cut, "the cut keeps the whole skill; the case lost its subject"
+
+
+@pytest.mark.parametrize("run", [str(p.relative_to(ANALYSE)) for p in case_runs()])
+def test_each_case_run_grades_as_recomputed_from_its_record(run):
+    record = ANALYSE / run
+    grading = json.loads((record / "grading.json").read_text(encoding="utf-8"))
+    recomputed = {e["text"]: e["passed"] for e in bench_analyse.checks(grading["case"], record)}
+    for expectation in grading["expectations"]:
+        assert recomputed[expectation["text"]] == expectation["passed"], \
+            f"{run}: '{expectation['text']}' was recorded {expectation['passed']} and recomputes otherwise"
+
+
+def test_the_latest_iteration_passes_every_expectation_on_every_case():
+    """The regression gate: the newest recorded iteration ran the skill as it ships and passed.
+    A change to the skill records a new iteration beside this one rather than over it."""
+    latest = max((p for p in ANALYSE.glob("iteration-*") if p.name != "iteration-1"),
+                 key=lambda p: int(p.name.split("-")[1]), default=None)
+    assert latest, "no case iteration is recorded"
+    graded = sorted(p.parent.name for p in latest.glob("*/grading.json"))
+    assert graded == sorted(p.parent.name for p in CASES.glob("*/case.json")), \
+        f"{latest.name} does not hold one run per case"
+    for path in latest.glob("*/grading.json"):
+        failed = [e["text"] for e in json.loads(path.read_text(encoding="utf-8"))["expectations"]
+                  if not e["passed"]]
+        assert not failed, f"{path.parent.name}: {failed}"

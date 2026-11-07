@@ -1,0 +1,5 @@
+decided fields per node — 4 node(s) carry a decision, 11 decided field(s) over 162 declared across the root; «What the material does not state, the analysis decides» (SPEC-001 R4), and a node whose declared fields its log mostly filled is one the material barely described:
+    6 decided /  35 declared  rules/troubleshooting/case-transitions
+    3 decided /   7 declared  domain/troubleshooting/reopening
+    1 decided /  10 declared  domain/troubleshooting/evidence
+    1 decided /   3 declared  rules/troubleshooting/reopen-within-seven-days

@@ -1,0 +1,5 @@
+{"name": "file-material-empty-root",
+ "what": "A Portuguese material file over an empty specification root: the full route, the ledger and the handoff.",
+ "material": "material.md", "conversation": null, "seed": null, "resume_after_step": null,
+ "invocation": "/analyse {project} docs/material.md",
+ "checks": ["spec_sound", "no_open_marker", "identities_english", "ledger_sound", "line_outside:12", "line_answered:13", "projections_written", "handoff_saved", "report_hands:/plan-work", "no_commit"]}

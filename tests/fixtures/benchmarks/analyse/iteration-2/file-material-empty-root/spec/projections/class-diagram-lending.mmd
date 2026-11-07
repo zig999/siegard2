@@ -1,0 +1,41 @@
+classDiagram
+    namespace CopyAggregate {
+        class Copy {
+            <<AggregateRoot>>
+            +string code
+        }
+    }
+    namespace MemberAggregate {
+        class Loan {
+            <<Entity>>
+            +date borrowedOn
+            +date dueOn
+            +boolean renewed
+            +date returnedOn
+        }
+        class Member {
+            <<AggregateRoot>>
+            +string name
+            +borrow()
+            +renew()
+            +return()
+        }
+    }
+    namespace ReservationAggregate {
+        class Reservation {
+            <<AggregateRoot>>
+            +date reservedOn
+            +date collectBy
+        }
+    }
+    namespace TitleAggregate {
+        class Title {
+            <<AggregateRoot>>
+            +string name
+        }
+    }
+    Copy "0..*" --> "1" Title
+    Loan "0..*" --> "1" Copy
+    Member "1" *-- "0..*" Loan
+    Reservation "0..*" --> "1" Member
+    Reservation "0..*" --> "1" Copy

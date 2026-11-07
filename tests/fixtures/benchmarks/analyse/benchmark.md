@@ -46,3 +46,39 @@ from the evident target, which is the candidate, and wrote nothing. The link was
 - `s2-conflict-reading.md` — decisions born of a contradiction inside the material: 19 in eternal,
   all over code-derived material, 7 revised (37%, twice the base rate), 5 by a person vs 12 standing;
   0 in servicedeskn1. The stop proposal is declined there with the criterion that reopens it.
+
+# `/analyse` over the three cases — benchmark, iteration 2 (2026-11-07)
+
+From this iteration a run names the case it ran. The cases live under `cases/<name>/case.json`,
+and `tools/bench_analyse.py` sets each one up, prints what the running agent is handed and grades
+the record. `tests/test_benchmarks.py` recomputes every `mechanical:` expectation from the record
+with the same checks, so a grading is re-read, never trusted. A `reported:` expectation rests on
+the agent's own `commands.txt` or on `facts.json`, written when the run was recorded.
+
+| case | what it holds the skill to | tokens | time | expectations |
+|---|---|---|---|---|
+| `file-material-empty-root` | a Portuguese material file over an empty root: English identities, the ledger sound with the screen line `outside` and the open question answered, projections, the handoff saved, `/plan-work` handed | 105.5k | 4 m 16 s | 10/10 |
+| `change-populated-root` | a change given in the conversation over `tests/fixtures/spec-model`: `resolved -> investigating`, `cancelled` still terminal, new decisions logged, "not a file", the handoff saved | 97.2k | 3 m 00 s | 8/8 |
+| `compaction-resume` | the session resumes holding the skill's first 20,000 characters (≈5k tokens, what Claude Code re-attaches after a compaction) with steps 1–3 done: ledger, projections, `--shape --of`, `--prepare --ledger`, `--render`, the handoff saved | 84.6k | 2 m 47 s | 9/9 |
+
+Arm: `src/claude` at `59dbe97` (Siegard 5.59.1), one `general-purpose` agent per run, on the
+session's model. The `compaction-resume` run read the skill's checklist, read `SKILL.md` again from
+where the cut fell and finished the route. The same case over the skill as it stood at 5.57.0, with
+no checklist, scored 3/9 and 4/9 in two runs on the same day (no ledger file, no `handoff.py`, a
+report of its own form); those runs predate the case's grader and are not recorded here.
+
+One run per case is a reading, not a distribution: what this iteration settles is that the skill
+as shipped passes every case, which the newest iteration must keep saying.
+
+## Re-running
+
+    python3 tools/bench_analyse.py setup  <case> <dir>/projects/<case>
+    python3 tools/bench_analyse.py prompt <case> <dir>/projects/<case> <dir>/out/<case>
+    # hand the printed prompt to a fresh general-purpose agent; then
+    python3 tools/bench_analyse.py record <case> <dir>/projects/<case> <dir>/out/<case> \
+        tests/fixtures/benchmarks/analyse/iteration-<N>/<case> --arm "<version (commit)>" \
+        --tokens <subagent tokens> --seconds <duration>
+
+`--skill <SKILL.md>` points `setup` and `prompt` at another arm. A change to the skill records a
+new iteration beside this one, never over it; `test_the_latest_iteration_passes_every_expectation_on_every_case`
+holds the newest one to passing every case.

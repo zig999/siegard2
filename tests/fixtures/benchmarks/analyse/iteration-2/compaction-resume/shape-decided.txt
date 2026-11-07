@@ -1,0 +1,11 @@
+decided fields per node — 10 node(s) carry a decision, 17 decided field(s) over 95 declared across the root; «What the material does not state, the analysis decides» (SPEC-001 R4), and a node whose declared fields its log mostly filled is one the material barely described:
+    4 decided /  18 declared  domain/lending/loan
+    3 decided /  10 declared  domain/lending/reservation
+    2 decided /  11 declared  domain/lending/copy
+    2 decided /  10 declared  domain/lending/member
+    1 decided /   1 declared  domain/lending/_context
+    1 decided /   3 declared  rules/lending/late-fee-per-overdue-day
+    1 decided /   3 declared  rules/lending/renewal-extends-due-date-fourteen-days
+    1 decided /   5 declared  rules/lending/reserved-copy-blocks-renewal
+    1 decided /   3 declared  rules/lending/reserved-copy-held-three-days
+    1 decided /   5 declared  rules/lending/returned-reserved-copy-notifies-reserver

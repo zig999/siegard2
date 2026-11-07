@@ -1,0 +1,28 @@
+/home/siegfriedneto/projects/siegard2/src/claude/skills/analyse/SKILL.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/spec/context.json
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/spec/element.json
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/spec/rule.json
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/spec/scenario.json
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/spec/contract.json
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/spec/constraint.json
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/spec/decision-log.json
+/tmp/analyse-bench/iteration-2/projects/change-populated-root/spec/constraints/asynchronous-events.md
+/tmp/analyse-bench/iteration-2/projects/change-populated-root/spec/contracts/troubleshooting/case-resolved.md
+/tmp/analyse-bench/iteration-2/projects/change-populated-root/spec/domain/troubleshooting/case.md
+/tmp/analyse-bench/iteration-2/projects/change-populated-root/spec/domain/troubleshooting/case-id.md
+/tmp/analyse-bench/iteration-2/projects/change-populated-root/spec/domain/troubleshooting/case-status.md
+/tmp/analyse-bench/iteration-2/projects/change-populated-root/spec/domain/troubleshooting/hypothesis.md
+/tmp/analyse-bench/iteration-2/projects/change-populated-root/spec/domain/troubleshooting/investigation.md
+/tmp/analyse-bench/iteration-2/projects/change-populated-root/spec/domain/troubleshooting/resolution.md
+/tmp/analyse-bench/iteration-2/projects/change-populated-root/spec/rules/troubleshooting/alert-opens-case.md
+/tmp/analyse-bench/iteration-2/projects/change-populated-root/spec/rules/troubleshooting/case-transitions.md
+/tmp/analyse-bench/iteration-2/projects/change-populated-root/spec/rules/troubleshooting/case-transitions.log.md
+/tmp/analyse-bench/iteration-2/projects/change-populated-root/spec/scenarios/system/troubleshoot-from-alert.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/analyse/references/deciding-by-class.md
+/tmp/analyse-bench/iteration-2/projects/change-populated-root/spec/domain/troubleshooting/_context.md
+/tmp/analyse-bench/iteration-2/projects/change-populated-root/spec/domain/troubleshooting/evidence.log.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/analyse/references/reading-shape.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/handoff.json
+/home/siegfriedneto/projects/siegard2/src/claude/skills/plan-work/SKILL.md (argument-hint line only, via grep)
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/SKILL.md (frontmatter lines 1-8)
+/tmp/analyse-bench/iteration-2/projects/change-populated-root/siegard.json

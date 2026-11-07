@@ -1,0 +1,16 @@
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py spec	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --project spec	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --shape --of <16 written identities> spec	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --decide rules/lending/reserved-copy-held-three-days spec	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --decide rules/lending/renewal-extends-due-date-fourteen-days spec	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py spec	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --ledger docs/ledger.md spec	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py spec	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --project spec	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --shape --of <16 written identities> spec	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill analyse --project /tmp/analyse-bench/iteration-2/projects/compaction-resume --ledger docs/ledger.md --language pt-BR	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --help	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --save-report /tmp/analyse-bench/iteration-2/projects/compaction-resume/.git/siegard/handoff/20261107T131644Z-analyse.md	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --render handoff.json	exit 1 (block 727 chars over ceiling 600)
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --render handoff.json	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --render handoff.json	exit 0 (re-run to capture output into report.md)

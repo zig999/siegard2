@@ -1,0 +1,59 @@
+{
+ "run": "file-material-empty-root",
+ "case": "file-material-empty-root",
+ "arm": "5.59.1 (59dbe97)",
+ "subagent_tokens": 105531,
+ "seconds": 256.1,
+ "expectations": [
+  {
+   "text": "mechanical: spec.py exits 0",
+   "passed": true,
+   "evidence": "specification sound: 5 element(s), 8 rule(s), 1 scenario(s), 1 contract(s) across 1 context(s); 12 decision(s) disclosed"
+  },
+  {
+   "text": "mechanical: no node carries an open marker",
+   "passed": true,
+   "evidence": "none"
+  },
+  {
+   "text": "mechanical: every identity is English",
+   "passed": true,
+   "evidence": "25 file(s); Portuguese: []"
+  },
+  {
+   "text": "mechanical: docs/ledger.md beside the material and trace.py --ledger exits 0",
+   "passed": true,
+   "evidence": "ledger sound: 10 fact line(s) over 1 material file(s) — 8 landed in 13 node(s), 2 left out with a reason, 0 open"
+  },
+  {
+   "text": "mechanical: material line 12 (the screen) is answered outside",
+   "passed": true,
+   "evidence": "---\ncontract_version: siegard-ledger/1\nmaterial:\n  - material.md\ndigests:\n  material.md: sha256:bec66729869237ae202e49b51f7c126ed8649a8fb6f4e5de2a8d69fadef13193\nentries:\n  - at: material.md:3\n    outside: States the purpose of the system as a whole, which the lending context exists to serve, and no "
+  },
+  {
+   "text": "mechanical: material line 13 (the open question) has a ledger entry",
+   "passed": true,
+   "evidence": "---\ncontract_version: siegard-ledger/1\nmaterial:\n  - material.md\ndigests:\n  material.md: sha256:bec66729869237ae202e49b51f7c126ed8649a8fb6f4e5de2a8d69fadef13193\nentries:\n  - at: material.md:3\n    outside: States the purpose of the system as a whole, which the lending context exists to serve, and no "
+  },
+  {
+   "text": "mechanical: spec.py --project wrote the projections",
+   "passed": true,
+   "evidence": "capability-map.mmd, class-diagram-lending.mmd, context-map.mmd, full-text.md, overview.md"
+  },
+  {
+   "text": "mechanical: the report was saved through handoff.py --save-report",
+   "passed": true,
+   "evidence": "handoff.md"
+  },
+  {
+   "text": "mechanical: the report hands /plan-work",
+   "passed": true,
+   "evidence": ""
+  },
+  {
+   "text": "reported: the run made no commit",
+   "passed": true,
+   "evidence": "commits added: 0"
+  }
+ ]
+}

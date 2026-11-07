@@ -1,0 +1,6 @@
+{"name": "compaction-resume",
+ "what": "The session resumes after a compaction holding only the first ~5k tokens of the skill (20,000 characters); steps 1-3 are done and the nodes sit uncommitted. Does the rest of the route still run?",
+ "material": "material.md", "conversation": null, "seed": "seed-spec", "seed_committed": false,
+ "resume_after_step": 3, "truncate_chars": 20000,
+ "invocation": "/analyse {project} docs/material.md",
+ "checks": ["spec_sound", "ledger_sound", "projections_written", "handoff_saved", "report_hands:/plan-work", "reported:shape_of", "reported:prepare_ledger", "reported:render", "no_commit"]}

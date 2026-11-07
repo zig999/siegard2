@@ -1,0 +1,26 @@
+bin/project.py /tmp/analyse-bench/iteration-2/projects/change-populated-root — exit 0
+bin/spec.py spec — exit 0
+bin/spec.py --digest spec — exit 0
+bin/spec.py --impact domain/troubleshooting/case,domain/troubleshooting/case-status,rules/troubleshooting/case-transitions,domain/troubleshooting/resolution,contracts/troubleshooting/case-resolved,constraints/asynchronous-events spec — exit 0
+bin/spec.py --node domain/troubleshooting/reopening.md . — exit 0
+bin/spec.py --node domain/troubleshooting/case.md . — exit 0
+bin/spec.py --node rules/troubleshooting/case-transitions.md . — exit 0
+bin/spec.py --node rules/troubleshooting/reopen-within-seven-days.md . — exit 0
+bin/spec.py . — exit 0
+bin/spec.py --decide rules/troubleshooting/case-transitions spec (rejections.resolved.cancel) — exit 0
+bin/spec.py --decide rules/troubleshooting/case-transitions spec (rejections.resolved.resolve) — exit 0
+bin/spec.py --decide rules/troubleshooting/case-transitions spec (rejections.resolved.start-investigation) — exit 0
+bin/spec.py --decide rules/troubleshooting/case-transitions spec (rejections.open.reopen) — exit 0
+bin/spec.py --decide rules/troubleshooting/case-transitions spec (rejections.investigating.reopen) — exit 0
+bin/spec.py --decide rules/troubleshooting/reopen-within-seven-days spec (statement) — exit 0
+bin/spec.py --decide domain/troubleshooting/reopening spec (type) — exit 0
+bin/spec.py --decide domain/troubleshooting/reopening spec (attributes.reopened_at) — exit 0
+bin/spec.py --decide domain/troubleshooting/reopening spec (attributes.reason.type) — exit 0
+bin/spec.py spec — exit 0
+bin/spec.py --project spec — exit 0
+bin/spec.py --shape --of domain/troubleshooting/case,domain/troubleshooting/reopening,rules/troubleshooting/case-transitions,rules/troubleshooting/reopen-within-seven-days spec — exit 0
+bin/handoff.py --prepare --skill analyse --project /tmp/analyse-bench/iteration-2/projects/change-populated-root --language pt-BR — exit 0
+bin/handoff.py --help — exit 0
+bin/handoff.py --save-report /tmp/analyse-bench/iteration-2/projects/change-populated-root/.git/siegard/handoff/20261107T131700Z-analyse.md — exit 0
+bin/handoff.py --render record.json — exit 0
+bin/handoff.py --render record.json (re-run to capture into report.md) — exit 0
