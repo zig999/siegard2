@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.55.0 — 2026-11-07
+
+A thing the material names only as a question to decide, an option or a proposal is one it names: the entry deciding it says in `unstated` what the material asked or proposed, never that the material names no such thing (SPEC-001 R9). The analyse skill and the decision-log schema's `unstated` description state it. (`42334e0`)
+
 ## 5.54.0 — 2026-11-05
 
 A commit that adds to an orchestration log a `decided:` or `recommended:` line out of the form the handoff states, or a judged `decided:` line where no goal armed through the framework names that initiative, is refused by the plugin's new `PreToolUse` hook, `hooks/commit_check.py` (SPEC-006 R12). The door line's form and its eight criteria live once, in `bin/goal.py`. (`391a7d3`)
