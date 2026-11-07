@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.69.0 — 2026-11-07
+
+The implement-task skill fits whole inside what a compaction re-attaches: its spawn blocks and their filling rules move to the delegation reference, the order diagram gives way to the checklist, and the task-pin paragraph moves to the records reference. A resumed delivery no longer reads the skill again. (`1c6b8c7`)
+
 ## 5.68.0 — 2026-11-07
 
 The deliver-scope skill opens with a progress checklist, fits whole inside what a compaction re-attaches, and keeps its branches in four references; its sentences run shorter, its description names the trigger first, and the door-decider's description takes the form the other agents carry. A resumed run now hands its report through the handoff record. (`2c9c710`)
