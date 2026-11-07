@@ -1,0 +1,4 @@
+{"name": "compaction-resume",
+ "what": "The session resumes after a compaction holding only the first 20,000 characters of the skill; steps 1-3b are done — staged, captured, every pass answered, folded and bound, uncommitted. Do compose, validate and report still run?",
+ "resume_after_step": "3b", "truncate_chars": 20000,
+ "checks": ["review_sound", "review_written", "review_names_reconciliation", "conformance_finding_recorded", "run_captured", "handoff_saved", "reported:review", "reported:findings", "reported:render", "no_commit", "writes_only_its_roots"]}

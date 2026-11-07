@@ -1,0 +1,63 @@
+{
+  "contract_version": "siegard-delivery/2",
+  "nodes": [
+    {
+      "id": "implementation/fees/compute-late-fee",
+      "kind": "implementation",
+      "file": "implementation/fees/compute-late-fee.md",
+      "title": "Late fee of a returned loan",
+      "summary": "A function that answers, in integer cents, the late fee a returned loan carries.",
+      "task": "task/fees/compute-late-fee"
+    },
+    {
+      "id": "proof/fees/compute-late-fee",
+      "kind": "proof",
+      "file": "proof/fees/compute-late-fee.md",
+      "title": "Proof of the late fee of a returned loan",
+      "summary": "Three tests holding late_fee_cents to the task's two criteria, over returns on, before and after the due date.",
+      "task": "task/fees/compute-late-fee"
+    },
+    {
+      "id": "review/fees-review",
+      "kind": "review",
+      "file": "review/fees-review.md",
+      "title": "Late fee of a returned loan, review fees-review",
+      "summary": "What the coverage, conformance and standard passes found over the late fee computation and its tests, and a captured run that passed.",
+      "ran": [
+        "coverage",
+        "conformance",
+        "standard"
+      ],
+      "unproven": [
+        "A loan returned after its due date carries 100 cents for each calendar day between its due date and its return."
+      ],
+      "findings": 1
+    }
+  ],
+  "edges": [
+    {
+      "from": "implementation/fees/compute-late-fee",
+      "to": "rules/lending/late-fee-per-overdue-day",
+      "kind": "encodes",
+      "at": "nodes[0]"
+    },
+    {
+      "from": "implementation/fees/compute-late-fee",
+      "to": "task/fees/compute-late-fee",
+      "kind": "implements",
+      "at": "the path"
+    },
+    {
+      "from": "proof/fees/compute-late-fee",
+      "to": "implementation/fees/compute-late-fee",
+      "kind": "proves",
+      "at": "the path"
+    },
+    {
+      "from": "review/fees-review",
+      "to": "task/fees/compute-late-fee",
+      "kind": "reviews",
+      "at": "tasks[0]"
+    }
+  ]
+}

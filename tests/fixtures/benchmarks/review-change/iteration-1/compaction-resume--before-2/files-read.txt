@@ -1,0 +1,12 @@
+/tmp/rcbench/runs/compaction-resume--before-2/prompt.txt
+/tmp/rcbench/runs/compaction-resume--before-2/p.skill-after-compaction.md
+/tmp/rcbench/runs/compaction-resume--before-2/p/siegard.json
+/home/siegfriedneto/.claude/projects/-home-siegfriedneto-projects-siegard2/20610e82-24d7-4511-b829-8cff1ad48cfe/tool-results/bqzhlr23a.txt (output of deliver.py --contract review/coverageEntry/unpairedTest/finding)
+/tmp/rcbench/runs/compaction-resume--before-2/p/siegard-reconcile/fees-review.md
+/tmp/rcbench/runs/compaction-resume--before-2/p/siegard-reconcile/fees-review.returns/lending__fees.py.yaml
+/tmp/rcbench/runs/compaction-resume--before-2/p/siegard-reconcile/fees-review.returns/tests__test_fees.py.yaml
+/tmp/rcbench/runs/compaction-resume--before-2/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/rcbench/runs/compaction-resume--before-2/p/delivery/lending/proof/fees/compute-late-fee.md
+/tmp/rcbench/runs/compaction-resume--before-2/p/delivery/lending/run/fees-review/run.json
+/tmp/rcbench/runs/compaction-resume--before-2/p/app/lending/fees.py
+/tmp/rcbench/runs/compaction-resume--before-2/p/work/lending/task/fees/compute-late-fee.md

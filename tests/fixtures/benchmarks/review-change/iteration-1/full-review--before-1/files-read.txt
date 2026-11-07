@@ -1,0 +1,30 @@
+/tmp/rcbench/runs/full-review--before-1/prompt.txt
+/tmp/rcbench/before/skills/review-change/SKILL.md
+/tmp/rcbench/runs/full-review--before-1/p/siegard.json
+/tmp/rcbench/runs/full-review--before-1/p/siegard-trace.json
+/tmp/rcbench/runs/full-review--before-1/p/work/lending/plan.json
+/tmp/rcbench/runs/full-review--before-1/p/delivery/lending/delivery.json
+/tmp/rcbench/runs/full-review--before-1/p/work/lending/task/fees/compute-late-fee.md
+/tmp/rcbench/runs/full-review--before-1/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/rcbench/runs/full-review--before-1/p/delivery/lending/proof/fees/compute-late-fee.md
+/tmp/rcbench/before/schemas/reconciliation.json
+/tmp/rcbench/runs/full-review--before-1/p/delivery/lending/run/fees-review/run.json
+/tmp/rcbench/runs/full-review--before-1/p/delivery/lending/run/fees-review/test.log
+/tmp/rcbench/before/agents/coverage-auditor.md
+/tmp/rcbench/before/agents/specification-conformance-reviewer.md
+/tmp/rcbench/before/agents/standard-conformance-reviewer.md
+/tmp/rcbench-ws-Lldj/manifest.json
+/tmp/rcbench-ws-Lldj/candidates.txt
+/tmp/rcbench-ws-Lldj/packs/lending__fees.py.md
+/tmp/rcbench-ws-Lldj/packs/tests__test_fees.py.md
+/tmp/rcbench/runs/full-review--before-1/p/app/lending/fees.py
+/tmp/rcbench/runs/full-review--before-1/p/app/tests/test_fees.py
+/tmp/rcbench/before/schemas/conformance-return.json
+/tmp/rcbench/runs/full-review--before-1/p/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/rcbench/runs/full-review--before-1/p/spec/rules/lending/late-fee-per-overdue-day.log.md
+/tmp/rcbench/runs/full-review--before-1/p/spec/domain/lending/loan.md
+/tmp/rcbench/runs/full-review--before-1/p/spec (grep for fee/cents/calendar terms across all nodes)
+/tmp/rcbench/before/bin/trace.py (lines 4680-4819, save-return implementation)
+/tmp/rcbench/runs/full-review--before-1/p/siegard-reconcile/fees-review.md
+/tmp/rcbench/before/bin/handoff.py (--help docstring and grep)
+/tmp/rcbench/before/schemas/handoff.json

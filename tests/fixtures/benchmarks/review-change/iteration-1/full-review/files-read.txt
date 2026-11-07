@@ -1,0 +1,34 @@
+/tmp/rcbench/runs/full-review-2/prompt.txt
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/SKILL.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/standard.md
+/tmp/rcbench/runs/full-review-2/p/siegard.json
+/tmp/rcbench/runs/full-review-2/p/work/lending/plan.json
+/tmp/rcbench/runs/full-review-2/p/delivery/lending/delivery.json
+/tmp/rcbench/runs/full-review-2/p/work/lending/task/fees/compute-late-fee.md
+/tmp/rcbench/runs/full-review-2/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/rcbench/runs/full-review-2/p/delivery/lending/proof/fees/compute-late-fee.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/trace.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/staging.md
+/tmp/rcbench/runs/full-review-2/ws.fWFg/manifest.json
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/passes.md
+/tmp/rcbench/runs/full-review-2/p/delivery/lending/run/fees-review/test.log
+/home/siegfriedneto/projects/siegard2/src/claude/agents/coverage-auditor.md
+/tmp/rcbench/runs/full-review-2/p/app/tests/test_fees.py
+/tmp/rcbench/runs/full-review-2/p/app/lending/fees.py
+/home/siegfriedneto/projects/siegard2/src/claude/agents/specification-conformance-reviewer.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/conformance-return.json
+/tmp/rcbench/runs/full-review-2/ws.fWFg/packs/lending__fees.py.md
+/tmp/rcbench/runs/full-review-2/ws.fWFg/packs/tests__test_fees.py.md
+/tmp/rcbench/runs/full-review-2/ws.fWFg/candidates.txt
+/tmp/rcbench/runs/full-review-2/p/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/rcbench/runs/full-review-2/p/spec/rules/lending/late-fee-per-overdue-day.log.md
+/tmp/rcbench/runs/full-review-2/p/spec/domain/lending/loan.md
+/tmp/rcbench/runs/full-review-2/p/spec/domain/lending/loan.log.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/standard-conformance-reviewer.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/fold-and-bind.md
+/home/siegfriedneto/projects/siegard2/src/claude/bin/trace.py (lines 4700-4809, after --save-return refused a non-transcript)
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/reconciliation.json (properties title, summary, delivered, target, files)
+/tmp/rcbench/runs/full-review-2/p/siegard-reconcile/fees-review.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/compose.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/report.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/handoff.json (top-level, x-labels pt-BR, x-jargon)

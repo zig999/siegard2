@@ -552,16 +552,21 @@ def test_a_wave_ends_on_the_save_s_receipt_and_never_on_a_count_kept_in_the_sess
     """The harness delivers several notifications in one turn and some inside the turn that
     spawned the wave, so a tally the session keeps undercounts what arrived; the one signal is
     what `--save-return` reads from the returns on disk, and the text says so in the agent's words
-    for the form of the reply too — the delegation prompt is where the form was shown to hold."""
+    for the form of the reply too — the delegation prompt is where the form was shown to hold.
+    The wave's end stays in SKILL.md, where a compaction keeps it; the form of the reply and the
+    save's receipt may sit in the references the skill names at the step that reads them."""
     text = (REPO / "src/claude/skills" / skill / "SKILL.md").read_text(encoding="utf-8")
     flat = " ".join(text.split())
     assert "A wave ends when `--save-return` reports `0 pending` for it, read from the returns " \
            "on disk; a count of notifications kept in the session is never the signal" in flat, \
         f"{skill} lets the session count notifications"
-    assert "ends with the mapping's last line; no ``` line anywhere" in flat, \
+    corpus = " ".join(skill_corpus(skill).split())
+    assert "ends with the mapping's last line; no ``` line anywhere" in corpus, \
         f"{skill} hands the delegation no form for its reply"
-    assert "whether the fold will refuse what was just saved" in flat, \
+    assert "whether the fold will refuse what was just saved" in corpus, \
         f"{skill} never says the save's receipt is to be read"
+    if skill == "review-change":
+        assert "references/passes.md" in text and "references/fold-and-bind.md" in text
 
 
 def test_implement_task_writes_both_records_through_the_writer():
@@ -942,8 +947,11 @@ JOINS = ("and", "or", "but", "so")
 
 CITING_FILES = sorted([*(REPO / "src/claude/skills/analyse").rglob("*.md"),
                        *(REPO / "src/claude/skills/implement-task").rglob("*.md"),
+                       *(REPO / "src/claude/skills/review-change").rglob("*.md"),
                        *(REPO / "src/claude/agents" / f"{name}.md" for name in
-                         ("task-implementer", "test-author", "failure-diagnostician"))])
+                         ("task-implementer", "test-author", "failure-diagnostician",
+                          "coverage-auditor", "specification-conformance-reviewer",
+                          "standard-conformance-reviewer"))])
 
 
 @pytest.mark.parametrize("path", CITING_FILES,
@@ -994,7 +1002,7 @@ def test_every_project_root_input_states_how_an_unnamed_root_resolves(name):
 # ~5k tokens, which the benchmarks hold as 20,000 characters.
 
 COMPACTION_CUT = 20_000
-SIZED = ("analyse", "implement-task", "plan-work")
+SIZED = ("analyse", "implement-task", "plan-work", "review-change")
 REFERENCED = sorted(p.parent.name for p in (REPO / "src/claude/skills").glob("*/references"))
 
 
@@ -1025,7 +1033,7 @@ def test_a_reference_over_100_lines_opens_with_its_contents(path):
     assert re.search(r"^## Contents", head, re.M), f"{path.name} runs past 100 lines with no contents"
 
 
-CHECKLISTED = {"implement-task": 9, "plan-work": 6}
+CHECKLISTED = {"implement-task": 9, "plan-work": 6, "review-change": 6}
 
 
 @pytest.mark.parametrize("skill", sorted(CHECKLISTED))
@@ -1052,3 +1060,12 @@ def test_the_plan_work_skill_survives_a_compaction_whole():
     session holds every step and the checklist that names each reference."""
     assert len(skill_text("plan-work")) <= COMPACTION_CUT, \
         f"plan-work's SKILL.md is {len(skill_text('plan-work'))} characters, past the cut"
+
+
+def test_the_review_change_skill_survives_a_compaction_whole():
+    """At 5.65.0 the cut fell inside step 1 and every later step was lost — compose, validate and
+    the report's handoff among them; the rewrite keeps SKILL.md inside the 20,000 characters a
+    compaction re-attaches, so a resumed review holds every step and the checklist naming each
+    reference."""
+    assert len(skill_text("review-change")) <= COMPACTION_CUT, \
+        f"review-change's SKILL.md is {len(skill_text('review-change'))} characters, past the cut"

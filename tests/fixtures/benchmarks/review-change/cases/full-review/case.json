@@ -1,0 +1,3 @@
+{"name": "full-review",
+ "what": "The ordinary route over one committed delivery: the late-fee task, its two files, the full skill in context. Does a sound review land, with its reconciliation folded and bound, its run captured and its handoff rendered?",
+ "checks": ["review_sound", "review_written", "review_names_reconciliation", "reconciliation_sound", "trace_bound", "run_captured", "handoff_saved", "reported:stage", "reported:fold", "reported:bind_record", "reported:review", "reported:render", "no_commit", "writes_only_its_roots"]}

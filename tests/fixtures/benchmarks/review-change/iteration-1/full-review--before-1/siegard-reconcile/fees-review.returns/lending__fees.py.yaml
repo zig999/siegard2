@@ -1,0 +1,20 @@
+findings:
+  - file: lending/fees.py
+    where: >-
+      line 7, the overdue-day count in late_fee_cents
+    evidence: >-
+      overdue_days = (loan.returned_on - loan.due_on).days
+    cost: >-
+      the node charges BRL 1.00 "for each calendar day between its due date and its return" and does not say whether the return day counts, so the count this line takes (a return one day after the due date is one day, 100 cents) is a decision that lives only in code; the next reader looks for it in the specification and does not find it, and a reading that counts only the days strictly between the two dates would charge 100 cents less for every late return
+    kind: unstated
+    correction: >-
+      the specification states how the calendar days between the due date and the return are counted (whether a return the day after the due date carries one day's fee), as a decided fact of rules/lending/late-fee-per-overdue-day, and the code is then read against it
+    node: rules/lending/late-fee-per-overdue-day
+read:
+  - node: rules/lending/late-fee-per-overdue-day
+    held_at: >-
+      late_fee_cents, lines 7-10, with the per-day rate declared at line 3
+    evidence: >-
+      LATE_FEE_CENTS_PER_DAY = 100 ... if overdue_days <= 0: return 0 ... return overdue_days * LATE_FEE_CENTS_PER_DAY
+looked_past: >-
+  The fee is answered as an int of cents while domain/lending/loan declares late_fee as a decimal in BRL, which is a representation the project's standard rule PY-01 governs and a shape this file does not declare, so it is the standard pass's and the loan record's, not this one's.

@@ -1,0 +1,79 @@
+{
+ "run": "full-review--draft-1",
+ "case": "full-review",
+ "arm": "draft: 5.66.0 first candidate (inline returns refused by --save-return)",
+ "subagent_tokens": 121059,
+ "seconds": 219.0,
+ "expectations": [
+  {
+   "text": "mechanical: deliver.py --review fees-review over the recorded delivery exits 0",
+   "passed": true,
+   "evidence": "  1 implementation, 1 proof, 1 review; 1 of 1 task(s) hold a record; 0 criterion(s) recorded unmet; 1 recorded unproven; 1 finding(s)"
+  },
+  {
+   "text": "mechanical: delivery/lending/review/fees-review.md exists",
+   "passed": true,
+   "evidence": "present"
+  },
+  {
+   "text": "mechanical: the review record names siegard-reconcile/fees-review.md",
+   "passed": false,
+   "evidence": "None"
+  },
+  {
+   "text": "mechanical: trace.py --reconciliation accepts siegard-reconcile/fees-review.md",
+   "passed": false,
+   "evidence": "no siegard-reconcile/fees-review.md"
+  },
+  {
+   "text": "mechanical: the trace binds rules/lending/late-fee-per-overdue-day to app/lending/fees.py as judged",
+   "passed": false,
+   "evidence": "{\"path\": \"app/lending/fees.py\", \"digest\": \"sha256:5c0340d29dbae2e06163d0c8704227b422e07a71c765307eb6c46e46b4562eba\", \"node_digest\": \"sha256:f80e46355ae62d71c5184c1087cb1eaa48367ce7e98d697b21f5f42bb57c"
+  },
+  {
+   "text": "mechanical: run/fees-review ran the registry's build and test steps",
+   "passed": true,
+   "evidence": "passed ['build', 'test']"
+  },
+  {
+   "text": "mechanical: the report was saved through handoff.py --save-report",
+   "passed": true,
+   "evidence": "handoff.md"
+  },
+  {
+   "text": "reported: commands.txt shows trace\\.py[^\\n]*--stage[^\\n]*--review",
+   "passed": true,
+   "evidence": "trace.py --stage app spec fees-review /tmp/rcbench/runs/full-review/ws.4HQb lending/fees.py tests/test_fees.py --review"
+  },
+  {
+   "text": "reported: commands.txt shows trace\\.py[^\\n]*--fold",
+   "passed": true,
+   "evidence": "trace.py --fold"
+  },
+  {
+   "text": "reported: commands.txt shows trace\\.py[^\\n]*--bind-record[^\\n]*--workspace",
+   "passed": false,
+   "evidence": ""
+  },
+  {
+   "text": "reported: commands.txt shows deliver\\.py[^\\n]*--review",
+   "passed": true,
+   "evidence": "deliver.py --review"
+  },
+  {
+   "text": "reported: commands.txt shows handoff\\.py[^\\n]*--render",
+   "passed": true,
+   "evidence": "handoff.py --render"
+  },
+  {
+   "text": "reported: the run made no commit",
+   "passed": true,
+   "evidence": "commits added: 0"
+  },
+  {
+   "text": "reported: the run wrote nothing outside the delivery root, siegard-reconcile/ and siegard-trace.json",
+   "passed": true,
+   "evidence": "outside: []"
+  }
+ ]
+}

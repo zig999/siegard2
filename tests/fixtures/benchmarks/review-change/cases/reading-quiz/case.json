@@ -1,0 +1,187 @@
+{
+ "name": "reading-quiz",
+ "kind": "quiz",
+ "what": "A reader holding only the skill, its references and its four agents answers what the text requires at its densest points. Each wrong option differs from the right one in one detail; the options are shuffled per question by its id.",
+ "questions": [
+  {
+   "id": 1,
+   "q": "Where does the review's file set come from?",
+   "options": [
+    "The tasks' implementation and proof records, plus any path the person says the change reached; never discovered",
+    "The tasks' implementation and proof records, plus any path `git diff` shows under the target source root",
+    "The tasks' implementation records alone; proof records name tests, which the coverage pass finds itself",
+    "The paths the trace binds to the tasks' nodes, read from siegard-trace.json"
+   ]
+  },
+  {
+   "id": 2,
+   "q": "A path an implementation record names that the target source root no longer holds (a file the delivery deleted). What does the review do with it?",
+   "options": [
+    "Leaves it out of the file set and names it in the report as not read",
+    "Keeps it in the file set and records a finding that it cannot be read",
+    "Stops the review, since a path the root cannot read stops its pass",
+    "Leaves it out of the file set silently, since it was never in the set"
+   ]
+  },
+  {
+   "id": 3,
+   "q": "The invocation names no review name. What is the review called, and what if that name is taken?",
+   "options": [
+    "The initiative's slug; a name already taken under run/, review/ or siegard-reconcile/ is a stop",
+    "The initiative's slug; a taken name gets a numeric suffix so the earlier record stays",
+    "The task's identifier; a name already taken under run/, review/ or siegard-reconcile/ is a stop",
+    "The initiative's slug; a taken name is a stop only where run.py refuses it"
+   ]
+  },
+  {
+   "id": 4,
+   "q": "Where does the project's standard come from when the invocation names one and siegard.json declares a different one for the target?",
+   "options": [
+    "The invocation's naming wins, and the report gives both",
+    "siegard.json wins, as it does for the roots, and the report gives both",
+    "The invocation's naming wins, and the report gives only the one used",
+    "Neither: two differing standards join the single stop of absent inputs"
+   ]
+  },
+  {
+   "id": 5,
+   "q": "siegard.json declares `null` as the standard for this target. What happens?",
+   "options": [
+    "The standard pass does not run, and the record says the project authored none for this target",
+    "The standard joins the single stop of absent inputs, with the /siegard-config invocation ready",
+    "The standard pass does not run, and the record says the input was not given",
+    "Another target's standard line is used, since the project declares one"
+   ]
+  },
+  {
+   "id": 6,
+   "q": "Does a review carry a pin of the tasks it answers?",
+   "options": [
+    "No; it answers the criteria its tasks state today, and an earlier review over a task changed since is never refused for it",
+    "Yes; it pins each task's digest, and `--review` refuses a review whose task changed since",
+    "No; it answers the criteria its tasks state today, and an earlier review over a task changed since is refused by deliver.py --check",
+    "Yes, but only for the standard, whose pin `--review` compares against the task's"
+   ]
+  },
+  {
+   "id": 7,
+   "q": "Under `trace.py --stage --review`, which node-file pair is left out of the judges' packs?",
+   "options": [
+    "One a reconciliation's judgment cleared at the very bytes on disk (`judged`), its node unchanged since and no finding standing against it",
+    "One a delivery's bind stamped at the very bytes on disk, its node unchanged since and no finding standing against it",
+    "One a reconciliation's judgment cleared at the very bytes on disk, even where it is a node the tasks implement",
+    "Any pair whose trace binding shows no drift"
+   ]
+  },
+  {
+   "id": 8,
+   "q": "A file of the set that the trace binds nothing to (a test, say). What does the staging do with it?",
+   "options": [
+    "Hands it a judge over the plan's nodes alone, and stages it under `unbound`",
+    "Hands it no judge, and stages it under `unbound`",
+    "Hands it a judge over the plan's nodes alone, and binds them to it at the fold",
+    "Hands it a judge over every node of the candidate index"
+   ]
+  },
+  {
+   "id": 9,
+   "q": "How are the conformance judges dispatched?",
+   "options": [
+    "One per file the manifest holds, by the waves the staging receipt lists; the next wave only once `--save-return` reports 0 pending",
+    "One per file the manifest holds, by the waves the staging receipt lists; the next wave once the session has counted every notification of the last",
+    "One per node the manifest holds, by the waves the staging receipt lists; the next wave only once `--save-return` reports 0 pending",
+    "One judge over the whole file set, so no pair is judged twice"
+   ]
+  },
+  {
+   "id": 10,
+   "q": "The harness refuses a launch within a wave. What is the route?",
+   "options": [
+    "The wave was cut too wide: report `--stage --concurrency <fewer>` ready to run again",
+    "Dispatch the refused judge again on its own, after the rest of the wave returns",
+    "Run the refused file's judgment inline and say so in the report",
+    "Re-stage with `--concurrency <fewer>` yourself and continue without reporting it"
+   ]
+  },
+  {
+   "id": 11,
+   "q": "A saved conformance return is one the fold will refuse. What do you do?",
+   "options": [
+    "Run a fresh subagent with the prompt fixed, before the wave closes",
+    "Repair the saved YAML so it holds to conformance-return.json, saying so in the report",
+    "Send a follow-up message to the same subagent asking it to fix its reply",
+    "Fold anyway; the fold drops the unusable return and the record notes it"
+   ]
+  },
+  {
+   "id": 12,
+   "q": "What does `trace.py --bind-record` write after the fold?",
+   "options": [
+    "Exactly the pairs the judgment cleared — the delivery's own nodes and every other node's claim on these files — never with `--replace`",
+    "Exactly the pairs the judgment cleared, with `--replace`, so releases owed are applied at once",
+    "Every pair the staging read, cleared or not, so the trace shows what was judged",
+    "Only the delivery's own nodes; other nodes' claims on these files wait for /reconcile"
+   ]
+  },
+  {
+   "id": 13,
+   "q": "When does the failures pass run?",
+   "options": [
+    "Where a run was captured and it did not pass — including a run whose outcome says nothing executed",
+    "Where a run was captured, whatever its outcome, so a green run is also diagnosed",
+    "Where a run was captured and a step failed; a run whose outcome says nothing executed is an absent input",
+    "Only where the person named a run already captured"
+   ]
+  },
+  {
+   "id": 14,
+   "q": "How do the certification pass and the coverage pass differ?",
+   "options": [
+    "Coverage asks whether the tests prove the task's criteria; certification asks whether one test proves one node's fact — and only its `covered`, with the conformance pass clearing the node as well, makes the binding one a test decides",
+    "Coverage asks whether the tests prove the task's criteria; certification asks whether one test proves one node's fact — and its `covered` alone makes the binding one a test decides",
+    "Certification replaces coverage for any node a proof's test demonstrates",
+    "Coverage asks whether the tests prove one node's fact; certification asks whether they prove the task's criteria"
+   ]
+  },
+  {
+   "id": 15,
+   "q": "Where does a certification claim come from?",
+   "options": [
+    "The `demonstrates` entries of the proof records passed under `--demonstrated`, or a `--certify` file a person states — never both for one node",
+    "The `demonstrates` entries of the proof records passed under `--demonstrated`, or the session's own reading of which test proves which node",
+    "Any node whose kind is `policy`, since a policy names one input against one result",
+    "The `demonstrates` entries, or a `--certify` file; a node under both takes the `--certify` one"
+   ]
+  },
+  {
+   "id": 16,
+   "q": "What does the report do with the findings?",
+   "options": [
+    "Opens with counts from `deliver.py --findings`, grouped by pass, kind, rule, cause and file, each group beside the route a repair would take; it never ranks a group or decides a route",
+    "Opens with counts from `deliver.py --findings`, grouped by pass, kind, rule, cause and file, and recommends which group to repair first",
+    "Opens with each finding in full, then the counts, each group beside the route a repair would take",
+    "Opens with counts the session tallies from the review record, grouped by pass and file"
+   ]
+  },
+  {
+   "id": 17,
+   "q": "Which invocation does the review's handoff hand forward?",
+   "options": [
+    "None: the skeleton marks no door, and a finding's route handed as a decision is the person's own",
+    "The `/implement-task` invocation over the task, for each finding against source",
+    "The `/analyse` invocation, for each unstated fact the conformance pass found",
+    "None, except a `/reconcile` invocation where the trace shows drift"
+   ]
+  },
+  {
+   "id": 18,
+   "q": "Besides the delivery root, what may the review write?",
+   "options": [
+    "The reconciliation record and its returns under siegard-reconcile/ and siegard-trace.json, at the target's git toplevel",
+    "The reconciliation record and its returns under siegard-reconcile/, siegard-trace.json, and delivery.json written by hand",
+    "The reconciliation record under siegard-reconcile/ alone; the bind is /reconcile's",
+    "siegard-trace.json and the task files whose criteria the coverage pass found unmet"
+   ]
+  }
+ ]
+}

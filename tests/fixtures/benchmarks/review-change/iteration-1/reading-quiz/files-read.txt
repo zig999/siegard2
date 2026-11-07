@@ -1,0 +1,13 @@
+/tmp/rcbench/runs/reading-quiz/prompt.txt
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/SKILL.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/compose.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/fold-and-bind.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/passes.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/report.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/staging.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/standard.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/trace.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/coverage-auditor.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/specification-conformance-reviewer.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/standard-conformance-reviewer.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/failure-diagnostician.md

@@ -1,0 +1,9 @@
+title: Review fees-review of the late fee delivery
+summary: The delivery of task/fees/compute-late-fee under the initiative lending wrote these files.
+delivered: fees-review
+target: app
+files:
+- path: lending/fees.py
+  change: late_fee_cents(loan) answers 0 for a loan returned on or before its due date, and 100 cents for each calendar day between its due date and its return otherwise
+- path: tests/test_fees.py
+  change: written by the delivery of task/fees/compute-late-fee

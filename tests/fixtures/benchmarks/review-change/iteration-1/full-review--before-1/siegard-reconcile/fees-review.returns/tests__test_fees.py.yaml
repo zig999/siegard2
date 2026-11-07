@@ -1,0 +1,5 @@
+read: []
+nowhere:
+  - rules/lending/late-fee-per-overdue-day
+looked_past: >-
+  The tests assert late_fee_cents's answers over returns on, before and up to forty days after the due date, which is what the coverage pass judges against the task's criteria, not a fact this file holds.

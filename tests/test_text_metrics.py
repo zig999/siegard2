@@ -143,3 +143,57 @@ def test_the_plan_work_skill_names_its_trigger_first():
     import yaml
     text = (REPO / "src/claude/skills/plan-work/SKILL.md").read_text(encoding="utf-8")
     assert yaml.safe_load(text.split("---", 2)[1])["description"].startswith("Use when ")
+
+
+# ---------------------------------------------------------------- review-change, rewritten at 5.66.0
+REVIEW_AGENTS = ("coverage-auditor", "specification-conformance-reviewer",
+                 "standard-conformance-reviewer")
+REVIEW_BASELINE = REPO / "tests/fixtures/benchmarks/review-change/text-metrics-5.65.0.json"
+REVIEW_PINS = {
+    "chars": 90_500,
+    "skill_chars": 19_850,
+    "sentence_words_median": 19,
+    "sentence_words_p90": 37,
+    "sentences_over_60_words": 1,
+    "prose_lines_over_100": 0,
+}
+REVIEW_DESCRIPTION_PIN = 572
+
+
+def review_current() -> dict:
+    return text_metrics.measure(text_metrics.files_of(REPO / "src/claude", "review-change",
+                                                      REVIEW_AGENTS))
+
+
+def review_baseline() -> dict:
+    return json.loads(REVIEW_BASELINE.read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("measure", ["chars", "skill_chars", "sentence_words_median",
+                                     "sentence_words_p90", "sentence_words_max",
+                                     "sentences_over_60_words", "prose_lines_over_100"])
+def test_the_review_change_rewrite_is_strictly_better_than_5_65_0(measure):
+    before, now = review_baseline()[measure], review_current()[measure]
+    assert now < before, f"review-change {measure}: {now} is not below 5.65.0's {before}"
+
+
+@pytest.mark.parametrize("name", ["skill", *REVIEW_AGENTS])
+def test_every_review_change_description_is_shorter_than_5_65_0_and_under_its_pin(name):
+    before = review_baseline()["description_chars"][name]
+    now = review_current()["description_chars"][name]
+    assert now < before, f"{name}: description {now} chars is not below 5.65.0's {before}"
+    assert now <= REVIEW_DESCRIPTION_PIN, f"{name}: description {now} passes {REVIEW_DESCRIPTION_PIN}"
+
+
+@pytest.mark.parametrize("measure", sorted(REVIEW_PINS))
+def test_no_review_change_measure_grows_past_its_pin(measure):
+    now = review_current()[measure]
+    assert now <= REVIEW_PINS[measure], \
+        f"review-change {measure} grew to {now}, past its pin {REVIEW_PINS[measure]}: raise the " \
+        f"pin in the same change and say in the commit what the growth bought"
+
+
+def test_the_review_change_skill_names_its_trigger_first():
+    import yaml
+    text = (REPO / "src/claude/skills/review-change/SKILL.md").read_text(encoding="utf-8")
+    assert yaml.safe_load(text.split("---", 2)[1])["description"].startswith("Use when ")

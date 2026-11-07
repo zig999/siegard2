@@ -448,3 +448,111 @@ def test_the_5_65_0_plan_work_carries_a_resumed_plan_to_its_handoff_and_reads_fo
         assert all(e["passed"] for e in grading["expectations"]), grading["run"]
     assert max(g["subagent_tokens"] for g in quiz_shipped) < \
         min(g["subagent_tokens"] for g in quiz_before)
+
+
+# ---------------------------------------------------------------- /review-change: cases
+# Reviews the implement-task benchmark's recorded first delivery, laid over its fixture project and
+# committed; graded by tools/bench_review_change.py and recomputed here from each record.
+
+import bench_review_change  # noqa: E402
+
+REVIEW = BENCH / "review-change"
+
+
+def review_runs() -> list[Path]:
+    return sorted(p for it in sorted(REVIEW.glob("iteration-*"))
+                  for p in it.iterdir() if (p / "grading.json").is_file())
+
+
+def review_runs_of(iteration: str, case_name: str, arm: str) -> list[dict]:
+    return [grading_of(p) for p in sorted((REVIEW / iteration).iterdir())
+            if (p / "grading.json").is_file() and grading_of(p)["case"] == case_name
+            and grading_of(p)["arm"].startswith(arm)]
+
+
+def test_every_review_change_case_names_only_checks_the_grader_knows(tmp_path):
+    names = sorted(p.parent.name for p in (REVIEW / "cases").glob("*/case.json"))
+    assert names == ["compaction-resume", "full-review", "reading-quiz"]
+    for name in names:
+        project = tmp_path / name
+        bench_review_change.setup(name, project, bench_review_change.SKILL)
+        bench_review_change.checks(name, project)
+
+
+def test_the_review_change_fixture_holds_a_sound_delivery_to_review(tmp_path):
+    """The recorded delivery laid over the fixture is what a review starts from: the plan and the
+    delivery check clean, and the trace shows no drift."""
+    project = tmp_path / "full-review"
+    bench_review_change.setup("full-review", project, bench_review_change.SKILL)
+    bins = REPO / "src/claude/bin"
+    for args in (("plan.py", "--check", "work/lending", "spec"),
+                 ("deliver.py", "--check", "delivery/lending", "work/lending", "app", "spec"),
+                 ("trace.py", "--check", "app")):
+        done = subprocess.run([sys.executable, "-B", str(bins / args[0]), *args[1:]],
+                              capture_output=True, text=True, cwd=project)
+        assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_the_resumed_review_change_case_starts_where_step_3b_ends(tmp_path):
+    """Staged, captured, folded and bound through the framework's own writers, uncommitted: what
+    is left is compose, validate and report."""
+    project = tmp_path / "compaction-resume"
+    bench_review_change.setup("compaction-resume", project, bench_review_change.SKILL)
+    assert (project / bench_review_change.RECONCILIATION).is_file()
+    assert (project / f"delivery/lending/run/{bench_review_change.REVIEW}/run.json").is_file()
+    assert not (project / bench_review_change.REVIEW_RECORD).exists()
+    trace = json.loads((project / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert any(f.get("judged") for b in trace["bindings"] for f in b["files"])
+
+
+@pytest.mark.parametrize("run", [str(p.relative_to(REVIEW)) for p in review_runs()])
+def test_each_review_change_run_grades_as_recomputed_from_its_record(run):
+    record = REVIEW / run
+    grading = grading_of(record)
+    assert grading["arm"].split(":")[0] in ("shipped", "before", "draft"), \
+        f"{run}: arm {grading['arm']!r}"
+    recomputed = {e["text"]: e["passed"] for e in bench_review_change.checks(grading["case"], record)}
+    for expectation in grading["expectations"]:
+        assert recomputed[expectation["text"]] == expectation["passed"], \
+            f"{run}: '{expectation['text']}' was recorded {expectation['passed']} and recomputes otherwise"
+
+
+def test_the_latest_review_change_iteration_passes_every_expectation_with_the_shipped_skill():
+    latest = max(REVIEW.glob("iteration-*"), key=lambda p: int(p.name.split("-")[1]), default=None)
+    assert latest, "no iteration is recorded"
+    shipped = [p for p in latest.iterdir() if (p / "grading.json").is_file()
+               and grading_of(p)["arm"].startswith("shipped:")]
+    assert sorted({grading_of(p)["case"] for p in shipped}) == \
+        sorted(p.parent.name for p in (REVIEW / "cases").glob("*/case.json")), \
+        f"{latest.name} does not run the shipped skill over every case"
+    for record in shipped:
+        failed = [e["text"] for e in grading_of(record)["expectations"] if not e["passed"]]
+        assert not failed, f"{record.name}: {failed}"
+
+
+def test_the_review_change_reading_quiz_has_one_answer_per_question_spread_over_the_letters():
+    questions = bench_review_change.case("reading-quiz")["questions"]
+    assert [q["id"] for q in questions] == list(range(1, 19))
+    keys = {bench_review_change.quiz_options(q)[1] for q in questions}
+    assert keys == set("abcd")
+
+
+def test_the_5_66_0_review_change_carries_a_resumed_review_to_its_handoff_and_reads_as_well():
+    """Iteration 1 compares the 5.66.0 rewrite with the 5.65.0 text. Resumed after step 3b holding
+    the first 20,000 characters, every 5.65.0 run left a mechanical expectation unmet and every
+    5.66.0 run met all of them. Every quiz run of both arms answered every question as the text
+    decides; the quiz does not separate the arms on cost, so it is held as no regression only."""
+    before = review_runs_of("iteration-1", "compaction-resume", "before:")
+    shipped = review_runs_of("iteration-1", "compaction-resume", "shipped:")
+    assert len(before) >= 2 and len(shipped) >= 2
+    for grading in before:
+        mechanical = [e for e in grading["expectations"] if e["text"].startswith("mechanical:")]
+        assert any(not e["passed"] for e in mechanical), \
+            f"{grading['run']} ran the old skill and met every mechanical expectation"
+    for grading in shipped:
+        assert all(e["passed"] for e in grading["expectations"]), grading["run"]
+    quiz = review_runs_of("iteration-1", "reading-quiz", "")
+    assert len([g for g in quiz if g["arm"].startswith("before:")]) >= 2
+    assert len([g for g in quiz if g["arm"].startswith("shipped:")]) >= 2
+    for grading in quiz:
+        assert all(e["passed"] for e in grading["expectations"]), grading["run"]

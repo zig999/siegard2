@@ -1,0 +1,4 @@
+read: []
+nowhere:
+- rules/lending/late-fee-per-overdue-day
+looked_past: The tests assert the fee in cents per day, which is the coverage pass's to weigh.

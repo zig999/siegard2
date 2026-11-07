@@ -1,0 +1,9 @@
+python3 -B /tmp/rcbench/before/bin/deliver.py --help	exit 0
+python3 -B /tmp/rcbench/before/bin/deliver.py --contract review	exit 0
+python3 -B /tmp/rcbench/before/bin/deliver.py --contract coverageEntry	exit 0
+python3 -B /tmp/rcbench/before/bin/deliver.py --contract unpairedTest	exit 0
+python3 -B /tmp/rcbench/before/bin/deliver.py --contract finding	exit 0
+python3 -B /tmp/rcbench/before/bin/deliver.py --node delivery/lending/review/fees-review.md delivery/lending	exit 0
+python3 -B /tmp/rcbench/before/bin/deliver.py --review fees-review delivery/lending work/lending app spec	exit 0
+python3 -B /tmp/rcbench/before/bin/deliver.py --check --review fees-review delivery/lending work/lending app spec	exit 0
+python3 -B /tmp/rcbench/before/bin/deliver.py --findings delivery/lending/review/fees-review.md	exit 0

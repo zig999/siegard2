@@ -1,0 +1,9 @@
+/tmp/rcbench/runs/compaction-resume--before-1/prompt.txt
+/tmp/rcbench/runs/compaction-resume--before-1/p.skill-after-compaction.md
+/tmp/rcbench/runs/compaction-resume--before-1/p/siegard-reconcile/fees-review.md
+/tmp/rcbench/runs/compaction-resume--before-1/p/siegard-reconcile/fees-review.returns/lending__fees.py.yaml
+/tmp/rcbench/runs/compaction-resume--before-1/p/siegard-reconcile/fees-review.returns/tests__test_fees.py.yaml
+/tmp/rcbench/runs/compaction-resume--before-1/p/delivery/lending/run/fees-review/run.json
+/tmp/rcbench/runs/compaction-resume--before-1/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/rcbench/runs/compaction-resume--before-1/p/delivery/lending/proof/fees/compute-late-fee.md
+/tmp/rcbench/runs/compaction-resume--before-1/p/siegard.json

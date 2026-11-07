@@ -1,0 +1,18 @@
+python3 -B bin/deliver.py --contract coverageEntry	exit 0
+python3 -B bin/deliver.py --contract unpairedTest	exit 0
+python3 -B bin/deliver.py --contract finding	exit 0
+python3 -B bin/deliver.py --contract	exit 0
+python3 -B bin/deliver.py --contract review	exit 0
+python3 -B bin/deliver.py --node delivery/lending/review/fees-review.md delivery/lending	exit 0
+python3 -B bin/deliver.py --node delivery/lending/review/fees-review.md delivery/lending	exit 0
+python3 -B bin/deliver.py --review fees-review delivery/lending work/lending app spec	exit 0
+python3 -B bin/handoff.py --prepare --skill review-change --project /tmp/rcbench/runs/compaction-resume/p --slug lending --target app --language pt-BR	exit 0
+python3 -B bin/deliver.py --findings delivery/lending/review/fees-review.md	exit 0
+python3 -B bin/deliver.py --standard standard.yaml --reach --for lending/fees.py --for tests/test_fees.py	exit 0
+python3 -B bin/trace.py --owed app	exit 0
+python3 -B bin/handoff.py --help	exit 0
+python3 -B bin/trace.py --check app	exit 0
+python3 -B bin/handoff.py --save-report /tmp/rcbench/runs/compaction-resume/p/.git/siegard/handoff/20261107T165825Z-review-change.md	exit 0
+python3 -B bin/handoff.py --render /tmp/rcbench/runs/compaction-resume/out/handoff-record.json	exit 1
+python3 -B bin/handoff.py --render /tmp/rcbench/runs/compaction-resume/out/handoff-record.json	exit 0
+python3 -B bin/handoff.py --render /tmp/rcbench/runs/compaction-resume/out/handoff-record.json	exit 0

@@ -1,0 +1,25 @@
+python3 -B bin/project.py /tmp/rcbench/runs/full-review/p  # exit 0
+python3 -B bin/plan.py --check work/lending spec  # exit 0
+python3 -B bin/deliver.py --check delivery/lending work/lending app spec  # exit 0
+python3 -B bin/deliver.py --contract coverageEntry  # exit 0
+python3 -B bin/deliver.py --contract unpairedTest  # exit 0
+python3 -B bin/deliver.py --contract finding  # exit 0
+python3 -B bin/deliver.py --standard app/standard.yaml --against app --specification spec  # exit 0
+python3 -B bin/trace.py --check app  # exit 0
+python3 -B bin/trace.py --stage app spec fees-review /tmp/rcbench/runs/full-review/ws.4HQb lending/fees.py tests/test_fees.py --review --node rules/lending/late-fee-per-overdue-day --demonstrated delivery/lending/proof/fees/compute-late-fee.md  # exit 0
+python3 -B bin/run.py delivery/lending --run fees-review --cwd app --timeout-seconds 120 --step 'build=python3 -m compileall -q lending' --step 'test=python3 -m pytest -q tests'  # exit 0
+python3 -B bin/trace.py --save-return app /tmp/rcbench/runs/full-review/ws.4HQb lending/fees.py /tmp/rcbench/runs/full-review/inline/lending__fees.py.yaml  # exit 2
+python3 -B bin/trace.py --save-return app /tmp/rcbench/runs/full-review/ws.4HQb tests/test_fees.py /tmp/rcbench/runs/full-review/inline/tests__test_fees.py.yaml  # exit 2
+python3 -B bin/deliver.py --standard app/standard.yaml --reading --for lending/fees.py --for tests/test_fees.py  # exit 0
+python3 -B bin/trace.py --fold app /tmp/rcbench/runs/full-review/ws.4HQb /tmp/rcbench/runs/full-review/ws.4HQb/premise.yaml siegard-reconcile/fees-review.md  # exit 1
+python3 -B bin/deliver.py --contract review  # exit 0
+python3 -B bin/deliver.py --node delivery/lending/review/fees-review.md delivery/lending  # exit 0
+python3 -B bin/deliver.py --review fees-review delivery/lending work/lending app spec  # exit 0
+python3 -B bin/handoff.py --prepare --skill review-change --project /tmp/rcbench/runs/full-review/p --slug lending --target app --language pt-BR  # exit 0
+python3 -B bin/deliver.py --findings delivery/lending/review/fees-review.md  # exit 0
+python3 -B bin/deliver.py --standard app/standard.yaml --reach --for lending/fees.py --for tests/test_fees.py  # exit 0
+python3 -B bin/handoff.py --help  # exit 0
+python3 -B bin/handoff.py --save-report /tmp/rcbench/runs/full-review/p/.git/siegard/handoff/20261107T165951Z-review-change.md  # exit 0
+python3 -B bin/handoff.py --render /tmp/rcbench/runs/full-review/inline/handoff.json  # exit 1 (body carried a script name)
+python3 -B bin/handoff.py --render /tmp/rcbench/runs/full-review/inline/handoff.json  # exit 0
+python3 -B bin/handoff.py --render /tmp/rcbench/runs/full-review/inline/handoff.json  # exit 0 (re-render into report.md)

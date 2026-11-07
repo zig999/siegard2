@@ -1,0 +1,6 @@
+/tmp/rcbench/runs/reading-quiz--before-2/prompt.txt
+/tmp/rcbench/before/skills/review-change/SKILL.md
+/tmp/rcbench/before/agents/coverage-auditor.md
+/tmp/rcbench/before/agents/specification-conformance-reviewer.md
+/tmp/rcbench/before/agents/standard-conformance-reviewer.md
+/tmp/rcbench/before/agents/failure-diagnostician.md

@@ -1,0 +1,64 @@
+{
+ "run": "compaction-resume-2",
+ "case": "compaction-resume",
+ "arm": "shipped: 5.66.0 (candidate over e98711f)",
+ "subagent_tokens": 83779,
+ "seconds": 138.4,
+ "expectations": [
+  {
+   "text": "mechanical: deliver.py --review fees-review over the recorded delivery exits 0",
+   "passed": true,
+   "evidence": "  1 implementation, 1 proof, 1 review; 1 of 1 task(s) hold a record; 0 criterion(s) recorded unmet; 1 recorded unproven; 1 finding(s)"
+  },
+  {
+   "text": "mechanical: delivery/lending/review/fees-review.md exists",
+   "passed": true,
+   "evidence": "present"
+  },
+  {
+   "text": "mechanical: the review record names siegard-reconcile/fees-review.md",
+   "passed": true,
+   "evidence": "siegard-reconcile/fees-review.md"
+  },
+  {
+   "text": "mechanical: the review records the fold's unstated finding on lending/fees.py, stamped conformance",
+   "passed": true,
+   "evidence": "1"
+  },
+  {
+   "text": "mechanical: run/fees-review ran the registry's build and test steps",
+   "passed": true,
+   "evidence": "passed ['build', 'test']"
+  },
+  {
+   "text": "mechanical: the report was saved through handoff.py --save-report",
+   "passed": true,
+   "evidence": "handoff.md"
+  },
+  {
+   "text": "reported: commands.txt shows deliver\\.py[^\\n]*--review",
+   "passed": true,
+   "evidence": "deliver.py --review"
+  },
+  {
+   "text": "reported: commands.txt shows deliver\\.py[^\\n]*--findings",
+   "passed": true,
+   "evidence": "deliver.py --findings"
+  },
+  {
+   "text": "reported: commands.txt shows handoff\\.py[^\\n]*--render",
+   "passed": true,
+   "evidence": "handoff.py --render"
+  },
+  {
+   "text": "reported: the run made no commit",
+   "passed": true,
+   "evidence": "commits added: 0"
+  },
+  {
+   "text": "reported: the run wrote nothing outside the delivery root, siegard-reconcile/ and siegard-trace.json",
+   "passed": true,
+   "evidence": "outside: []"
+  }
+ ]
+}

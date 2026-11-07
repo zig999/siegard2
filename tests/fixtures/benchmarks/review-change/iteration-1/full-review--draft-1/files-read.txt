@@ -1,0 +1,32 @@
+/tmp/rcbench/runs/full-review/prompt.txt
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/SKILL.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/standard.md
+/tmp/rcbench/runs/full-review/p/work/lending/plan.json
+/tmp/rcbench/runs/full-review/p/delivery/lending/delivery.json
+/tmp/rcbench/runs/full-review/p/work/lending/task/fees/compute-late-fee.md
+/tmp/rcbench/runs/full-review/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/rcbench/runs/full-review/p/delivery/lending/proof/fees/compute-late-fee.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/trace.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/staging.md
+/tmp/rcbench/runs/full-review/p/delivery/lending/run/fees-review/run.json
+/tmp/rcbench/runs/full-review/p/delivery/lending/run/fees-review/test.log
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/passes.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/coverage-auditor.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/specification-conformance-reviewer.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/standard-conformance-reviewer.md
+/tmp/rcbench/runs/full-review/ws.4HQb/manifest.json
+/tmp/rcbench/runs/full-review/ws.4HQb/candidates.txt
+/tmp/rcbench/runs/full-review/ws.4HQb/packs/lending__fees.py.md
+/tmp/rcbench/runs/full-review/ws.4HQb/packs/tests__test_fees.py.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/conformance-return.json
+/tmp/rcbench/runs/full-review/p/spec/rules/lending/late-fee-per-overdue-day.log.md
+/tmp/rcbench/runs/full-review/p/app/lending/fees.py
+/tmp/rcbench/runs/full-review/p/app/tests/test_fees.py
+/tmp/rcbench/runs/full-review/p/app/lending/loans.py (outside the file set; not prescribed by the skill)
+/tmp/rcbench/runs/full-review/p/spec (grep over the specification root for fee terms: matched spec/domain/lending/loan.md, _context.md, loan.log.md lines)
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/fold-and-bind.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/reconciliation.json (premise fields only)
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/compose.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/references/report.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/handoff.json
+/home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py (lines 600-673, for the --render/--save-report argument form)

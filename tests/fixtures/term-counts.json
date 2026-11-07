@@ -6,7 +6,7 @@
   "the caller": 3
  },
  "src/claude/agents/coverage-auditor.md": {
-  "the caller": 2
+  "the caller": 1
  },
  "src/claude/agents/domain-surveyor.md": {
   "the caller": 3
@@ -21,10 +21,10 @@
   "the caller": 1
  },
  "src/claude/agents/specification-conformance-reviewer.md": {
-  "the caller": 5
+  "the caller": 4
  },
  "src/claude/agents/standard-conformance-reviewer.md": {
-  "the caller": 9
+  "the caller": 7
  },
  "src/claude/agents/task-implementer.md": {
   "the caller": 2
@@ -149,9 +149,7 @@
   "this invocation": 2
  },
  "src/claude/skills/review-change/SKILL.md": {
-  "the caller": 5,
-  "the session": 3,
-  "this invocation": 1
+  "the session": 2
  },
  "src/claude/skills/siegard-config/SKILL.md": {
   "this invocation": 9

@@ -1,0 +1,6 @@
+===== build :: python3 -m compileall -q lending :: passed =====
+
+===== test :: python3 -m pytest -q tests :: passed =====
+....                                                                     [100%]
+4 passed in 0.01s
+
