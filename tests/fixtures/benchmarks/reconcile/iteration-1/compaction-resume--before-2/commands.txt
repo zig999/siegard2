@@ -1,0 +1,4 @@
+python3 -B /tmp/reconcile-before/bin/trace.py --help → exit 0
+python3 -B /tmp/reconcile-before/bin/trace.py --bind-record app spec siegard-reconcile/fees-hand-edit.md --workspace /tmp/rcb/compaction-resume--before-2/p.workspace → exit 0
+python3 -B /tmp/reconcile-before/bin/trace.py --check app → exit 0
+python3 -B /tmp/reconcile-before/bin/trace.py --owed app → exit 0

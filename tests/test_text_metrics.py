@@ -197,3 +197,78 @@ def test_the_review_change_skill_names_its_trigger_first():
     import yaml
     text = (REPO / "src/claude/skills/review-change/SKILL.md").read_text(encoding="utf-8")
     assert yaml.safe_load(text.split("---", 2)[1])["description"].startswith("Use when ")
+
+
+# ---------------------------------------------------------------- reconcile, rewritten at 5.67.0
+# The two agents were rewritten at 5.66.0 and are unchanged here: they enter the measure as the
+# context a reconciliation reads, and the gain held below is the skill's.
+RECONCILE_AGENTS = ("coverage-auditor", "specification-conformance-reviewer")
+RECONCILE_BASELINE = REPO / "tests/fixtures/benchmarks/reconcile/text-metrics-5.66.0.json"
+RECONCILE_PINS = {
+    "chars": 82_050,
+    "skill_chars": 17_100,
+    "sentence_words_median": 19,
+    "sentence_words_p90": 38,
+    "sentences_over_60_words": 1,
+    "prose_lines_over_100": 0,
+}
+RECONCILE_DESCRIPTION_PIN = 582
+
+
+def reconcile_current() -> dict:
+    return text_metrics.measure(text_metrics.files_of(REPO / "src/claude", "reconcile",
+                                                      RECONCILE_AGENTS))
+
+
+def reconcile_baseline() -> dict:
+    return json.loads(RECONCILE_BASELINE.read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("measure", ["chars", "skill_chars", "sentence_words_median",
+                                     "sentence_words_p90", "sentence_words_max",
+                                     "sentences_over_60_words", "prose_lines_over_100"])
+def test_the_reconcile_rewrite_is_strictly_better_than_5_66_0(measure):
+    before, now = reconcile_baseline()[measure], reconcile_current()[measure]
+    assert now < before, f"reconcile {measure}: {now} is not below 5.66.0's {before}"
+
+
+def test_the_reconcile_description_is_shorter_than_5_66_0_and_under_its_pin():
+    before = reconcile_baseline()["description_chars"]["skill"]
+    now = reconcile_current()["description_chars"]["skill"]
+    assert now < before, f"reconcile: description {now} chars is not below 5.66.0's {before}"
+    assert now <= RECONCILE_DESCRIPTION_PIN, \
+        f"reconcile: description {now} passes {RECONCILE_DESCRIPTION_PIN}"
+
+
+@pytest.mark.parametrize("measure", sorted(RECONCILE_PINS))
+def test_no_reconcile_measure_grows_past_its_pin(measure):
+    now = reconcile_current()[measure]
+    assert now <= RECONCILE_PINS[measure], \
+        f"reconcile {measure} grew to {now}, past its pin {RECONCILE_PINS[measure]}: raise the " \
+        f"pin in the same change and say in the commit what the growth bought"
+
+
+def test_the_reconcile_skill_names_its_trigger_first():
+    import yaml
+    text = (REPO / "src/claude/skills/reconcile/SKILL.md").read_text(encoding="utf-8")
+    assert yaml.safe_load(text.split("---", 2)[1])["description"].startswith("Use when ")
+
+
+def test_the_reconcile_terms_are_schemas_terms_json_s_and_each_is_used_outside_its_section():
+    """`## Terms` defines each term by schemas/terms.json's `means`, verbatim, and names no term
+    the skill and its references never use elsewhere."""
+    import re
+    means = {c["term"].lower(): c["means"] for c in
+             json.loads((REPO / "schemas/terms.json").read_text(encoding="utf-8"))["concepts"]}
+    folder = REPO / "src/claude/skills/reconcile"
+    skill = (folder / "SKILL.md").read_text(encoding="utf-8")
+    section = skill.split("## Terms\n", 1)[1].split("\n## ", 1)[0]
+    rest = skill.replace(section, "") + "".join(
+        p.read_text(encoding="utf-8") for p in sorted(folder.glob("references/*.md")))
+    entries = re.findall(r"^- \*\*(.+?)\*\* — (.+?)\.(?: |$)", section, re.M)
+    assert entries, "reconcile's ## Terms holds no entry"
+    for term, said in entries:
+        assert term.lower() in means, f"{term} is not a term schemas/terms.json lists"
+        assert said == means[term.lower()], f"{term}: {said!r} is not terms.json's means"
+        assert re.search(rf"\b{re.escape(term.lower())}\b", rest.lower()), \
+            f"{term} is never used outside ## Terms"

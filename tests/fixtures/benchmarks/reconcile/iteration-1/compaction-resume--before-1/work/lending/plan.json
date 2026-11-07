@@ -1,0 +1,42 @@
+{
+  "contract_version": "siegard-plan/3",
+  "nodes": [
+    {
+      "id": "epic/fees",
+      "kind": "epic",
+      "file": "epic/fees.md",
+      "title": "Late fees",
+      "summary": "The fee a loan returned late carries."
+    },
+    {
+      "id": "inventory/lending-app",
+      "kind": "inventory",
+      "file": "inventory/lending-app.md",
+      "title": "Lending service",
+      "summary": "The area the late-fee scope lands in, one Python package under lending/."
+    },
+    {
+      "id": "task/fees/compute-late-fee",
+      "kind": "task",
+      "file": "task/fees/compute-late-fee.md",
+      "title": "Compute the late fee of a returned loan",
+      "summary": "A function that answers the late fee a returned loan carries.",
+      "epic": "fees"
+    }
+  ],
+  "edges": [
+    {
+      "from": "epic/fees",
+      "to": "rules/lending/late-fee-per-overdue-day",
+      "kind": "covers",
+      "at": "covers[0]"
+    },
+    {
+      "from": "task/fees/compute-late-fee",
+      "to": "rules/lending/late-fee-per-overdue-day",
+      "kind": "implements",
+      "at": "implements[0]",
+      "digest": "sha256:f80e46355ae62d71c5184c1087cb1eaa48367ce7e98d697b21f5f42bb57c2857"
+    }
+  ]
+}

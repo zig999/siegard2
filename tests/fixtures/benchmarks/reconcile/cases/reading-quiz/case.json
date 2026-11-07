@@ -1,0 +1,187 @@
+{
+ "name": "reading-quiz",
+ "kind": "quiz",
+ "what": "A reader holding only the skill, its references and its two agents answers what the text requires at its densest points. Each wrong option differs from the right one in one detail; the options are shuffled per question by its id.",
+ "questions": [
+  {
+   "id": 1,
+   "q": "A reconciliation runs without `--audit`. Which pairs does `--stage` hand no judge as current?",
+   "options": [
+    "A pair whose binding computes at the file's content as it stands, with no open finding against it in the corpus",
+    "A pair whose binding computes at the file's content as it stands, whether or not a finding is open against it",
+    "A pair whose node's text did not move since the bind, whatever the file's content",
+    "Every pair of a file the drift report does not list"
+   ]
+  },
+  {
+   "id": 2,
+   "q": "The person asks to re-examine standing bindings that never drifted. What runs?",
+   "options": [
+    "`--stage --audit`: every pair goes to a judge, and no candidate tier is staged or passed",
+    "`--stage --audit`: every pair goes to a judge, and the candidate index is passed as usual",
+    "`--stage` without `--audit`: the guard omits nothing where nothing drifted",
+    "`--stage --audit`, chosen by the skill whenever `--check` reports no drift on the set"
+   ]
+  },
+  {
+   "id": 3,
+   "q": "How does each conformance judge receive the candidate index?",
+   "options": [
+    "As its absolute, resolved path; never its contents",
+    "As its contents, pasted into each prompt so the judge need not open a file",
+    "As its path relative to the target source root, for the judge to resolve",
+    "As its absolute path, handed only to a judge whose file states an unstated fact"
+   ]
+  },
+  {
+   "id": 4,
+   "q": "The person names nodes `/analyse` wrote after the source was last bound. What happens to them?",
+   "options": [
+    "Each is passed to `--stage` with `--node`; it joins the candidate tier and cannot be bound here",
+    "Each is passed to `--stage` with `--node`, and bound where its judge clears it",
+    "The skill finds them itself from the specification's history since the bind",
+    "Each is added to its file's node pack, read like a bound node"
+   ]
+  },
+  {
+   "id": 5,
+   "q": "When is the next wave of judges spawned?",
+   "options": [
+    "After `--save-return` reports `0 pending` for the current wave, read from the returns on disk",
+    "After the session has counted one notification per judge of the current wave",
+    "Immediately: every wave is spawned in one message and the saves follow",
+    "After `--save-return` reports `0 pending` for every wave the staging listed"
+   ]
+  },
+  {
+   "id": 6,
+   "q": "The harness refuses a judge's launch. What follows?",
+   "options": [
+    "The wave was cut too wide: the report hands `--stage --concurrency <fewer>`, and no judge is dispatched again on the invocation's own account",
+    "The wave was cut too wide: the refused judge is dispatched again in the next turn",
+    "The refused file is judged inline, and the report says the pass ran inline",
+    "The wave was cut too wide: the report hands `--stage --concurrency <fewer>`, and the refused judge is dispatched once more first"
+   ]
+  },
+  {
+   "id": 7,
+   "q": "Where and how is a judge's return saved?",
+   "options": [
+    "Verbatim at `siegard-reconcile/<slug>.returns/<path with '/' as '__'>.yaml`; `--save-return` copies it from a spawned subagent's transcript",
+    "Verbatim at `siegard-reconcile/<slug>.returns/<path with '/' as '__'>.yaml`, retyped from the notification that relays it",
+    "Trimmed to the contract's five keys, at `siegard-reconcile/<slug>.returns/<path with '/' as '__'>.yaml`",
+    "Verbatim in the workspace beside the node pack, which the fold reads"
+   ]
+  },
+  {
+   "id": 8,
+   "q": "A saved return carries a sixth key, `notes`, beside the five the contract admits. What happens?",
+   "options": [
+    "`--fold` refuses, and refuses whole; what a subagent says outside the five keys belongs in the report",
+    "`--fold` drops the extra key and folds the rest",
+    "`--fold` refuses that file's return alone and folds the others",
+    "You delete the key from the saved return and fold again"
+   ]
+  },
+  {
+   "id": 9,
+   "q": "A node's judges read its fact in one file and answered `nowhere` for another of its bound files, with nothing found against it. What does the bind do?",
+   "options": [
+    "Binds the node on the file that holds it; the bind's receipt hands the `nowhere` pair's `--release ... --node` ready, relayed as the person's decision",
+    "Binds the node on the file that holds it, and releases the `nowhere` pair itself",
+    "Binds nothing for the node until the `nowhere` pair is released",
+    "Binds the node on the file that holds it; the report hands a `--replace` naming the files to keep"
+   ]
+  },
+  {
+   "id": 10,
+   "q": "The report lists a node the judgment did not clear that carries `collateral`. What does it mean?",
+   "options": [
+    "Nothing was found against its substance: it shares a file with a finding that named no node, and its route rides that finding's",
+    "A finding named it in a sibling file, and its route is its own `/analyse` door",
+    "Nothing was found against its substance, so the bind writes it anyway",
+    "It shares a file with a finding that named no node, and the report hands it its own `/plan-work` door"
+   ]
+  },
+  {
+   "id": 11,
+   "q": "Which bindings does `--bind-record --workspace` write?",
+   "options": [
+    "Only the pairs under some node's `encoded_at`; a file an earlier bind put on the node and the record does not name stays bound",
+    "Only the pairs under some node's `encoded_at`; a file an earlier bind put on the node and the record does not name is dropped",
+    "The whole set, once the judgment cleared most of its nodes",
+    "Every node of the record, cleared or not, each stamped with its outcome"
+   ]
+  },
+  {
+   "id": 12,
+   "q": "The person says a fact moved out of a file rather than into an additional one. What does the skill do with `--replace`?",
+   "options": [
+    "Never passes it: the report hands that invocation ready to paste, and stops",
+    "Passes it on the bind, since the person stated the move",
+    "Never passes it, and never hands it either: the release is the only route",
+    "Passes it after reading the bind's receipt of what stopped being claimed"
+   ]
+  },
+  {
+   "id": 13,
+   "q": "The person offers a test as a node's proof. How is it certified?",
+   "options": [
+    "Written into a YAML passed as `--certify`; a coverage auditor reads the certification pack, the file's conformance judge runs too, and the fold writes `decided_by: test` only from `covered`",
+    "Written into a YAML passed as `--certify`; the coverage auditor replaces the file's conformance judge for that node",
+    "The skill picks the tests that exercise the node from the project's suite and certifies them",
+    "Written into a YAML passed as `--certify`; the fold writes `decided_by: test` wherever the node's type is one a test decides"
+   ]
+  },
+  {
+   "id": 14,
+   "q": "The staging separated pairs under `mechanical`. How is step 3b run, and what if a step is red?",
+   "options": [
+    "`run.py siegard-reconcile/<slug>.returns --run <slug>` with the registry's commands, once; a red step is a result the fold reads, never re-run",
+    "`run.py siegard-reconcile/<slug>.returns --run <slug>`; a red step is re-run under the same name until it is green",
+    "`run.py <workspace> --run <slug>`, once; a red step is a result the fold reads",
+    "`run.py siegard-reconcile/<slug>.returns --run <slug>` with commands composed from the tree's layout, once"
+   ]
+  },
+  {
+   "id": 15,
+   "q": "The person stated a rewrite, and the staging's receipt says it reproduces nothing. What now?",
+   "options": [
+    "Stop and show the person the transcription before any judge runs",
+    "Continue: every drifted pair goes to a judge as without the rewrite",
+    "Adjust the pattern until it reproduces the current text, then stage again",
+    "Stage again under the same slug without `--rewrite`"
+   ]
+  },
+  {
+   "id": 16,
+   "q": "When does an invocation run as an adoption?",
+   "options": [
+    "Only where the person names the mode; the candidates are theirs to name, and a test file in the set is refused with the `--certify` entry it takes",
+    "Whenever no trace file exists for the target; the candidates are the person's to name",
+    "Only where the person names the mode; a test file in the set is adopted as source beside the rest",
+    "Only where the person names the mode; the candidates are the nodes the specification holds under the files' areas"
+   ]
+  },
+  {
+   "id": 17,
+   "q": "Where does the file set come from?",
+   "options": [
+    "The person names every path, each relative to the target source root; it is never discovered",
+    "The `code` lines `trace.py --check` prints, kept where the person named a directory",
+    "The person names every path, each relative to the git toplevel, as `trace.py` prints it",
+    "The person names the paths, and the skill adds every file that shares a node with them"
+   ]
+  },
+  {
+   "id": 18,
+   "q": "A judge found `contradicts` against a node. What does the report hand?",
+   "options": [
+    "Both the `/analyse` and the `/plan-work` doors, with what each assumes and what would settle it; choosing is the person's own decision",
+    "The `/analyse` door, recommended, since the source is newer than the node",
+    "The `/plan-work` door, recommended, since the node is the authority",
+    "Both doors, and the comment route recommended over them by `rule violated`"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,9 @@
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/trace.py --bind-record app spec siegard-reconcile/fees-hand-edit.md --workspace /tmp/rcs/compaction-resume-2/p.workspace	exit 0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --prepare --skill reconcile --project /tmp/rcs/compaction-resume-2/p --target app --language pt-BR	exit 0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/trace.py --check app	exit 0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/trace.py --owed app	exit 0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --help	exit 0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --save-report /tmp/rcs/compaction-resume-2/p/.git/siegard/handoff/20261107T172229Z-reconcile.md	exit 0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --render /tmp/rcs/compaction-resume-2/work/handoff.json	exit 1
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --render /tmp/rcs/compaction-resume-2/work/handoff.json	exit 1
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --render /tmp/rcs/compaction-resume-2/work/handoff.json	exit 0

@@ -1,0 +1,3 @@
+{"name": "full-reconcile",
+ "what": "The ordinary route over one hand edit: lending/fees.py changed by a commit after its bind, the full skill in context. Does a sound record land, its returns saved, the cleared node bound through the staging's workspace, and the handoff rendered, with nothing committed?",
+ "checks": ["reconciliation_sound", "returns_saved", "trace_bound", "no_drift", "handoff_saved", "reported:stage", "reported:fold", "reported:reconciliation", "reported:bind_record", "reported:save_report", "reported:render", "no_commit", "writes_only_its_roots"]}

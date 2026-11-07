@@ -1,0 +1,17 @@
+python3 -B /tmp/reconcile-before/bin/project.py /tmp/rcb/full-reconcile--before-1/p  # exit 0
+python3 -B /tmp/reconcile-before/bin/spec.py /tmp/rcb/full-reconcile--before-1/p/spec  # exit 0
+python3 -B /tmp/reconcile-before/bin/trace.py /tmp/rcb/full-reconcile--before-1/p/app  # exit 0
+python3 -B /tmp/reconcile-before/bin/trace.py --check /tmp/rcb/full-reconcile--before-1/p/app  # exit 1 (1 code drift finding)
+python3 -B /tmp/reconcile-before/bin/trace.py --stage /tmp/rcb/full-reconcile--before-1/p/app /tmp/rcb/full-reconcile--before-1/p/spec fees-hand-edit /tmp/tmp.SpX8G31kPc lending/fees.py  # exit 0
+python3 -B /tmp/reconcile-before/bin/trace.py --fold /tmp/rcb/full-reconcile--before-1/p/app /tmp/tmp.SpX8G31kPc /tmp/tmp.SpX8G31kPc/premise.yaml siegard-reconcile/fees-hand-edit.md  # exit 0
+python3 -B /tmp/reconcile-before/bin/trace.py --reconciliation siegard-reconcile/fees-hand-edit.md  # exit 0
+python3 -B /tmp/reconcile-before/bin/trace.py --bind-record /tmp/rcb/full-reconcile--before-1/p/app /tmp/rcb/full-reconcile--before-1/p/spec siegard-reconcile/fees-hand-edit.md --workspace /tmp/tmp.SpX8G31kPc  # exit 0
+python3 -B /tmp/reconcile-before/bin/handoff.py --prepare --skill reconcile --project /tmp/rcb/full-reconcile--before-1/p --target app --language pt-BR  # exit 0
+python3 -B /tmp/reconcile-before/bin/handoff.py --help  # exit 0
+python3 -B /tmp/reconcile-before/bin/handoff.py --render /tmp/rcb/full-reconcile--before-1/work/handoff.json  # exit 1 (recommended shape: door required; kind/paste/what_it_does not allowed)
+python3 -B /tmp/reconcile-before/bin/handoff.py --render /tmp/rcb/full-reconcile--before-1/work/handoff.json  # exit 1 (jargon terms; report not yet written; block 1019 > 600)
+python3 -B /tmp/reconcile-before/bin/handoff.py --render /tmp/rcb/full-reconcile--before-1/work/handoff.json  # exit 1 (block 714 > 600; report not yet written)
+python3 -B /tmp/reconcile-before/bin/trace.py --check /tmp/rcb/full-reconcile--before-1/p/app  # exit 0 (no drift)
+python3 -B /tmp/reconcile-before/bin/trace.py --owed /tmp/rcb/full-reconcile--before-1/p/app  # exit 0 (nothing owed; 1 restates listed)
+python3 -B /tmp/reconcile-before/bin/handoff.py --save-report /tmp/rcb/full-reconcile--before-1/p/.git/siegard/handoff/20261107T171818Z-reconcile.md  # exit 0
+python3 -B /tmp/reconcile-before/bin/handoff.py --render /tmp/rcb/full-reconcile--before-1/work/handoff.json  # exit 0

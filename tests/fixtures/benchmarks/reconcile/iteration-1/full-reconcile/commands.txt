@@ -1,0 +1,16 @@
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/project.py /tmp/rcs/full-reconcile/p  exit=0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/spec.py /tmp/rcs/full-reconcile/p/spec  exit=0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/trace.py /tmp/rcs/full-reconcile/p/app  exit=0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/trace.py --check /tmp/rcs/full-reconcile/p/app  exit=1
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/trace.py --stage /tmp/rcs/full-reconcile/p/app /tmp/rcs/full-reconcile/p/spec fees-hand-edit /tmp/tmp.BagCdS5niu lending/fees.py  exit=0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/trace.py --save-return /tmp/rcs/full-reconcile/p/app /tmp/tmp.BagCdS5niu lending/fees.py /tmp/rcs/full-reconcile/inline-return-lending__fees.py.yaml  exit=2
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/trace.py --fold /tmp/rcs/full-reconcile/p/app /tmp/tmp.BagCdS5niu /tmp/tmp.BagCdS5niu/premise.yaml siegard-reconcile/fees-hand-edit.md  exit=0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/trace.py --reconciliation siegard-reconcile/fees-hand-edit.md  exit=0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/trace.py --bind-record /tmp/rcs/full-reconcile/p/app /tmp/rcs/full-reconcile/p/spec siegard-reconcile/fees-hand-edit.md --workspace /tmp/tmp.BagCdS5niu  exit=0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --prepare --skill reconcile --project /tmp/rcs/full-reconcile/p --target app --language pt-BR  exit=0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/trace.py --check /tmp/rcs/full-reconcile/p/app  exit=0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/trace.py --owed /tmp/rcs/full-reconcile/p/app  exit=0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --save-report /tmp/rcs/full-reconcile/p/.git/siegard/handoff/20261107T172315Z-reconcile.md  exit=0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --render /tmp/rcs/full-reconcile/work/handoff.json  exit=1
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --render /tmp/rcs/full-reconcile/work/handoff.json  exit=0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --render /tmp/rcs/full-reconcile/work/handoff.json  exit=0

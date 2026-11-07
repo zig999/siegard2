@@ -1,0 +1,26 @@
+findings:
+  - file: lending/fees.py
+    where: >-
+      the comment inside late_fee_cents(), line 7
+    evidence: >-
+      # A loan returned after its due date pays 100 cents for each overdue day.
+    cost: >-
+      the comment states the late-fee rule a second time beside the code that holds it; the day the
+      constant or the node changes and the comment does not, a reader has two statements of the fee
+      and no way to tell which was decided
+    kind: restates
+    correction: >-
+      remove the comment; `return overdue_days * FEE_CENTS_PER_OVERDUE_DAY` already holds the fact
+      and rules/lending/late-fee-per-overdue-day is its home
+    node: rules/lending/late-fee-per-overdue-day
+read:
+  - node: rules/lending/late-fee-per-overdue-day
+    held_at: >-
+      the constant FEE_CENTS_PER_OVERDUE_DAY, line 3, and the overdue branch of late_fee_cents(),
+      lines 8-11
+    evidence: >-
+      FEE_CENTS_PER_OVERDUE_DAY = 100 / overdue_days = (loan.returned_on - loan.due_on).days /
+      if overdue_days <= 0: return 0 / return overdue_days * FEE_CENTS_PER_OVERDUE_DAY
+looked_past: >-
+  the fee is computed in integer cents with no currency named in the file, a representation choice
+  rather than a domain fact this node or any other states.

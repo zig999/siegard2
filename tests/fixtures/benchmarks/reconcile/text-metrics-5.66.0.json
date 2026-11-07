@@ -1,0 +1,21 @@
+{
+ "files": 3,
+ "chars": 82740,
+ "skill_chars": 56813,
+ "sentences": 315,
+ "sentence_words_median": 22,
+ "sentence_words_p90": 43,
+ "sentence_words_max": 155,
+ "sentences_over_60_words": 7,
+ "prose_lines_over_100": 6,
+ "synonyms": {
+  "the person": 0,
+  "subagent": 0,
+  "test-author": 0
+ },
+ "description_chars": {
+  "skill": 870,
+  "coverage-auditor": 331,
+  "specification-conformance-reviewer": 346
+ }
+}

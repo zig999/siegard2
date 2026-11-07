@@ -1,0 +1,99 @@
+{
+ "run": "reading-quiz",
+ "case": "reading-quiz",
+ "arm": "shipped: 5.67.0 (candidate over dba563c)",
+ "subagent_tokens": 66195,
+ "seconds": 15.1,
+ "expectations": [
+  {
+   "text": "mechanical: question 1 is answered b",
+   "passed": true,
+   "evidence": "answered b"
+  },
+  {
+   "text": "mechanical: question 2 is answered d",
+   "passed": true,
+   "evidence": "answered d"
+  },
+  {
+   "text": "mechanical: question 3 is answered b",
+   "passed": true,
+   "evidence": "answered b"
+  },
+  {
+   "text": "mechanical: question 4 is answered b",
+   "passed": true,
+   "evidence": "answered b"
+  },
+  {
+   "text": "mechanical: question 5 is answered a",
+   "passed": true,
+   "evidence": "answered a"
+  },
+  {
+   "text": "mechanical: question 6 is answered d",
+   "passed": true,
+   "evidence": "answered d"
+  },
+  {
+   "text": "mechanical: question 7 is answered c",
+   "passed": true,
+   "evidence": "answered c"
+  },
+  {
+   "text": "mechanical: question 8 is answered a",
+   "passed": true,
+   "evidence": "answered a"
+  },
+  {
+   "text": "mechanical: question 9 is answered a",
+   "passed": true,
+   "evidence": "answered a"
+  },
+  {
+   "text": "mechanical: question 10 is answered d",
+   "passed": true,
+   "evidence": "answered d"
+  },
+  {
+   "text": "mechanical: question 11 is answered a",
+   "passed": true,
+   "evidence": "answered a"
+  },
+  {
+   "text": "mechanical: question 12 is answered a",
+   "passed": true,
+   "evidence": "answered a"
+  },
+  {
+   "text": "mechanical: question 13 is answered b",
+   "passed": true,
+   "evidence": "answered b"
+  },
+  {
+   "text": "mechanical: question 14 is answered d",
+   "passed": true,
+   "evidence": "answered d"
+  },
+  {
+   "text": "mechanical: question 15 is answered c",
+   "passed": true,
+   "evidence": "answered c"
+  },
+  {
+   "text": "mechanical: question 16 is answered a",
+   "passed": true,
+   "evidence": "answered a"
+  },
+  {
+   "text": "mechanical: question 17 is answered a",
+   "passed": true,
+   "evidence": "answered a"
+  },
+  {
+   "text": "mechanical: question 18 is answered c",
+   "passed": true,
+   "evidence": "answered c"
+  }
+ ]
+}

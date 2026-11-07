@@ -1,0 +1,16 @@
+/tmp/rcs/full-reconcile/prompt.txt
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/SKILL.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/reconciliation.json
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/references/stage.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/references/judge.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/specification-conformance-reviewer.md
+/tmp/tmp.BagCdS5niu/packs/lending__fees.py.md
+/tmp/tmp.BagCdS5niu/candidates.txt
+/tmp/rcs/full-reconcile/p/spec/rules/lending/late-fee-per-overdue-day.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/conformance-return.json
+/tmp/rcs/full-reconcile/p/app/lending/fees.py
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/references/fold.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/references/bind.md
+/tmp/rcs/full-reconcile/p/siegard-reconcile/fees-hand-edit.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/references/report.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/handoff.json

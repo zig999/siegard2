@@ -1,0 +1,74 @@
+{
+ "run": "full-reconcile--before-1",
+ "case": "full-reconcile",
+ "arm": "before: 5.66.0 (dba563c)",
+ "subagent_tokens": 99613,
+ "seconds": 137.9,
+ "expectations": [
+  {
+   "text": "mechanical: trace.py --reconciliation accepts siegard-reconcile/fees-hand-edit.md",
+   "passed": true,
+   "evidence": "fees-hand-edit.md holds: 1 file(s), 1 node(s) the judgment cleared, 0 it did not, 0 file(s) the trace binds nothing to."
+  },
+  {
+   "text": "mechanical: the return for lending/fees.py is saved under siegard-reconcile/fees-hand-edit.returns/",
+   "passed": true,
+   "evidence": "['lending__fees.py.yaml']"
+  },
+  {
+   "text": "mechanical: the trace binds rules/lending/late-fee-per-overdue-day to app/lending/fees.py as judged",
+   "passed": true,
+   "evidence": "{\"path\": \"app/lending/fees.py\", \"digest\": \"sha256:21d0e5af542f4cde6ffae084937b197d33eaa7e22b89a6b61fad161769f126f1\", \"judged\": true, \"node_digest\": \"sha256:f80e46355ae62d71c5184c1087cb1eaa48367ce7e98d"
+  },
+  {
+   "text": "mechanical: trace.py --check reports no drift on app/lending/fees.py",
+   "passed": true,
+   "evidence": "trace: /tmp/tmpynmsqtxr/siegard-trace.json — one file per git toplevel; every target under it reads this same one"
+  },
+  {
+   "text": "mechanical: the report was saved through handoff.py --save-report",
+   "passed": true,
+   "evidence": "handoff.md"
+  },
+  {
+   "text": "reported: commands.txt shows trace\\.py[^\\n]*--stage",
+   "passed": true,
+   "evidence": "trace.py --stage"
+  },
+  {
+   "text": "reported: commands.txt shows trace\\.py[^\\n]*--fold",
+   "passed": true,
+   "evidence": "trace.py --fold"
+  },
+  {
+   "text": "reported: commands.txt shows trace\\.py[^\\n]*--reconciliation",
+   "passed": true,
+   "evidence": "trace.py --reconciliation"
+  },
+  {
+   "text": "reported: commands.txt shows trace\\.py[^\\n]*--bind-record[^\\n]*--workspace",
+   "passed": true,
+   "evidence": "trace.py --bind-record /tmp/rcb/full-reconcile--before-1/p/app /tmp/rcb/full-reconcile--before-1/p/spec siegard-reconcile/fees-hand-edit.md --workspace"
+  },
+  {
+   "text": "reported: commands.txt shows handoff\\.py[^\\n]*--save-report",
+   "passed": true,
+   "evidence": "handoff.py --save-report"
+  },
+  {
+   "text": "reported: commands.txt shows handoff\\.py[^\\n]*--render",
+   "passed": true,
+   "evidence": "handoff.py --render"
+  },
+  {
+   "text": "reported: the run made no commit",
+   "passed": true,
+   "evidence": "commits added: 0"
+  },
+  {
+   "text": "reported: the run wrote nothing outside siegard-reconcile/ and siegard-trace.json",
+   "passed": true,
+   "evidence": "outside: []"
+  }
+ ]
+}

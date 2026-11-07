@@ -567,6 +567,8 @@ def test_a_wave_ends_on_the_save_s_receipt_and_never_on_a_count_kept_in_the_sess
         f"{skill} never says the save's receipt is to be read"
     if skill == "review-change":
         assert "references/passes.md" in text and "references/fold-and-bind.md" in text
+    if skill == "reconcile":
+        assert "references/judge.md" in text
 
 
 def test_implement_task_writes_both_records_through_the_writer():
@@ -948,6 +950,7 @@ JOINS = ("and", "or", "but", "so")
 CITING_FILES = sorted([*(REPO / "src/claude/skills/analyse").rglob("*.md"),
                        *(REPO / "src/claude/skills/implement-task").rglob("*.md"),
                        *(REPO / "src/claude/skills/review-change").rglob("*.md"),
+                       *(REPO / "src/claude/skills/reconcile").rglob("*.md"),
                        *(REPO / "src/claude/agents" / f"{name}.md" for name in
                          ("task-implementer", "test-author", "failure-diagnostician",
                           "coverage-auditor", "specification-conformance-reviewer",
@@ -1002,7 +1005,7 @@ def test_every_project_root_input_states_how_an_unnamed_root_resolves(name):
 # ~5k tokens, which the benchmarks hold as 20,000 characters.
 
 COMPACTION_CUT = 20_000
-SIZED = ("analyse", "implement-task", "plan-work", "review-change")
+SIZED = ("analyse", "implement-task", "plan-work", "review-change", "reconcile")
 REFERENCED = sorted(p.parent.name for p in (REPO / "src/claude/skills").glob("*/references"))
 
 
@@ -1033,7 +1036,7 @@ def test_a_reference_over_100_lines_opens_with_its_contents(path):
     assert re.search(r"^## Contents", head, re.M), f"{path.name} runs past 100 lines with no contents"
 
 
-CHECKLISTED = {"implement-task": 9, "plan-work": 6, "review-change": 6}
+CHECKLISTED = {"implement-task": 9, "plan-work": 6, "review-change": 6, "reconcile": 6}
 
 
 @pytest.mark.parametrize("skill", sorted(CHECKLISTED))
@@ -1069,3 +1072,27 @@ def test_the_review_change_skill_survives_a_compaction_whole():
     reference."""
     assert len(skill_text("review-change")) <= COMPACTION_CUT, \
         f"review-change's SKILL.md is {len(skill_text('review-change'))} characters, past the cut"
+
+
+def test_the_reconcile_skill_survives_a_compaction_whole():
+    """At 5.66.0 the cut fell inside step 2 and every later step was lost — the bind over the
+    staging's workspace and the report's handoff among them; the rewrite keeps SKILL.md inside the
+    20,000 characters a compaction re-attaches, so a resumed reconciliation holds every step and
+    the checklist naming each reference."""
+    assert len(skill_text("reconcile")) <= COMPACTION_CUT, \
+        f"reconcile's SKILL.md is {len(skill_text('reconcile'))} characters, past the cut"
+
+
+def test_the_reconcile_skill_keeps_its_handoff_and_bind_in_skill_md():
+    """What a resumed reconciliation needs at its last two steps stays in SKILL.md, where the
+    compaction keeps it; the report's list and the doors live in the reference titled as the
+    report, which handoff.py reads for the doors."""
+    text = unwrapped(skill_text("reconcile"))
+    for held in ("--bind-record <target-source-root> <specification-root> <the record> "
+                 "--workspace <workspace>", "handoff.py --prepare --skill reconcile",
+                 "--save-report", "handoff.py --render", "(SPEC-006 R10)", "(SPEC-006 R1)",
+                 "never passes `--replace`", "references/report.md", "references/bind.md"):
+        assert held in text, f"reconcile's SKILL.md lost {held!r}"
+    report = (REPO / "src/claude/skills/reconcile/references/report.md").read_text(encoding="utf-8")
+    assert report.startswith("# The report\n")
+

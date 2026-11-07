@@ -1,0 +1,17 @@
+{
+  "specification": "spec",
+  "bindings": [
+    {
+      "node": "rules/lending/late-fee-per-overdue-day",
+      "digest": "sha256:f80e46355ae62d71c5184c1087cb1eaa48367ce7e98d697b21f5f42bb57c2857",
+      "files": [
+        {
+          "path": "app/lending/fees.py",
+          "digest": "sha256:21d0e5af542f4cde6ffae084937b197d33eaa7e22b89a6b61fad161769f126f1",
+          "judged": true,
+          "node_digest": "sha256:f80e46355ae62d71c5184c1087cb1eaa48367ce7e98d697b21f5f42bb57c2857"
+        }
+      ]
+    }
+  ]
+}

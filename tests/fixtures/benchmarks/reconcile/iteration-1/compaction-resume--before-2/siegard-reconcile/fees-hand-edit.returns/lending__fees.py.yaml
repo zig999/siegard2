@@ -1,0 +1,16 @@
+findings:
+- file: lending/fees.py
+  where: late_fee_cents, the comment above overdue_days
+  evidence: "# A loan returned after its due date pays 100 cents for each overdue day."
+  cost: The comment is a second home for the late fee rule the node holds and the code computes, so a change to the rule leaves it stating the old one.
+  kind: restates
+  node: rules/lending/late-fee-per-overdue-day
+- file: lending/fees.py
+  where: late_fee_cents, the branch on overdue_days
+  evidence: "if overdue_days <= 0:\n        return 0"
+  cost: The fee of a loan returned on or before its due date is decided in code and in no node, so a change to it answers to no rule a reader can open.
+  kind: unstated
+read:
+- node: rules/lending/late-fee-per-overdue-day
+  held_at: late_fee_cents, the product of overdue_days and FEE_CENTS_PER_OVERDUE_DAY
+  evidence: "return overdue_days * FEE_CENTS_PER_OVERDUE_DAY"

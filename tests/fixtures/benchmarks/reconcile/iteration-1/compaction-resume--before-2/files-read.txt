@@ -1,0 +1,5 @@
+/tmp/rcb/compaction-resume--before-2/prompt.txt
+/tmp/rcb/compaction-resume--before-2/p.skill-after-compaction.md
+/tmp/rcb/compaction-resume--before-2/p/siegard-reconcile/fees-hand-edit.md
+/tmp/rcb/compaction-resume--before-2/p/siegard-reconcile/fees-hand-edit.returns/lending__fees.py.yaml
+/tmp/rcb/compaction-resume--before-2/p/siegard-trace.json

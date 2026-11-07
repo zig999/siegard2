@@ -1,0 +1,12 @@
+/tmp/rcs/compaction-resume-2/prompt.txt
+/tmp/rcs/compaction-resume-2/p.skill-after-compaction.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/references/bind.md
+/tmp/rcs/compaction-resume-2/p/siegard.json
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/references/report.md
+/tmp/rcs/compaction-resume-2/p/siegard-reconcile/fees-hand-edit.md
+/tmp/rcs/compaction-resume-2/p/siegard-reconcile/fees-hand-edit.returns/lending__fees.py.yaml
+/tmp/rcs/compaction-resume-2/p.workspace/manifest.json
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/handoff.json
+/home/siegfriedneto/projects/siegard2/src/claude/skills/analyse/SKILL.md (argument-hint line only, via grep)
+/home/siegfriedneto/projects/siegard2/src/claude/skills/plan-work/SKILL.md (argument-hint line only, via grep)
+/tmp/rcs/compaction-resume-2/p/app/lending/fees.py

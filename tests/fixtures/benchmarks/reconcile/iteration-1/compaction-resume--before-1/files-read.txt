@@ -1,0 +1,3 @@
+/tmp/rcb/compaction-resume--before-1/prompt.txt
+/tmp/rcb/compaction-resume--before-1/p.skill-after-compaction.md
+/tmp/rcb/compaction-resume--before-1/p/siegard-reconcile/fees-hand-edit.md

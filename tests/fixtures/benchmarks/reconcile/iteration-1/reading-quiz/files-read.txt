@@ -1,0 +1,12 @@
+/tmp/rcs/reading-quiz/prompt.txt
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/SKILL.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/references/adoption.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/references/bind.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/references/capture.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/references/certify.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/references/fold.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/references/judge.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/references/report.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/reconcile/references/stage.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/coverage-auditor.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/specification-conformance-reviewer.md

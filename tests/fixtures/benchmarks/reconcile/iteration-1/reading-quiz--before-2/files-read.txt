@@ -1,0 +1,4 @@
+/tmp/rcb/reading-quiz--before-2/prompt.txt
+/tmp/reconcile-before/skills/reconcile/SKILL.md
+/tmp/reconcile-before/agents/coverage-auditor.md
+/tmp/reconcile-before/agents/specification-conformance-reviewer.md

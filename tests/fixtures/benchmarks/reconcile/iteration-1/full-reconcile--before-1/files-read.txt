@@ -1,0 +1,10 @@
+/tmp/rcb/full-reconcile--before-1/prompt.txt
+/tmp/reconcile-before/skills/reconcile/SKILL.md
+/tmp/reconcile-before/schemas/reconciliation.json
+/tmp/reconcile-before/agents/specification-conformance-reviewer.md
+/tmp/tmp.SpX8G31kPc/packs/lending__fees.py.md
+/tmp/rcb/full-reconcile--before-1/p/app/lending/fees.py
+/tmp/reconcile-before/schemas/conformance-return.json
+/tmp/tmp.SpX8G31kPc/manifest.json
+/tmp/rcb/full-reconcile--before-1/p/siegard-reconcile/fees-hand-edit.md
+/tmp/reconcile-before/schemas/handoff.json ($defs and properties.decisions only, after --render refused the first draft)

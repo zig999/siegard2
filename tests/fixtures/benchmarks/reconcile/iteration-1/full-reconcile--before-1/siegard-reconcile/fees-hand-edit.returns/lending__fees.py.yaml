@@ -1,0 +1,20 @@
+findings:
+  - file: lending/fees.py
+    where: >-
+      the comment opening late_fee_cents(), line 7
+    evidence: >-
+      # A loan returned after its due date pays 100 cents for each overdue day.
+    cost: >-
+      the comment restates rules/lending/late-fee-per-overdue-day while the code on lines 3 and 8-11 holds the same fact; the day the node's amount or day count changes, the code is corrected and the comment goes on stating the old rule as if it were current, with nothing that checks it
+    kind: restates
+    correction: >-
+      remove the comment; the code and the node already state the fact
+    node: rules/lending/late-fee-per-overdue-day
+read:
+  - node: rules/lending/late-fee-per-overdue-day
+    held_at: >-
+      the constant FEE_CENTS_PER_OVERDUE_DAY, line 3, and the body of late_fee_cents(), lines 8-11
+    evidence: >-
+      FEE_CENTS_PER_OVERDUE_DAY = 100 / overdue_days = (loan.returned_on - loan.due_on).days / if overdue_days <= 0: return 0 / return overdue_days * FEE_CENTS_PER_OVERDUE_DAY
+looked_past: >-
+  The import of Loan from lending.loans passes the element along without declaring its shape, and the constant's name is an implementation choice, neither a domain fact this pass judges.

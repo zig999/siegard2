@@ -1,0 +1,4 @@
+{"name": "compaction-resume",
+ "what": "The session resumes after a compaction holding only the first 20,000 characters of the skill; steps 1-4 are done — staged, judged inline, the return saved, folded and validated, uncommitted. Do the bind over the staging's workspace and the saved, rendered handoff still run?",
+ "resume_after_step": "4", "truncate_chars": 20000,
+ "checks": ["reconciliation_sound", "returns_saved", "trace_bound", "no_drift", "handoff_saved", "reported:bind_record", "reported:save_report", "reported:render", "no_commit", "writes_only_its_roots"]}
