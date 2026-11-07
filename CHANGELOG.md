@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.60.0 — 2026-11-07
+
+A project root no invocation names is the git toplevel of the session's working directory, read by `project.py --here` and only where it holds `siegard.json` (SPEC-010 R6); every skill that takes the project root quotes the rule in place of a sentence that read both ways, and `siegard.json` is never created under an unnamed root. (`fe7eac0`)
+
 ## 5.59.2 — 2026-11-07
 
 No citation in the analyse skill splits the clause it stands in: two quotations move after the instruction they back, words unchanged, and a test holds the skill to it. (`3d618db`)
