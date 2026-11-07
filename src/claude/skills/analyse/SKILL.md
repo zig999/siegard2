@@ -506,7 +506,11 @@ ledger only where no line of it is open, so over survey or intent material an op
 more increment of this analysis before `/reconcile` can take it.
 
 A later invocation over the same material answers the same ledger: it reads the open lines first,
-answers them, and leaves every other entry as it stands unless the line's node changed.
+answers them, and leaves every other entry as it stands unless the line's node changed. That is
+only possible where the ledger was kept: «The ledger is part of the increment it records: the
+commit that takes the specification the analysis wrote takes the ledger with it, and no ledger is
+left untracked» (SPEC-001 R16). The ledger is not working material to leave out of the review;
+it is the record of what this increment answered and what it left open.
 
 ### 5. Cross-check: obligations that share a subject
 
@@ -602,7 +606,8 @@ Report, in this order, in the file:
   source alone» (SPEC-005 R2), so where the human also holds documentation, the increment it
   feeds is this skill again, after the adoption — and so is intent material read from the tests.
 
-Then stop. `git diff` over the specification root is the review, and it belongs to a person.
+Then stop. `git diff` over the specification root and the ledger is the review, and it belongs
+to a person; whoever commits the specification commits the ledger in the same commit, by path.
 
 ## What you never do
 

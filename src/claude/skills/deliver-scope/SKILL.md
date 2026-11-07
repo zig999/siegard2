@@ -225,8 +225,11 @@ evidence, a finding's worth — is never taken.
   after its digest is checked against the condition; the project root is the condition's. A
   report opening `stop: no-fact —` or `stop: no-change —` is nothing to specify: write the line to
   the log and plan. Any other stop of `/analyse` ends the run. Where it wrote, run the gate above
-  again — `spec.py` over the specification root — and commit the specification root alone as
-  `deliver-scope <slug>: analyse`; then plan with the same objective as the scope. The report
+  again — `spec.py` over the specification root — and commit the specification root, with the
+  ledger `/analyse` answered beside the objective and nothing else, as
+  `deliver-scope <slug>: analyse` — «That commit takes the ledger the analysis answered beside the
+  objective with it» (SPEC-008 R10), because a ledger left untracked is a tree the goal's state
+  never reads as clean; then plan with the same objective as the scope. The report
   carries what `/analyse`'s own report states for a reviewer: the decided fields per node, the
   nodes written, what the increment may have put delivered code in breach of, and the
   reconciliation candidates it named — the person reviews this specification after the goal,

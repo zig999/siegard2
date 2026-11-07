@@ -633,6 +633,22 @@ def test_every_line_of_material_given_as_a_file_is_owed_a_ledger_entry():
     assert "--prepare --skill analyse --project <project-root> --ledger <ledger.md>" in text
 
 
+def test_the_ledger_is_committed_with_the_specification_it_accounts_for():
+    """SPEC-001 R16 and SPEC-008 R10: the open lines a later increment answers live only in the
+    ledger, and a goal's state reads an untracked ledger as a tree that is not clean — so the
+    commit that takes the specification takes the ledger, in the analysis and in the one route
+    that commits an analysis it invoked over an objective."""
+    analyse = unwrapped(skill_text("analyse"))
+    assert ("The ledger is part of the increment it records: the commit that takes the "
+            "specification the analysis wrote takes the ledger with it, and no ledger is left "
+            "untracked") in analyse
+    assert "commits the ledger in the same commit, by path" in analyse
+    deliver = unwrapped(skill_text("deliver-scope"))
+    assert ("That commit takes the ledger the analysis answered beside the objective with it"
+            ) in deliver
+    assert "commit the specification root alone" not in deliver
+
+
 def test_the_analysis_reports_how_many_fields_it_decided_per_node():
     """The count is the one line a reviewer reads before any node; it opens the report's body
     beside every node written, read from `--shape --of` and never composed."""

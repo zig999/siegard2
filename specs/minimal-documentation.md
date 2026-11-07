@@ -169,7 +169,9 @@ enforces mechanically.
   as complete. The reasons lines were left out are reported grouped and counted, largest first,
   and none is refused for its count. Material given only in conversation has no lines and owes no
   ledger, and the report says the material was not a file. A file the material only cites is a
-  source the analysis consults, never material, and owes no ledger.
+  source the analysis consults, never material, and owes no ledger. The ledger is part of the
+  increment it records: the commit that takes the specification the analysis wrote takes the
+  ledger with it, and no ledger is left untracked.
 
 ### Language
 
@@ -249,4 +251,6 @@ enforces mechanically.
    `tests/test_ledger.py` proves each. `bin/handoff.py --prepare` given a ledger with open lines
    leads its state with their count and hands the analysis as a door, and `--render` refuses the
    record once the count changed — `tests/test_handoff.py` proves it. The analyse skill states the
-   requirement, and `tests/test_skill_contract.py` holds its sentence.
+   requirement, and `tests/test_skill_contract.py` holds its sentence; the same test holds the
+   analyse skill and the deliver-scope skill stating that the ledger is committed with the
+   specification it accounts for.
