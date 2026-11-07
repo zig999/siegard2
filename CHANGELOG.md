@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.59.1 — 2026-11-07
+
+`/plan-work` declares its invocation form in `argument-hint`, and the `/analyse` and `/reconcile` handoffs into it hand the invocation in that form. (`59dbe97`)
+
 ## 5.59.0 — 2026-11-07
 
 `spec.py --shape --of` lists a scoped node no log decided anything over at zero, so every node an analysis wrote has a count its report can quote (SPEC-001). (`7484c7e`)
