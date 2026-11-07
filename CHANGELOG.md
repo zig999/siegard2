@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.63.0 — 2026-11-07
+
+The shipped instructions name each concept once — "the person", "subagent", `test-author` — across skills, agents, scripts and schemas; `schemas/terms.json` lists the concepts and their variants, and a test holds forbidden variants at zero and every other count to a ratchet. (`9169bc1`)
+
 ## 5.62.0 — 2026-11-07
 
 The implement-task skill, its references and its three agents name each concept once, under a `## Terms` section, state each rule with at most one clause of why, and open each description with its trigger; the fifteen files read 23% shorter and 10% cheaper, with a reading quiz showing no meaning lost. (`4b4f069`)
