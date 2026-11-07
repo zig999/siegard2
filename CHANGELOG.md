@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.66.0 — 2026-11-07
+
+The review-change skill opens with a progress checklist, fits whole inside what a compaction re-attaches, and keeps its branches in seven references; it and three of its agents name each concept once and read 6% shorter. A resumed review now hands its report through the handoff record. (`6594b2c`)
+
 ## 5.65.0 — 2026-11-07
 
 The plan-work skill opens with a progress checklist, fits whole inside what a compaction re-attaches, and keeps its modes and routes in eight references; it and its four agents name each concept once and read 22% shorter. A resumed planning session now hands its report through the handoff record. (`4997252`)
