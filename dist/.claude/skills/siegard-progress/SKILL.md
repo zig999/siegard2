@@ -14,7 +14,7 @@ commands below.
 
 A missing input is a stop, not a default:
 
-1. **the project root** — where `siegard.json` lives, named by the human. «Where the invocation
+1. **the project root** — where `siegard.json` lives, named by the person. «Where the invocation
    names none, the project root is the git toplevel of the session's working directory, as
    `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
    (SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run

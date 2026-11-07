@@ -131,7 +131,7 @@ NOT_DECIDED = {
         "--all`; another node's is not",
     ],
     "plan-work": [
-        "the scope — what the human wants developed, in prose — is a required input no file holds",
+        "the scope — what the person wants developed, in prose — is a required input no file holds",
         "a corrective, decided-fact or proof increment each takes inputs only the person names: "
         "the file the wrong behavior lives in, the fact a delivery stopped over, the facts to prove",
     ],
@@ -140,7 +140,7 @@ NOT_DECIDED = {
         "holds it to the records only once the review's record is written",
     ],
     "deliver-scope": [
-        "the ask — the human's own words stating that the scope is carried end to end — is a "
+        "the ask — the person's own words stating that the scope is carried end to end — is a "
         "required input no file holds",
         "under a goal naming its objective by a file and a digest, a digest that no longer "
         "matches is a stop, read against the condition the person armed",

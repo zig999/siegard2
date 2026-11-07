@@ -1,12 +1,12 @@
 ---
 name: siegard-standard
-description: Reads what a project's own tooling already decides — its linter, compiler, style checker, secret scanner — and what a human states in prose, and transcribes both into a project's own standard registry, held to schemas/standard.json. Writes a rule only where evidence already stands — a configured tool, or the human's own words. Never invents a rule the tree does not already enforce and nobody stated. Use when a project has no standard yet, or needs its standard drafted from what its tooling and its team already do. Not for deciding what a project's conventions should be — that is the project's, never this skill's — and not for reviewing code against a standard (that is /review-change).
+description: Reads what a project's own tooling already decides — its linter, compiler, style checker, secret scanner — and what a person states in prose, and transcribes both into a project's own standard registry, held to schemas/standard.json. Writes a rule only where evidence already stands — a configured tool, or the person's own words. Never invents a rule the tree does not already enforce and nobody stated. Use when a project has no standard yet, or needs its standard drafted from what its tooling and its team already do. Not for deciding what a project's conventions should be — that is the project's, never this skill's — and not for reviewing code against a standard (that is /review-change).
 disable-model-invocation: true
 effort: medium
 ---
 
 You transcribe a project's own conventions into its standard registry, and you stop. What you write
-answers to two sources only — a tool already configured in the tree, or the human's own words — and
+answers to two sources only — a tool already configured in the tree, or the person's own words — and
 answers to neither invention. A rule with neither behind it is an opinion, and opinions are not a
 registry's to hold: `schemas/standard.json` exists because Siegard ships no rule of its own, and a
 skill that supplied one anyway would ship it through the door the schema was written to close.
@@ -15,7 +15,7 @@ skill that supplied one anyway would ship it through the door the schema was wri
 
 A missing input is a stop, not a default:
 
-1. **the project root** — where `siegard.json` lives, named by the human. «Where the invocation
+1. **the project root** — where `siegard.json` lives, named by the person. «Where the invocation
    names none, the project root is the git toplevel of the session's working directory, as
    `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
    (SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run
@@ -23,12 +23,12 @@ A missing input is a stop, not a default:
 2. **the target** — which of the project's target source roots this standard governs, by the key
    `siegard.json`'s `targets` names it. A standard governs one target; a project with more than one
    stack holds one registry per target, never a single file spanning both.
-3. **the standard's own path** — where it is written, in the project's own tree, named by the human.
+3. **the standard's own path** — where it is written, in the project's own tree, named by the person.
    Absent, it is created; present, this invocation extends what it already holds. Never here and
    never inside a delivery root as its origin: a standard is the project's own artifact, and this
    skill only ever writes into the project's own tree.
 
-One optional input: **conventions in the human's own words** — inline in the invocation, or a
+One optional input: **conventions in the person's own words** — inline in the invocation, or a
 document named by path and read whole — prose naming what the team already does that no tool in
 the tree would show by reading it: a review habit, a naming choice enforced by eye, a boundary
 nobody wrote a linter for. Absent, this invocation writes only what the tree's own tooling already
@@ -44,7 +44,7 @@ The review is `git diff` over the standard's own path, once written — and a di
 this invocation did when the tree starts clean. Before any write, `git status --porcelain --
 <project-root>` must print nothing outside what this invocation is about to touch. Output is a
 stop: report what is pending and go no further — committing, discarding, or overriding is the
-human's decision, never this skill's.
+person's decision, never this skill's.
 
 ## Read the contract
 
@@ -70,14 +70,14 @@ Do not read a stack's own convention from habit or from what is common elsewhere
 decides — the same discipline `codebase-surveyor` holds a convention to: unseen anywhere, it is an
 opinion, not an inventory.
 
-## 2. Take what the human stated, and nothing past it
+## 2. Take what the person stated, and nothing past it
 
 Where conventions were supplied in prose, transcribe each into a rule `decided_by: reading` — the
-statement as close to the human's own words as a falsifiable condition allows, and `because` as the
-consequence the human gave or the plainest one implied by what they said. Never sharpen a vague
-statement into a specific threshold the human did not name: "keep components small" is a statement
+statement as close to the person's own words as a falsifiable condition allows, and `because` as the
+consequence the person gave or the plainest one implied by what they said. Never sharpen a vague
+statement into a specific threshold the person did not name: "keep components small" is a statement
 this skill records as itself, not tightened into a line count nobody stated — it is not this skill's
-to decide what "small" means where the human did not say.
+to decide what "small" means where the person did not say.
 
 A conventions source that names nothing beyond what step 1 already found is a legitimate answer:
 write nothing further, and say so in the report.
@@ -88,10 +88,10 @@ Write each rule to the shape `schemas/standard.json`'s `rule` branch requires: `
 your own choosing, stable across categories so a citation stays legible), `statement`, `because`,
 `decided_by`, `applies_to` scoped to where the evidence actually reached (never `src` broadly where
 the tool's own configuration only touches one directory), and `seen_at` naming the exact file the
-rule was read from — a config's path for a `tool` rule, the conversation or document the human's
+rule was read from — a config's path for a `tool` rule, the conversation or document the person's
 words came from for a `reading` rule, where that can be named at all.
 
-Declare `decides` on a step only where the human stated that this step is what checks a named
+Declare `decides` on a step only where the person stated that this step is what checks a named
 Architecture Constraint, or the step's own configuration names the boundary the constraint states —
 by the constraint's identity under the specification root, never by a step guessed for a constraint
 nobody connected to one. A constraint no step decides is named in the report as held by reading
@@ -116,7 +116,7 @@ Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the standard's 
 --specification <specification-root>`, the root `project.py` printed. Anything but
 a clean pass is this invocation's own shape to fix — a duplicate id, a `tool` rule naming no step, a
 `presupposes` or `dependencies` entry citing a rule the registry does not declare — never a stop:
-getting the shape right is this skill's job, not a question for the human. Once it holds, run
+getting the shape right is this skill's job, not a question for the person. Once it holds, run
 `--against <the target source root>` and keep the output for the report — which presupposed
 artifacts already stand and which do not is not this skill's to fix; a project whose substrate is
 still incomplete carries that into the report as fact, not as a defect of the file.
@@ -126,10 +126,10 @@ still incomplete carries that into the report as fact, not as a defect of the fi
 - **State what the system answers or who may see what** — a status, an error code, a refusal, an
   authorization outcome. Those are the specification's; a rule here restating one puts the standard
   pass and the conformance pass in contradiction over the same line.
-- **Sharpen an implicit threshold the human did not name**, or generalize one tool's default into a
+- **Sharpen an implicit threshold the person did not name**, or generalize one tool's default into a
   rule the project's own configuration does not turn on.
 - **Silently drop a rule the file already held.** An update extends; removing a rule the tree no
-  longer evidences is named in the report as a proposal, and the write waits for the human to
+  longer evidences is named in the report as a proposal, and the write waits for the person to
   confirm it, never assumed.
 - **Invoke itself.** This skill decides no domain fact and reviews nothing, but it shapes what every
   later review holds the project to — the same reason `/siegard-config` is closed to model
@@ -145,15 +145,15 @@ states; what follows is the report that opening sits above.
 Report, in this order:
 
 - every rule written, by `id`, with its source — the exact config file and line-adjacent context
-  for a `tool` rule, the human's own words for a `reading` rule;
+  for a `tool` rule, the person's own words for a `reading` rule;
 - every rule an update touched, and what changed;
 - every candidate `noticed` but not written, with why — no evidence, or evidence past what step 1
-  or step 2 actually supplied — so a human reviewing this can decide whether to supply what is
+  or step 2 actually supplied — so a person reviewing this can decide whether to supply what is
   missing and ask again;
 - the `deliver.py --standard` output, verbatim, both plain and `--against`;
 - the path, ready to hand to `/siegard-config` as the standard for the target this invocation
   governs — both the target's key and the path filled in, since this invocation was given both —
-  and nothing more filled, because naming this the project's standard is the human's decision,
+  and nothing more filled, because naming this the project's standard is the person's decision,
   never this skill's to make on its own invocation.
 
 Then stop. `git diff` over the standard's own path is the review, and it belongs to a person.

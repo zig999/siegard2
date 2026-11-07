@@ -14,7 +14,7 @@ so the two never share a file.
 
 A missing input is a stop, not a default:
 
-1. **the project root** — where `siegard.json` lives, named by the human. «Where the invocation
+1. **the project root** — where `siegard.json` lives, named by the person. «Where the invocation
    names none, the project root is the git toplevel of the session's working directory, as
    `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
    (SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run
@@ -24,12 +24,12 @@ A missing input is a stop, not a default:
    disclosed in the report, never asked.
 3. **the slug** — this survey's name, one directory under `siegard-survey/` at the target's git
    toplevel, beside `siegard-reconcile/`. A slug already taken is a stop and not a suffix.
-4. **the areas** — named by the human: each a short name and the paths or directories it holds,
+4. **the areas** — named by the person: each a short name and the paths or directories it holds,
    spelled from the target source root. In the source form tests are not an area: a test is a
    certification's material, not a survey's. In the tests form an area is the declared tests
    those paths hold, and nothing else. The areas together are the context's source or its tests,
    and a file in two areas is a stop.
-5. **the form** — `tests` where the human asks for the tests to be read; otherwise the source
+5. **the form** — `tests` where the person asks for the tests to be read; otherwise the source
    form. The tests form needs the target's tests declared in `siegard.json`; a target that
    declares none is a stop that hands `/siegard-config`, because which files are tests is the
    declaration's to say.
@@ -79,12 +79,12 @@ as a file of the area, and its stop is this skill's. In the tests form the area 
 of the same output — the files it lists under `left out as declared tests` — and a single test
 named alone is still its stop: name the directory that holds it. Where the project declares no tests for the
 target the script says so and leaves nothing out; which of the files it lists are tests is then
-the human's to say, by naming the area again or by declaring the target's tests through
+the person's to say, by naming the area again or by declaring the target's tests through
 `/siegard-config`, never this skill's to guess.
 
 ### 2. Delegate
 
-Spawn one subagent per area, in waves of at most twenty — the harness's ceiling on delegations
+Spawn one subagent per area, in waves of at most twenty — the harness's ceiling on subagents
 running at once, the same number `trace.py --stage` cuts a reconciliation's waves by — one wave
 whole in one message, the next only after every return of the last has arrived; a launch the
 harness refuses is a wave cut too wide, never a surveyor dispatched a second time on its own.

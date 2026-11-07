@@ -36,7 +36,7 @@ one task, and that is what it is held to.
 **The two records a delivery writes are written here, from the producer's return.** A record the
 caller composes by hand is a record whose pins and shape depend on the session that typed it; the
 writer makes the record a function of the return, the task file, the standard and the run. The
-return is the delegation's final reply — read from its transcript, or from a file holding the
+return is the subagent's final reply — read from its transcript, or from a file holding the
 same bytes — parsed as one YAML mapping, and what the invocation knows is stamped on it: the
 target by key, the pin of the task file on an implementation and of the implementation record on
 a proof, the standard's path and pin where one was named, and the run where one was captured. A
@@ -299,7 +299,7 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         delivery-node.json — a `$defs` entry, or
                                                         every property one `kind` value admits —
                                                         with every `$ref` inlined; stands alone,
-                                                        needs no root. What a delegation is handed
+                                                        needs no root. What a subagent is handed
                                                         in place of the whole file
         The target source root is the one this invocation delivers into. Every record names its
         own by key, and resolves its `standard` reference and its paths at the root `siegard.json`
@@ -406,7 +406,7 @@ def contract_branches(schema: dict) -> list[str]:
 def sliceable() -> list[Path]:
     """The contracts this script slices, in the order a refusal offers them: what a delivery
     records, and what the project's own registry declares. Both are this script's to validate, so
-    both are its to print — a registry is the artifact a human authors by hand, and what
+    both are its to print — a registry is the artifact a person authors by hand, and what
     `commands[]` or a rule may declare is otherwise held only in a file under the plugin's own
     `schemas/`, which a person with the question would have to know was there."""
     return [DELIVERY_CONTRACT, STANDARD_CONTRACT]
@@ -870,7 +870,7 @@ def record_standard_problems(nid: str, front: dict, root: Path, target: Path, va
 
 def installed_problems(nid: str, front: dict, data: dict, at: str) -> list[str]:
     """Every package a record says it installed, against the list its standard authorizes. The
-    list is where a human's approval of a package lives — the only place it survives the session it
+    list is where a person's approval of a package lives — the only place it survives the session it
     was given in — so a delivery that could install past it would make the approval decorative.
     The check is over names and never over a manifest: reading one would be reading a stack this
     framework ships no knowledge of."""
@@ -2288,20 +2288,20 @@ def write_record(kind: str, args: list[str]) -> int:
         return CANNOT_RUN
     if text.lstrip().startswith("```"):
         print(f"{nid}: the return opens with a code fence; a return is one YAML mapping and "
-              f"nothing else, and a fence is not stripped to find one — the delegation answers "
+              f"nothing else, and a fence is not stripped to find one — the subagent answers "
               f"again")
         return 1
     rendered = sorted(set(HTML_ENTITY.findall(text)))
     if rendered:
         print(f"{nid}: the return carries {', '.join(rendered)}, the escaping a notification "
               f"applies when it renders a reply; it was read from the text that relays the "
-              f"delegation, not from the delegation's transcript. Name the transcript with "
+              f"subagent, not from the subagent's transcript. Name the transcript with "
               f"--from, never a copy of the notification")
         return 1
     try:
         returned = spec.load_yaml(text)
     except yaml.YAMLError as broken:
-        print(f"{nid}: the return does not parse: {broken}. The delegation answers again; a "
+        print(f"{nid}: the return does not parse: {broken}. The subagent answers again; a "
               f"return is never repaired by hand, because the record is a function of it")
         return 1
     if not isinstance(returned, dict):
@@ -2311,7 +2311,7 @@ def write_record(kind: str, args: list[str]) -> int:
     emptied = sorted(key for key, value in returned.items() if value == [] and key not in kept)
     for key in emptied:
         # A list with nothing in it states nothing, and the contract asks for an absent field
-        # rather than an empty one; refusing it would send a delegation back over no content.
+        # rather than an empty one; refusing it would send a subagent back over no content.
         # An implementation that stands is the exception: its contract requires `files`, empty.
         del returned[key]
     stamped = [key for key in STAMPED[kind] if key in returned]
@@ -2703,7 +2703,7 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
     and the others were left to whoever read the files — which is how a caller chose a task that
     stopped two commands later, and how the deliverable set the handoff describes in words stayed
     something nobody computed. Beside those it quotes the underdetermined entries, which stop nothing: they are
-    what a task's tests must exclude, `/implement-task` hands them to the test author quoted
+    what a task's tests must exclude, `/implement-task` hands them to the test-author quoted
     whole, and a set a script read is a set no eye had to collect.
 
     None of the four is a refusal here. This writes nothing and exits 0 over every state it can

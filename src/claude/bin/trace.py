@@ -78,11 +78,11 @@ What this script does, and nobody else does any of it:
                                                                   they join the candidate index,
                                                                   recorded with their digests, and
                                                                   bind nowhere; never an audit's
-    trace.py --stage ... --concurrency <n>                        cut the delegations into waves
+    trace.py --stage ... --concurrency <n>                        cut the subagents into waves
                                                                   of at most n, in the manifest
                                                                   and the receipt; the default is
                                                                   the harness's own ceiling on
-                                                                  delegations running at once
+                                                                  subagents running at once
     trace.py --stage ... --certify <file>                         also stage a certification per
                                                                   node the file names: its pack,
                                                                   the proof offered and the step
@@ -94,11 +94,11 @@ What this script does, and nobody else does any of it:
                                                                   binding pinned; a run of the
                                                                   steps it names answers it
     trace.py --save-return <target-root> <workspace> <file> <transcript>
-                                                                  save one delegation's final
+                                                                  save one subagent's final
                                                                   reply, verbatim, as the return
                                                                   for a staged file (or a node
                                                                   staged for certification)
-    trace.py --fold <target-root> <workspace> <premise> <record>  fold the delegations' returns
+    trace.py --fold <target-root> <workspace> <premise> <record>  fold the subagents' returns
                                                                   into the reconciliation record
     trace.py --fold ... --run <run-dir>                           the same, the mechanical tier
                                                                   answered by the run bin/run.py
@@ -245,7 +245,7 @@ owns this one. A reconciliation record has no life outside the trace — it exis
 and nothing reads it for any other purpose — so the validation lands here rather than in a script
 invented to hold it. The check that matters is the accounting: every path a node claims is a path
 the record's own file set names, and every file it names is claimed by a node or declared unbound.
-A record that binds a file nobody declared would widen the reconciliation past what a human
+A record that binds a file nobody declared would widen the reconciliation past what a person
 scoped, silently, and the trace would carry the result forever.
 
 `--bind` validates <spec-root> the way spec.py does, refuses a node it does not hold, reads that
@@ -337,12 +337,12 @@ recomputed by `--bind-record` at bind time; the manifest's list is a preparation
 authority. `--stage` also reserves the reconciliation's own ground: it refuses a slug whose record
 or returns directory already exists, and creates `siegard-reconcile/<slug>.returns/` empty — the
 returns saved there are the evidence the record is folded from, and they outlive the workspace.
-`--save-return` writes one there from the delegation's own transcript: the last assistant message,
+`--save-return` writes one there from the subagent's own transcript: the last assistant message,
 byte for byte, under the name the fold reads for the staged file. A notification relays that reply
 re-rendered for display — an entity-escaped `&gt;` reads as text inside a scalar and parses — so a
-return copied from what was shown can carry characters the delegation never wrote. The save then
+return copied from what was shown can carry characters the subagent never wrote. The save then
 reports two things read from disk: whether the fold will refuse what was just saved, by the
-fold's own rule, while the delegation can still run again inside its wave; and what the wave
+fold's own rule, while the subagent can still run again inside its wave; and what the wave
 still waits for, by name — the one count of pending returns, because the harness delivers
 several notifications in one turn and some inside the turn that spawned the wave, and a tally
 the session keeps undercounts what has arrived.
@@ -350,7 +350,7 @@ the session keeps undercounts what has arrived.
 `--audit` inverts that one omission, deliberately. Every report keyed by change has a blind spot:
 a binding over-broad from the day it was written never drifts, so nothing that watches for drift
 ever re-examines it, and the claim stands for as long as the file does. An audit is the
-re-judgment of exactly those pairs — the human names a file set whose bindings did not move, and
+re-judgment of exactly those pairs — the person names a file set whose bindings did not move, and
 the staging hands every standing claim to a judge, omitting nothing. Everything downstream is the
 ordinary pipeline: a claim the judge confirms is restamped with a record justifying it, a fact
 held nowhere blocks its node and hands the `--release ... --node` release ready to run, and a finding
@@ -362,14 +362,14 @@ A constraint some step of the project's registry `decides` is answered by runnin
 by a reading. The registry's `commands[].decides` is the join that keeps which command checks a
 constraint the project's choice and never the node's; a reading that judged such a pair would
 re-decide what the step decides, at a model's recall and at the price of the whole file's
-delegation, since one judge is spawned per file and reads it whole. So `--stage` hands no judge
+subagent, since one judge is spawned per file and reads it whole. So `--stage` hands no judge
 such a pair and lists it in the manifest under `mechanical`, `--check` says which `code` findings
 sit on one, `--encodes` marks the binding, and `--rank` counts a file's bindings by whether a
 reading decides them at all. The omission guard still runs first: a pair that is current and owes
 nothing needs no judge and no run either.
 
 A binding may also be decided by a test, and that is the trace's own join rather than the
-registry's. `--stage --certify <file>` takes the human's certifications — a node, the test file(s)
+registry's. `--stage --certify <file>` takes the person's certifications — a node, the test file(s)
 offered as its proof, and the registry step that runs them — refuses a node the named files do not
 encode, a proof that is not there or a step the registry does not declare, never omits a pair of a
 node being certified, and writes one certification pack per node beside the file packs. The
@@ -401,7 +401,7 @@ registry's command whose `role` is `suite` — the one step that proves the work
 `deliver.py` holds to being declared once. A record `deliver.py` did not first hold to its
 contract is read defensively, the way every record here is; a node no test claims gets no entry,
 and a registry declaring no suite step is a refusal, because a certification with no step to run
-its proof is one nothing can ever answer for. The human's `--certify` may ride beside it, for a
+its proof is one nothing can ever answer for. The person's `--certify` may ride beside it, for a
 claim no proof carries; one node certified from both is refused, the way one node certified twice
 in one file already is.
 
@@ -422,18 +422,18 @@ each carried file's `judged` as it stood, and restamps a carried node's certifie
 same rewrite reproduced every one that moved. A carried pair was read by no judge, and `--owed`
 counts it as neither a clearance nor a finding.
 
-`--fold` writes the reconciliation record from the delegations' returns, mechanically. Every rule
-it applies is a fold over structured answers — a node conforms exactly where every delegation that
+`--fold` writes the reconciliation record from the subagents' returns, mechanically. Every rule
+it applies is a fold over structured answers — a node conforms exactly where every subagent that
 read one of its files cleared it; a finding naming a node lands on that node wherever its own judge
 stood; a finding naming none holds every node of the file that produced it *that its judge was
 handed* — a node a run decided reached no judge, and what answered it is the step's own outcome
 rather than a reading's silence about which node it meant; a node whose fact no
 named file holds any more binds nothing — and none of those rules asks for judgment, so none of
 them is applied by a context that could misremember one. The caller supplies the one part that is
-not mechanical: a premise file carrying the human's `title`, `summary`, `target` and per-file
+not mechanical: a premise file carrying the person's `title`, `summary`, `target` and per-file
 `change` lines. A return that does not satisfy `schemas/conformance-return.json`, answers for a
 node set other than the manifest's, or is missing for a staged file refuses the fold naming the
-delegation to run again — the correction for an unusable return is a fresh delegation, never a
+subagent to run again — the correction for an unusable return is a fresh subagent, never a
 repair applied to its answer here. The record it writes is validated against
 `schemas/reconciliation.json` and its own accounting before it lands, and is then read by
 `--reconciliation` and `--bind-record` exactly like one written any other way.
@@ -480,7 +480,7 @@ Exit:   0 sound / drift-free / bound / pruned / released / the record holds / no
           staged / folded
         1 problems: an invalid file, drift found, an unsound specification, an unknown node
           or file, a record its contract refuses, a finding no bind closed, a return a
-          delegation owes again
+          subagent owes again
         2 cannot run
 """
 
@@ -519,7 +519,7 @@ TRACE_FILE = "siegard-trace.json"
 RECONCILE_DIR = "siegard-reconcile"
 MANIFEST_FILE = "manifest.json"
 RUN_DIR = "run"
-# The harness's own ceiling on delegations running at once, read from the refusal it prints past
+# The harness's own ceiling on subagents running at once, read from the refusal it prints past
 # it; `--concurrency` overrides it where a harness sets another. Not this framework's number.
 CONCURRENCY = 20
 
@@ -1371,8 +1371,8 @@ def reconcile_set_report(declared: dict, home: Path, target: Path,
     under the specification root — a bind stamps the digest on disk, and a digest of pending
     text is a binding to a specification that may never exist; a file bound to a node whose
     entry moved and which a live task not yet delivered implements — that task's delivery
-    rebinds the node, and a reconciliation first pays the reading twice; and a certified test that changed, which a certification the human offers
-    answers, never a reading owed. Any of the three the human still wants read is named to
+    rebinds the node, and a reconciliation first pays the reading twice; and a certified test that changed, which a certification the person offers
+    answers, never a reading owed. Any of the three the person still wants read is named to
     `/reconcile` by hand, which is why each is listed by path."""
     spec_relative = declared["specification"]
     spec_root = home / spec_relative
@@ -1459,7 +1459,7 @@ def reconcile_set_report(declared: dict, home: Path, target: Path,
                              f"{', '.join(tasks)})")
         if proofs:
             lines.append("decided by a certified test whose text changed — a certification of "
-                         "the test as it now stands is what answers it, offered by the human and "
+                         "the test as it now stands is what answers it, offered by the person and "
                          "never a reading owed:")
             for path in sorted(proofs):
                 lines.append(f"  {spelled(path)}  ({', '.join(sorted(proofs[path]))})")
@@ -1712,7 +1712,7 @@ def accounted(front: dict) -> list[str]:
 
     The schema says what a field may hold; this says whether the fields agree with each other, and
     it is the half that carries the risk. `--bind-record` binds every path a node's `encoded_at`
-    names, so a path that reached the record without reaching its file set is ground the human
+    names, so a path that reached the record without reaching its file set is ground the person
     never scoped, asserted in the one file this framework keeps after every plan is gone. The
     accounting runs both ways for the same reason a bind and a drift check do: a named file no node
     accounts for is a file somebody meant to reconcile and nothing did, and it would leave the
@@ -1731,7 +1731,7 @@ def accounted(front: dict) -> list[str]:
             claimed.add(path)
             if path not in named:
                 problems.append(f"{node_id}: {where} names {path}, which this record's file set "
-                                f"does not; a reconciliation reaches only what the human scoped")
+                                f"does not; a reconciliation reaches only what the person scoped")
         if not entry["conforms"] and entry.get("encoded_at"):
             problems += [f"{node_id}: encoded_at names {path}, which its observed_at does not; a "
                          f"node not cleared binds only pairs of the ground it was read on"
@@ -3592,7 +3592,7 @@ def untraced(target: Path, show_all: bool = False) -> int:
     Drift is keyed by change and `--rank` by what the trace holds, so neither can see code the
     trace never reached: a file no delivery wrote and no reconciliation judged is in no report,
     however much of the system it carries. This names it, and tells apart the ways a file can be
-    unbound — an adoption judged it and bound none of its candidates to it, the human kept it out
+    unbound — an adoption judged it and bound none of its candidates to it, the person kept it out
     of an adoption's judgment, it is a test the project declares and no certification names, or
     nothing has looked at it at all — because only the last is ground an adoption has not
     covered. A test is never that ground: it is a certification's material, offered or not. «Adoption is complete when no file is unsurveyed and no
@@ -3743,7 +3743,7 @@ def reading_counts(declared: dict, home: Path, offset: str) -> dict[str, tuple[i
 
 
 def return_name(given: str) -> str:
-    """The filename one delegation's return is saved under, computed from the path it judged.
+    """The filename one subagent's return is saved under, computed from the path it judged.
     Flat on purpose: the returns directory is read as a set keyed by file, and a nested copy of
     the source tree would make a stray return — one no staged file explains — hard to even see."""
     return given.replace("/", "__") + ".yaml"
@@ -3756,7 +3756,7 @@ def certify_return_name(node_id: str) -> str:
 
 
 def expected_returns(manifest: dict) -> dict[str, str]:
-    """Every return filename a staging waits for, each mapped to the delegation the manifest's
+    """Every return filename a staging waits for, each mapped to the subagent the manifest's
     waves name it by — the staged file's path, or `certify__<node>` for a certification. The one
     definition the save and the fold both read, so what one reports pending is what the other
     refuses to fold without."""
@@ -3767,23 +3767,23 @@ def expected_returns(manifest: dict) -> dict[str, str]:
 
 
 def wave_of(manifest: dict) -> dict[str, int]:
-    """Which wave each delegation belongs to, by the name the manifest's waves spell."""
+    """Which wave each subagent belongs to, by the name the manifest's waves spell."""
     return {name: number for number, wave in enumerate(manifest.get("waves") or [], start=1)
             for name in wave}
 
 
-def pending_receipt(manifest: dict, returns_dir: Path, delegation: str) -> str:
+def pending_receipt(manifest: dict, returns_dir: Path, subagent: str) -> str:
     """What a staging still waits for, read from the returns on disk and never from a count kept
     anywhere else — the harness delivers several notifications in one turn, and some inside the
     turn that spawned the wave, so a tally kept by the session undercounts what has arrived. Where
-    the manifest cuts waves, the line is the wave's this delegation belongs to; where it cuts none,
+    the manifest cuts waves, the line is the wave's this subagent belongs to; where it cuts none,
     it is the staging's. Saved is the whole claim: a return on disk the fold will refuse is saved,
     and the fold is where it is refused."""
     expected = expected_returns(manifest)
     present = {p.name for p in returns_dir.iterdir()} if returns_dir.is_dir() else set()
     waves = wave_of(manifest)
-    if delegation in waves:
-        number = waves[delegation]
+    if subagent in waves:
+        number = waves[subagent]
         members = [name for name, key in expected.items() if waves.get(key) == number]
         label = f"wave {number}"
     else:
@@ -3998,7 +3998,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     that did not move. Everything here is computed from the trace, the specification and the
     corpus — nothing is chosen, so nothing here is a judgment.
 
-    The delegations are also cut into waves of at most `concurrency`, in the manifest and in the
+    The subagents are also cut into waves of at most `concurrency`, in the manifest and in the
     receipt: a judge per file and an auditor per certification, in the order staged. A session
     dispatches one wave whole, saves every return, then the next. A wave is the harness's ceiling
     made a list, so that "no larger than the harness runs at once" is read rather than guessed
@@ -4039,7 +4039,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     «A binding of adopted source rests on a reconciliation record whose judgment cleared the
     pair» (SPEC-005 R3). No trace is needed to begin: the first adoption of a target is the one
     that writes it. A candidate is never omitted and never answered by a run here, since its
-    reading is what decides whether it is bound at all. `outside` names tracked files the human
+    reading is what decides whether it is bound at all. `outside` names tracked files the person
     keeps out of the judgment; they are reserved in the manifest and judged by no one.
 
     With a ledger, the candidates are per file: each file's judge is handed the nodes the ledger
@@ -4259,7 +4259,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     # What a run decides is not handed to a judge. A constraint some registry step decides and a
     # node a certified test decides are both answered by running that step over the tree, and a
     # reading of either re-decides mechanically what a run settles exactly — at a model's recall,
-    # and at the price of the whole file's delegation. Two guards hold the tier honest, and both
+    # and at the price of the whole file's subagent. Two guards hold the tier honest, and both
     # send the pair back to a judge rather than widening it: the certification must still be live,
     # which `test_decided` recomputes from the proof's own digests, and the node's text must not
     # have moved since the bind — a step or a test decided the fact as the node then stated it,
@@ -4440,10 +4440,10 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
 
     # Every path a judge needs beside the nodes, resolved here rather than searched for there. A
     # specification root's own layout is not obvious from its root — a projection may or may not
-    # exist — and a judge that hunts for one spends a call per delegation to learn what one
+    # exist — and a judge that hunts for one spends a call per subagent to learn what one
     # listing already knows. Only what is on disk is named: a path offered and absent is the same
     # hunt with an extra step. The labels are the shortest thing that identifies each path,
-    # because this block is re-read on every turn of every delegation: what each file means is
+    # because this block is re-read on every turn of every subagent: what each file means is
     # stated where that file is authoritative, and a sentence repeated here would be bought once
     # per turn to say what the file itself says once.
     projections = [(label, spec_root / relative) for label, relative in
@@ -4532,7 +4532,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     # the fact is a delivery's act, which no reconciliation performs. So the tier refines an
     # attribution an audit cannot act on, at the cost of every candidate a judge opens to make it.
     # The reconcile route keeps it: there a misattribution reported as a gap is a false finding,
-    # and a false finding blocks a node and costs a fresh delegation to undo.
+    # and a false finding blocks a node and costs a fresh subagent to undo.
     if audit:
         candidates = {}
     else:
@@ -4557,8 +4557,8 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         (workspace / "candidates.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     mechanical = sorted(mechanical, key=lambda e: (e["file"], e["node"]))
-    delegations = list(manifest_files) + [f"{CERTIFY_PREFIX}{e['node']}" for e in certify_entries]
-    waves = [delegations[at:at + concurrency] for at in range(0, len(delegations), concurrency)]
+    subagents = list(manifest_files) + [f"{CERTIFY_PREFIX}{e['node']}" for e in certify_entries]
+    waves = [subagents[at:at + concurrency] for at in range(0, len(subagents), concurrency)]
     manifest = {"slug": slug,
                 "concurrency": concurrency,
                 "waves": waves,
@@ -4628,10 +4628,10 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
           + (f"candidate index at {workspace / 'candidates.txt'}" if not audit else
              "no candidate index — an audit asks whether a claim stands, and both answers a "
              "candidate separates release the same claim"))
-    print(f"  save each delegation's return verbatim at "
+    print(f"  save each subagent's return verbatim at "
           f"{returns_dir}/<file path with '/' as '__'>.yaml")
     if waves:
-        print(f"  dispatch in {len(waves)} wave(s) of at most {concurrency} delegation(s) — a "
+        print(f"  dispatch in {len(waves)} wave(s) of at most {concurrency} subagent(s) — a "
               f"wave spawned whole in one message, the next only after every return of the "
               f"last is saved; a launch the harness refuses is a wave cut too wide, and "
               f"--concurrency <fewer> is its route:")
@@ -4683,7 +4683,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
               + " ".join(f'--step {s}="<the registry\'s command>"' for s in run_steps))
     if certify_entries:
         print(f"  {len(certify_entries)} certification(s) staged — one coverage-auditor "
-              f"delegation each, over the node's pack and its proof; save each return verbatim at "
+              f"subagent each, over the node's pack and its proof; save each return verbatim at "
               f"{returns_dir}/{CERTIFY_PREFIX}<node with '/' as '__'>.yaml:")
         for entry in certify_entries:
             print(f"    {entry['node']} — proof {', '.join(entry['proof'])} (step "
@@ -4716,12 +4716,12 @@ HANDBACK_TOOL = "SubagentHandback"
 
 
 def final_reply_of(transcript: Path) -> tuple[str | None, str | None]:
-    """The text a delegation answered with, read from its own transcript. A delegation answers in
+    """The text a subagent answered with, read from its own transcript. A subagent answers in
     one of two forms. It hands back: a `SubagentHandback` call whose `message` the harness confirms
     delivered (`success: true` on the call's result) — the last such call is the answer, and text
     written after it never reached the caller. Or it ends: the last assistant message, which must
     carry text and no tool call. A notification relays either re-rendered for display, so what it
-    shows is not what the delegation wrote; the transcript is. The format is the harness's and
+    shows is not what the subagent wrote; the transcript is. The format is the harness's and
     undocumented, read here the way the telemetry reads it, and a transcript that does not hold
     one of the two shapes is refused rather than guessed at."""
     if not transcript.is_file():
@@ -4744,11 +4744,11 @@ def final_reply_of(transcript: Path) -> tuple[str | None, str | None]:
             return None, f"{transcript}'s delivered hand-back carries no text in `message`"
         return message, None
     if last is None:
-        return None, f"{transcript} holds no assistant message; it is not a delegation's transcript"
+        return None, f"{transcript} holds no assistant message; it is not a subagent's transcript"
     blocks = telemetry.blocks_of(last)
     if any(block.get("type") == "tool_use" for block in blocks):
         return None, (f"{transcript} ends in a tool call and holds no delivered hand-back; the "
-                      f"delegation has not answered yet, so there is no return to save")
+                      f"subagent has not answered yet, so there is no return to save")
     text = "".join(block["text"] for block in blocks
                    if block.get("type") == "text" and isinstance(block.get("text"), str))
     if not text.strip():
@@ -4757,10 +4757,10 @@ def final_reply_of(transcript: Path) -> tuple[str | None, str | None]:
 
 
 def save_return_from(target: Path, workspace: Path, given: str, transcript: Path) -> int:
-    """Save one delegation's return, verbatim, where the fold reads it. The bytes are the final
+    """Save one subagent's return, verbatim, where the fold reads it. The bytes are the final
     reply's and nothing else: no fence is stripped and nothing is trimmed, because a return the
-    saving reshaped carries a judgment the delegation never made, and one the fold refuses names
-    the delegation to run again."""
+    saving reshaped carries a judgment the subagent never made, and one the fold refuses names
+    the subagent to run again."""
     manifest_path = workspace / "manifest.json"
     if not manifest_path.is_file():
         print(f"cannot run: {workspace} holds no manifest.json; save into a staged workspace",
@@ -4773,9 +4773,9 @@ def save_return_from(target: Path, workspace: Path, given: str, transcript: Path
     node_id = given[len(CERTIFY_PREFIX):] if given.startswith(CERTIFY_PREFIX) else given
     ask = None
     if given in manifest["files"]:
-        name, delegation = return_name(given), given
+        name, subagent = return_name(given), given
     elif node_id in certified:
-        name, delegation, ask = (certify_return_name(node_id), f"{CERTIFY_PREFIX}{node_id}",
+        name, subagent, ask = (certify_return_name(node_id), f"{CERTIFY_PREFIX}{node_id}",
                                  certified[node_id])
     else:
         print(f"cannot run: {given} is neither a staged file nor a node staged for "
@@ -4794,35 +4794,35 @@ def save_return_from(target: Path, workspace: Path, given: str, transcript: Path
     replaced = path.exists()
     path.write_text(text, encoding="utf-8")
     print(f"{'replaced' if replaced else 'saved'} {path} — {len(text.encode('utf-8'))} byte(s) "
-          f"of the delegation's final reply, verbatim")
+          f"of the subagent's final reply, verbatim")
     # The fold's own reading, run now so a return it will refuse is known while the wave is
-    # still open and the delegation can run again with its prompt fixed; the bytes stay as
+    # still open and the subagent can run again with its prompt fixed; the bytes stay as
     # written, and the fold is still where the refusal happens.
-    held = return_refusals(manifest, text, delegation, ask)
+    held = return_refusals(manifest, text, subagent, ask)
     if held:
-        print(f"  the fold will refuse it: {'; '.join(held)} — a delegation to run again with "
+        print(f"  the fold will refuse it: {'; '.join(held)} — a subagent to run again with "
               f"its prompt fixed")
-    print(f"  {pending_receipt(manifest, returns_dir, delegation)}")
+    print(f"  {pending_receipt(manifest, returns_dir, subagent)}")
     return 0
 
 
-def return_refusals(manifest: dict, text: str, delegation: str, ask: dict | None) -> list[str]:
+def return_refusals(manifest: dict, text: str, subagent: str, ask: dict | None) -> list[str]:
     """Why the fold would refuse this return, by the rule the fold applies: a file's return is
-    held to the node set its delegation was handed, a certification's to its node and proof."""
+    held to the node set its subagent was handed, a certification's to its node and proof."""
     try:
         front = load_return(text)
     except yaml.YAMLError as broken:
         return [f"the return does not parse: {broken}"]
     if ask is not None:
         return certification_problems(front, ask["node"], ask["proof"])
-    staged_for = manifest["files"][delegation]
-    return return_problems(front, staged_for["nodes"], staged_for.get("also", []), delegation)
+    staged_for = manifest["files"][subagent]
+    return return_problems(front, staged_for["nodes"], staged_for.get("also", []), subagent)
 
 
 def return_problems(front, bound: list[str], beside: list[str], given: str) -> list[str]:
-    """Every way one delegation's saved return fails its contract or its assignment. The schema
+    """Every way one subagent's saved return fails its contract or its assignment. The schema
     holds the shape; this holds the relation the schema cannot see — that `read` and `nowhere`
-    together answer for exactly the node set the delegation was handed, since a return short one
+    together answer for exactly the node set the subagent was handed, since a return short one
     node reads exactly like a complete one and the fold would clear the missing node by silence;
     and that `nowhere` names only nodes read beside the file's bindings, since a bound pair read
     nowhere is quoted into the record a release is decided from, and a bare name quotes nothing."""
@@ -4836,7 +4836,7 @@ def return_problems(front, bound: list[str], beside: list[str], given: str) -> l
     assigned = bound + beside
     absent = front.get("nowhere") or []
     answered = [entry["node"] for entry in front["read"]] + absent
-    problems += [f"read: {node} appears {answered.count(node)} times; a delegation answers once, "
+    problems += [f"read: {node} appears {answered.count(node)} times; a subagent answers once, "
                  f"and two answers for one node void each other"
                  for node in sorted(set(answered)) if answered.count(node) > 1]
     held_bare = sorted(node for node in set(absent) if node in bound)
@@ -4848,24 +4848,24 @@ def return_problems(front, bound: list[str], beside: list[str], given: str) -> l
     extra = sorted(set(answered) - set(assigned))
     if missing:
         problems.append(f"read: no entry for {', '.join(missing)}; the return answers for the "
-                        f"node set the delegation was handed, whole")
+                        f"node set the subagent was handed, whole")
     if extra:
-        problems.append(f"read: {', '.join(extra)} is not in this delegation's node set; a "
+        problems.append(f"read: {', '.join(extra)} is not in this subagent's node set; a "
                         f"candidate is opened to attribute a finding, never answered for in "
                         f"`read`")
     for finding in front.get("findings") or []:
         named = finding.get("file")
         if named is not None and named != given:
-            problems.append(f"findings: a finding names {named}, and this delegation read "
+            problems.append(f"findings: a finding names {named}, and this subagent read "
                             f"{given}, which is the spelling its pack header hands it; one "
-                            f"file per delegation is the shape of this pass")
+                            f"file per subagent is the shape of this pass")
     return problems
 
 
 def certification_problems(front, node_id: str, proof: list[str]) -> list[str]:
     """Every way one certification's saved return fails its contract or its ask. The schema holds
     the shape; this holds what the schema cannot see — that the return answers for exactly the node
-    it was handed, and cites no test outside the proof the human offered, because the binding pins
+    it was handed, and cites no test outside the proof the person offered, because the binding pins
     exactly that proof and a test cited from elsewhere would be certified by nobody."""
     if not isinstance(front, dict):
         return ["the return is not a mapping"]
@@ -4879,12 +4879,12 @@ def certification_problems(front, node_id: str, proof: list[str]) -> list[str]:
     answered = [entry["node"] for entry in front["certified"]]
     if answered != [node_id]:
         problems.append(f"certified: the return answers for {', '.join(answered)}; this "
-                        f"delegation was handed {node_id} alone")
+                        f"subagent was handed {node_id} alone")
     for entry in front["certified"]:
         for test in entry.get("tests") or []:
             if test["file"] not in proof:
                 problems.append(f"certified: {test['file']} is not among the proof offered "
-                                f"({', '.join(proof)}); a certification is of the tests the human "
+                                f"({', '.join(proof)}); a certification is of the tests the person "
                                 f"named, and the binding pins exactly those")
     return problems
 
@@ -4943,10 +4943,10 @@ def step_outcomes(captured: dict) -> dict[str, dict]:
 
 def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: Path,
                  run_dir: Path | None = None) -> int:
-    """Write the reconciliation record from the delegations' saved returns, mechanically.
+    """Write the reconciliation record from the subagents' saved returns, mechanically.
 
     Every rule here is a fold over structured answers, applied the same way every time: a node
-    conforms exactly where every delegation that read one of its files cleared it; a finding
+    conforms exactly where every subagent that read one of its files cleared it; a finding
     naming a node lands on that node wherever its own judge stood; a finding naming none holds
     every node of the file that produced it, marked `collateral` on the nodes nothing contested
     directly; a node whose fact no named file holds any more binds nothing, because a binding
@@ -4955,9 +4955,9 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     rule between node forty and node eighty.
 
     What the caller owes is the premise — title, summary, target, one `change` line per named
-    file — because that half is the human's assertion and no fold can write it. What the fold
+    file — because that half is the person's assertion and no fold can write it. What the fold
     owes back is refusal by name: a return that does not hold, or one missing for a staged file,
-    is a delegation to run again with its prompt fixed, never an answer to repair here."""
+    is a subagent to run again with its prompt fixed, never an answer to repair here."""
     if not target.is_dir():
         print(f"cannot run: {target} is not a directory", file=sys.stderr)
         return CANNOT_RUN
@@ -5062,7 +5062,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     returns_dir = home / RECONCILE_DIR / f"{manifest['slug']}.returns"
     if not returns_dir.is_dir():
         print(f"cannot fold: {returns_dir} does not exist; --stage is what creates it, and the "
-              f"returns are saved into it verbatim as each delegation answers", file=sys.stderr)
+              f"returns are saved into it verbatim as each subagent answers", file=sys.stderr)
         return CANNOT_RUN
 
     expected = {return_name(given): given for given in manifest["files"]}
@@ -5099,7 +5099,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             continue
         returns[given] = front
     # A certification's return is read by the same rule as a file's: saved verbatim, held to its
-    # own contract, and refused by name where it does not hold — the delegation runs again.
+    # own contract, and refused by name where it does not hold — the subagent runs again.
     certified_returns: dict[str, dict] = {}
     for name, ask in sorted(certify_expected.items()):
         path = returns_dir / name
@@ -5122,9 +5122,9 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     if rerun:
         for problem in rerun:
             print(f"cannot fold: {problem}")
-        print(f"\n{len(rerun)} problem(s); each names a delegation to run again with its prompt "
+        print(f"\n{len(rerun)} problem(s); each names a subagent to run again with its prompt "
               f"fixed — an unusable return is never repaired here, and a follow-up question to "
-              f"the delegation that already answered is not a fresh judgment.")
+              f"the subagent that already answered is not a fresh judgment.")
         return 1
 
     # The mechanical tier is answered by a run, and the run is refused before anything is written
@@ -5273,7 +5273,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     if landing_nowhere:
         for problem in landing_nowhere:
             print(f"cannot fold: {problem}")
-        print(f"\n{len(landing_nowhere)} problem(s); each names a delegation to run again with "
+        print(f"\n{len(landing_nowhere)} problem(s); each names a subagent to run again with "
               f"its prompt fixed — a finding that would vanish from the record is never folded "
               f"around, and the judge that filed it is the one that says which word it meant.")
         return 1
@@ -5501,7 +5501,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             continue
         entry["decided_by"] = DECIDED_BY_TEST
         entry["step"] = ask["step"]
-        # What is pinned is what the auditor cited, never the whole set the human offered. A file
+        # What is pinned is what the auditor cited, never the whole set the person offered. A file
         # offered and not cited bears on nothing the certification rests on, and pinning it would
         # make an edit to it lapse a certification no reading of it supported.
         entry["proof"] = sorted({test["file"] for test in answer["tests"]})
@@ -5511,13 +5511,13 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                         for t in answer["tests"])
             + " would fail if the fact stopped holding.")
 
-    notes = [f"Judged by {len(returns)} delegation(s), one per file; folded mechanically by "
+    notes = [f"Judged by {len(returns)} subagent(s), one per file; folded mechanically by "
              f"trace.py --fold from the returns under {RECONCILE_DIR}/{manifest['slug']}.returns/."]
     if tier:
         notes.append(
             f"{len(tier)} pair(s) over {len(by_run)} node(s) were decided by {run_named} rather "
             f"than by a judge — a registry step decides the constraint, or a certified test "
-            f"decides the node — with step(s) {', '.join(sorted(steps_named))}. No delegation read "
+            f"decides the node — with step(s) {', '.join(sorted(steps_named))}. No subagent read "
             f"them; the run's own log is the evidence, and it sits beside these returns.")
     if carried:
         rewritten_proofs = manifest.get("rewritten_proofs") or []
@@ -5579,7 +5579,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     opened_count = sum(len(front.get("candidates_opened") or []) for front in returns.values())
     with_any = sum(1 for front in returns.values() if front.get("candidates_opened"))
     notes.append(f"Candidates: {opened_count} opened across {with_any} of {len(returns)} "
-                 f"delegation(s); each return lists its own under `candidates_opened`.")
+                 f"subagent(s); each return lists its own under `candidates_opened`.")
     if unstated:
         notes.append(f"Unstated: {len(unstated)} fact(s) the source states that no node holds, "
                      f"over {len({e['file'] for e in unstated})} file(s), listed under "
@@ -5648,7 +5648,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     text = yaml.safe_dump(front, sort_keys=False, allow_unicode=True, width=100)
     record_out.write_text(
         f"---\n{text}---\n\n## Folded\nThis record was folded by `trace.py --fold` from the "
-        f"delegation returns under `{RECONCILE_DIR}/{manifest['slug']}.returns/`, which are the "
+        f"subagent returns under `{RECONCILE_DIR}/{manifest['slug']}.returns/`, which are the "
         f"evidence behind every entry above.\n", encoding="utf-8")
 
     cleared = sum(1 for entry in entries if entry["conforms"])
@@ -6449,14 +6449,14 @@ def main() -> int:
     if "--concurrency" in args:
         at = args.index("--concurrency")
         if at + 1 >= len(args) or not args[at + 1].isdigit() or int(args[at + 1]) < 1:
-            print("cannot run: --concurrency takes a whole number of delegations a wave holds, "
+            print("cannot run: --concurrency takes a whole number of subagents a wave holds, "
                   "at least 1", file=sys.stderr)
             return CANNOT_RUN
         concurrency = int(args[at + 1])
         del args[at:at + 2]
         if not do_stage:
             print("cannot run: --concurrency is a mode of --stage; the waves are cut where the "
-                  "delegations are", file=sys.stderr)
+                  "subagents are", file=sys.stderr)
             return CANNOT_RUN
     certify: Path | None = None
     if "--certify" in args:

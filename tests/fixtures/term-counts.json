@@ -1,0 +1,164 @@
+{
+ "src/claude/agents/backlog-decomposer.md": {
+  "the caller": 5
+ },
+ "src/claude/agents/codebase-surveyor.md": {
+  "the caller": 3
+ },
+ "src/claude/agents/coverage-auditor.md": {
+  "the caller": 2
+ },
+ "src/claude/agents/domain-surveyor.md": {
+  "the caller": 3
+ },
+ "src/claude/agents/door-decider.md": {
+  "the caller": 2
+ },
+ "src/claude/agents/execution-contract-binder.md": {
+  "the caller": 8
+ },
+ "src/claude/agents/failure-diagnostician.md": {
+  "the caller": 1
+ },
+ "src/claude/agents/specification-conformance-reviewer.md": {
+  "the caller": 5
+ },
+ "src/claude/agents/standard-conformance-reviewer.md": {
+  "the caller": 9
+ },
+ "src/claude/agents/task-implementer.md": {
+  "the caller": 2
+ },
+ "src/claude/agents/test-author.md": {
+  "the caller": 1
+ },
+ "src/claude/agents/test-intent-reader.md": {
+  "the caller": 3
+ },
+ "src/claude/agents/unstated-fact-decider.md": {
+  "the caller": 3
+ },
+ "src/claude/bin/ask.py": {
+  "the session": 1
+ },
+ "src/claude/bin/deliver.py": {
+  "the caller": 7,
+  "the session": 2,
+  "this invocation": 2
+ },
+ "src/claude/bin/door.py": {
+  "the session": 1
+ },
+ "src/claude/bin/goal.py": {
+  "the session": 5
+ },
+ "src/claude/bin/handoff.py": {
+  "the session": 1
+ },
+ "src/claude/bin/project.py": {
+  "the session": 1
+ },
+ "src/claude/bin/relay.py": {
+  "the session": 2
+ },
+ "src/claude/bin/run.py": {
+  "the caller": 1
+ },
+ "src/claude/bin/spec.py": {
+  "the caller": 2
+ },
+ "src/claude/bin/telemetry.py": {
+  "the caller": 1,
+  "the session": 18
+ },
+ "src/claude/bin/trace.py": {
+  "the caller": 10,
+  "the session": 2
+ },
+ "src/claude/hooks/rules.md": {
+  "the session": 2
+ },
+ "src/claude/schemas/certification-return.json": {
+  "the caller": 1
+ },
+ "src/claude/schemas/conformance-return.json": {
+  "the caller": 2
+ },
+ "src/claude/schemas/delivery-node.json": {
+  "the caller": 1,
+  "this invocation": 1
+ },
+ "src/claude/schemas/plan-node.json": {
+  "the caller": 1
+ },
+ "src/claude/schemas/reconciliation.json": {
+  "the caller": 2
+ },
+ "src/claude/schemas/run.json": {
+  "the caller": 2
+ },
+ "src/claude/schemas/spec/contract.json": {
+  "the caller": 1
+ },
+ "src/claude/schemas/standard.json": {
+  "the caller": 1
+ },
+ "src/claude/schemas/telemetry.json": {
+  "the session": 22
+ },
+ "src/claude/skills/analyse/SKILL.md": {
+  "this invocation": 11
+ },
+ "src/claude/skills/analyse/references/deciding-by-class.md": {
+  "the caller": 1
+ },
+ "src/claude/skills/analyse/references/reading-shape.md": {
+  "this invocation": 1
+ },
+ "src/claude/skills/check-source/SKILL.md": {
+  "the session": 1,
+  "this invocation": 7
+ },
+ "src/claude/skills/clarify-request/SKILL.md": {
+  "the session": 2
+ },
+ "src/claude/skills/deliver-scope/SKILL.md": {
+  "the session": 1
+ },
+ "src/claude/skills/implement-task/SKILL.md": {
+  "the session": 2
+ },
+ "src/claude/skills/plan-work/SKILL.md": {
+  "the session": 1,
+  "this invocation": 11
+ },
+ "src/claude/skills/reconcile/SKILL.md": {
+  "the session": 1,
+  "this invocation": 2
+ },
+ "src/claude/skills/review-change/SKILL.md": {
+  "the caller": 5,
+  "the session": 3,
+  "this invocation": 1
+ },
+ "src/claude/skills/siegard-config/SKILL.md": {
+  "this invocation": 9
+ },
+ "src/claude/skills/siegard-goal/SKILL.md": {
+  "the session": 1
+ },
+ "src/claude/skills/siegard-standard/SKILL.md": {
+  "this invocation": 8
+ },
+ "src/claude/skills/siegard-status/SKILL.md": {
+  "the session": 2,
+  "this invocation": 1
+ },
+ "src/claude/skills/siegard-telemetry/SKILL.md": {
+  "the session": 13,
+  "this invocation": 1
+ },
+ "src/claude/skills/survey/SKILL.md": {
+  "the session": 1
+ }
+}

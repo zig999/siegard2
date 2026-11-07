@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/conformance-return.json",
   "title": "Siegard conformance return",
-  "description": "One specification-conformance-reviewer delegation's answer, as a file. The agent returns this mapping as plain YAML text; the caller saves it verbatim, one file per delegation, under `siegard-reconcile/<slug>.returns/` — the returns are the evidence a reconciliation record is folded from, and a judgment whose raw answer survives nowhere is a judgment the record's reader cannot reopen. `bin/trace.py --fold` validates every return against this contract and refuses a delegation whose answer does not hold: an unusable return means the prompt was wrong, and the correction is a fresh delegation, never a repair applied to the answer by whoever saved it. A finding's own fields are the delivery-node contract's `finding` shape minus `pass` — the caller knows which pass it delegated, and a return cannot claim a pass that did not run.",
+  "description": "One specification-conformance-reviewer subagent's answer, as a file. The agent returns this mapping as plain YAML text; the caller saves it verbatim, one file per subagent, under `siegard-reconcile/<slug>.returns/` — the returns are the evidence a reconciliation record is folded from, and a judgment whose raw answer survives nowhere is a judgment the record's reader cannot reopen. `bin/trace.py --fold` validates every return against this contract and refuses a subagent whose answer does not hold: an unusable return means the prompt was wrong, and the correction is a fresh subagent, never a repair applied to the answer by whoever saved it. A finding's own fields are the delivery-node contract's `finding` shape minus `pass` — the caller knows which pass it delegated, and a return cannot claim a pass that did not run.",
   "type": "object",
   "required": [
     "read"
@@ -32,7 +32,7 @@
           "file": {
             "type": "string",
             "minLength": 1,
-            "description": "The path the finding was observed in, exactly as the file set lists it — spelled from the target source root, the anchor every record in this framework uses. A reconciliation delegation reads one file and its node pack header names the spelling; stated here, it must match."
+            "description": "The path the finding was observed in, exactly as the file set lists it — spelled from the target source root, the anchor every record in this framework uses. A reconciliation subagent reads one file and its node pack header names the spelling; stated here, it must match."
           },
           "where": {
             "type": "string",
@@ -71,7 +71,7 @@
     },
     "read": {
       "type": "array",
-      "description": "One entry per node of the delegation's own set, in the order the set gave them — exactly that set, never a subset and never a candidate, less the nodes `nowhere` names. It is a different statement from `findings`: per node, what was read and where the node's fact sits now. The fold writes a cleared node's `how` from this and from nothing else, and a bound pair read `nowhere` is quoted from it into the record a release is decided from. `read` and `nowhere` together answer for the whole set, each node once; empty only where `nowhere` names every node of it.",
+      "description": "One entry per node of the subagent's own set, in the order the set gave them — exactly that set, never a subset and never a candidate, less the nodes `nowhere` names. It is a different statement from `findings`: per node, what was read and where the node's fact sits now. The fold writes a cleared node's `how` from this and from nothing else, and a bound pair read `nowhere` is quoted from it into the record a release is decided from. `read` and `nowhere` together answer for the whole set, each node once; empty only where `nowhere` names every node of it.",
       "items": {
         "type": "object",
         "required": [
@@ -113,7 +113,7 @@
     "candidates_opened": {
       "type": "array",
       "uniqueItems": true,
-      "description": "Every candidate node the delegation actually opened, whether or not a finding came of it. Omitted where none was. This is the one field that measures the candidate tier: what was offered is in the delegation's prompt, what was used is here, and the distance between the two is what a later reading of the returns can weigh.",
+      "description": "Every candidate node the subagent actually opened, whether or not a finding came of it. Omitted where none was. This is the one field that measures the candidate tier: what was offered is in the subagent's prompt, what was used is here, and the distance between the two is what a later reading of the returns can weigh.",
       "items": {
         "$ref": "#/$defs/specNodeRef"
       }

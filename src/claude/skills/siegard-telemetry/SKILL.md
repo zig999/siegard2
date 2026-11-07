@@ -1,6 +1,6 @@
 ---
 name: siegard-telemetry
-description: Writes a telemetry report over one window of work with this framework — not what was delivered but how the work happened. Which agents ran, how often, at what effort, and what each cost in tokens and wall-clock; which framework commands refused and how often; what the captured runs took; what stopped for a person; what was decided on their behalf; which classified notes stood. Every figure is counted by bin/telemetry.py from disk — the delivery roots' runs, the plan's notes, the decision log, git, and the harness's own session transcripts, read only after a probe and an announcement — and lands as a JSON record and a Markdown report side by side under the project's telemetry_root, in English, self-sufficient enough for the framework's maintainer to rule on without a second conversation. Use when a human asks for a retrospective, a friction report, a cost breakdown, or a consumer report to send back to the framework's maintainer. Not for the project's status — that is /siegard-status.
+description: Writes a telemetry report over one window of work with this framework — not what was delivered but how the work happened. Which agents ran, how often, at what effort, and what each cost in tokens and wall-clock; which framework commands refused and how often; what the captured runs took; what stopped for a person; what was decided on their behalf; which classified notes stood. Every figure is counted by bin/telemetry.py from disk — the delivery roots' runs, the plan's notes, the decision log, git, and the harness's own session transcripts, read only after a probe and an announcement — and lands as a JSON record and a Markdown report side by side under the project's telemetry_root, in English, self-sufficient enough for the framework's maintainer to rule on without a second conversation. Use when a person asks for a retrospective, a friction report, a cost breakdown, or a consumer report to send back to the framework's maintainer. Not for the project's status — that is /siegard-status.
 effort: medium
 ---
 
@@ -23,16 +23,16 @@ printed.
 
 A missing input is a stop, not a default:
 
-1. **the project root** — where `siegard.json` lives, named by the human. «Where the invocation
+1. **the project root** — where `siegard.json` lives, named by the person. «Where the invocation
    names none, the project root is the git toplevel of the session's working directory, as
    `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
    (SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run
    below, and its `project_root:` line is the root. Its refusal is a stop.
 2. **the window** — the instant the report opens at, and optionally the instant it closes at
-   (default: now). Named by the human as an ISO-8601 instant, as a commit (`git show -s
+   (default: now). Named by the person as an ISO-8601 instant, as a commit (`git show -s
    --format=%aI <commit>` turns it into one — say which commit), or as `last`, which continues
    from the moment the previous report closed. A window is never inferred from memory of when a
-   session began: where the human names none and no previous report exists under
+   session began: where the person names none and no previous report exists under
    `telemetry_root`, that is a stop — say what `last` would have needed, and ask.
 
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything
@@ -61,11 +61,11 @@ That read is permitted on two conditions, and both are yours to meet before it h
    the harness keeps the project's transcripts, keyed by the main tree; a report run inside a
    linked worktree reads the sessions whose working directories reach that worktree and names it
    in `harness.worktree`.
-2. **Announce, verbatim.** Quote the probe's output to the human before the full run, so the read
+2. **Announce, verbatim.** Quote the probe's output to the person before the full run, so the read
    is stated rather than discovered. Where the probe reports the directory unavailable — absent,
    unreadable, or holding transcripts whose entries lack the keys the reader counts — say so
    and continue: the report is still written, with the agent and command sections absent and the
-   reason recorded in its `provenance`. Where the human, on seeing the probe, asks you not to read
+   reason recorded in its `provenance`. Where the person, on seeing the probe, asks you not to read
    the transcripts, pass `--transcripts` a directory that does not exist — the report says why
    those sections are empty rather than pretending they were counted.
 
@@ -131,7 +131,7 @@ What each section holds:
   model, from `framework.agents` and `framework.skills`. A report that cannot name the framework
   version it measured says `unknown` and says why that hollows the rest.
 - **2.** Phases in wall-clock order, built from what has a clock: the first and last agent of each
-  type, the runs' `started_at`/`ended_at`, the commits' timestamps, the human turns. A phase is
+  type, the runs' `started_at`/`ended_at`, the commits' timestamps, the person turns. A phase is
   named by the skill its agents belong to (`/plan-work` spawns surveyors, decomposers, binders,
   deciders; `/implement-task` spawns implementers, authors, diagnosticians; `/review-change` and
   `/reconcile` spawn reviewers and auditors). Where nothing carries a clock for a stretch, write
@@ -162,8 +162,8 @@ What each section holds:
   the repeat is the tokens and seconds of those agents where they carried a transcript, and
   "not recorded" where they did not.
 - **6.** Where the work waited for a person. Sources, in order of strength: standing `BLOCKING`
-  notes from `notes`; the human turns in `harness.sessions`, each placed against the commands and
-  agents around it; commits whose subject names a decision. What was asked and how the human
+  notes from `notes`; the person turns in `harness.sessions`, each placed against the commands and
+  agents around it; commits whose subject names a decision. What was asked and how the person
   answered is not in the record — where you were present for it in this conversation, quote it
   and tag it `[recall]`; where you were not, say "not recorded" rather than reconstructing it.
 - **7.** Every entry of `decisions.added`, whole — node, field, unstated, decided, why — and
@@ -185,7 +185,7 @@ What each section holds:
   said as one. **Then the orchestrating sessions**, summed from `harness.sessions[].usage` —
   every session's own turns, never a subagent's — beside `agent_totals.overall`, and their sum:
   what a report reading `agent_totals` alone leaves out is exactly this half, and a window with
-  several delegations from one session has spent roughly as much here as there. Then
+  several subagents from one session has spent roughly as much here as there. Then
   `harness.skill_totals`: the session side by the skill it was running, every row a ceiling per
   skill — the person's own turns inside a skill's span count toward it, and the section says so
   — so a reader sees which skill's prose the session paid for before anyone shortens any. **Then
@@ -232,7 +232,7 @@ What each section holds:
   orchestration logs hold none says zero; a `siegard-telemetry/8` record says nothing, which is
   not zero.
 
-- **14.** `handoffs` whole: the Skill calls the sessions made, the human turns, the short ones,
+- **14.** `handoffs` whole: the Skill calls the sessions made, the person turns, the short ones,
   and every confirmation by class — commit authorizations, go-aheads, choices by label — each
   class with its count, how many came after a message that asked nothing, the seconds waited in
   total and the longest single wait. Then `by_skill`: calls and confirmations side by side, one

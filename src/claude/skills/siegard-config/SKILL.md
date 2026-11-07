@@ -1,21 +1,21 @@
 ---
 name: siegard-config
-description: Writes or updates siegard.json — the project's own declaration of its specification root, its target source roots, its work and delivery root containers, its telemetry root, its standard, which targets a person edits without a task, and where each target's tests sit — so every other skill reads them from one place instead of retyping them per invocation; and, where the human asks for it, sets the project's status line to the progress line. Use when a human wants to declare, add or change what a project's siegard.json holds, including at the start of a new initiative when work_root or delivery_root's meaning changes, or to set or remove the progress status line. Not for anything the file itself governs — it never authors a specification, a plan, a delivery, or a standard's content.
+description: Writes or updates siegard.json — the project's own declaration of its specification root, its target source roots, its work and delivery root containers, its telemetry root, its standard, which targets a person edits without a task, and where each target's tests sit — so every other skill reads them from one place instead of retyping them per invocation; and, where the person asks for it, sets the project's status line to the progress line. Use when a person wants to declare, add or change what a project's siegard.json holds, including at the start of a new initiative when work_root or delivery_root's meaning changes, or to set or remove the progress status line. Not for anything the file itself governs — it never authors a specification, a plan, a delivery, or a standard's content.
 disable-model-invocation: true
 effort: low
 ---
 
-You write one file — `siegard.json` — from what the human tells you, and you stop. One
-invocation, one write: it may create the file or update the fields the human names, and it never
-touches a field the human did not name. The one other write is the status line, and only where the
-human asks for it in this invocation: one key in the project's local Claude Code settings, written
+You write one file — `siegard.json` — from what the person tells you, and you stop. One
+invocation, one write: it may create the file or update the fields the person names, and it never
+touches a field the person did not name. The one other write is the status line, and only where the
+person asks for it in this invocation: one key in the project's local Claude Code settings, written
 by a script, never by you.
 
 ## Required inputs
 
 A missing input is a stop, not a default:
 
-1. **the project root** — where `siegard.json` lives, or will, named by the human. «Where the
+1. **the project root** — where `siegard.json` lives, or will, named by the person. «Where the
    invocation names none, the project root is the git toplevel of the session's working
    directory, as `bin/project.py --here` resolves it, and only where that toplevel holds
    `siegard.json`» (SPEC-010 R6): there, `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py --here`
@@ -41,7 +41,7 @@ A missing input is a stop, not a default:
 The review is `git diff` over the project root, and a diff only says what this invocation did
 when it starts clean. Before any write of `siegard.json`, `git status --porcelain -- <project-root>/siegard.json`
 must print nothing. Output is a stop: report what is pending and go no further — committing,
-discarding, or overriding is the human's decision, never this skill's. A project root not under
+discarding, or overriding is the person's decision, never this skill's. A project root not under
 git control is the same stop: without git there is no review.
 
 ## Read the contract
@@ -68,21 +68,21 @@ this invocation may be the one that creates the file.
 
 ### 2. Merge
 
-Overlay only the fields the human named onto what was read. A field the human did not name is
+Overlay only the fields the person named onto what was read. A field the person did not name is
 left exactly as the existing file held it — this is an update, never a replacement — and where
 the file did not exist, only the named fields exist in the result. Never infer a value for a
-field the human did not name: a guessed `work_root`, an invented target, or a `standard` carried
+field the person did not name: a guessed `work_root`, an invented target, or a `standard` carried
 over from a different project would all be answers this invocation was not given.
 
-A `targets` entry the human names is added under its own key, or overwrites the existing value
-at that key; a key the human does not name is left standing. There is no way to remove a key, or
+A `targets` entry the person names is added under its own key, or overwrites the existing value
+at that key; a key the person does not name is left standing. There is no way to remove a key, or
 any other field, through this step — a deliberate removal is a fresh declaration of the whole
 file, named as such in the report, never a silent side effect of naming other fields.
 
 `standard` has two shapes the contract admits, and the merge keeps whichever one the result must
-hold. Where the human names a target with the value, the field is written as an object keyed by
-target: the named key is added or overwritten, and a key the human did not name is left standing,
-exactly as `targets` entries are. Where the file held a bare path or `null` and the human now
+hold. Where the person names a target with the value, the field is written as an object keyed by
+target: the named key is added or overwritten, and a key the person did not name is left standing,
+exactly as `targets` entries are. Where the file held a bare path or `null` and the person now
 names a target, the bare value has no target to be kept under, and the result is a fresh
 declaration of the field holding only the entries this invocation named — say so in the report,
 by name, as the removal of the bare value it is, never as a side effect. The reverse conversion,
@@ -91,9 +91,9 @@ only a valid result where `targets` holds one key: `project.py` refuses one regi
 over two or more targets, and that refusal is the validate step's to report, never this step's to
 guess around by picking one.
 
-`edits_freely` is written as the human states it, whole: it is a list, and a list overlaid entry
+`edits_freely` is written as the person states it, whole: it is a list, and a list overlaid entry
 by entry could never lose one, so naming it replaces it. Two things belong in the report when it
-is written, because they are what the human is choosing and neither is visible in the diff. Every
+is written, because they are what the person is choosing and neither is visible in the diff. Every
 key must be one `targets` holds — a key naming no target reaches no file, and this is where that
 is caught rather than in a drift report that quietly suppresses nothing. And say what the
 declaration costs: over those targets `trace.py --check` stops listing files that changed without
@@ -102,7 +102,7 @@ project's own suite for the rules a tool decides and by `/check-source` or a lat
 rules a reading decides — never by a reading this framework schedules on its own.
 
 `tests` is keyed by target, the way `standard`'s object is: the named key is added or overwritten
-and a key the human did not name is left standing. A target's scopes are written as the human
+and a key the person did not name is left standing. A target's scopes are written as the person
 states them, whole — a list overlaid scope by scope could never lose one. Every key must be one
 `targets` holds, and the report says what the declaration changes: `trace.py --untraced` counts
 those files uncertified instead of unsurveyed, `trace.py --area` leaves them out of every area a
@@ -121,18 +121,18 @@ Run:
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>
 ```
 
-This is the same resolution every other skill will now perform, so a human reading this report
+This is the same resolution every other skill will now perform, so a person reading this report
 is reading exactly what they will get. Anything but a clean pass is a stop: report the output
 verbatim. **Fixing means form, never invention** — a malformed path or an unreduced `targets` key
 is yours to correct; a `standard` path that does not resolve to a file, or any field's value, is
-never supplied by guessing what the human meant. Where the merged document does not hold
+never supplied by guessing what the person meant. Where the merged document does not hold
 together and the fix is not a form correction, undo the write — restore what step 1 read, or
 remove the file if step 1 found none — and report the problem instead of leaving a broken
 declaration on disk.
 
-### 5. The status line, where the human asked for it
+### 5. The status line, where the person asked for it
 
-Only where the human asked, in this invocation, to set or to remove the status line — never
+Only where the person asked, in this invocation, to set or to remove the status line — never
 offered as a default, never inferred from a field being declared. «The status line is set only
 where the person asks for it, in the project's `.claude/settings.local.json`, as the command
 `python3 -B` over the absolute path of the `bin/progress.py` that wrote it» (SPEC-009 R5). Run:
@@ -174,16 +174,16 @@ Then stop. `git diff` over `siegard.json` is the review, and it belongs to a per
 
 ## What you never do
 
-- Guess a value for a field the human did not name — an absent field stays absent, an existing
+- Guess a value for a field the person did not name — an absent field stays absent, an existing
   one stays as it was.
-- Remove a field the human did not ask to change.
+- Remove a field the person did not ask to change.
 - Require a `targets` entry, `work_root`, `delivery_root` or `telemetry_root` to already exist on disk — a
   container or a target may legitimately not exist yet; only `standard`, named as a path, must
   resolve to a file that does.
 - Key a `standard` entry by a target `targets` does not hold, or fill a target's `standard`
-  entry the human did not state from another target's — a registry is written against one
+  entry the person did not state from another target's — a registry is written against one
   stack, and the neighbouring one is the wrong answer, not a default.
 - Commit, stash, or otherwise change the consumer's git state — a dirty tree is reported, and
-  what to do with it is the human's call.
+  what to do with it is the person's call.
 - Set the status line unasked, write it into a settings file other than through `progress.py`,
   or replace a `statusLine` the script refused.

@@ -1,6 +1,6 @@
 ---
 name: adopt-scope
-description: Carries one context of source no delivery wrote end to end through the adoption route — /survey over the areas the ask names, /analyse over the material it wrote, /reconcile as an adoption over the ledger — committing between steps with a pathspec, recording each step in an orchestration log, and stopping at everything only a human settles. Use only where the human's own message states that the whole route is wanted for that context — an end-to-end ask quoted verbatim, or a standing automation whose condition names this skill. An intent inferred from anything less is a stop. Not for a single phase (invoke that entry point directly), never for code a delivery wrote, and never for planning or delivering work — the adoption changes no source.
+description: Carries one context of source no delivery wrote end to end through the adoption route — /survey over the areas the ask names, /analyse over the material it wrote, /reconcile as an adoption over the ledger — committing between steps with a pathspec, recording each step in an orchestration log, and stopping at everything only a person settles. Use only where the person's own message states that the whole route is wanted for that context — an end-to-end ask quoted verbatim, or a standing automation whose condition names this skill. An intent inferred from anything less is a stop. Not for a single phase (invoke that entry point directly), never for code a delivery wrote, and never for planning or delivering work — the adoption changes no source.
 effort: medium
 ---
 
@@ -9,19 +9,19 @@ committing between steps, and you stop. One invocation, one context adopted. Thi
 judgment of its own: every judgment belongs to the entry point that holds it, invoked whole, and
 every routing decision is a script's answer. What this skill adds is only the taking of the
 handoffs the reports already carry, and the commits between them — the two acts that were the
-human's, delegated once, in the ask.
+person's, delegated once, in the ask.
 
 ## Required inputs
 
 A missing input is a stop, not a default:
 
-1. **the ask** — the human's own words stating that this context is to be adopted end to end,
+1. **the ask** — the person's own words stating that this context is to be adopted end to end,
    quoted verbatim. The authorization is the statement itself, and it is never inferred: a
    request that names one phase gets that entry point, not this one, and an intent read into a
-   message that does not state it is a stop. A standing automation the human armed — a goal
+   message that does not state it is a stop. A standing automation the person armed — a goal
    condition naming this skill — is such a statement; this skill deciding on its own that a
    session "meant" the whole route is not.
-2. **the project root** — where `siegard.json` lives, named by the human. «Where the invocation
+2. **the project root** — where `siegard.json` lives, named by the person. «Where the invocation
    names none, the project root is the git toplevel of the session's working directory, as
    `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
    (SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run
@@ -46,9 +46,9 @@ A missing input is a stop, not a default:
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
 Every root answers only from there, exactly as it does for every entry point this skill invokes;
 a field the file does not declare is a stop, and the report carries the `/siegard-config`
-invocation ready to paste — that skill is closed to model invocation, so the paste is the human's.
+invocation ready to paste — that skill is closed to model invocation, so the paste is the person's.
 
-Absent inputs stop once, together, so the human answers once — never a question at a time.
+Absent inputs stop once, together, so the person answers once — never a question at a time.
 
 ## Before anything: the specification, and the tree
 
@@ -61,7 +61,7 @@ Before any step, `git status --porcelain -- <specification-root> <target-source-
 siegard-trace.json siegard-reconcile siegard-survey/<slug>` must print nothing. Output is a stop.
 
 This skill commits where `HEAD` already points and never creates a branch, never pushes, never
-stashes: starting the run on a branch cut for it is the human's act, offered in the report's
+stashes: starting the run on a branch cut for it is the person's act, offered in the report's
 opening line, which names where `HEAD` stood when the run began.
 
 ## This skill invokes `/analyse`, and only inside the ask

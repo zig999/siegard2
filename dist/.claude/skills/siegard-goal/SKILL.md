@@ -82,7 +82,7 @@ never added for them.
 Then run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once. Every root answers
 from there; a field the file does not declare is a stop, and the report carries the
 `/siegard-config` invocation ready to paste — that skill is closed to model invocation, so the
-paste is the human's.
+paste is the person's.
 
 ## Running the script
 

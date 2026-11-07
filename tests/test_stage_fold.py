@@ -708,7 +708,7 @@ def test_a_finding_spelled_from_the_toplevel_is_refused_naming_the_targets_spell
     save_return(consumer, "round", FILE, front)
     done, _ = folded(consumer)
     assert done.returncode == 1
-    assert f"a finding names backend/{FILE}, and this delegation read {FILE}, which is the " \
+    assert f"a finding names backend/{FILE}, and this subagent read {FILE}, which is the " \
            f"spelling its pack header hands it" in done.stdout
 
 
@@ -899,7 +899,7 @@ def test_save_return_says_when_the_fold_will_refuse_what_it_saved(consumer):
     done = run("--save-return", consumer / "backend", workspace, FILE, transcript)
     assert done.returncode == 0, done.stdout + done.stderr
     assert "the fold will refuse it: the return does not parse" in done.stdout
-    assert "a delegation to run again with its prompt fixed" in done.stdout
+    assert "a subagent to run again with its prompt fixed" in done.stdout
     assert f"wave 1: 1 of 2 saved, 1 pending: {SECOND}" in done.stdout
     saved = consumer / "siegard-reconcile" / "round.returns" / "src__orders__place.ts.yaml"
     assert saved.read_text(encoding="utf-8") == reply
@@ -1333,7 +1333,7 @@ def test_fold_refuses_a_certification_return_that_is_missing_or_off_its_ask(cons
         {"node": OTHER, "state": "covered", "tests": [{"file": PROOF}]}]})
     done, _ = folded(consumer)
     assert done.returncode == 1
-    assert f"this delegation was handed {NODE} alone" in done.stdout
+    assert f"this subagent was handed {NODE} alone" in done.stdout
 
 
 # ---------------------------------------------------------------- --fold --run
@@ -3112,7 +3112,7 @@ def test_the_staging_cuts_the_delegations_into_waves_and_the_receipt_lists_them(
     manifest = manifest_of(workspace)
     assert manifest["concurrency"] == 20
     assert manifest["waves"] == [[FILE]], "the second file is current and unowed; no judge, no wave"
-    assert "dispatch in 1 wave(s) of at most 20 delegation(s)" in done.stdout
+    assert "dispatch in 1 wave(s) of at most 20 subagent(s)" in done.stdout
     assert f"wave 1: 1 — {FILE}" in done.stdout
 
 

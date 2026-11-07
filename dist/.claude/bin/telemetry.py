@@ -47,7 +47,7 @@ the report. A window inferred from when a session seemed to begin would be the r
 replaces.
 
 **A decision is followed to the node it filled.** The log records what the framework decided on
-the human's behalf; nothing records whether anyone read it afterwards, and «the disclosed
+the person's behalf; nothing records whether anyone read it afterwards, and «the disclosed
 decisions later revised are reported by the telemetry — counted beside those that stand, each
 revised one named with the route that revised it and how long after — so the trade that removed
 the stop stays measured rather than assumed» (SPEC-001 R10).
@@ -92,7 +92,7 @@ by the criterion it names — a fact on disk decided it, or a rung of the ladder
 because the two are read apart: a judged recommendation the person read as not taken is the
 reading that narrows the grant back to derived ones.
 
-**A question is counted, never read.** A human turn in the window holding a question mark is a
+**A question is counted, never read.** A turn the person wrote in the window holding a question mark is a
 question the person put to the session, with the skill it ran and the seconds since the
 assistant's last entry, and nothing of its text. Which of them asked for the recommendation a
 handoff withheld is a person's reading of the transcript, never this script's: a word list for
@@ -113,7 +113,7 @@ longer turn is a message, never a confirmation. `handoffs` sums these across ses
 the Skill calls the sessions made, which is the denominator a confirmation count is read per.
 
 **A handoff's form is measured by the definition it is held to.** Every assistant message a
-person answered — the last text the session wrote before a human turn in the window — is read
+person answered — the last text the session wrote before a turn the person wrote in the window — is read
 once by `handoff.py`'s own `reading`, the function `handoff.py --check` runs, so «A handoff
 written as free text is held by `bin/handoff.py --check` to what is decidable without the
 record» (SPEC-006 R8) and is measured by nothing else. What leaves is its length, whether it
@@ -1417,9 +1417,9 @@ def route_of(subject: str) -> str:
     """Which route a commit that changed a decided field came through, read off the one subject a
     shipped skill writes: `/deliver-scope` is the only entry point that commits, every commit it
     makes opens `deliver-scope <slug>:`, and a subject with no such opening is a person's.
-    Authorship separates nothing here — every commit a skill makes is made under the human's
+    Authorship separates nothing here — every commit a skill makes is made under the person's
     identity. Whether a deliver-scope commit is corrective rests on its slug's words, which the
-    human's ask chose: a heuristic, and `route_meanings` says so beside every count."""
+    person's ask chose: a heuristic, and `route_meanings` says so beside every count."""
     if not ROUTE_PREFIX.match(subject or ""):
         return HAND_EDIT
     return CORRECTIVE if CORRECTION_WORDS.search(subject) else FRAMEWORK
@@ -1469,7 +1469,7 @@ def flat(value: object) -> str:
 
 def outcome_of(entry: dict, home: Path, spec_relative: str, specification_root: Path,
                upto: str | None = None) -> dict:
-    """What became of one decision the framework made on the human's behalf, read from the node
+    """What became of one decision the framework made on the person's behalf, read from the node
     it sits beside rather than from the log: the log records what was decided, and the node
     records what stands. The comparison is the field as the landing commit wrote it against the
     field today — never the log's `decided` text against the field, because the log paraphrases

@@ -44,7 +44,7 @@
     "summary": {
       "type": "string",
       "minLength": 1,
-      "description": "Why this file set was checked, in one sentence — the receipt a drift report printed, a batch of edits somebody wants read, a target nobody has looked at in a month. It is the human's reason and never a judgment about the source."
+      "description": "Why this file set was checked, in one sentence — the receipt a drift report printed, a batch of edits somebody wants read, a target nobody has looked at in a month. It is the person's reason and never a judgment about the source."
     },
     "target": {
       "type": "string",
@@ -56,7 +56,7 @@
       "minItems": 1,
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/targetPath" },
-      "description": "The file set the human named, and nothing else. Never discovered: a check that chose its own scope reads a different set each run, and a clean result would not say what it was clean over — the same rule a review's file set is held to, for the same reason. Every finding sits in a file this list holds."
+      "description": "The file set the person named, and nothing else. Never discovered: a check that chose its own scope reads a different set each run, and a clean result would not say what it was clean over — the same rule a review's file set is held to, for the same reason. Every finding sits in a file this list holds."
     },
     "standard": {
       "type": "object",

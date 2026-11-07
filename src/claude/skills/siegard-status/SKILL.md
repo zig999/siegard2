@@ -1,6 +1,6 @@
 ---
 name: siegard-status
-description: Use whenever a person asks how the work stands, whether any initiative is open or can be closed, what is left, what is blocked, what changed lately, what the framework's version is, or what to do next — every such question is answered by running this, never from what the conversation remembers. Derives the current status of a Siegard project from disk — which initiatives are live, what is delivered and what is outstanding, what each remaining task waits on, standing BLOCKING notes, trace drift by class, decisions recently disclosed on the human's behalf, and what the working tree holds uncommitted — by running the framework's own read-only commands and citing a source for every claim. The report speaks the session's language, in a friendly voice a non-expert can follow; command output stays quoted verbatim. It writes nothing in the tree and decides nothing; a status is recomputed every time, never remembered.
+description: Use whenever a person asks how the work stands, whether any initiative is open or can be closed, what is left, what is blocked, what changed lately, what the framework's version is, or what to do next — every such question is answered by running this, never from what the conversation remembers. Derives the current status of a Siegard project from disk — which initiatives are live, what is delivered and what is outstanding, what each remaining task waits on, standing BLOCKING notes, trace drift by class, decisions recently disclosed on the person's behalf, and what the working tree holds uncommitted — by running the framework's own read-only commands and citing a source for every claim. The report speaks the session's language, in a friendly voice a non-expert can follow; command output stays quoted verbatim. It writes nothing in the tree and decides nothing; a status is recomputed every time, never remembered.
 effort: low
 ---
 
@@ -13,7 +13,7 @@ command or file it came from.
 
 ## Required inputs
 
-One: **the project root** — where `siegard.json` lives, named by the human. «Where the invocation
+One: **the project root** — where `siegard.json` lives, named by the person. «Where the invocation
 names none, the project root is the git toplevel of the session's working directory, as
 `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
 (SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run
@@ -41,7 +41,7 @@ one's output, so a round trip per command pays the wait once per command instead
    sound or not, node counts, decisions disclosed. Then
    `git -C <project-root> log -5 --format='%h %ad %s' --date=short --
    '<specification-root>/**/*.log.md'`: the last five commits that touched a decision log
-   beside a node are the decisions most recently made on the human's behalf — `git show
+   beside a node are the decisions most recently made on the person's behalf — `git show
    --stat` on each names the node — and a status that hides them hides exactly what changed
    hands.
 2. **Each initiative.** List the directories under `work_root`. One holding `closure.md` is
@@ -59,7 +59,7 @@ one's output, so a round trip per command pays the wait once per command instead
    The second command is the question "what is left?" answered by the framework itself: tasks
    with no record, what each waits on — an undelivered dependency, absent substrate, a standing
    `BLOCKING, from the specification —` note — and the set deliverable now. Quote standing
-   BLOCKING entries whole; they are the places only the human moves next.
+   BLOCKING entries whole; they are the places only the person moves next.
 
    It answers that question in the plan's terms, which are implementation and proof, and a
    review is neither: `review/<name>.md` under the delivery root is the record `/review-change`

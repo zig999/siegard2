@@ -1,6 +1,6 @@
 ---
 name: deliver-scope
-description: Carries one stated scope end to end through the entry points — /plan-work, /implement-task over each deliverable task, /review-change — committing between steps with a pathspec, recording each step in an orchestration log, and stopping at everything only a human settles. Use only where the human's own message states that the whole route is wanted — an end-to-end ask quoted verbatim, or a standing automation whose condition names this skill. An intent inferred from anything less is a stop. Not for a single phase (invoke that entry point directly), and never for /analyse — the specification is authored, reviewed and committed by a person before this skill runs, except once, before the plan, under a goal whose condition asks to specify its objective.
+description: Carries one stated scope end to end through the entry points — /plan-work, /implement-task over each deliverable task, /review-change — committing between steps with a pathspec, recording each step in an orchestration log, and stopping at everything only a person settles. Use only where the person's own message states that the whole route is wanted — an end-to-end ask quoted verbatim, or a standing automation whose condition names this skill. An intent inferred from anything less is a stop. Not for a single phase (invoke that entry point directly), and never for /analyse — the specification is authored, reviewed and committed by a person before this skill runs, except once, before the plan, under a goal whose condition asks to specify its objective.
 effort: medium
 ---
 
@@ -8,18 +8,18 @@ You carry one stated scope through the route — plan, deliveries, review — co
 steps, and you stop. One invocation, one scope delivered. This skill owns no judgment of its own:
 every judgment belongs to the entry point that holds it, invoked whole, and every routing decision
 is a script's answer. What this skill adds is only the taking of the handoffs the reports already
-carry, and the commits between them — the two acts that were the human's, delegated once, in the
+carry, and the commits between them — the two acts that were the person's, delegated once, in the
 ask.
 
 ## Required inputs
 
 A missing input is a stop, not a default:
 
-1. **the ask** — the human's own words stating that this scope is to be carried end to end,
+1. **the ask** — the person's own words stating that this scope is to be carried end to end,
    quoted verbatim. The authorization is the statement itself, and it is never inferred: a
    request that names one phase gets that entry point, not this one, and an intent read into a
    message that does not state it is a stop, exactly as the corrective increment in `/plan-work`
-   is named and never inferred. A standing automation the human armed — a goal condition naming
+   is named and never inferred. A standing automation the person armed — a goal condition naming
    this skill — is such a statement, and so is a condition the plugin's `Stop` hook repeats from a goal armed by
    `goal.py --arm`, which only the person's own invocation of `/siegard-goal --arm` runs; this skill deciding on its own that a session "meant" the whole route is not. Where such a
    condition names its objective by a file and a digest, the file's text, read whole, is the
@@ -29,7 +29,7 @@ A missing input is a stop, not a default:
    digest — in place of a summary: «A route resumed after a compaction reads its authorization
    from a recorded ask, printed by `ask.py --read`, in place of a summary of an earlier context»
    (SPEC-010 R3).
-2. **the project root** — where `siegard.json` lives, named by the human. «Where the invocation
+2. **the project root** — where `siegard.json` lives, named by the person. «Where the invocation
    names none, the project root is the git toplevel of the session's working directory, as
    `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
    (SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run
@@ -52,9 +52,9 @@ Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, befor
 Every root and the standard answer only from there, exactly as they do for every entry point this
 skill invokes; a field the file does not declare is a stop, and the report carries the
 `/siegard-config` invocation ready to paste — that skill is closed to model invocation, so the
-paste is the human's.
+paste is the person's.
 
-Absent inputs stop once, together, so the human answers once — never a question at a time.
+Absent inputs stop once, together, so the person answers once — never a question at a time.
 
 ## Before anything: the specification gate
 
@@ -67,10 +67,10 @@ to leave in a person's hands.
 
 **This skill never invokes `/analyse`.** Not to open the run, not to unblock it: a fact the
 specification turns out not to state mid-route — the implementer's stop over a silence — ends the
-run, and the `/analyse` invocation that stop already hands over is relayed to the human verbatim.
+run, and the `/analyse` invocation that stop already hands over is relayed to the person verbatim.
 The one writer this run admits into the specification root is `/plan-work`'s own decided-fact
 route, which runs inside that skill's invocation under its own discipline and its own decision
-log, exactly as it does when a human invokes it — and, under a goal whose condition asks to
+log, exactly as it does when a person invokes it — and, under a goal whose condition asks to
 specify a prose objective, `/analyse` once, before the plan and never to unblock a stop, as
 "Under a goal" below states.
 
@@ -84,7 +84,7 @@ and the review commit both: a pending change this skill did not make is somebody
 progress, and committing it under a run's message would bury it. Output is a stop.
 
 This skill commits where `HEAD` already points and never creates a branch, never pushes, never
-stashes: starting the run on a branch cut for it is the human's act, offered in the report's
+stashes: starting the run on a branch cut for it is the person's act, offered in the report's
 opening line, which names where `HEAD` stood when the run began.
 
 ## Read the contract
@@ -155,7 +155,7 @@ The steps:
    committed, whatever it left in the tree: what it wrote is the person's to read, keep or
    discard. A task whose delivery gave up is not
    re-attempted in this run: the same invocation again is a decision about cost, and it is the
-   human's.
+   person's.
 4. **Review.** When the deliverable set is empty, invoke `/review-change` from the last
    delivery's handoff: the tasks being every task this run delivered, the file set being the
    union of the paths their reports named, and the review's name the one this skill gives it:
@@ -180,14 +180,14 @@ The steps:
    step's decision, wherever one exists» (SPEC-004 R10). Fill those slots from the record, one
    re-delivery per task, commit each as `deliver-scope <slug>: prove <task>`, one after the other:
    each is its own `/implement-task` invocation, run to its end and committed before the next
-   begins — never test authors spawned side by side over one tree, and never one suite run
+   begins — never test-authors spawned side by side over one tree, and never one suite run
    standing for several tasks. A suite is one run over the whole tree, so a red re-delivery beside
    green ones holds them all, and the clean-tree stop each invocation opens with is what keeps
    them apart: a re-delivery that stops red leaves its files for the person, every one already
    committed stands, and those not yet begun are relayed as not reached. Then invoke
    `/review-change` once more over exactly those tasks, named by step 4's rule, and commit it as
    `deliver-scope <slug>: review again`. This step runs once per run: a certification refused again is relayed with
-   its new remainder, and a third attempt is the human's decision about cost. A remainder over a
+   its new remainder, and a third attempt is the person's decision about cost. A remainder over a
    node no task of this run implements is not this run's; the report hands it on as `trace.py
    --owed` does.
 6. **Measure**, at the end of every run, the one a stop ended included: what an ended run cost is
@@ -316,7 +316,7 @@ None is worked around, and none is retried. Each carries its class, in backticks
   left unchanged, or a fix the report places in files no record of the task names, another
   task's or none's — the door is `/plan-work` over the slug, the person's, and never trying the
   same delivery again. A fix that lies only in tests the target declares is not this stop:
-  `/implement-task` hands it to its test author before the record, and only the test of another
+  `/implement-task` hands it to its test-author before the record, and only the test of another
   task whose files this delivery shares none of comes back here — `outside-task`;
 - a delivery whose implementer found every criterion already met by source the task never wrote,
   where the door the trace decides is not one this run takes — `already-met`;

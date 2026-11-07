@@ -17,12 +17,12 @@ reading what you wrote.
 A missing input is a stop, not a default:
 
 1. **the tasks under review** — by identifier, each already holding an implementation record.
-   Named by the human, or named by the invocation that delivered them. A review of a task nothing
+   Named by the person, or named by the invocation that delivered them. A review of a task nothing
    delivered has no subject, and a review that chose its own subject reviews something nobody
    asked about.
 2. **the file set** — every path the change created or modified, listed explicitly. Ordinarily it
    is read straight out of those tasks' implementation and proof records, which is exactly what
-   those records are for; where the change reached further, the human says so. **Never
+   those records are for; where the change reached further, the person says so. **Never
    discovered**: a review that chose its own scope reports a different set each run, and a clean
    result would not say what it was clean over. Each path is relative to the target source root,
    exactly as the records spell them: resolve them against that root to open the files, and state
@@ -38,7 +38,7 @@ A missing input is a stop, not a default:
    holds — a file the delivery deleted — or that lies outside that root has no bytes a review
    reads: no review is held to list it, and the review's report names it as not read.»
    (SPEC-004 R22)
-3. **the project root** — where `siegard.json` lives, named by the human. «Where the invocation
+3. **the project root** — where `siegard.json` lives, named by the person. «Where the invocation
    names none, the project root is the git toplevel of the session's working directory, as
    `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
    (SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run
@@ -54,7 +54,7 @@ A missing input is a stop, not a default:
 6. **this review's own name** — what `review/<review-name>.md` under the delivery root is called,
    the name its captured run takes, and the slug of the reconciliation record its conformance pass
    writes at `siegard-reconcile/<review-name>.md`, at the target's git toplevel. Named by the
-   human, or by `/deliver-scope` under the rule its own file states; where the invocation names
+   person, or by `/deliver-scope` under the rule its own file states; where the invocation names
    none, it is the initiative's slug. A name already taken in
    any of the three places is a stop and not a suffix: `bin/run.py` refuses a run under a name
    that exists, `trace.py --stage` refuses a reconciliation slug that exists, and the record
@@ -72,7 +72,7 @@ specification root" means `specification_root` as resolved, required exactly as 
 validator requires it — while the plan is live, and ignored once it is closed. The conformance
 pass reads it; without the specification there is nothing to hold the source to.
 
-Absent inputs stop once, together: one stop naming everything missing, so the human answers once —
+Absent inputs stop once, together: one stop naming everything missing, so the person answers once —
 never a question at a time.
 
 Two optional inputs, and between them they decide whether two of the four passes run.
@@ -100,7 +100,7 @@ to paste. A naming that overrode a differing file is reported with both. Below, 
 
 It decides a second thing now: **the commands are the registry's.** A registry declares how the
 project is installed, checked and run, and those steps are what the capture below executes. This
-is not a convenience. Left to a human to retype at each invocation the commands are not typed at
+is not a convenience. Left to a person to retype at each invocation the commands are not typed at
 all, and a registry's tool-decided rules go undecided while every review reports honestly that the
 failures pass had no input. The registry naming its own commands is what closes
 that, and it keeps every string the project's: nothing here composes a build or a test command or
@@ -142,7 +142,7 @@ so the check above is no stop on the review that answers the change.
 Before any write, `git status --porcelain -- <delivery-root>` must print nothing: the review's
 own diff is its own review, and the pathspec is the point — a pending change elsewhere in the
 repository is somebody else's work in progress, not a reason this review cannot leave a record.
-A dirty delivery root is reported, and what to do with it is the human's call.
+A dirty delivery root is reported, and what to do with it is the person's call.
 The target source root is not held to this — it holds the change under review, and a change is
 what a diff looks like.
 
@@ -187,7 +187,7 @@ Each pass is another judge's. The four are delegated to the subagents this frame
 in a clean context, and the judgment of each lives in the agent's file — not here, and not in your
 memory of it. Delegating means spawning the subagent by its plugin-scoped name —
 `siegard:<agent-name>` — never the bare form, which a consumer's own `.claude/agents/` can shadow —
-and reading the agent's file yourself is the fallback, never the delegation. Only
+and reading the agent's file yourself is the fallback, never the spawn. Only
 where the session cannot spawn subagents, read the agent's file under the plugin root's `agents/`
 directory and apply its discipline in place, and the report must say which passes ran inline.
 
@@ -278,8 +278,8 @@ label and every colour anybody moved. Two things follow, and both go in the repo
 this invocation's hands. Those files were changed by nobody this framework can name, so **the
 rules that a reading decides went unread over them** — nothing here scheduled that reading, and the
 project's own suite only ever answered the rules a tool decides. And the file set of this review is
-the human's to widen: where the receipt's count is worth acting on, `trace.py --check --all` lists
-the paths, and **offer them** — as paths the human may add to the file set of this review, so the
+the person's to widen: where the receipt's count is worth acting on, `trace.py --check --all` lists
+the paths, and **offer them** — as paths the person may add to the file set of this review, so the
 standard pass reaches them, or as the argument for a `/check-source` invocation over the same list.
 Offer, never widen: a review that pulled files in on its own would be choosing its own scope, which
 is the one thing the file set exists to prevent.
@@ -304,7 +304,7 @@ registry declares no such step. Compose nothing yourself: never from your own re
 never from a node's kind, and never from a proof you did not pass. `deliver.py` already refused
 a `demonstrates` naming a node the task does not implement, so what reaches here is a claim the
 plan gave the task; what this step adds is whether the test makes good on it. `--certify` may
-still ride beside it, for a claim no proof carries and a human states; a node under both is
+still ride beside it, for a claim no proof carries and a person states; a node under both is
 refused. Where no proof carries a claim, the staging stages no certification and the report says
 so.
 Either way the report lists every node the tasks implement that no test demonstrates,
@@ -341,7 +341,7 @@ Two states the staging may report continue differently. **A node under the orpha
 stop for that node alone, said plainly: the specification no longer holds it, no bind repairs the
 entry, `--prune` is its route, and no judge is handed it. **No trace file at all** is not a stop:
 nothing has been bound in this target, so there is no collateral to judge — the conformance pass
-runs over the file set with the plan's node identities as its whole node set, in one delegation,
+runs over the file set with the plan's node identities as its whole node set, in one subagent,
 writes no record and binds nothing, and the report says so.
 
 ### 2. Capture
@@ -405,11 +405,11 @@ runs next.
   `--save-return` reports `0 pending` for it, read from the returns on disk; a count of
   notifications kept in the session is never the signal, because notifications arrive several in
   one turn, and some inside the turn that spawns the wave, attached to a launch's result. The wave is
-  the harness's ceiling on delegations running at once, cut by `--stage` into a list rather than
+  the harness's ceiling on subagents running at once, cut by `--stage` into a list rather than
   estimated here; a launch the harness refuses is a wave cut too wide, reported with `--stage
   --concurrency <fewer>` ready to run again, and never a judge dispatched a second time on its
   own — each judging at
-  `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each delegation is passed:
+  `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each subagent is passed:
   a file set of exactly its one file — the resolved path its pack header names, the spelling a
   finding echoes being the header's own; as the node set, its node pack's path from the manifest —
   the pack is the set, whole, the trace's nodes and the plan's alike, each node's text with its
@@ -422,7 +422,7 @@ runs next.
   form of the reply, in the agent's own words: the reply begins with the first key the shape
   lists that the answer carries, and ends with the mapping's last line; no ``` line anywhere.
   Every
-  path a delegation receives is absolute and already resolved, and the pack and the index
+  path a subagent receives is absolute and already resolved, and the pack and the index
   go as paths, never as their text — one index serves the batch, and a prompt carrying it inline
   pays for it once per file. It returns where the source states a domain fact the specification
   does not hold, contradicts one it does, or became a second home for one — and, per node, where
@@ -430,17 +430,17 @@ runs next.
 
   One judge per file rather than one over the set, because a judgment over the set saturates: a
   single context holding every node and every file at once answers hundreds of node-file pairs in
-  one reading and claims clean over pairs it never weighed. No delegation reads another's return,
+  one reading and claims clean over pairs it never weighed. No subagent reads another's return,
   and the pass is the union of what they return. **Save each return verbatim the moment it
   arrives**, at `siegard-reconcile/<review-name>.returns/<the file's path with every '/' as
   '__'>.yaml` — a copy and nothing else, never reshaped, trimmed or repaired: the returns are the
   evidence the record is folded from and they outlive this session. The fold admits the five keys
-  `conformance-return.json` names and refuses a sixth; what a delegation says outside them belongs
-  in your report, never in the file the fold reads. A delegation answers once: where a return is
-  unusable, the correction is a fresh delegation with the prompt fixed, never a follow-up to the
+  `conformance-return.json` names and refuses a sixth; what a subagent says outside them belongs
+  in your report, never in the file the fold reads. A subagent answers once: where a return is
+  unusable, the correction is a fresh subagent with the prompt fixed, never a follow-up to the
   one that already answered.
 
-  Where the staging found no trace file, this pass is instead one delegation over the whole file
+  Where the staging found no trace file, this pass is instead one subagent over the whole file
   set with the plan's node identities as its set, as the situate step says, and nothing below
   under *fold and bind* runs.
 - **standard** — where the caller named a project standard, run
@@ -517,7 +517,7 @@ from the implementation records' own `files[].effect` where a record names the p
 "written by the delivery of <task>" where none does.
 
 Every conformance return is already on disk by then, saved verbatim the moment its notification
-arrived — a copy of the delegation's transcript and nothing else, never retyped from the
+arrived — a copy of the subagent's transcript and nothing else, never retyped from the
 notification that relays it:
 
 ```
@@ -527,7 +527,7 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --save-return <target-source-root>
 `<file>` is the staged file's path as the manifest lists it, or a certification as the wave
 names it, `certify__<node>`; `<transcript>` is the output file the harness names for the spawned
 agent. The save prints what the wave still waits for, and whether the fold will refuse what was
-just saved — a save whose receipt says so is the delegation to run again before the wave closes,
+just saved — a save whose receipt says so is the subagent to run again before the wave closes,
 never a return repaired. Then:
 
 ```
@@ -545,7 +545,7 @@ The fold writes the record mechanically from the saved returns — which answer 
 when more than one judge read it, where a finding naming a node lands, what a finding naming none
 holds, which nodes are marked `collateral` — and every rule it applies lives in the fold and its
 tests, not here. **Never apply those rules by hand, and never edit what the fold wrote.** A
-refusal naming a delegation is a fresh delegation with the prompt fixed; a refusal about the
+refusal naming a subagent is a fresh subagent with the prompt fixed; a refusal about the
 premise is yours to fix. The bind then writes **whatever the judgment cleared, and never anything
 else**: a pair the judgment refused is under no `encoded_at`, and the binding form reads only the
 pairs that are — so the invocation above restamps exactly the cleared set, the delivery's own nodes at
@@ -561,7 +561,7 @@ reconciliation record and its returns under `siegard-reconcile/`, and `siegard-t
 at the target's git toplevel — and none of it is a decision about the change. The record states
 what the judges read; the bind states what they cleared; a finding stays a finding, routed by a
 person. **Nor is it a second judgment on the delivery's own nodes made by you:** the judges are
-the delegations above, and where this session cannot spawn subagents and wrote any node a judge
+the subagents above, and where this session cannot spawn subagents and wrote any node a judge
 would read, the pass stops and reports rather than running inline.
 
 Every finding a return carries — `contradicts`, `unstated` and `restates` alike — is a finding of this

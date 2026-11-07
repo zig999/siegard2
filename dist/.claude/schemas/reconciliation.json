@@ -26,7 +26,7 @@
       "type": "string",
       "minLength": 1,
       "pattern": "^[^/]",
-      "description": "Relative to the target source root, exactly as `siegard-trace.json` and every delivery record spell a path. One anchor or none of them can be compared: the file set the human named, the paths a node's binding holds, and the paths this record accounts for are matched against each other by spelling. Never absolute, and never spelled from the repository around the target."
+      "description": "Relative to the target source root, exactly as `siegard-trace.json` and every delivery record spell a path. One anchor or none of them can be compared: the file set the person named, the paths a node's binding holds, and the paths this record accounts for are matched against each other by spelling. Never absolute, and never spelled from the repository around the target."
     },
     "specNodeRef": {
       "type": "string",
@@ -72,7 +72,7 @@
     "summary": {
       "type": "string",
       "minLength": 1,
-      "description": "What changed in the source and why the human states it is correct. This is the premise the whole record rests on and it is a human's assertion, never the judgment's: the pass below decides whether the specification still holds, not whether the code is right."
+      "description": "What changed in the source and why the person states it is correct. This is the premise the whole record rests on and it is a person's assertion, never the judgment's: the pass below decides whether the specification still holds, not whether the code is right."
     },
     "said": {
       "type": "string",
@@ -92,7 +92,7 @@
     "files": {
       "type": "array",
       "minItems": 1,
-      "description": "The file set the human named, and nothing else. Never discovered: a reconciliation that chose its own scope reconciles a different set each run, and the bindings it writes would claim ground nobody declared. Every path a node below accounts for must appear here, and every path here must be accounted for by a node or by `unbound`.",
+      "description": "The file set the person named, and nothing else. Never discovered: a reconciliation that chose its own scope reconciles a different set each run, and the bindings it writes would claim ground nobody declared. Every path a node below accounts for must appear here, and every path here must be accounted for by a node or by `unbound`.",
       "items": {
         "type": "object",
         "required": [
@@ -292,13 +292,13 @@
           "step": {
             "type": "string",
             "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-            "description": "The registry step that runs the proof, by the name `commands[].step` gives it, as the human named it to the staging. The staging refuses a step the registry does not declare."
+            "description": "The registry step that runs the proof, by the name `commands[].step` gives it, as the person named it to the staging. The staging refuses a step the registry does not declare."
           },
           "proof": {
             "type": "array",
             "minItems": 1,
             "uniqueItems": true,
-            "description": "The test file(s) the auditor cited as bearing on the fact — never the whole set the human offered, which the auditor may cite in part. A file offered and not cited bears on nothing the certification rests on, and pinning it would let an edit to it lapse a certification no reading of it supported; the fold writes the cited set and `--bind-record` pins exactly that. Spelled from the target source root like every path here; not required to be in `files`, because the tests are read to certify and never reconciled by this record.",
+            "description": "The test file(s) the auditor cited as bearing on the fact — never the whole set the person offered, which the auditor may cite in part. A file offered and not cited bears on nothing the certification rests on, and pinning it would let an edit to it lapse a certification no reading of it supported; the fold writes the cited set and `--bind-record` pins exactly that. Spelled from the target source root like every path here; not required to be in `files`, because the tests are read to certify and never reconciled by this record.",
             "items": {
               "$ref": "#/$defs/targetPath"
             }
@@ -462,7 +462,7 @@
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "description": "Tracked files the human kept out of an adoption's judgment: no judge read them and nothing here says what they hold. Named so that a file kept out is never read afterwards as one that was judged and found empty. Only an adopted record carries it, and none of its entries is in `files`.",
+      "description": "Tracked files the person kept out of an adoption's judgment: no judge read them and nothing here says what they hold. Named so that a file kept out is never read afterwards as one that was judged and found empty. Only an adopted record carries it, and none of its entries is in `files`.",
       "items": {
         "$ref": "#/$defs/targetPath"
       }
@@ -477,7 +477,7 @@
         "pairs"
       ],
       "additionalProperties": false,
-      "description": "The pairs a rewrite the human declared carries to the file as it stands, without a judgment — «A pair whose file changed by a rewrite the reconciliation declares is carried to the file as it stands without a judgment, where the declared rewrite applied to the text the binding pinned reproduces the current text exactly and every step the declaration names passed over that tree» (SPEC-005 R11). The rewrite and its claim to change no behavior are the human's, like `summary`; what this framework adds is the evidence: the text each binding pinned, recovered from git at `pinned_at` and run through the rewrite, equals the file's current bytes, and the run named here passed every step the declaration names. A pair listed here was read by no judge, so it is no reading in the corpus: `--owed` counts it neither as a clearance nor as a finding. Whether it binds is still said by its node's entry under `nodes`, where it sits under `encoded_at` or `observed_at` like any pair, and `--bind-record` recomputes every reproduction before it writes anything.",
+      "description": "The pairs a rewrite the person declared carries to the file as it stands, without a judgment — «A pair whose file changed by a rewrite the reconciliation declares is carried to the file as it stands without a judgment, where the declared rewrite applied to the text the binding pinned reproduces the current text exactly and every step the declaration names passed over that tree» (SPEC-005 R11). The rewrite and its claim to change no behavior are the person's, like `summary`; what this framework adds is the evidence: the text each binding pinned, recovered from git at `pinned_at` and run through the rewrite, equals the file's current bytes, and the run named here passed every step the declaration names. A pair listed here was read by no judge, so it is no reading in the corpus: `--owed` counts it neither as a clearance nor as a finding. Whether it binds is still said by its node's entry under `nodes`, where it sits under `encoded_at` or `observed_at` like any pair, and `--bind-record` recomputes every reproduction before it writes anything.",
       "properties": {
         "pattern": {
           "type": "string",

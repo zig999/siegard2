@@ -40,7 +40,7 @@
       "type": "array",
       "minItems": 1,
       "items": { "$ref": "#/$defs/command" },
-      "description": "How this project is installed, checked and run, as steps a caller names to `bin/run.py`. The framework composes none of them and infers none from what it finds in a tree: a runner that guessed a test command would be answering a question about the consumer's project, and the guess would be wrong in the project that mattered. What declaring them changes is who names them. Left to a human to retype at every invocation, they were not named at all — which is how one registry reached twenty-four rules decided by a tool with no step ever run to decide any of them. A registry that declares none behaves the way every registry did before this field: nothing runs on its own, and a review says which rules went unanswered.",
+      "description": "How this project is installed, checked and run, as steps a caller names to `bin/run.py`. The framework composes none of them and infers none from what it finds in a tree: a runner that guessed a test command would be answering a question about the consumer's project, and the guess would be wrong in the project that mattered. What declaring them changes is who names them. Left to a person to retype at every invocation, they were not named at all — which is how one registry reached twenty-four rules decided by a tool with no step ever run to decide any of them. A registry that declares none behaves the way every registry did before this field: nothing runs on its own, and a review says which rules went unanswered.",
       "$comment": "Read by /implement-task and /review-change, and passed to bin/run.py as --step NAME=COMMAND."
     },
     "elsewhere": {
@@ -164,7 +164,7 @@
         "why": {
           "type": "string",
           "minLength": 1,
-          "description": "Why this project admitted it. Where a rule needs the package, that rule's need in a sentence; where a human approved it on its own, this is the approval — the field exists because an approval that lived in a conversation is one the next invocation does not have, and a package admitted with no stated reason is one nobody can later reconsider."
+          "description": "Why this project admitted it. Where a rule needs the package, that rule's need in a sentence; where a person approved it on its own, this is the approval — the field exists because an approval that lived in a conversation is one the next invocation does not have, and a package admitted with no stated reason is one nobody can later reconsider."
         },
         "rules": {
           "type": "array",

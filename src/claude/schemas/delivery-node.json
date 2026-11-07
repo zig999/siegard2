@@ -225,7 +225,7 @@
         "type": "string",
         "minLength": 1
       },
-      "description": "The direct dependencies this delivery added, by the names the project's package manager knows them by. Each must be one the pinned standard authorizes: that list is where a human's approval of a package lives, and a delivery that could install past it would make the approval decorative. Transitive dependencies are not here and could not be \u2014 nobody approved them, no package manager offers a closure anybody did, and what actually arrived is the lockfile's record. Absent is a claim that this delivery added none, which the diff of the manifest either bears out or does not."
+      "description": "The direct dependencies this delivery added, by the names the project's package manager knows them by. Each must be one the pinned standard authorizes: that list is where a person's approval of a package lives, and a delivery that could install past it would make the approval decorative. Transitive dependencies are not here and could not be \u2014 nobody approved them, no package manager offers a closure anybody did, and what actually arrived is the lockfile's record. Absent is a claim that this delivery added none, which the diff of the manifest either bears out or does not."
     }
   },
   "allOf": [

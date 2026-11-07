@@ -1,6 +1,6 @@
 ---
 name: check-source
-description: Holds source that no task delivered to the rules the project set for itself — takes a file set a human names, reads it against the standard's rules that a reading decides, and records every departure citing exactly one rule, beside the trace. Use when files were changed without a task and somebody wants them read — the paths a drift receipt counted as suppressed, a batch of direct edits, or a corner nobody has looked at. Not for reviewing what a delivered task produced (that is /review-change), not for the specification (that is /reconcile), not for running a suite, and never for writing source.
+description: Holds source that no task delivered to the rules the project set for itself — takes a file set a person names, reads it against the standard's rules that a reading decides, and records every departure citing exactly one rule, beside the trace. Use when files were changed without a task and somebody wants them read — the paths a drift receipt counted as suppressed, a batch of direct edits, or a corner nobody has looked at. Not for reviewing what a delivered task produced (that is /review-change), not for the specification (that is /reconcile), not for running a suite, and never for writing source.
 effort: medium
 ---
 
@@ -24,7 +24,7 @@ other half's owner.
 
 A missing input is a stop, not a default:
 
-1. **the project root** — where `siegard.json` lives, named by the human. «Where the invocation
+1. **the project root** — where `siegard.json` lives, named by the person. «Where the invocation
    names none, the project root is the git toplevel of the session's working directory, as
    `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
    (SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run
@@ -36,9 +36,9 @@ A missing input is a stop, not a default:
 3. **the file set** — every path to be read, listed explicitly, each relative to the target source
    root. **Never discovered**: a check that chose its own scope reads a different set each run, and
    a clean result would not say what it was clean over. Ordinarily this is what
-   `trace.py --check --all` listed, or what a `/review-change` report offered; any list a human
+   `trace.py --check --all` listed, or what a `/review-change` report offered; any list a person
    states is as good, and where they name none this invocation has no subject and stops. Where a
-   human wants to see what a change touched before naming the set,
+   person wants to see what a change touched before naming the set,
    `trace.py --encodes --changed <target-root> [<ref>]` prints the changed paths under the target
    and the nodes each is bound to — a reading they then name a set from, never a set this skill
    discovered for itself.
@@ -57,14 +57,14 @@ to read the files against, and there is no narrower thing for it to do; `null` f
 the same stop, said in the file's own words. Where neither answers, that is the stop, and the
 report carries the `/siegard-config` invocation ready to paste, naming this target.
 
-Absent inputs stop once, together: one stop naming everything missing, so the human answers once.
+Absent inputs stop once, together: one stop naming everything missing, so the person answers once.
 
 ## Before anything: the tree
 
 Before any write, `git status --porcelain -- <the check directory>` must print nothing, where the
 check directory is `siegard-check/` at the target's git toplevel. The pathspec is the point: a
 pending change elsewhere is somebody else's work, not a reason this reading cannot leave a record.
-A dirty check directory is reported, and what to do with it is the human's call.
+A dirty check directory is reported, and what to do with it is the person's call.
 
 The target source root is not held to this. It holds the very edits this invocation was called to
 read, and an edit is what a diff looks like.

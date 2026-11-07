@@ -1,13 +1,13 @@
 ---
 name: siegard-archive
-description: Removes closed initiatives from the working tree so their history survives only in git — `bin/archive.py` decides each candidate mechanically (closed, committed, still valid as history) and removes work and delivery together and whole, touching nothing that carries understanding — the project file, the trace, the specification with its decision log, and the reconciliation records all stay. It never commits, tags or stages anything; the report hands the git commands ready, in order, and the git acts are the human's. Use when the human asks to archive closed initiatives, prune delivered history from the branch, or keep the working tree lean. Not for live initiatives, and not for deleting anything else.
+description: Removes closed initiatives from the working tree so their history survives only in git — `bin/archive.py` decides each candidate mechanically (closed, committed, still valid as history) and removes work and delivery together and whole, touching nothing that carries understanding — the project file, the trace, the specification with its decision log, and the reconciliation records all stay. It never commits, tags or stages anything; the report hands the git commands ready, in order, and the git acts are the person's. Use when the person asks to archive closed initiatives, prune delivered history from the branch, or keep the working tree lean. Not for live initiatives, and not for deleting anything else.
 disable-model-invocation: true
 effort: low
 ---
 
 You run one script that removes closed history from the working tree, so it survives only in git,
 and you stop. One invocation, one archiving act — a working-tree change like any other skill's:
-the human reviews it and the human commits it.
+the person reviews it and the person commits it.
 
 The framework keeps **understanding** in the specification (with the decision logs beside its
 nodes), `siegard-trace.json`, `siegard-reconcile/` and the code itself, and keeps **evidence** —
@@ -20,19 +20,19 @@ and delivery root, and archiving them would leave binds resting on judgments hel
 
 A missing input is a stop, not a default:
 
-1. **the project root** — where `siegard.json` lives, named by the human. «Where the invocation
+1. **the project root** — where `siegard.json` lives, named by the person. «Where the invocation
    names none, the project root is the git toplevel of the session's working directory, as
    `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
    (SPEC-010 R6): there, `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py --here`
    runs before the act, and its `project_root:` line is the root. Its refusal is a stop.
 2. **the scope** — which initiatives, by slug, or the literal ask to archive everything closed.
-   Never inferred: removal is the one act whose want only the human can state, which is also
+   Never inferred: removal is the one act whose want only the person can state, which is also
    why this skill is closed to model invocation.
 
 Optionally, **the target** — a key of `siegard.json`'s `targets`. Each delivery is checked
 against the targets its own records name, so the target is asked for only where a delivery's
 records name none and the project declares more than one; the script's report says so, and the
-human names it for the next invocation.
+person names it for the next invocation.
 
 `${CLAUDE_PLUGIN_ROOT}` is set where this skill runs as an installed plugin. Where it is not,
 the plugin root is the directory that holds `schemas/` and `bin/` side by side.
@@ -46,7 +46,7 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/archive.py --remove <project-root> (--all |
 ```
 
 `--all` is the ask to archive everything closed; slugs are the ask to archive those. Where the
-human asked only what would leave, run `--check` in place of `--remove`: it changes nothing.
+person asked only what would leave, run `--check` in place of `--remove`: it changes nothing.
 
 The script is where the criteria live — closed, committed with nothing git ignores or does not
 track inside the pair, valid as history under `bin/plan.py --check` (the closed plan held to
@@ -70,7 +70,7 @@ Relay the script's output whole and in its order: each initiative eligible or sk
 criterion, the pairs removed, the git acts — the tag on the commit the removal starts from, then
 the removal's own commit, pathspec-scoped to the pairs removed — the line that brings any pair
 back, whether `HEAD` sits on a remote branch, and what still answers from what remains. The git
-acts are the human's, ready to paste; the diff, deletions and all, is the review.
+acts are the person's, ready to paste; the diff, deletions and all, is the review.
 
 Then stop.
 

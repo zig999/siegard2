@@ -1,0 +1,99 @@
+{
+  "description": "The words this repository's shipped instructions use for one concept each. A concept has one preferred term; `forbidden` lists the variants that never name anything else, which no file of `clean` may carry; `counted` lists variants that are sometimes the concept and sometimes a plain use (the session's language, the agent's caller), which are counted and held by a ratchet rather than banned. A count is read over prose: frontmatter, fenced blocks, «…» quotations (a requirement's own words) and inline code (a file or identifier's name) are removed first, and a variant matches as whole words, case-insensitively. `scope` is every file whose prose a session or an agent reads as instructions, including what a script prints and what a schema's descriptions say, since both reach an agent. tests/test_terms.py holds the clean files at zero and every other file at the count tests/fixtures/term-counts.json pins; tools/term_counts.py prints and rewrites those pins. A skill whose SKILL.md defines terms under `## Terms` defines only concepts listed here.",
+  "scope": [
+    "src/claude/skills/*/SKILL.md",
+    "src/claude/skills/*/references/*.md",
+    "src/claude/agents/*.md",
+    "src/claude/hooks/rules.md",
+    "src/claude/bin/*.py",
+    "src/claude/schemas/*.json",
+    "src/claude/schemas/*/*.json"
+  ],
+  "concepts": [
+    {
+      "term": "the person",
+      "means": "whoever invoked the skill and decides what only a person decides",
+      "forbidden": [
+        "the human",
+        "a human",
+        "the human's",
+        "a human's"
+      ],
+      "counted": [],
+      "clean": [
+        "src/claude/*"
+      ]
+    },
+    {
+      "term": "subagent",
+      "means": "an agent a skill spawns",
+      "forbidden": [
+        "delegation",
+        "delegations"
+      ],
+      "counted": [],
+      "clean": [
+        "src/claude/*"
+      ]
+    },
+    {
+      "term": "test-author",
+      "means": "the subagent that writes the tests proving one task, named as its file names it",
+      "forbidden": [
+        "test author",
+        "test authors",
+        "test author's"
+      ],
+      "counted": [],
+      "clean": [
+        "src/claude/*"
+      ]
+    },
+    {
+      "term": "you",
+      "means": "the session that runs a skill, addressed by the skill's text",
+      "forbidden": [],
+      "counted": [
+        "the session",
+        "this invocation",
+        "the caller"
+      ],
+      "clean": []
+    },
+    {
+      "term": "producer",
+      "means": "a subagent that writes what a delivery is made of: task-implementer or test-author",
+      "forbidden": [],
+      "counted": [],
+      "clean": []
+    },
+    {
+      "term": "re-enter",
+      "means": "send a subagent that has returned a new message in its own context, instead of spawning a fresh one",
+      "forbidden": [],
+      "counted": [],
+      "clean": []
+    },
+    {
+      "term": "stop",
+      "means": "the invocation ends: nothing more is written, and the report says why",
+      "forbidden": [],
+      "counted": [],
+      "clean": []
+    },
+    {
+      "term": "refusal",
+      "means": "a script's non-zero exit naming what it refused",
+      "forbidden": [],
+      "counted": [],
+      "clean": []
+    },
+    {
+      "term": "door",
+      "means": "an invocation of another entry point, filled and ready to paste, that a report hands the person",
+      "forbidden": [],
+      "counted": [],
+      "clean": []
+    }
+  ]
+}

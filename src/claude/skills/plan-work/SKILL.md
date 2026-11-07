@@ -1,6 +1,6 @@
 ---
 name: plan-work
-description: Turns a stated development scope plus a validated specification into a development plan — inventory, epics and tasks as markdown nodes, each task naming the nodes it implements — validates the plan against the specification, and derives plan.json. A fact the specification does not state is decided on the way, blind to the task cut, and disclosed in the decision log. Also takes a corrective increment — one wrong behavior observed in code already delivered, answering to no task's criteria — as a single task, without the survey or the decomposition. Also takes a proof increment — facts a test decides, held by delivered code, proven by none — one task per fact. Also closes a plan whose initiative the human declares over. Use to plan or decompose work over a domain the specification holds, to route a bug found by running the delivered system, to owe a node its test, or to close a finished plan. Not for analysing domain material, and not for writing source code or tests.
+description: Turns a stated development scope plus a validated specification into a development plan — inventory, epics and tasks as markdown nodes, each task naming the nodes it implements — validates the plan against the specification, and derives plan.json. A fact the specification does not state is decided on the way, blind to the task cut, and disclosed in the decision log. Also takes a corrective increment — one wrong behavior observed in code already delivered, answering to no task's criteria — as a single task, without the survey or the decomposition. Also takes a proof increment — facts a test decides, held by delivered code, proven by none — one task per fact. Also closes a plan whose initiative the person declares over. Use to plan or decompose work over a domain the specification holds, to route a bug found by running the delivered system, to owe a node its test, or to close a finished plan. Not for analysing domain material, and not for writing source code or tests.
 argument-hint: "<project-root> target <key> slug <slug> — <the scope, or the increment, in prose>"
 effort: medium
 ---
@@ -13,8 +13,8 @@ order, same discipline.
 
 A missing input is a stop, not a default:
 
-1. **the scope** — what the human wants developed, in prose, plus any files it references.
-2. **the project root** — where `siegard.json` lives, named by the human. «Where the invocation
+1. **the scope** — what the person wants developed, in prose, plus any files it references.
+2. **the project root** — where `siegard.json` lives, named by the person. «Where the invocation
    names none, the project root is the git toplevel of the session's working directory, as
    `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
    (SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run
@@ -62,10 +62,10 @@ invocation ready to paste. A file that does not hold together is a stop reported
 naming that overrode a differing file is reported with both. Below, a standard "named" means
 resolved by either step.
 
-Absent inputs stop once, together: one stop naming everything missing, so the human answers
+Absent inputs stop once, together: one stop naming everything missing, so the person answers
 once — never a question at a time.
 
-A closing invocation — the human declaring the initiative over — needs three of these: the ask
+A closing invocation — the person declaring the initiative over — needs three of these: the ask
 with its why, the project root, and the initiative's slug. The specification root and the
 target source root play no part in closing (see "Closing the plan"). A corrective increment
 needs all four and one more the ordinary path never asks for: the file the wrong behavior lives
@@ -106,7 +106,7 @@ decided-fact route may write. A diff only says what this invocation did when the
 clean. Before any write, `git status --porcelain -- <work-root> <specification-root>` must
 print nothing; a closing invocation names the work root alone, because nothing it does reaches
 the other. Output is a stop: report what is pending and go no further — committing,
-discarding, or overriding is the human's decision, never the plan's. A root not under git
+discarding, or overriding is the person's decision, never the plan's. A root not under git
 control is the same stop: without git there is no review.
 
 ## Read the contract
@@ -148,9 +148,9 @@ to the cut that surfaced it. The judgment of each lives in the agent's file — 
 not in your memory of it. Delegating means spawning the subagent by its plugin-scoped name —
 `siegard:<agent-name>` — never the bare form, which a consumer's own `.claude/agents/` can shadow —
 and reading the agent's file yourself is the fallback, never the
-delegation. A spawned delegation runs in the background and the harness delivers a notification
+subagent. A spawned subagent runs in the background and the harness delivers a notification
 when it answers; the session waits for that notification and nothing else — never a `sleep`, a
-scheduled wakeup, an agent listing or a message to the delegation, each of which is a turn spent
+scheduled wakeup, an agent listing or a message to the subagent, each of which is a turn spent
 reading nothing — and reads the return when the notification names it. The binder's isolation
 is the point of the whole arrangement: it arrives with
 no memory of how the tasks were cut, so the specification is read for what it says today, never
@@ -167,10 +167,10 @@ task holds — because the task that wrote the file was delivered and reviewed b
 the behavior. Running the system for real is where these arrive, and they arrive after every
 ceremony this framework has has already finished.
 
-**The human names this in the invocation. It is never inferred from the tree**, exactly as the
+**The person names this in the invocation. It is never inferred from the tree**, exactly as the
 narrow re-delivery in `/implement-task` is never inferred: a mode that decides for itself when to
 run fewer steps is a mode that runs fewer steps. The invocation names two things: the wrong
-behavior, and the file it lives in. Both are the human's — they ran the system and they are
+behavior, and the file it lives in. Both are the person's — they ran the system and they are
 holding the file — and the second is what the epic below is cut from.
 
 It exists because the whole path is sized for a scope, and a one-behavior correction is not one;
@@ -189,11 +189,11 @@ situate → intake → the task, written here → implement-against → validate
 
 **The survey and the decomposition do not run.** `intake` above is step 2's first paragraph and
 only it — the scope persists exactly as it always does, and the rest of that step is the survey.
-There is no tree to discover — the human is
+There is no tree to discover — the person is
 holding the file — and there is nothing to decompose: the increment is one task, and where it is
 genuinely more than one, this is a scope and the ordinary path is what it gets.
 
-**The scope under `intake/` is the human's and nothing else.** The behavior as they described
+**The scope under `intake/` is the person's and nothing else.** The behavior as they described
 it, the reproduction, and the file by path. Where a goal's findings policy named the finding in
 advance, the invocation carries it from the review's record, and the intake holds three things
 from it: the node the finding names, as what the code must do; the file; and the record, by
@@ -211,7 +211,7 @@ note when the fix contradicts something the specification states or states nothi
 is the common shape here, because a behavior nobody specified is how the bug survived review. The
 decided-fact route of step 4 runs here too, and settles that silence the same way, so the
 correction stands still only on a genuine contradiction. The binder is also the cheapest of the
-survey, decomposition and binding delegations, so the ceremony this path drops is the ceremony
+survey, decomposition and binding subagents, so the ceremony this path drops is the ceremony
 that was buying nothing.
 
 You write the task yourself, and it is held to every test a decomposer's task is held to. The
@@ -240,7 +240,7 @@ holds the file to what a binder read, never the skeleton to its first draft.
 set of every task under it, so growing a delivered epic's claim for one correction re-opens every
 task that epic already holds; a new epic claims exactly what this correction answers to and
 re-judges nothing. What it answers to is the binder's to say, and the file seeds what the binder
-reads — the human named the file, and the trace already knows what that file answers to:
+reads — the person named the file, and the trace already knows what that file answers to:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes <target-source-root> <file> [<file> ...]
@@ -251,10 +251,10 @@ ever bound is not a corrective increment, because there is no claim to correct a
 what came back the way step 1 closes any impact set; that closed set is the binder's candidate set,
 handed as the candidates' file paths exactly as step 4 hands them, and in place of the epic's
 `covers` less its `uncovered`, because the epic is not written yet. Write the epic after the
-binder returns: its `covers` is the `implements` the binder returned plus any node the human named
+binder returns: its `covers` is the `implements` the binder returned plus any node the person named
 for this correction, and nothing else — a node the file encodes and the correction does not touch
 is not claimed, so it owes no declaration. `uncovered` holds only a node the epic claims that the
-human excluded from this correction, with the human's own why; a why composed to fill the field
+person excluded from this correction, with the person's own why; a why composed to fill the field
 says nothing the next reader can act on. The validator refuses an epic claiming a node its task
 does not implement and `uncovered` does not declare.
 
@@ -317,12 +317,12 @@ decide it is owed that test, and the implementation holding the fact may have be
 before anyone could write it — by another task, in a plan already closed, or bound by a
 reconciliation no task ever planned. This is the route that owes it a task.
 
-**The human names this in the invocation, exactly as the corrective increment is named.** For each
-fact the invocation names four things, all the human's: the node, by identity; the assertion,
+**The person names this in the invocation, exactly as the corrective increment is named.** For each
+fact the invocation names four things, all the person's: the node, by identity; the assertion,
 verbatim, as the record's `remainder_why` states it; the record that stated it, by path under
 `siegard-reconcile/`; and the file or files the node is bound to where its fact is held. `trace.py
 --owed` prints the first three and the files beside every node it lists, and its closing line hands
-this invocation ready to fill. Which facts are worth a test is the human's: this route takes the
+this invocation ready to fill. Which facts are worth a test is the person's: this route takes the
 ones named and proposes none.
 
 Two stops, each reported with what answered it. Every named file must be one the trace binds the
@@ -473,7 +473,7 @@ under `intake/` in the work root. Point every `sources` entry at a file under it
 persists the same way — a new file under `intake/`, never an edit to what intake already
 holds.
 
-**A layout the human supplied goes under `intake/layout/`, apart from the scope.** A mockup, a
+**A layout the person supplied goes under `intake/layout/`, apart from the scope.** A mockup, a
 rendering, a palette — anything that shows what a screen should look like rather than telling what
 the system should do. The separation is a directory rather than a promise because of what reads
 each: everything under `intake/` is material this skill's judges read, and only what a task names
@@ -572,7 +572,7 @@ same seven `/analyse` reads. Never the skeleton, never the note's
 own text, never a binder's reasoning: the decider is blind to the cut, and the blindness is
 what keeps the specification from being bent to fit tasks already written.
 
-What comes back is written, not judged, and read from where the delegation answered: its
+What comes back is written, not judged, and read from where the subagent answered: its
 transcript, or a return saved from it — never the text of the notification that relays it, which
 renders the reply rather than holding it. On `stated` or `decided`, write the edits verbatim at
 the paths they name, then append the returned log entry where the return carries one — every
@@ -669,7 +669,7 @@ Settling a blocking note takes one of two routes, and the skeleton's `rationale`
 Where the blocked statement was the decomposer's decision — the skeleton carries `rationale` over
 that cut — the skeleton goes back to the decomposer with the note, is re-cut, and re-run through
 this step. Where it came from the scope, the task is written with the note, and the report names
-it as a conflict only the human settles: through the scope, or through the analysis that extends
+it as a conflict only the person settles: through the scope, or through the analysis that extends
 the specification. A remainder's clause is answered where it belongs — another task's reference,
 the epic's `uncovered`, or scope this plan does not yet hold — and no validator walks clauses, so
 the report is where a reviewer checks that something answers it. The class itself is never yours
@@ -813,16 +813,16 @@ Report, in this order, in the file:
   `BLOCKING, from the specification —` note — and then the set itself. Where that set holds more
   than one task, `bin/deliver.py --help` describes delivering them in parallel — one worktree
   per task, integrated by merge — and taking that route is, like everything in this
-  handoff, the human's choice. A set restated here instead is a set that was true when it was
+  handoff, the person's choice. A set restated here instead is a set that was true when it was
   printed. The handoff offers the next step and never takes it: filling the one open slot and
-  invoking are the human's — given per invocation, or given once for a whole route through the
+  invoking are the person's — given per invocation, or given once for a whole route through the
   orchestrating entry point, `/deliver-scope`, whose own file bounds what it may fill.
 
 Then stop. `git diff` over the work root is the review, and it belongs to a person.
 
 ## Closing the plan
 
-A work root serves one initiative, and the human says when it is over — the ask, with its
+A work root serves one initiative, and the person says when it is over — the ask, with its
 why, is the input, and either missing is a stop. Closing spawns no judge and touches neither
 the specification root nor the target source root.
 
@@ -842,10 +842,10 @@ the specification root nor the target source root.
 
   The newest review is the last name `ls` lists under `review/`; where the delivery root holds
   none, say "no review". None of the three is a stop, and none is a judgment: closing is the
-  human's act, and these are the counts it closes over — findings nobody routed, nodes still
+  person's act, and these are the counts it closes over — findings nobody routed, nodes still
   owed a test, notes still standing — so that "complete" is a word read beside them rather than
   said instead of them.
-- Write `closure.md` at the work root: prose, one sentence per line — the why as the human
+- Write `closure.md` at the work root: prose, one sentence per line — the why as the person
   gave it, and the intake file it was read from. It is a marker, never a node: the
   validator keeps it the way it keeps `intake/`.
 - Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py <work-root>` — no specification root,
@@ -867,5 +867,5 @@ the specification root nor the target source root.
 - Record a status, an estimate, a priority or an execution order — those fields do not exist,
   and prose does not get to hold what the contract refused.
 - Commit, stash, or otherwise change the consumer's git state — a dirty root is reported, and
-  what to do with it is the human's call.
-- Remove a closure — a closed plan is history, and reopening it is the human's git act.
+  what to do with it is the person's call.
+- Remove a closure — a closed plan is history, and reopening it is the person's git act.

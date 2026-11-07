@@ -1,6 +1,6 @@
 ---
 name: reconcile
-description: Reconciles source that changed without a rebind — whatever wrote it — with the specification the trace says it encodes — reads which nodes a named file set is bound to, holds that source to them through the conformance judgment, records the answer per node, and rebinds only what the judgment cleared. Use when source was edited by hand, resolved in a merge, or rewritten by a delivery while other nodes' bindings still claim it; as an audit over a set the human names, to re-examine standing bindings that never drifted; or as an adoption of source no delivery wrote, binding each node /analyse wrote from it to the files that hold its fact. Not for changing the specification (that is /analyse), not for routing a wrong behavior into a task (that is /plan-work), not for reviewing what a delivered task produced (that is /review-change), and never for writing source.
+description: Reconciles source that changed without a rebind — whatever wrote it — with the specification the trace says it encodes — reads which nodes a named file set is bound to, holds that source to them through the conformance judgment, records the answer per node, and rebinds only what the judgment cleared. Use when source was edited by hand, resolved in a merge, or rewritten by a delivery while other nodes' bindings still claim it; as an audit over a set the person names, to re-examine standing bindings that never drifted; or as an adoption of source no delivery wrote, binding each node /analyse wrote from it to the files that hold its fact. Not for changing the specification (that is /analyse), not for routing a wrong behavior into a task (that is /plan-work), not for reviewing what a delivered task produced (that is /review-change), and never for writing source.
 effort: medium
 ---
 
@@ -28,10 +28,10 @@ succeeded is not discarded because a sibling reading did not.
 A missing input is a stop, not a default:
 
 1. **the file set** — every path this reconciliation covers, listed explicitly, each relative to
-   the target source root. Named by the human. **Never discovered**: a reconciliation that chose
+   the target source root. Named by the person. **Never discovered**: a reconciliation that chose
    its own scope covers a different set each run, and what it writes is the one claim this
    framework keeps after every plan and delivery root is gone.
-2. **the project root** — where `siegard.json` lives, named by the human. «Where the invocation
+2. **the project root** — where `siegard.json` lives, named by the person. «Where the invocation
    names none, the project root is the git toplevel of the session's working directory, as
    `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
    (SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run
@@ -45,28 +45,28 @@ A missing input is a stop, not a default:
    justification for a binding that is still in the trace.
 
 One optional input: **certifications** — for a node the file set encodes, the test file(s) the
-human offers as its proof, spelled from the target source root, and the registry step that runs
-them, by the name `commands[].step` gives it. Named by the human, never chosen here: which test
+person offers as its proof, spelled from the target source root, and the registry step that runs
+them, by the name `commands[].step` gives it. Named by the person, never chosen here: which test
 proves a fact is a claim about the project's own suite, and the judgment below decides only
 whether the claim holds — the auditor's rule, that the tests would fail if the fact stopped
 holding. Where it holds, the bind writes the node as one a test decides, so a later drift on its
 files is answered by the step's run rather than by a fresh reading. Absent, nothing is certified
 and every binding stays decided by reading, which is every binding's default.
 
-A second optional input: **a rewrite** — the human's statement that the files changed by one
+A second optional input: **a rewrite** — the person's statement that the files changed by one
 mechanical rewrite and nothing else (a module specifier gaining a suffix, an import path following
 a move), and the registry steps whose run shows the rewritten tree still builds and passes. Named by
-the human, never composed here: you transcribe the rewrite they state into a `pattern` and a
+the person, never composed here: you transcribe the rewrite they state into a `pattern` and a
 `replacement`, and the report shows that transcription beside what it carried. A rewrite read off a
-diff and proposed by you is a claim the human never made — the reproduction proves a text is the
-old text rewritten, never that the rewrite changes no behavior, and that claim is the human's alone.
+diff and proposed by you is a claim the person never made — the reproduction proves a text is the
+old text rewritten, never that the rewrite changes no behavior, and that claim is the person's alone.
 Absent, every drifted pair goes to a judge.
 
-And one mode, named by the human and never inferred: **adoption** — the file set is source no
+And one mode, named by the person and never inferred: **adoption** — the file set is source no
 delivery wrote, and the invocation also names the **candidates**, the nodes `/analyse` wrote from
 material read from that source, which its report lists, and optionally the files kept **outside**
 the judgment, which no judge reads. «A binding of adopted source rests on a reconciliation record
-whose judgment cleared the pair» (SPEC-005 R3), and the candidates are the human's to name, never
+whose judgment cleared the pair» (SPEC-005 R3), and the candidates are the person's to name, never
 discovered here. Without the word, this is an ordinary reconciliation and a file the trace binds
 nothing to is reported and goes no further.
 
@@ -81,7 +81,7 @@ means `specification_root` as resolved.
 of them, and that is the whole of what it adds: the judgment it runs already existed and was
 reachable only through a delivery that a hand edit does not have.
 
-Absent inputs stop once, together: one stop naming everything missing, so the human answers once —
+Absent inputs stop once, together: one stop naming everything missing, so the person answers once —
 never a question at a time.
 
 ## Before anything: the tree
@@ -96,7 +96,7 @@ because a bind records a digest on both sides: the digest of an uncommitted edit
 the next checkout erases, and a node stamped from text nobody committed is a binding to a
 specification that may never have existed — the drift that would report afterwards, either way, is
 drift nobody caused. Output is a stop that names what is pending — committing or discarding is the
-human's decision, never this skill's.
+person's decision, never this skill's.
 
 `siegard-trace.json` must be clean for the same reason every other entry point wants its own output
 clean: it is what this invocation writes, and a diff only says what this run did when it starts from
@@ -133,7 +133,7 @@ situate → stage → judge → capture → fold → bind → report → stop
 - **The trace must hold together too.** Run
   `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py <target-source-root>`. A trace file that does not
   exist is a stop with a plain answer: nothing has ever been bound in this target, so there is no
-  link to reconcile, and what the human wants is a delivery — or, for source no delivery wrote, an
+  link to reconcile, and what the person wants is a delivery — or, for source no delivery wrote, an
   adoption, the one invocation that begins without a trace and writes the first one.
 - **The record's own path must be free.** `siegard-reconcile/<slug>.md`, at the target source
   root's git toplevel — the directory `git -C <target-source-root> rev-parse --show-toplevel`
@@ -159,7 +159,7 @@ second home for it):
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --stage <target-source-root> <specification-root> \
     <slug> <workspace> <each named path> [--audit] [--certify <certifications file>] \
-    [--rewrite <rewrite file>] [--node <each node the human named as written since the bind>]
+    [--rewrite <rewrite file>] [--node <each node the person named as written since the bind>]
 ```
 
 This is the locate step, run by the one reader that cannot miss a binding. It computes every node
@@ -174,11 +174,11 @@ comes back reads exactly like a complete one.
 
 **Two anchors meet here, and only one of them belongs in what anyone writes.** The git toplevel
 is the anchor of what `trace.py` *prints* — a `--check` finding, an entry of the trace file — and
-nothing else. Everything written — the file set the human gave you, every path in the premise,
+nothing else. Everything written — the file set the person gave you, every path in the premise,
 and the `file` every finding names — is spelled from the target source root, the anchor every
 other record in this framework uses; the pack header hands the judge that spelling verbatim, and
-the judge copies it. `--stage` takes the human's own spelling and refuses the other one naming
-the correction, which is the cheap failure; the expensive one is converting the human's paths
+the judge copies it. `--stage` takes the person's own spelling and refuses the other one naming
+the correction, which is the cheap failure; the expensive one is converting the person's paths
 the other way to match the drift report you just read. **What is judged is every node the trace binds to the set, and never a chosen subset** —
 which nodes a file answers to is what the trace holds, and reconciling a file against the part of
 the specification that happens to agree with it is the failure this whole route exists to prevent.
@@ -187,16 +187,16 @@ binding computes at the file's content as it stands, with no open finding agains
 corpus, was judged over these exact bytes already, and re-judging it buys a second reading of
 text that did not move.
 
-**Where the human's ask is an audit, pass `--audit` and omit nothing.** An audit is this same
+**Where the person's ask is an audit, pass `--audit` and omit nothing.** An audit is this same
 invocation over a set whose bindings did not drift: a binding over-broad from the day it was
-written never drifts, so nothing keyed by change ever re-examines it, and the human's ask to
+written never drifts, so nothing keyed by change ever re-examines it, and the person's ask to
 re-examine standing claims is the one trigger there is. The staging then hands every pair to a
 judge, the premise's `summary` says the source did not change and the claims are what is being
 re-read, and everything downstream runs unmodified — a claim confirmed is restamped with the
 record justifying it, a fact held nowhere blocks its node and the report hands the
 `--release ... --node` release ready to paste, and a finding nobody acts on stays in the corpus
 where `--owed` repeats it. `trace.py --encodes --rank <target-source-root>` is where an audit's
-candidate set comes from — the two accretion counts, as facts; the file set is still the human's
+candidate set comes from — the two accretion counts, as facts; the file set is still the person's
 to name. An audit is never chosen by this skill: invoked without the word, a reconciliation
 omits what the guard allows, and that is the default for a reason — re-judging unchanged pairs
 is bought deliberately or not at all.
@@ -222,25 +222,25 @@ Four states the staging separates, and they do not all continue:
 Two kinds land there and both are answered the same way: a constraint some step of the project's
 registry `decides`, and a node a certified test decides. A reading of either would re-decide
 mechanically what a run settles exactly — at a model's recall, and at the price of the whole
-file's delegation. Two guards send such a pair back to a judge instead, and neither is yours to
+file's subagent. Two guards send such a pair back to a judge instead, and neither is yours to
 override: a certification whose test's text moved is no longer live, and a node whose own text
 moved was decided by a step or a test that was never asked about the sentence which replaced it.
 A pair that is current and owes nothing is omitted before either tier reaches it — nothing has to
 re-decide it, so it needs no run either.
 
-**Where the human offered certifications, write them into a small YAML file in the workspace and
+**Where the person offered certifications, write them into a small YAML file in the workspace and
 pass it as `--certify`** — a list, each entry the node, its `proof` paths and its `step`, exactly
-as the human stated them. The staging refuses, before writing anything, a node none of the named
+as the person stated them. The staging refuses, before writing anything, a node none of the named
 files encodes, a proof that is not there, and a step the registry does not declare; a refusal is
-the human's to answer, never a default. It never omits a pair of a node being certified — the
+the person's to answer, never a default. It never omits a pair of a node being certified — the
 certification rides a fresh reading of the node against its file — and it writes one
 **certification pack** per node beside the file packs: the node's text with its source named, the
 proof resolved to absolute paths, the step, and the return contract's path. The pack is the whole
 of what the auditor is handed.
 
-**Where the human stated a rewrite, write it into a small YAML file in the workspace and pass it as
+**Where the person stated a rewrite, write it into a small YAML file in the workspace and pass it as
 `--rewrite`** — `pattern` and `replacement` as Python's `re.sub` reads them, and `steps`, the
-registry steps the human named. «A pair whose file changed by a rewrite the reconciliation declares
+registry steps the person named. «A pair whose file changed by a rewrite the reconciliation declares
 is carried to the file as it stands without a judgment, where the declared rewrite applied to the
 text the binding pinned reproduces the current text exactly and every step the declaration names
 passed over that tree» (SPEC-005 R11). The staging recovers each pinned text from git and hands no
@@ -248,7 +248,7 @@ judge a pair the rewrite reproduces; every other drifted pair is judged as witho
 receipt names each one with the reason — the node moved, an open finding stands against the pair,
 git holds no pinned text, or the rewrite does not reproduce it. A rewrite never rides an audit, a
 review or an adoption, and the staging refuses a step the registry does not declare. Where the
-receipt says the rewrite reproduces nothing, stop and show the human the transcription before any
+receipt says the rewrite reproduces nothing, stop and show the person the transcription before any
 judge runs: either it says something other than what they stated, or the change was not that
 rewrite alone, and only they can say which.
 
@@ -257,7 +257,7 @@ no delivery ever encoded has no entry in it — which is the ordinary state of e
 wrote after the source it governs was written, and that alternation is the rhythm this framework
 expects rather than an exception to it. Such a node cannot be cleared here and cannot be bound here:
 it was never delivered, and binding it is a delivery's act. What it can be is a **candidate**. Where
-the human names nodes written since this source was last bound — `/analyse` ends by listing exactly
+the person names nodes written since this source was last bound — `/analyse` ends by listing exactly
 those identities — they join the candidate tier the judgment is passed, so a fact one of them now
 holds is attributed to it instead of reported as held by nothing. Name each to the staging with
 `--node <node>`: it lands in the candidate index beside the bound nodes, the manifest records it
@@ -278,15 +278,15 @@ return of that wave saved with `--save-return` before the next wave is spawned. 
 `--save-return` reports `0 pending` for it, read from the returns on disk; a count of
 notifications kept in the session is never the signal, because notifications arrive several in
 one turn, and some inside the turn that spawns the wave, attached to a launch's result. The wave is the
-harness's ceiling on delegations running at once, cut by `--stage` into a list rather than
+harness's ceiling on subagents running at once, cut by `--stage` into a list rather than
 estimated here; a launch the harness refuses ran no judge and is a wave cut too wide — the
 report hands `--stage --concurrency <fewer>` ready to run again, and no judge is dispatched a
 second time on this invocation's own account — its judgment lives at
-`${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each delegation is passed:
+`${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each subagent is passed:
 a file set of exactly its one file — the resolved path its pack header names, the spelling a
 finding echoes being the header's own; as the node set, its node pack's path from the manifest —
 the pack is the set, whole, each node's text with its source named; as candidates, the path to
-the workspace's candidate index — which holds any node the human named as written since the
+the workspace's candidate index — which holds any node the person named as written since the
 bind — which it may consult where its file states a fact its own nodes do not
 settle: a fact one file states can be governed by a node another file carries, and a judge who
 cannot open that node reports an absence where the true finding is a misattribution; the
@@ -308,23 +308,23 @@ is a delivery's act, which no reconciliation performs. What the tier would buy o
 better sentence about a pair whose outcome it cannot change, paid for with every candidate node a
 judge opens to write it. The ordinary route keeps the tier for the opposite reason: there a
 misattribution reported as a gap is a false finding, a false finding blocks its node, and undoing
-one costs a fresh delegation over the whole file.
+one costs a fresh subagent over the whole file.
 
 **Two rules about the paths in those prompts, and both are about what a prompt costs.**
 
 - **The candidate index goes as its path and never as its contents.** One index serves the whole
   batch — every node the staging assigned, with the files each is bound to — and a judge opens it
   on demand, in its own context, where the reading is paid once by whoever needs it. Writing that
-  list into a prompt instead pays for it again per delegation, in this context, where nothing
+  list into a prompt instead pays for it again per subagent, in this context, where nothing
   reuses it: a batch's index is the same text every time, so N prompts carrying it inline is that
   text written N times to say what one path already says. The same holds for the node pack: its
   path, never its text.
-- **Every path a delegation receives is absolute and already resolved.** Never a path relative to
-  a root the delegation is told to prepend, and never a root plus an instruction to compose the
+- **Every path a subagent receives is absolute and already resolved.** Never a path relative to
+  a root the subagent is told to prepend, and never a root plus an instruction to compose the
   rest — a target source root whose own internal layout is not obvious (a nested `src/`, a
-  monorepo alias, a generated directory) turns that composition into the delegation's guess, and a
+  monorepo alias, a generated directory) turns that composition into the subagent's guess, and a
   guess that misses returns a refusal instead of a judgment. The refusal costs the whole
-  delegation and buys nothing: it is the one failure that a resolved path makes impossible.
+  subagent and buys nothing: it is the one failure that a resolved path makes impossible.
 
 **A judgment answers two questions, and `kind` is which one a finding answers.** Whether the
 source still states what a node holds is one; whether it states a fact **no** node holds is the
@@ -347,8 +347,8 @@ bind is owed, and the report hands each its route.
 `siegard-reconcile/<slug>.returns/<the file's path with every '/' as '__'>.yaml` — a copy and
 nothing else. Never reshape one, never trim one, never repair one: the returns are the evidence
 the record is folded from and they outlive this session, and a return adjusted by the hand that
-saved it carries a judgment the delegation never made. The copy is the script's, from the
-delegation's transcript — the output file the harness names for the spawned agent:
+saved it carries a judgment the subagent never made. The copy is the script's, from the
+subagent's transcript — the output file the harness names for the spawned agent:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --save-return <target-root> <workspace> <file> <transcript>
@@ -357,10 +357,10 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --save-return <target-root> <works
 `<file>` is the staged file's path as the manifest lists it, or a certification by its node
 identity or as the wave names it, `certify__<node>`. The save prints what the wave still waits
 for, and whether the fold will refuse what was just saved — a save whose receipt says so is the
-delegation to run again before the wave closes, never a return repaired. Never retype a return
+subagent to run again before the wave closes, never a return repaired. Never retype a return
 from the notification that relays it: that text is
 re-rendered for display, and an escaped character it carries parses as part of a scalar. A
-refusal says why: a delegation answers either by its final reply or by a hand-back the harness
+refusal says why: a subagent answers either by its final reply or by a hand-back the harness
 confirmed delivered, whose `message` is then the return; one whose transcript ends in any other
 tool call has not answered yet, and only one whose transcript cannot be read is saved by hand,
 under the same discipline. A spawned
@@ -369,7 +369,7 @@ session waits for that notification and nothing else — never a `sleep`, a sche
 agent listing or a message to the judge, each of which is a turn spent reading nothing — and
 saves the return when the notification names it.
 
-**A certification is the coverage auditor's, and it is one more delegation per node.** For each
+**A certification is the coverage auditor's, and it is one more subagent per node.** For each
 entry the manifest holds under `certify`, spawn a `siegard:coverage-auditor` subagent — its judgment
 lives at `${CLAUDE_PLUGIN_ROOT}/agents/coverage-auditor.md` — handing it the certification
 pack's path and the target source root, and nothing else: the pack names the node, the proof and
@@ -385,27 +385,27 @@ node's entry, and `trace.py --owed` lists the testable ones as the work a test c
 
 **Verbatim is literal, and the fold enforces it against five keys.** `conformance-return.json`
 admits `findings`, `read`, `nowhere`, `looked_past` and `candidates_opened`, and nothing else at
-any depth. A sixth key — a `notes` holding a delegation's closing paragraph, a summary line written
-for a human, anything the five do not have a home for — refuses that return at `--fold`, and the fold
+any depth. A sixth key — a `notes` holding a subagent's closing paragraph, a summary line written
+for a person, anything the five do not have a home for — refuses that return at `--fold`, and the fold
 refuses whole: every saved return is re-read and re-written before it runs at all, which is the
-whole batch's transcription paid twice for one field nobody needed. What a delegation says outside
-those keys belongs in your report to the human, never in the file the fold reads. Where a return
+whole batch's transcription paid twice for one field nobody needed. What a subagent says outside
+those keys belongs in your report to the person, never in the file the fold reads. Where a return
 arrives shaped for a reader rather than for the contract, the fix is still a copy: save what came
 back, and say the rest in the report.
 
 One judge per file rather than one over the set, because a judgment over the set saturates: a
 single context holding every node and every file at once answers hundreds of node-file pairs in
 one reading and claims clean over pairs it never weighed. A judge holding one file and its own
-nodes reads less and misses less. No delegation reads another's
+nodes reads less and misses less. No subagent reads another's
 return, and the pass is the union of what they return: a finding keeps the file its judge read,
-and a node is cleared exactly where no delegation that read one of its files found against it.
+and a node is cleared exactly where no subagent that read one of its files found against it.
 
-**A delegation answers once.** Where a return is unusable — a field missing, a node it never
-accounted for — the prompt was wrong, and the correction is a fresh delegation with the prompt
+**A subagent answers once.** Where a return is unusable — a field missing, a node it never
+accounted for — the prompt was wrong, and the correction is a fresh subagent with the prompt
 fixed, never a follow-up question to the one that already answered. A resumed judge holds its first
 reading and the new question at once, and what comes back is neither its first answer nor an
-independent second one. So two divergent answers from one delegation are
-not a union to fold — union is what holds *between* delegations, each of which read something the
+independent second one. So two divergent answers from one subagent are
+not a union to fold — union is what holds *between* subagents, each of which read something the
 others did not. They void each other, the file is judged again from a clean context, and `notes`
 says that happened. A score folded out of a judge that answered twice is a floor, not a measurement,
 and a record cannot say which it is.
@@ -419,7 +419,7 @@ attribute a fact, and the per-node `read` it returns — `held_at` and its quote
 is what a cleared node's `how` is written from. Never write a `how` from your own reading of the
 file; that is the judgment this step delegated.
 
-**Do not read the files yourself and decide.** The premise the human handed you is that the source
+**Do not read the files yourself and decide.** The premise the person handed you is that the source
 is correct; the question this step answers is a different one — whether the specification still
 states what the source now says — and answering it from the same context that accepted the premise
 is answering it from the premise.
@@ -435,7 +435,7 @@ its candidates. A context that authored a node and then reads the source against
 own writing, which is the whole of what delegating this judgment prevents; run inline, it produces a
 record saying `conforms` in the voice of a judgment nobody independent made, and that record is what
 a bind rests on for as long as the code lives. The stop is to report and wait. Say why the spawn
-failed, too: a spend limit or a rate limit passes, and what the human does then is run it again
+failed, too: a spend limit or a rate limit passes, and what the person does then is run it again
 rather than accept less.
 
 ### 3b. Capture the run the mechanical tier and the rewrite are answered by
@@ -466,14 +466,14 @@ is what keeps both readable.
 A step the rewrite names is the one exception, and the fold is what holds it: a carried pair is
 answered by the run alone, so a red step there leaves it answered by nothing, and the fold writes
 no record. Report the step's own output and stop. Whether the tree is wrong, the run was flaky or
-the rewrite was not the whole change is the human's reading; the doors are a passing run captured
+the rewrite was not the whole change is the person's reading; the doors are a passing run captured
 under a new name beside this one, or a fresh staging under a new slug without the rewrite, which
 hands each pair a judge.
 
 ### 4. Fold
 
-Write the premise — the one part of the record that is the human's and no fold can compose. A
-small YAML file in the workspace, carrying `title`, `summary` (what changed and why the human
+Write the premise — the one part of the record that is the person's and no fold can compose. A
+small YAML file in the workspace, carrying `title`, `summary` (what changed and why the person
 states it is correct, as theirs — never restated as a finding of yours), `said` (the person's own
 words that asked for this reconciliation, quoted verbatim from their message — never a
 paraphrase, and never words they did not type; the fold refuses a premise without it), `target`,
@@ -504,8 +504,8 @@ how every named file is accounted for. **Never apply those rules by hand, and ne
 fold wrote** — a record adjusted after the fold carries a judgment the returns behind it do not,
 and the returns are what a later reader checks it against.
 
-Where the fold refuses, read the refusal as two kinds. A refusal naming a delegation — a return
-missing, a node unanswered, a shape the contract does not hold — is a fresh delegation with the
+Where the fold refuses, read the refusal as two kinds. A refusal naming a subagent — a return
+missing, a node unanswered, a shape the contract does not hold — is a fresh subagent with the
 prompt fixed, run again from the judge step, never a follow-up question to the one that already
 answered and never a hand-edit of what it returned. A refusal about the premise is yours to fix
 here. Then hold the record to its contract:
@@ -535,7 +535,7 @@ was. What lands is
 the union: a file an earlier bind put on a node and this record does not name stays bound, because
 two things landing one node in two files is not one of them undoing the other's work.
 
-**This skill never passes `--replace`.** Where the human says a fact moved out of a file rather than
+**This skill never passes `--replace`.** Where the person says a fact moved out of a file rather than
 into an additional one, the report hands that invocation ready to paste and stops: `--replace`
 substitutes the whole entry, its receipt of what stopped being claimed is the only signal there is,
 and a receipt nobody was there to read is the silent loss the union default exists to end.
@@ -600,10 +600,10 @@ field it names; a state it says has moved, by running `--prepare` again and carr
 
 Say, in this order and in prose, in the file: the file set as given; what the staging held for each file, by
 state — judged, nothing left to judge, unbound — and how many pairs it omitted as current and
-unowed; the shape the judgment ran in — how many delegations, one per file; what the judgment
+unowed; the shape the judgment ran in — how many subagents, one per file; what the judgment
 answered per node, with its evidence; which pairs a run answered instead of a judge, with the
 step and the run's own outcome per step; which pairs the declared rewrite carried, how many over
-how many files, with the transcription verbatim beside the human's own words for it, and which
+how many files, with the transcription verbatim beside the person's own words for it, and which
 drifted pairs it did not carry, with the reason the staging gave for each — a carried pair was
 read by no judge, and the report says so plainly; where the record, the returns and the run were written;
 what was bound and what was not; which nodes are decided by a test from here and which
@@ -617,7 +617,7 @@ to, all read from the record you just folded, under a new slug. `/plan-work` pla
 fact, `/implement-task` writes the proof alone, and the review that reads it certifies the node —
 «A finite test is preferred to a reading, and to a registry step's decision, wherever one exists»
 (SPEC-004 R10), so every testable remainder is handed on, never only the ones that look cheap.
-Which to take is the human's: they paste the invocation whole, or trimmed to the facts they want.
+Which to take is the person's: they paste the invocation whole, or trimmed to the facts they want.
 And the next invocation where there is one.
 
 Where a node the judgment did not clear carries `collateral`, say so apart from the contested
@@ -641,12 +641,12 @@ a node bound to no file here has no digest to drift, so its finding lives in the
 **Then say what the next invocation's file set is, and make it the remainder.** It is the files
 whose nodes are still owed — never the whole set again. The nodes that cleared are bound, their
 files are committed and nothing here rewrites source, so re-judging them buys a second reading of
-text that did not move and pays one delegation per file for it. Two things go in with the remainder,
+text that did not move and pays one subagent per file for it. Two things go in with the remainder,
 and both come from `--check` rather than from your memory of this run: any file the run about to
 follow leaves reporting `moved`, because an `/analyse` that shifts a node re-opens every file bound
 to it including one that cleared here, and any file whose nodes the remainder shares — the binding
 form refuses a record that names a file and answers for only some of the nodes bound to it. Name
-them; the file set is still the human's to state. A bound file `--check` reports as no longer
+them; the file set is still the person's to state. A bound file `--check` reports as no longer
 existing goes in no file set: this skill reads files, and there is nothing to read — `trace.py
 --release <target-source-root> <path>` is what answers it, and the report names that invocation
 beside the remainder.
@@ -672,7 +672,7 @@ reconciliation with nothing to do.
 The third, where the node and the behavior agree and what the finding names is the file's own
 prose — a comment breaking the consumer rules' comment rule. Neither door above fits it: there is
 no fact to decide into the specification and no behavior to correct, and routing it through either
-prices a line of prose like a defect. The consumer rules' comment route is the answer — the human
+prices a line of prose like a defect. The consumer rules' comment route is the answer — the person
 removes the prose, never refreshes it, and this skill invoked again over that file under a new slug
 is what re-judges and rebinds. The prose removed is every comment the file carries, directives the
 toolchain reads excepted, never only the ones cited: a judge names what it read, it does not list
@@ -704,7 +704,7 @@ A finding left in the notes and not in the report is a finding nobody will act o
 The same order, with four differences, each held by the scripts rather than by this prose.
 
 - **Stage with `--adopt`, over the ledger.** Where `/analyse` wrote a ledger beside survey or
-  intent material — its handoff names it — pass it, and the files the human keeps out with
+  intent material — its handoff names it — pass it, and the files the person keeps out with
   `--outside`:
 
   ```
@@ -745,14 +745,14 @@ The same order, with four differences, each held by the scripts rather than by t
 
 - **It never writes source and never writes a specification node.** Both have entry points, and a
   reconciliation that repaired what it found would be a third one nobody validated.
-- **It never decides that a file is correct.** The human asserts that; this skill records the
+- **It never decides that a file is correct.** The person asserts that; this skill records the
   assertion as theirs and asks a different question.
-- **It never certifies a test itself.** Which test a human offers is theirs; whether it would
+- **It never certifies a test itself.** Which test a person offers is theirs; whether it would
   fail if the fact stopped holding is the auditor's; the fold writes `decided_by: test` from the
   auditor's `covered` and from nothing else. A node's type says nothing about it either way.
 - **It never decides that a node is testable.** Whether the remainder a refused certification
   leaves is one a test could assert is the auditor's, read from the fact as the node states it;
-  the record carries it, and what closes it is a test the human writes and offers again. A node
+  the record carries it, and what closes it is a test the person writes and offers again. A node
   whose type looks testable and whose fact is not is exactly the case the auditor is there for.
 - **It is not a review.** It reads one file set against the nodes the trace already links to it. It
   says nothing about coverage, about the project's standard, or about whether anything was proven —

@@ -40,8 +40,8 @@ parts for every script: a rule's scope and a declared test are matched by the sa
 a path one of them reaches is never read differently by the other.
 
 `--declared-tests` answers one question about those scopes for a caller holding paths: which of
-them are tests the target declares. A build red whose fix lies only in such files is the test
-author's to answer — «A build red whose fix lies only in files the project declares as its tests
+them are tests the target declares. A build red whose fix lies only in such files is the
+test-author's to answer — «A build red whose fix lies only in files the project declares as its tests
 is answered by the delivery's test author, before the implementation record is written»
 (SPEC-004 R24) — and which files those are is this match, never a session's reading of a
 directory name. A target that declares no tests answers that no path is one.

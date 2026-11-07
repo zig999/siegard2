@@ -101,7 +101,7 @@ Usage:  plan.py <work-root> [<specification-root>]
                                                         plan-node.json — a `$defs` entry, or every
                                                         property one `kind` value admits — with
                                                         every `$ref` inlined; stands alone, needs
-                                                        no root. What a delegation is handed in
+                                                        no root. What a subagent is handed in
                                                         place of the whole file. `--fields` keeps
                                                         only the named properties and `--without`
                                                         drops them, so a judge reads the fields it
@@ -195,13 +195,13 @@ def contract_branches(schema: dict) -> list[str]:
 
 
 def project_branch(sliced: dict, keep: set[str] | None, drop: set[str] | None) -> dict:
-    """One branch narrowed to the fields a delegation actually writes.
+    """One branch narrowed to the fields a subagent actually writes.
 
     A judge is handed the contract so that what it returns is what the validator will apply, and
     every field beyond the ones it writes is text that cannot change a single decision it makes —
     the binder decides `implements` and reads a whole task branch to do it. Narrowing is a
     projection of the same schema, computed here rather than quoted by whoever spawns the
-    delegation, so there is no second copy of the contract to drift.
+    subagent, so there is no second copy of the contract to drift.
 
     `required` is filtered with the properties: a required name the slice no longer carries would
     describe a shape this slice cannot satisfy. Each example is projected the same way. What
@@ -234,7 +234,7 @@ def print_contract_branch(schema_path: Path, branch: str, keep: set[str] | None 
                           drop: set[str] | None = None) -> int:
     """`--contract`'s own body: read the schema, slice it, print the slice — or refuse, naming
     every branch that schema does answer for. `--fields` and `--without` narrow the slice to what
-    one delegation writes, and a name the branch does not declare is refused rather than dropped
+    one subagent writes, and a name the branch does not declare is refused rather than dropped
     in silence: a typo that quietly widened the slice would be the drift the narrowing exists to
     end."""
     if not schema_path.is_file():
@@ -320,7 +320,7 @@ def notes_opening(notes: str, opening: str) -> list[str]:
     about to write source over it, and a second gate would only ever fire on a state that stop
     already refuses; an underdetermined note travels to whoever writes the tests, and refuses
     nothing anywhere. What reading them mechanically ends is the same for both: a set the skills
-    describe in words — which tasks would stop, which entries the test author is handed — was
+    describe in words — which tasks would stop, which entries the test-author is handed — was
     assembled by eye from files a script could read.
     """
     return [line for line in (raw.strip() for raw in notes.splitlines())
@@ -336,7 +336,7 @@ def blocking_notes_of(notes: str) -> list[str]:
 def underdetermined_notes_of(notes: str) -> list[str]:
     """The standing `UNDERDETERMINED, from the specification —` entries: each names an
     implementation that satisfies every criterion as written and that the specification refuses,
-    and excluding it is the test author's work — so the set is handed over whole, by a reading
+    and excluding it is the test-author's work — so the set is handed over whole, by a reading
     rather than by eye."""
     return notes_opening(notes, UNDERDETERMINED_OPENING)
 
