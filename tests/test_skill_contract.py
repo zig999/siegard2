@@ -75,7 +75,7 @@ def case(request) -> dict:
     pairing = SKILLS[name]
     text = (REPO / "src/claude/skills" / name / "SKILL.md").read_text(encoding="utf-8")
     schema = json.loads((REPO / "src/claude" / pairing["contract"]).read_text(encoding="utf-8"))
-    return {"name": name, "text": text, "schema": schema, **pairing}
+    return {"name": name, "text": text, "corpus": skill_corpus(name), "schema": schema, **pairing}
 
 
 def test_the_frontmatter_parses_and_names_the_skill(case):
@@ -188,7 +188,7 @@ def test_frontmatter_satisfies_the_skill_contract(case, skill_schema):
 
 
 def test_every_cited_path_exists(repo, case):
-    cited = CITATION.findall(case["text"])
+    cited = CITATION.findall(case["corpus"])
     assert cited, f"{case['name']} cites nothing under the plugin root; it must cite the contract"
     for relative in cited:
         assert (repo / "src/claude" / relative).is_file(), \
@@ -205,7 +205,7 @@ def test_the_contract_and_the_validator_are_both_cited(case):
 
 def test_every_delegate_is_cited_and_exists(repo, case):
     for name in case["delegates"]:
-        assert f"agents/{name}.md" in case["text"], \
+        assert f"agents/{name}.md" in case["corpus"], \
             f"{case['name']} delegates to {name} and never cites its file"
         assert (repo / "src/claude/agents" / f"{name}.md").is_file(), \
             f"{case['name']} delegates to {name}, which src/claude/agents does not hold"
@@ -278,6 +278,21 @@ def skill_text(name: str) -> str:
     return (REPO / "src/claude/skills" / name / "SKILL.md").read_text(encoding="utf-8")
 
 
+def reference_text(name: str, reference: str) -> str:
+    """One reference file of a skill, on one line."""
+    path = REPO / "src/claude/skills" / name / "references" / f"{reference}.md"
+    return " ".join(path.read_text(encoding="utf-8").split())
+
+
+def skill_corpus(name: str) -> str:
+    """What a skill ships as instructions: its `SKILL.md`, then every reference file beside it.
+    A sentence moved into a reference is still the skill's, and a test anchored on it reads it
+    there; `test_every_reference_is_named_by_its_skill` holds that the skill points at each."""
+    folder = REPO / "src/claude/skills" / name
+    return "\n\n".join(p.read_text(encoding="utf-8")
+                        for p in [folder / "SKILL.md", *sorted(folder.glob("references/*.md"))])
+
+
 # analyse-domain -> plan-work stays absent for good: analyse-domain is retired, not renamed,
 # and it authors the pre-redesign knowledge base plan-work no longer accepts. Its replacement is
 # named below instead of appended beside it.
@@ -303,7 +318,7 @@ def test_the_seam_hands_off_every_input_the_other_skill_requires(handing, receiv
     the only ones anybody checked."""
     required = INPUT_TERM.findall(skill_text(receiving))
     assert required, f"{receiving} numbers no required inputs; the seam guard lost its subject"
-    outgoing = handoff_blocks(skill_text(handing), f"/{receiving}")
+    outgoing = handoff_blocks(skill_corpus(handing), f"/{receiving}")
     assert len(outgoing) == 1, \
         f"the {handing} report ends with exactly one /{receiving} handoff"
     for term in required:
@@ -402,7 +417,7 @@ def test_every_skill_that_runs_outstanding_relays_the_records_pinning_no_standar
     than their target declares, are reported where the command ran, never dropped by a reading
     that only wanted the tasks. A skill that hands the command in a handoff without running it
     states no report over its output and owes nothing here."""
-    text = (REPO / "src/claude/skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+    text = skill_corpus(skill)
     if not OUTSTANDING.search(text):
         pytest.skip("this skill never runs --outstanding")
     assert "(SPEC-007 R1)" in text, f"{skill}: runs --outstanding and never cites SPEC-007 R1"
@@ -516,7 +531,7 @@ def test_a_skill_that_delegates_waits_for_the_harness_and_never_polls(skill):
     """A spawned delegation runs in the background and the harness notifies when it answers.
     A session that sleeps, schedules wakeups, lists agents or messages the judge in between
     spends turns reading nothing; the text names the one signal and forbids the rest."""
-    text = (REPO / "src/claude/skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+    text = skill_corpus(skill)
     assert "waits for that notification and nothing else" in text, \
         f"{skill} never says what the session waits for"
     assert "never a `sleep`" in text, f"{skill} never forbids polling"
@@ -552,7 +567,7 @@ def test_a_wave_ends_on_the_save_s_receipt_and_never_on_a_count_kept_in_the_sess
 def test_implement_task_writes_both_records_through_the_writer():
     """A record composed by hand has pins and a shape that depend on the session; the writer
     makes it a function of the return, the task file, the standard and the run."""
-    text = skill_text("implement-task")
+    text = skill_corpus("implement-task")
     assert "deliver.py --write-implementation" in text
     assert "deliver.py --write-proof" in text
     assert "--write-proof --replace" in text
@@ -674,9 +689,9 @@ def test_a_return_that_writes_nothing_is_a_stop_whose_door_the_trace_decides():
     writer admits a task writing no source only with `stands`. What the delivery hands then is
     the trace's answer over the files the return names: a plan carrying `stands` where every
     node is bound to them, the reconciliation where one is not."""
-    skill = (REPO / "src/claude/skills/implement-task/SKILL.md").read_text(encoding="utf-8")
-    stop = skill.split("A return that writes nothing because the work already stands", 1)[1]
-    stop = " ".join(stop.split("**Every path the returned record names", 1)[0].split())
+    returns = reference_text("implement-task", "implementer-returns")
+    stop = returns.split("## A return that writes nothing", 1)[1].split("## A return that stopped", 1)[0]
+    assert "A return that writes nothing because the work already stands" in stop
     assert "trace.py --encodes <target-source-root> <each file named>" in stop
     assert "`/plan-work` over this slug" in stop
     assert "`/reconcile` over those files" in stop
@@ -690,7 +705,7 @@ def test_a_re_delivery_hands_the_record_it_replaces_and_carries_its_files():
     """A re-plan that changed no criterion leaves a delivered task's files holding the fact; the
     re-delivery writes its record again over them instead of stopping on R20. The implementer is
     handed the record it replaces, and `--unrecorded` is what holds the carried files to it."""
-    skill = (REPO / "src/claude/skills/implement-task/SKILL.md").read_text(encoding="utf-8")
+    skill = skill_corpus("implement-task")
     flat = " ".join(skill.split())
     assert "earlier record: <absolute path of the implementation record this re-delivery " \
            "replaces" in flat
@@ -708,9 +723,11 @@ def test_the_proof_is_skipped_only_for_the_task_the_validator_names_the_substrat
     reaches included» (SPEC-004 R23). Step 5 reads which task that is from `--outstanding`, the
     same test the validator applies, never from what the task built; and the progress table reads
     the line as delivered."""
-    skill = (REPO / "src/claude/skills/implement-task/SKILL.md").read_text(encoding="utf-8")
-    step = " ".join(skill.split("### 5. Prove", 1)[1].split("Spawn a `siegard:test-author`", 1)[0]
-                    .split())
+    skill = skill_corpus("implement-task")
+    step = reference_text("implement-task", "substrate").split("## At prove: no proof owed", 1)[1]
+    prove = " ".join(skill.split("### 5. Prove", 1)[1].split("Spawn a `siegard:test-author`", 1)[0]
+                     .split())
+    assert "references/substrate.md" in prove, "step 5 no longer sends a substrate task there"
     assert "--scope task/<epic>/<slug>" in step and "deliver.py --outstanding" in step
     assert "`implemented as the substrate alone, which owes no proof`" in step
     assert "SPEC-004 R23" in step
@@ -724,8 +741,7 @@ def test_a_red_the_tasks_own_files_cannot_answer_ends_the_run_without_a_retry():
     """A build red over a tree the delivery left unchanged is the tree's own, read from git; a fix
     that lies only in another task's files is the producer's to say. Neither is a judged choice:
     trying the same delivery again cannot reward it."""
-    skill = " ".join((REPO / "src/claude/skills/implement-task/SKILL.md")
-                     .read_text(encoding="utf-8").split())
+    skill = " ".join(skill_corpus("implement-task").split())
     assert "**A red no change to this task's own files can answer is a stop of its own, and " \
            "never a retry.**" in skill
     assert "`git status --porcelain -- <target-source-root>` printing nothing" in skill
@@ -746,9 +762,10 @@ def test_a_build_red_only_a_test_can_answer_goes_to_the_test_author_before_the_r
     route such a red had no producer: which paths are tests is `project.py`'s match, the proof runs
     ahead of the record with the implementer's return in its place, and the stop keeps only what
     no producer of this delivery can answer."""
-    skill = " ".join((REPO / "src/claude/skills/implement-task/SKILL.md")
-                     .read_text(encoding="utf-8").split())
-    build = skill.split("### 4. Build", 1)[1].split("### 5. Prove", 1)[0]
+    skill = " ".join(skill_corpus("implement-task").split())
+    step = skill.split("### 4. Build", 1)[1].split("### 5. Prove", 1)[0]
+    assert "references/red-build.md" in step, "step 4 no longer sends a red build there"
+    build = reference_text("implement-task", "red-build")
     assert "**A red only a test can answer is the test author's, and it is answered before the " \
            "record.**" in build
     assert "bin/project.py <project-root> --declared-tests <the target's key>" in build
@@ -848,18 +865,19 @@ def test_a_red_on_an_earlier_tasks_test_is_answered_by_the_shape_the_two_records
     delivery only where its files include one that task's implementation record names» (SPEC-004
     R25): the build hands the red to the stop, the suite reads the shape from the two records, and
     the proof-only re-delivery is the person's and checks the tree before it writes."""
-    skill = " ".join((REPO / "src/claude/skills/implement-task/SKILL.md")
-                     .read_text(encoding="utf-8").split())
-    build = skill.split("### 4. Build", 1)[1].split("### 5. Prove", 1)[0]
+    skill = " ".join(skill_corpus("implement-task").split())
+    build = reference_text("implement-task", "red-build")
     assert "the stop below, naming the test and the task whose proof names it" in build
-    suite = skill.split("### 6. Suite", 1)[1].split("### 7.", 1)[0]
+    assert "references/red-suite.md" in skill.split("### 6. Suite", 1)[1].split("### 7.", 1)[0]
+    suite = reference_text("implement-task", "red-suite")
     assert "`test`, on a test an earlier task owns" in suite
     assert "read from the two implementation records, never from the assertion's wording" in suite
     assert "**Where none is**" in suite and "**Where one is**" in suite
-    assert "the proof-only re-delivery the re-delivery paragraph names" in suite
+    assert "the proof-only re-delivery `references/redelivery.md` names" in suite
     assert "rewrites it whole — never trimmed, never narrowed" in suite
     assert "it joins this proof's `tests`" in suite
-    redelivery = skill.split("One narrower re-delivery exists, and only the human names it", 1)[1]
+    redelivery = reference_text("implement-task", "redelivery").split(
+        "One narrower re-delivery exists, and only the human names it", 1)[1]
     assert "Steps 3 and 4 do not run: the implementation record is not touched" in redelivery
     assert "trace.py --check --all <target-source-root>" in redelivery
     assert "read the findings that name a node the task implements" in redelivery
@@ -871,8 +889,7 @@ def test_only_the_tasks_own_bindings_decide_whether_an_implementation_stands():
     refusal: the review that follows reads each `stands` file against every node the trace binds
     to it.» (SPEC-004 R26) — the skill reads the findings for the task's own nodes, says another
     node's in the record's notes, and names the writer that holds the same reading."""
-    skill = " ".join((REPO / "src/claude/skills/implement-task/SKILL.md")
-                     .read_text(encoding="utf-8").split())
+    skill = " ".join(skill_corpus("implement-task").split())
     standing = skill.split("**A task carrying `stands` is delivered the same way", 1)[1]
     standing = standing.split("Step 3 does not run.", 1)[0]
     assert "is read for the findings that name a node the task implements" in standing
@@ -922,9 +939,15 @@ CLAUSE_SPLIT = re.compile(r"«[^»]*»\s*\(SPEC-\d+ (?:R\d+|§[\w ]+)\)(?P<after
 JOINS = ("and", "or", "but", "so")
 
 
-@pytest.mark.parametrize("path", sorted((REPO / "src/claude/skills/analyse").rglob("*.md")),
-                         ids=lambda p: p.relative_to(REPO / "src/claude/skills").as_posix())
-def test_no_analyse_citation_splits_the_clause_it_stands_in(path):
+CITING_FILES = sorted([*(REPO / "src/claude/skills/analyse").rglob("*.md"),
+                       *(REPO / "src/claude/skills/implement-task").rglob("*.md"),
+                       *(REPO / "src/claude/agents" / f"{name}.md" for name in
+                         ("task-implementer", "test-author", "failure-diagnostician"))])
+
+
+@pytest.mark.parametrize("path", CITING_FILES,
+                         ids=lambda p: p.relative_to(REPO / "src/claude").as_posix())
+def test_no_citation_splits_the_clause_it_stands_in(path):
     """A quotation the session must read through to find where its own sentence ends is a
     quotation standing where the instruction should: the rule is stated in the skill's words, and
     the requirement's sentence follows it. A citation may close a clause, or be followed by a
@@ -960,3 +983,59 @@ def test_every_project_root_input_states_how_an_unnamed_root_resolves(name):
     held = re.sub(r"\s+", " ", ROOT_INPUT.search(text).group(1))
     assert R6 in held, f"{name}: the project-root input does not quote SPEC-010 R6"
     assert "`project_root:`" in held, f"{name}: the input does not say which line names the root"
+
+
+# ---------------------------------------------------------------- a skill's size and its references
+# Anthropic's guidance for skills: a body under 500 lines, every reference linked from SKILL.md
+# itself and never only from another reference, and a reference over 100 lines opening with its
+# contents (platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices). The
+# compaction budget is Claude Code's: a skill re-attached after a compaction keeps its first
+# ~5k tokens, which the benchmarks hold as 20,000 characters.
+
+COMPACTION_CUT = 20_000
+SIZED = ("analyse", "implement-task")
+REFERENCED = sorted(p.parent.name for p in (REPO / "src/claude/skills").glob("*/references"))
+
+
+@pytest.mark.parametrize("skill", SIZED)
+def test_the_skill_body_stays_under_500_lines(skill):
+    lines = skill_text(skill).count("\n")
+    assert lines < 500, f"{skill}'s SKILL.md holds {lines} lines; move a branch into references/"
+
+
+@pytest.mark.parametrize("skill", REFERENCED)
+def test_every_reference_is_named_by_its_skill(skill):
+    """A reference only another reference names is one a session may never open: SKILL.md is the
+    one index a session holds."""
+    text = skill_text(skill)
+    folder = REPO / "src/claude/skills" / skill / "references"
+    unnamed = [p.name for p in sorted(folder.glob("*.md")) if f"references/{p.name}" not in text]
+    assert not unnamed, f"{skill}'s SKILL.md never names {unnamed}"
+
+
+@pytest.mark.parametrize("path",
+                         sorted((REPO / "src/claude/skills/implement-task").glob("references/*.md")),
+                         ids=lambda p: p.relative_to(REPO / "src/claude/skills").as_posix())
+def test_a_reference_over_100_lines_opens_with_its_contents(path):
+    text = path.read_text(encoding="utf-8")
+    if text.count("\n") <= 100:
+        return
+    head = "\n".join(text.splitlines()[:12])
+    assert re.search(r"^## Contents", head, re.M), f"{path.name} runs past 100 lines with no contents"
+
+
+def test_the_implement_task_checklist_survives_the_compaction_cut():
+    """What a resumed session holds of the skill is its first 20,000 characters. The checklist
+    must sit inside them, tell the session to read the skill again, name every step, and name
+    every reference at the step that reads it — so a session past the cut still reaches each."""
+    held = skill_text("implement-task")[:COMPACTION_CUT]
+    assert "## Progress checklist" in held
+    checklist = held.split("## Progress checklist", 1)[1].split("\n## ", 1)[0]
+    assert "read `${CLAUDE_PLUGIN_ROOT}/skills/implement-task/SKILL.md` again" in unwrapped(checklist)
+    steps = re.findall(r"^### (\d+)\. ", skill_text("implement-task"), re.M)
+    assert steps == [str(n) for n in range(1, 10)], steps
+    for step in steps:
+        assert re.search(rf"^- \[ \] {step} ", checklist, re.M), f"the checklist skips step {step}"
+    folder = REPO / "src/claude/skills/implement-task/references"
+    for path in sorted(folder.glob("*.md")):
+        assert f"references/{path.name}" in checklist, f"the checklist never names {path.name}"

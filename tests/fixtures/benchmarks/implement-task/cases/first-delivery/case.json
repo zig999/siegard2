@@ -1,0 +1,4 @@
+{"name": "first-delivery",
+ "what": "The whole route over a fresh project: one planned task, a standard declaring a build and a suite, the full skill in context. Does every record, run, bind and handoff land?",
+ "invocation": "/implement-task {project} task/fees/compute-late-fee",
+ "checks": ["implementation_written", "proof_written", "delivery_sound", "suite_passed", "trace_bound", "tests_written", "existing_test_untouched", "handoff_saved", "report_hands:/review-change", "every_change_recorded", "reported:write_implementation", "reported:write_proof", "reported:unrecorded", "reported:bind_record", "reported:render", "no_commit"]}

@@ -1,0 +1,22 @@
+/tmp/itbench/runs/first-delivery-cand1/prompt.txt
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/SKILL.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/standard.md
+/home/siegfriedneto/.claude/projects/-home-siegfriedneto-projects-siegard2/8767d72d-23dd-44ce-b35e-ee61cb939375/tool-results/b83uz37v6.txt (persisted output of the three deliver.py --contract runs)
+/tmp/itbench/runs/first-delivery-cand1/p/work/lending/task/fees/compute-late-fee.md
+/tmp/itbench/runs/first-delivery-cand1/p/work/lending/plan.json
+/tmp/itbench/runs/first-delivery-cand1/p/work/lending/inventory/lending-app.md
+/tmp/itbench/runs/first-delivery-cand1/p/work/lending/epic/fees.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/delegation.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/task-implementer.md
+/tmp/itbench/runs/first-delivery-cand1/p/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/itbench/runs/first-delivery-cand1/p/app/standard.yaml
+/tmp/itbench/runs/first-delivery-cand1/p/app/lending/loans.py
+/tmp/itbench/runs/first-delivery-cand1/p/app/lending/__init__.py
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/records.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/test-author.md
+/tmp/itbench/runs/first-delivery-cand1/p/app/tests/conftest.py
+/tmp/itbench/runs/first-delivery-cand1/p/app/tests/test_loans.py
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/finish.md
+/tmp/itbench/runs/first-delivery-cand1/p/siegard-trace.json (first 40 lines, via cat)
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/report.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/handoff.json (decision $def only, via python, after --render refused the record)

@@ -1,0 +1,8 @@
+{
+  "specification_root": "spec",
+  "targets": {"app": "app"},
+  "work_root": "work",
+  "delivery_root": "delivery",
+  "standard": "app/standard.yaml",
+  "tests": {"app": [{"under": "tests", "suffix": ".py"}]}
+}

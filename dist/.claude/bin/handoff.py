@@ -97,6 +97,7 @@ FENCE = re.compile(r"^[ \t]*```.*?^[ \t]*```[^\n]*$", re.S | re.M)
 INVOCATION = re.compile(r"^[ \t]*`?/[a-z][\w:-]*(?:[ \t`]|$)", re.M)
 CLOSING = (".", "!", "?", ":", "…")
 REPORT_HEADING = re.compile(r"^(#{2,3}) (?:\d+\. )?(?:Report\b|The report\b)", re.M)
+REFERENCE_REPORT = re.compile(r"# (?:Report\b|The report\b)")
 NEXT_DOOR = re.compile(r"`/([a-z][\w-]*)` invocation ready to paste")
 STATE_SCRIPTS = ("goal.py", "progress.py")
 HANDOFF_DIR = ("siegard", "handoff")
@@ -319,12 +320,22 @@ def report_sections(text: str) -> str:
     return re.sub(r"\s+", " ", " ".join(sections))
 
 
+def report_text(skill: str) -> str:
+    """The report of `skill`: the report sections of its `SKILL.md`, then every reference file
+    of the skill whose own title is the report, whole."""
+    texts = [report_sections((SKILLS / skill / "SKILL.md").read_text(encoding="utf-8"))]
+    for path in sorted((SKILLS / skill / "references").glob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        if REFERENCE_REPORT.match(text):
+            texts.append(re.sub(r"\s+", " ", text))
+    return " ".join(texts)
+
+
 def next_doors(skill: str) -> list[str]:
-    """The skills the report of `skill`'s own file hands as invocations ready to paste, in the
-    order the file names them first."""
-    text = (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8")
+    """The skills the report of `skill`'s own files hands as invocations ready to paste, in the
+    order the files name them first."""
     doors: list[str] = []
-    for name in NEXT_DOOR.findall(report_sections(text)):
+    for name in NEXT_DOOR.findall(report_text(skill)):
         if name != skill and name not in doors:
             doors.append(name)
     return doors

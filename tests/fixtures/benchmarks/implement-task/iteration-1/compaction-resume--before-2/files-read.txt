@@ -1,0 +1,16 @@
+/tmp/itbench/runs/compaction-resume-base2/prompt.txt
+/tmp/itbench/runs/compaction-resume-base2/p.skill-after-compaction.md
+/tmp/itbench/runs/compaction-resume-base2/p/work/lending/task/fees/compute-late-fee.md
+/tmp/itbench/runs/compaction-resume-base2/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/itbench/runs/compaction-resume-base2/p/app/lending/fees.py
+/tmp/itbench/runs/compaction-resume-base2/p/app/standard.yaml
+/tmp/itbench/runs/compaction-resume-base2/p/siegard.json
+/tmp/itbench/runs/compaction-resume-base2/p/app/tests/conftest.py
+/tmp/itbench/runs/compaction-resume-base2/p/app/tests/test_loans.py
+/tmp/itbench/arm-old/agents/test-author.md
+/home/siegfriedneto/.claude/projects/-home-siegfriedneto-projects-siegard2/8767d72d-23dd-44ce-b35e-ee61cb939375/tool-results/bu41gn7if.txt (persisted output of my own test-author.md + deliver.py --contract proof + --help command)
+/tmp/itbench/runs/compaction-resume-base2/p/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/itbench/runs/compaction-resume-base2/p/spec/rules/lending/late-fee-per-overdue-day.log.md
+/tmp/itbench/runs/compaction-resume-base2/p/app/lending/loans.py
+/tmp/itbench/runs/compaction-resume-base2/p/app/.gitignore
+/tmp/itbench/runs/compaction-resume-base2/p/delivery/lending/run/fees-compute-late-fee-build/run.json

@@ -1,0 +1,41 @@
+{
+  "contract_version": "siegard-delivery/2",
+  "nodes": [
+    {
+      "id": "implementation/fees/compute-late-fee",
+      "kind": "implementation",
+      "file": "implementation/fees/compute-late-fee.md",
+      "title": "Late fee of a returned loan",
+      "summary": "A function in lending/fees.py that answers, in integer cents, the late fee a returned loan carries.",
+      "task": "task/fees/compute-late-fee"
+    },
+    {
+      "id": "proof/fees/compute-late-fee",
+      "kind": "proof",
+      "file": "proof/fees/compute-late-fee.md",
+      "title": "Proof of the late fee of a returned loan",
+      "summary": "Four tests in tests/test_fees.py holding late_fee_cents to both criteria and to the per-overdue-day rule.",
+      "task": "task/fees/compute-late-fee"
+    }
+  ],
+  "edges": [
+    {
+      "from": "implementation/fees/compute-late-fee",
+      "to": "rules/lending/late-fee-per-overdue-day",
+      "kind": "encodes",
+      "at": "nodes[0]"
+    },
+    {
+      "from": "implementation/fees/compute-late-fee",
+      "to": "task/fees/compute-late-fee",
+      "kind": "implements",
+      "at": "the path"
+    },
+    {
+      "from": "proof/fees/compute-late-fee",
+      "to": "implementation/fees/compute-late-fee",
+      "kind": "proves",
+      "at": "the path"
+    }
+  ]
+}

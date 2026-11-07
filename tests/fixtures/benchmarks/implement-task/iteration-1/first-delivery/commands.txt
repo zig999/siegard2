@@ -1,0 +1,23 @@
+python3 -B bin/project.py /tmp/itbench/runs/first-delivery-cand1/p  -> exit 0
+python3 -B bin/plan.py --check <p>/work/lending <p>/spec  -> exit 0
+python3 -B bin/deliver.py --contract implementation  -> exit 0
+python3 -B bin/deliver.py --contract proof  -> exit 0
+python3 -B bin/deliver.py --contract finding  -> exit 0
+python3 -B bin/deliver.py --outstanding <p>/delivery/lending <p>/work/lending <p>/app <p>/spec  -> exit 2 (delivery root not a directory; created empty per the skill's input 4)
+python3 -B bin/deliver.py --outstanding <p>/delivery/lending <p>/work/lending <p>/app <p>/spec  -> exit 0
+python3 -B bin/deliver.py --standard <p>/app/standard.yaml --against <p>/app --specification <p>/spec  -> exit 0
+python3 -B bin/run.py <p>/delivery/lending --run fees-compute-late-fee-build --cwd <p>/app --excerpt 40 --timeout-seconds 60 --step 'build=python3 -m compileall -q lending'  -> exit 0
+python3 -B bin/deliver.py --write-implementation <p>/delivery/lending task/fees/compute-late-fee --target app --task-file <p>/work/lending/task/fees/compute-late-fee.md --run run/fees-compute-late-fee-build --standard standard.yaml --standard-file <p>/app/standard.yaml --from-text <scratch>/implementation.yaml --note "..."  -> exit 0
+python3 -B bin/run.py <p>/delivery/lending --run fees-compute-late-fee-suite --cwd <p>/app --excerpt 40 --timeout-seconds 120 --step 'build=python3 -m compileall -q lending' --step 'test=python3 -m pytest -q tests'  -> exit 0
+python3 -B bin/deliver.py --write-proof <p>/delivery/lending task/fees/compute-late-fee --target app --run run/fees-compute-late-fee-suite --standard standard.yaml --standard-file <p>/app/standard.yaml --from-text <scratch>/proof.yaml --note "..."  -> exit 0
+python3 -B bin/deliver.py --unrecorded <p>/app <p>/delivery/lending/implementation/fees/compute-late-fee.md <p>/delivery/lending/proof/fees/compute-late-fee.md  -> exit 0
+python3 -B bin/deliver.py <p>/delivery/lending <p>/work/lending <p>/app <p>/spec  -> exit 0
+python3 -B bin/trace.py --bind-record <p>/app <p>/spec <p>/delivery/lending/implementation/fees/compute-late-fee.md  -> exit 0
+python3 -B bin/handoff.py --prepare --skill implement-task --project <p> --slug lending --target app --language pt-BR  -> exit 0
+python3 -B bin/handoff.py --help  -> exit 0
+python3 -B bin/handoff.py --save-report <p>/.git/siegard/handoff/20261107T143224Z-implement-task.md  -> exit 0
+python3 -B bin/handoff.py --render <scratch>/handoff.json  -> exit 1 (neither recommended nor settles)
+python3 -B bin/handoff.py --render <scratch>/handoff.json  -> exit 1 (script name in door; block 942 > 600)
+python3 -B bin/handoff.py --render <scratch>/handoff.json  -> exit 1 (block 614 > 600)
+python3 -B bin/handoff.py --render <scratch>/handoff.json  -> exit 0
+# bin = /home/siegfriedneto/projects/siegard2/src/claude/bin ; <p> = /tmp/itbench/runs/first-delivery-cand1/p ; <scratch> = /tmp/itbench-scratch-cand1

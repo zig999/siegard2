@@ -1,0 +1,16 @@
+/tmp/itbench/runs/compaction-resume-base1/prompt.txt
+/tmp/itbench/runs/compaction-resume-base1/p.skill-after-compaction.md
+/tmp/itbench/runs/compaction-resume-base1/p/siegard.json
+/tmp/itbench/runs/compaction-resume-base1/p/app/standard.yaml
+/tmp/itbench/runs/compaction-resume-base1/p/work/lending/task/fees/compute-late-fee.md
+/tmp/itbench/runs/compaction-resume-base1/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/itbench/runs/compaction-resume-base1/p/app/lending/fees.py
+/tmp/itbench/runs/compaction-resume-base1/p/app/lending/loans.py
+/tmp/itbench/runs/compaction-resume-base1/p/app/tests/conftest.py
+/tmp/itbench/runs/compaction-resume-base1/p/app/tests/test_loans.py
+/tmp/itbench/runs/compaction-resume-base1/p/app/.gitignore
+/tmp/itbench/runs/compaction-resume-base1/p/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/itbench/arm-old/agents/test-author.md
+/tmp/itbench/runs/compaction-resume-base1/p/delivery/lending/run/fees-compute-late-fee-build/run.json
+/tmp/itbench/runs/compaction-resume-base1/p/delivery/lending/run/fees-compute-late-fee-suite/test.log
+/tmp/itbench/runs/compaction-resume-base1/p/delivery/lending/proof/fees/compute-late-fee.md

@@ -1,0 +1,19 @@
+/tmp/itbench/runs/compaction-resume-cand2/prompt.txt
+/tmp/itbench/runs/compaction-resume-cand2/p.skill-after-compaction.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/SKILL.md (lines 300-497, plus a heading grep)
+/tmp/itbench/runs/compaction-resume-cand2/p/work/lending/task/fees/compute-late-fee.md
+/tmp/itbench/runs/compaction-resume-cand2/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/itbench/runs/compaction-resume-cand2/p/app/lending/fees.py
+/home/siegfriedneto/projects/siegard2/src/claude/agents/test-author.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/delegation.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/records.md
+/tmp/itbench/runs/compaction-resume-cand2/p/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/itbench/runs/compaction-resume-cand2/p/app/standard.yaml
+/tmp/itbench/runs/compaction-resume-cand2/p/app/lending/loans.py
+/tmp/itbench/runs/compaction-resume-cand2/p/app/tests/conftest.py
+/tmp/itbench/runs/compaction-resume-cand2/p/app/tests/test_loans.py
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/finish.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/references/report.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/handoff.json (structure, x-ceilings, x-jargon, pt-BR x-labels)
+/home/siegfriedneto/projects/siegard2/src/claude/skills/review-change/SKILL.md (lines 1-80, grep for required inputs)
+/tmp/itbench/runs/compaction-resume-cand2/p/delivery/lending/proof/fees/compute-late-fee.md (first 20 lines, after writing)

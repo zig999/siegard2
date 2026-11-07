@@ -220,3 +220,111 @@ def test_the_latest_iteration_passes_every_expectation_on_every_case():
         failed = [e["text"] for e in json.loads(path.read_text(encoding="utf-8"))["expectations"]
                   if not e["passed"]]
         assert not failed, f"{path.parent.name}: {failed}"
+
+
+# ---------------------------------------------------------------- /implement-task: cases
+# Each run delivers the one task of tests/fixtures/benchmarks/implement-task/project/ and names
+# the case it ran; tools/bench_implement_task.py grades it and this module recomputes every
+# expectation from the record. A run's `arm` says which skill it ran: `shipped:` is the skill as
+# this repository holds it at the iteration's commit, `before:` the skill it replaced.
+
+import bench_implement_task  # noqa: E402
+
+IMPLEMENT = BENCH / "implement-task"
+IMPLEMENT_CASES = IMPLEMENT / "cases"
+
+
+def implement_runs() -> list[Path]:
+    return sorted(p for it in sorted(IMPLEMENT.glob("iteration-*"))
+                  for p in it.iterdir() if (p / "grading.json").is_file())
+
+
+def grading_of(record: Path) -> dict:
+    return json.loads((record / "grading.json").read_text(encoding="utf-8"))
+
+
+def test_every_implement_task_case_names_only_checks_the_grader_knows(tmp_path):
+    names = sorted(p.parent.name for p in IMPLEMENT_CASES.glob("*/case.json"))
+    assert names == ["compaction-resume", "first-delivery"]
+    for name in names:
+        project = tmp_path / name
+        bench_implement_task.setup(name, project, bench_implement_task.SKILL)
+        bench_implement_task.checks(name, project)
+
+
+def test_the_implement_task_fixture_plan_and_specification_hold_together(tmp_path):
+    project = tmp_path / "project"
+    bench_implement_task.setup("first-delivery", project, bench_implement_task.SKILL)
+    assert problems_of(project / "spec") == []
+    done = subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/plan.py"), "--check",
+                           str(project / "work/lending"), str(project / "spec")],
+                          capture_output=True, text=True)
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_the_resumed_implement_task_case_starts_where_step_4_ends(tmp_path):
+    """The case holds the skill to the steps a compaction leaves: steps 1-4 ran through the
+    framework's writers, the implementation record validates, and nothing past it exists."""
+    project = tmp_path / "compaction-resume"
+    bench_implement_task.setup("compaction-resume", project, bench_implement_task.SKILL)
+    assert (project / bench_implement_task.IMPLEMENTATION).is_file()
+    assert not (project / bench_implement_task.PROOF).exists()
+    assert not (project / "siegard-trace.json").exists()
+    graded = {e["text"]: e["passed"] for e in bench_implement_task.checks("compaction-resume", project)}
+    assert graded["mechanical: deliver.py over the recorded delivery exits 0"] is True
+    assert graded["mechanical: the proof record exists"] is False
+
+
+def test_the_resumed_implement_task_case_cuts_the_skill_where_a_compaction_reattaches_it(tmp_path):
+    """The cut keeps the checklist that tells a resumed session to read the skill again, and
+    loses every step past the implement step — which is the subject of the case."""
+    project = tmp_path / "compaction-resume"
+    bench_implement_task.setup("compaction-resume", project, bench_implement_task.SKILL)
+    cut = (tmp_path / "compaction-resume.skill-after-compaction.md").read_text(encoding="utf-8")
+    assert "## Progress checklist" in cut
+    assert "read `${CLAUDE_PLUGIN_ROOT}/skills/implement-task/SKILL.md`" in " ".join(cut.split())
+    assert "### 6. Suite" not in cut, "the cut keeps the suite step; the case lost its subject"
+
+
+@pytest.mark.parametrize("run", [str(p.relative_to(IMPLEMENT)) for p in implement_runs()])
+def test_each_implement_task_run_grades_as_recomputed_from_its_record(run):
+    record = IMPLEMENT / run
+    grading = grading_of(record)
+    assert grading["arm"].split(":")[0] in ("shipped", "before"), f"{run}: arm {grading['arm']!r}"
+    recomputed = {e["text"]: e["passed"] for e in bench_implement_task.checks(grading["case"], record)}
+    for expectation in grading["expectations"]:
+        assert recomputed[expectation["text"]] == expectation["passed"], \
+            f"{run}: '{expectation['text']}' was recorded {expectation['passed']} and recomputes otherwise"
+
+
+def test_the_latest_implement_task_iteration_passes_every_expectation_with_the_shipped_skill():
+    """The regression gate: the newest recorded iteration ran the skill as it ships, over every
+    case, and passed. A change to the skill records a new iteration beside this one."""
+    latest = max(IMPLEMENT.glob("iteration-*"), key=lambda p: int(p.name.split("-")[1]), default=None)
+    assert latest, "no iteration is recorded"
+    shipped = [p for p in latest.iterdir() if (p / "grading.json").is_file()
+               and grading_of(p)["arm"].startswith("shipped:")]
+    assert sorted({grading_of(p)["case"] for p in shipped}) == \
+        sorted(p.parent.name for p in IMPLEMENT_CASES.glob("*/case.json")), \
+        f"{latest.name} does not run the shipped skill over every case"
+    for record in shipped:
+        failed = [e["text"] for e in grading_of(record)["expectations"] if not e["passed"]]
+        assert not failed, f"{record.name}: {failed}"
+
+
+def test_the_checklist_is_what_carries_a_resumed_delivery_to_its_end():
+    """The benefit the progress checklist was shipped for, as measured in iteration 1: over the
+    resumed case, every run of the skill it replaced left a mechanical expectation unmet, and
+    every run of the shipped skill met all of them. A later iteration need not re-run the old
+    skill; this record is what the change was decided on."""
+    runs = [p for p in (IMPLEMENT / "iteration-1").iterdir()
+            if (p / "grading.json").is_file() and grading_of(p)["case"] == "compaction-resume"]
+    before = [p for p in runs if grading_of(p)["arm"].startswith("before:")]
+    shipped = [p for p in runs if grading_of(p)["arm"].startswith("shipped:")]
+    assert len(before) >= 2 and len(shipped) >= 2, "the comparison needs two runs per arm"
+    for record in before:
+        mechanical = [e for e in grading_of(record)["expectations"] if e["text"].startswith("mechanical:")]
+        assert any(not e["passed"] for e in mechanical), \
+            f"{record.name} ran the old skill and met every mechanical expectation"
+    for record in shipped:
+        assert all(e["passed"] for e in grading_of(record)["expectations"]), record.name

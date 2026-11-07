@@ -1,0 +1,21 @@
+/tmp/itbench/runs/first-delivery-base1/prompt.txt
+/tmp/itbench/arm-old/skills/implement-task/SKILL.md
+/home/siegfriedneto/.claude/projects/-home-siegfriedneto-projects-siegard2/8767d72d-23dd-44ce-b35e-ee61cb939375/tool-results/b0iwl5fx5.txt (persisted output of the three deliver.py --contract runs)
+/tmp/itbench/runs/first-delivery-base1/p/work/lending/task/fees/compute-late-fee.md
+/tmp/itbench/runs/first-delivery-base1/p/work/lending/plan.json
+/tmp/itbench/runs/first-delivery-base1/p/work/lending/inventory/lending-app.md
+/tmp/itbench/runs/first-delivery-base1/p/work/lending/epic/fees.md
+/tmp/itbench/runs/first-delivery-base1/p/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/itbench/arm-old/agents/task-implementer.md
+/tmp/itbench/runs/first-delivery-base1/p/app/standard.yaml
+/tmp/itbench/runs/first-delivery-base1/p/app/.gitignore
+/tmp/itbench/runs/first-delivery-base1/p/app/lending/__init__.py
+/tmp/itbench/runs/first-delivery-base1/p/app/lending/loans.py
+/tmp/itbench/runs/first-delivery-base1/p/app/tests/conftest.py
+/tmp/itbench/runs/first-delivery-base1/p/app/tests/test_loans.py
+/tmp/itbench/runs/first-delivery-base1/p/spec/rules/lending/late-fee-per-overdue-day.log.md
+/tmp/itbench/runs/first-delivery-base1/p/spec/domain/lending/loan.md
+/tmp/itbench/arm-old/agents/test-author.md
+/tmp/itbench/runs/first-delivery-base1/p/delivery/lending/implementation/fees/compute-late-fee.md (first 20 lines)
+/tmp/itbench/runs/first-delivery-base1/p/siegard.json
+/tmp/itbench/arm-old/schemas/handoff.json ($defs and decisions, to fill the handoff record)

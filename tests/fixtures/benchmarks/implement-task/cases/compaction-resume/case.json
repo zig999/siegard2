@@ -1,0 +1,5 @@
+{"name": "compaction-resume",
+ "what": "The session resumes after a compaction holding only the first ~5k tokens of the skill (20,000 characters); steps 1-4 are done, the source and the implementation record sit uncommitted. Does the rest of the route still run?",
+ "invocation": "/implement-task {project} task/fees/compute-late-fee",
+ "resume_after_step": 4, "truncate_chars": 20000,
+ "checks": ["implementation_written", "proof_written", "delivery_sound", "suite_passed", "trace_bound", "tests_written", "existing_test_untouched", "handoff_saved", "report_hands:/review-change", "every_change_recorded", "reported:write_proof", "reported:unrecorded", "reported:bind_record", "reported:render", "no_commit"]}

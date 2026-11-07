@@ -1,0 +1,12 @@
+python3 -B /tmp/itbench/arm-old/bin/deliver.py --contract proof	exit 0
+python3 -B /tmp/itbench/arm-old/bin/deliver.py --help	exit 0
+python3 -B /tmp/itbench/arm-old/bin/run.py --help	exit 0
+python3 -B /tmp/itbench/arm-old/bin/run.py delivery/lending --run fees-compute-late-fee-suite --cwd app --timeout-seconds 120 --step 'build=python3 -m compileall -q lending' --step 'test=python3 -m pytest -q tests' --excerpt 40	exit 0
+python3 -B /tmp/itbench/arm-old/bin/deliver.py --write-proof delivery/lending task/fees/compute-late-fee --target app --run run/fees-compute-late-fee-suite --standard standard.yaml --standard-file app/standard.yaml --from-text /tmp/itbench/runs/compaction-resume-base1/out/proof-return.yaml	exit 0
+python3 -B /tmp/itbench/arm-old/bin/deliver.py --unrecorded app delivery/lending/implementation/fees/compute-late-fee.md delivery/lending/proof/fees/compute-late-fee.md	exit 0
+python3 -B /tmp/itbench/arm-old/bin/deliver.py delivery/lending work/lending app spec	exit 0
+python3 -B /tmp/itbench/arm-old/bin/trace.py --help	exit 0
+python3 -B /tmp/itbench/arm-old/bin/trace.py --bind-record app spec delivery/lending/implementation/fees/compute-late-fee.md	exit 0
+python3 -B /tmp/itbench/arm-old/bin/trace.py --check app spec	exit unknown (piped through tail; printed the usage refusal "cannot run: expected [--check [--all]] <target-root>")
+python3 -B /tmp/itbench/arm-old/bin/trace.py --check app	exit 0
+python3 -B /tmp/itbench/arm-old/bin/deliver.py --check delivery/lending work/lending app spec	exit 0

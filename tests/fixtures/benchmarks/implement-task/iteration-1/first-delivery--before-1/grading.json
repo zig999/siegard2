@@ -1,0 +1,89 @@
+{
+ "run": "first-delivery--before-1",
+ "case": "first-delivery",
+ "arm": "before: 5.60.0 (d975730)",
+ "subagent_tokens": 118817,
+ "seconds": 183.4,
+ "expectations": [
+  {
+   "text": "mechanical: the implementation record exists",
+   "passed": true,
+   "evidence": "delivery/lending/implementation/fees/compute-late-fee.md"
+  },
+  {
+   "text": "mechanical: the proof record exists",
+   "passed": true,
+   "evidence": "delivery/lending/proof/fees/compute-late-fee.md"
+  },
+  {
+   "text": "mechanical: deliver.py over the recorded delivery exits 0",
+   "passed": true,
+   "evidence": "derived /tmp/tmp6hhzki5b/delivery/lending/delivery.json: 2 node(s), 3 edge(s), contract siegard-delivery/2"
+  },
+  {
+   "text": "mechanical: the proof's run passed and ran the suite step",
+   "passed": true,
+   "evidence": "run/fees-compute-late-fee-suite: passed ['build', 'test']"
+  },
+  {
+   "text": "mechanical: the trace binds rules/lending/late-fee-per-overdue-day to app/lending/fees.py",
+   "passed": true,
+   "evidence": "app/lending/fees.py"
+  },
+  {
+   "text": "mechanical: every test the proof names sits in the target",
+   "passed": true,
+   "evidence": "4/4 held; demonstrates rules/lending/late-fee-per-overdue-day: 1"
+  },
+  {
+   "text": "mechanical: the test an earlier delivery wrote is unchanged",
+   "passed": true,
+   "evidence": "identical"
+  },
+  {
+   "text": "mechanical: the report was saved through handoff.py --save-report",
+   "passed": true,
+   "evidence": "handoff.md"
+  },
+  {
+   "text": "mechanical: the report hands /review-change",
+   "passed": true,
+   "evidence": "/review-change"
+  },
+  {
+   "text": "reported: every path the run changed under the target is named by a record",
+   "passed": true,
+   "evidence": "changed ['lending/fees.py', 'tests/test_fees.py']; unnamed []"
+  },
+  {
+   "text": "reported: commands.txt shows --write-implementation",
+   "passed": true,
+   "evidence": "--write-implementation /tmp/itbench/runs/first-delivery-base1/p/delivery/lending task/fees/compute-late-fee --target app --task-file /tmp/itbench/runs/first-delivery-base1/p/work/lending/task/fees/com"
+  },
+  {
+   "text": "reported: commands.txt shows --write-proof",
+   "passed": true,
+   "evidence": "--write-proof /tmp/itbench/runs/first-delivery-base1/p/delivery/lending task/fees/compute-late-fee --target app --run run/fees-compute-late-fee-suite --standard standard.yaml --standard-file /tmp/itbe"
+  },
+  {
+   "text": "reported: commands.txt shows --unrecorded",
+   "passed": true,
+   "evidence": "--unrecorded /tmp/itbench/runs/first-delivery-base1/p/app /tmp/itbench/runs/first-delivery-base1/p/delivery/lending/implementation/fees/compute-late-fee.md /tmp/itbench/runs/first-delivery-base1/p/del"
+  },
+  {
+   "text": "reported: commands.txt shows --bind-record",
+   "passed": true,
+   "evidence": "--bind-record /tmp/itbench/runs/first-delivery-base1/p/app /tmp/itbench/runs/first-delivery-base1/p/spec /tmp/itbench/runs/first-delivery-base1/p/delivery/lending/implementation/fees/compute-late-fee."
+  },
+  {
+   "text": "reported: commands.txt shows --render",
+   "passed": true,
+   "evidence": "--render out-work/handoff.json -> exit 1 (schema: neither recommended nor settles)"
+  },
+  {
+   "text": "reported: the run made no commit",
+   "passed": true,
+   "evidence": "commits added: 0"
+  }
+ ]
+}
