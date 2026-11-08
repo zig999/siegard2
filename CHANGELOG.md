@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.78.0 — 2026-11-08
+
+The stack is never a node: a language, a runtime version, a package, a tool, a command, an image or a test arrangement belongs to the project's standard, which the person authors. The analyse skill leaves such a line outside the specification and hands it to the person as a rule; the decider returns it as a new `standard` outcome, which plan-work reports without stopping the task. (`7d759b1`)
+
 ## 5.77.0 — 2026-11-08
 
 `spec.py --delta` reads what a change did to the specification: the nodes it added, modified and removed, whether a modified node changed in form alone, and the decision-log entries it appended beside each — against the working tree or between two revisions. A reading, so no specification changes. (`9ac3ef9`)
