@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.71.0 — 2026-11-08
+
+A node whose text changed in form alone no longer owes its files a judgment: `trace.py --carry` restamps every pair whose stamped node text, recovered from git, has the node's present reading, and leaves each other pair with its reason. `/reconcile` runs it before `--check`. SPEC-003 R7 defines the reading; SPEC-005 R13 the carry. (`93a2f72`)
+
 ## 5.70.0 — 2026-11-08
 
 The binder reads its candidate set in one file: `spec.py --pack` prints every candidate verbatim under its identity and digest and lists the decision logs by path, plan-work hands that file instead of one path per node and log, and the binder opens a log only for a claim of succession. SPEC-003 R6 names the pack. (`6cf9b5b`)
