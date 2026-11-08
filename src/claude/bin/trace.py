@@ -6407,8 +6407,9 @@ def carry(target: Path, named: list[str]) -> int:
     path = trace_path(target)
     declared = load(target)
     if declared is None:
-        print(f"cannot carry: {path} does not exist; nothing has been bound, so nothing moved")
-        return 1
+        print(f"no trace file: {path} does not exist; nothing has been bound, so nothing moved "
+              f"and nothing is carried")
+        return 0
     problems = problems_of(declared)
     if problems:
         for problem in problems:

@@ -248,3 +248,19 @@ def test_node_scopes_the_carry(bound):
     done = run("--carry", bound / "backend", "--node", OTHER)
     assert f"carried {OTHER}: 1 pair(s)" in done.stdout
     assert NODE not in done.stdout.split("\n\n")[0]
+
+
+def test_a_target_with_no_trace_has_nothing_to_carry_and_is_no_refusal(tmp_path):
+    """A first adoption runs `/reconcile` over a target nothing has been bound in yet, and its
+    step 2 runs `--carry` before `--check`: with no trace there is nothing that moved, which is an
+    ordinary state, answered the way `--check` answers it — never a refusal that stops the route."""
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, capture_output=True)
+    (tmp_path / "backend").mkdir()
+    shutil.copytree(FIXTURE, tmp_path / "specs")
+    (tmp_path / "siegard.json").write_text(json.dumps(
+        {"specification_root": "specs", "targets": {"backend": "backend"}}) + "\n",
+        encoding="utf-8")
+    done = run("--carry", tmp_path / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "no trace file" in done.stdout and "nothing is carried" in done.stdout
+    assert not (tmp_path / "siegard-trace.json").exists()
