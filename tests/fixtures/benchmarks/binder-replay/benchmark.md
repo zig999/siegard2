@@ -48,3 +48,47 @@ repository (`temp/binder-replay/`); this record keeps the measurement.
   interleaves its arms, or its token comparison reads the cache rather than the format.
 - **The historical binders ran on `claude-sonnet-5-5`** (subagent metadata); the agent definition
   at 5.69.0 picks Opus. Every arm compared against this floor runs on the same model.
+
+# Iteration 2 — the candidate pack (2026-11-08)
+
+Arm `pack-p2`: the 5.70.0 working tree. `/plan-work` hands the binder the path of one file
+`spec.py --pack` printed over the candidates — every node verbatim under its identity and digest,
+each decision log listed by path and not carried — instead of one path per node and log. Same
+frozen inputs, same snapshot, same model (`claude-opus-5-5`), 3 repetitions per task, 30 runs,
+0 failures.
+
+## Decision
+
+| measure | current (A) | pack (B) |
+|---|---|---|
+| tasks identical across all 3 repetitions | 5 / 10 | 3 / 10 |
+| mean pairwise Jaccard within the arm | 0.944 | 0.929 |
+| minimum pairwise Jaccard within the arm | 0.75 | 0.80 |
+| mean Jaccard against the recorded `implements` | 0.931 | 0.924 |
+| mean Jaccard across arms (every A run × every B run) | 0.928 | |
+| minimum Jaccard across arms | 0.75 | |
+
+Every identity on which B diverged is one A already oscillated on, or one the recorded
+`implements` holds, save one domain element named once in one B run of one task — an element A
+also named and dropped between repetitions of another task. The divergence across arms equals B's
+divergence from itself and sits within 0.016 of A's: the pack changed no decision outside the
+floor iteration 1 measured.
+
+## Cost
+
+| repetition | arm | cost (US$) | turns, median | cache read, median | cache write, median | seconds, median |
+|---|---|---|---|---|---|---|
+| 1 (cold) | A | 4.63 | 25 | 150.6k | 33.1k | 69 |
+| 1 (cold) | B | 3.84 | 4 | 24.2k | 35.7k | 45 |
+| 2 | A | 2.99 | 27.5 | 177.4k | 12.6k | 62 |
+| 2 | B | 1.34 | 4 | 58.9k | 0 | 38 |
+| 3 | A | 2.75 | 24 | 164.6k | 10.6k | 59 |
+| 3 | B | 1.55 | 4 | 56.9k | 0 | 48 |
+
+- **Repetition 1 is the production-like reading**: each binder in a plan reads a different
+  skeleton before its pack, so the pack enters the cache cold, as here. Against it the pack costs
+  17% less, takes 35% less time and 84% fewer turns. The cache write is the same — the pack is
+  written once instead of across 25 turns — and the saving is the cache re-read every turn pays.
+- **Repetitions 2 and 3 cost about half** of A's, but their inputs are byte-identical to
+  repetition 1's, so the pack is read from cache; a plan does not repeat a task, and these rows
+  bound the saving from above.

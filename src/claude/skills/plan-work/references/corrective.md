@@ -64,8 +64,8 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes <target-source-root> <fi
 - **A file the trace does not know is a stop**, named in the report: a correction to code no task
   ever bound has no claim to correct against.
 - **Close what came back as step 1 closes any impact set.** That closed set is the binder's
-  candidate set, handed as file paths, in place of an epic's `covers`, since the epic is not written
-  yet.
+  candidate set, handed as the pack `spec.py --pack` prints over it, in place of an epic's
+  `covers`, since the epic is not written yet.
 - **Write the epic after the binder returns.** Its `covers` is the `implements` the binder returned
   plus any node the person named for this correction, and nothing else. `uncovered` holds only a
   node the epic claims that the person excluded, with the person's own why.

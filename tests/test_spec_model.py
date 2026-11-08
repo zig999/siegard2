@@ -1046,6 +1046,47 @@ def test_impact_stands_beside_no_other_flag(spec_root):
     assert "derives nothing" in done.stderr
 
 
+# --------------------------------------------------------------------- --pack
+
+
+def test_pack_carries_every_named_node_verbatim_under_its_identity_and_digest(spec_root):
+    """The binder reads a candidate set in one file instead of one per node. Verbatim, because
+    anything less is a summary the binder would decide from instead of the node; with the digest
+    `--digest` prints, so what was read is a version anyone can name."""
+    named = ["rules/troubleshooting/case-transitions", "domain/troubleshooting/case"]
+    done = run_node("--pack", ",".join(named), str(spec_root))
+    assert done.returncode == 0, done.stderr
+    for identity in named:
+        path = spec_root / f"{identity}.md"
+        assert f"=== {identity}  {spec.digest_of(path)}" in done.stdout
+        assert path.read_text(encoding="utf-8").rstrip("\n") in done.stdout
+    assert done.stdout.index(f"=== {named[0]}") < done.stdout.index(f"=== {named[1]}"), \
+        "the pack keeps the order the caller named"
+
+
+def test_pack_lists_the_decision_logs_and_never_carries_them(spec_root):
+    """A log decides nothing a node is read for; the binder opens one only for a claim of
+    succession. Carried whole, every log would be read whether or not one is claimed."""
+    done = run_node("--pack", "domain/troubleshooting/evidence", str(spec_root))
+    assert done.returncode == 0, done.stderr
+    log = spec_root / "domain/troubleshooting/evidence.log.md"
+    assert f"  {log}" in done.stdout.split("\nlogs:\n", 1)[1]
+    assert log.read_text(encoding="utf-8").strip() not in done.stdout
+
+
+def test_pack_refuses_an_identity_that_names_no_file(spec_root):
+    done = run_node("--pack", "domain/troubleshooting/nope", str(spec_root))
+    assert done.returncode == 2
+    assert "names no file" in done.stderr
+
+
+def test_pack_stands_beside_no_other_flag(spec_root):
+    done = run_node("--pack", "domain/troubleshooting/case", "--impact",
+                    "domain/troubleshooting/case", str(spec_root))
+    assert done.returncode == 2
+    assert "derives nothing" in done.stderr
+
+
 # ------------------------------------------------------------------ shape
 
 

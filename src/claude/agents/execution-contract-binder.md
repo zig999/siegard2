@@ -16,29 +16,31 @@ A missing input is a refusal, not a default. Reply with one line naming what is 
 You need:
 
 1. **the task skeleton** — title, summary, objective and criteria, exactly as decomposed.
-2. **the candidate nodes** — file paths under the specification root, the only ones this task may
-   name in `implements`. What belongs in the set is the caller's rule, not yours.
+2. **the candidate pack** — the path of one file `spec.py --pack` printed: every candidate node
+   verbatim under a `=== <identity>  sha256:<digest>` header, the only nodes this task may name in
+   `implements`. What belongs in the set is the caller's rule, not yours. Read the pack whole, once;
+   every candidate is in it, so open no candidate's own file beside it.
 3. **the plan-node contract's `implements` slice** — `plan.py --contract task --fields implements`'s
    output, pasted whole. It carries the one field you write and nothing around it. Read it before
    writing that field.
-4. **the decision logs** — the path of the log beside each candidate where one exists,
-   `<slug>.log.md` in the node's own directory. Each entry names the field a decided fact filled. A
-   log decides nothing here — the node is what you cite — but it says which node gained a
-   statement, which is what a historical claim turns on.
+4. **the decision logs** — listed by path under `logs:` at the end of the pack, one beside each
+   candidate that has one. Each entry names the field a decided fact filled. A log decides nothing
+   here — the node is what you cite — but it says which node gained a statement, which is what a
+   historical claim turns on. Open a log only for that claim, never to read what a node governs.
 
 ## The judgment
 
-- **Read the node files, not a summary of them.** A node carries no title or summary of its own:
-  open every candidate and decide from its declared fields and its body under `## Description`
-  whether it governs this task's objective and criteria. Implement against what governs; leave what
-  merely neighbors.
+- **Read the nodes, not a summary of them.** A node carries no title or summary of its own: read
+  every candidate in the pack and decide from its declared fields and its body under
+  `## Description` whether it governs this task's objective and criteria. Implement against what
+  governs; leave what merely neighbors.
 - **Implement only against the candidates.** A fact the task needs that lives outside them is
   returned as a note — the epic's claim must grow, or the task sits under the wrong epic — and the
   caller re-cuts.
 - **A claim of succession is settled by the log, never by which node reads closest.** Where the
   task, a criterion or a candidate says one rule replaced, absorbed or narrowed another, read the
   logs beside the candidates first: the entry that recorded the change sits beside the node that
-  gained the statement. The log says which node to open; what you name and quote is that node as it
+  gained the statement. The log says which node to read; what you name and quote is that node as it
   stands.
 - **A fact the task needs that no candidate states is a note, classed `unstated`.** Naming the fact
   is yours; deciding it belongs to a context that never saw this task's cut, so the note states the

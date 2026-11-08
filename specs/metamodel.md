@@ -207,7 +207,10 @@ R8); a fact the material does not state is decided and disclosed in the node's d
   - **full text** — every node's file verbatim under a header naming its identity, in identity
     order: one grep target instead of a walk, so a reader locates where a fact lives and then
     opens the node the match names. It locates and never states: a claim about a node is made
-    from the node's own file, and the projection carries nothing that file does not.
+    from the node's own file, and the projection carries nothing that file does not. A pack is
+    the full text restricted to the identities a reader is handed, in the order named, each
+    under its digest, with the decision log beside each listed by path and never carried: the
+    form a candidate set is read in.
 
 ## What is not normative
 

@@ -61,6 +61,16 @@ What it cannot answer is which nodes to name. That is the scope's vocabulary rea
 specification's, it is judgment, and a set closed perfectly around the wrong candidates is still
 the wrong set.
 
+**A candidate set is read in one file.** `--pack <identity>[,<identity>...]` prints every named
+node's file verbatim under a header naming its identity and its digest, in the order named, then
+the path of each decision log that sits beside one of them — «A pack is the full text restricted
+to the identities a reader is handed» (SPEC-003 R6). A reader handed a candidate set opens
+one file instead of one per node, and the digest beside each node says which version it read.
+The logs are listed and not carried: a log decides nothing a node is read for, and is opened only
+where a claim that one node replaced another needs the entry that recorded it. Like `--impact` it
+is a reading, so it answers over a specification that has problems; a name that holds no file is
+refused.
+
 **A decision is written by this script, never by hand.** `--decide <identity>` reads one entry
 as a JSON object on stdin and appends it to the decision log beside the named node,
 `<identity>.log.md`, creating the log where none exists — «One decision log beside every node
@@ -1040,6 +1050,31 @@ def print_impact(nodes: dict[str, dict], root: Path, named: list[str],
     return 0
 
 
+def print_pack(root: Path, named: list[str]) -> int:
+    """`--pack`'s own body: the named nodes verbatim, each under its identity and digest.
+
+    One file for a reader handed a candidate set, so the set is read once rather than walked a
+    file at a time, and the digest beside each node says which version was read. The decision
+    logs are listed by path and never carried: what a node governs is read from the node, and a
+    log is opened only for the one question it settles — which node gained a statement."""
+    missing = [identity for identity in named if not (root / f"{identity}.md").is_file()]
+    if missing:
+        print(f"cannot run: {', '.join(missing)} names no file under {root}; "
+              f"an identity is a node's path without `.md`", file=sys.stderr)
+        return CANNOT_RUN
+    ordered = list(dict.fromkeys(named))
+    logs = [root / f"{identity}.log.md" for identity in ordered
+            if (root / f"{identity}.log.md").is_file()]
+    print(f"pack: {len(ordered)} node(s), each verbatim under its identity and digest; "
+          f"{len(logs)} decision log(s) listed at the end, not carried.")
+    for identity in ordered:
+        path = root / f"{identity}.md"
+        print(f"\n=== {identity}  {digest_of(path)}")
+        print(path.read_text(encoding="utf-8").rstrip("\n"))
+    print("\nlogs:")
+    print("\n".join(f"  {log}" for log in logs) or "  (none)")
+    return 0
+
 
 # ---------------------------------------------------------------- shape
 
@@ -1994,6 +2029,18 @@ def main() -> int:
         if not impact:
             print("cannot run: --impact names no node", file=sys.stderr)
             return CANNOT_RUN
+    pack = None
+    if "--pack" in args:
+        at = args.index("--pack")
+        if at + 1 >= len(args):
+            print("cannot run: --pack takes a comma-separated list of node identities",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        pack = [name.strip() for name in args[at + 1].split(",") if name.strip()]
+        del args[at:at + 2]
+        if not pack:
+            print("cannot run: --pack names no node", file=sys.stderr)
+            return CANNOT_RUN
     single = None
     if "--node" in args:
         at = args.index("--node")
@@ -2016,6 +2063,11 @@ def main() -> int:
         print("cannot run: --decide writes one entry and revalidates; it stands beside no "
               "other flag", file=sys.stderr)
         return CANNOT_RUN
+    if pack is not None and (write or show_digests or shape or single is not None
+                             or impact is not None or deciding is not None):
+        print("cannot run: --pack reads the named nodes and derives nothing; it stands beside "
+              "no other flag", file=sys.stderr)
+        return CANNOT_RUN
     if impact is not None and (write or show_digests or shape or single is not None):
         print("cannot run: --impact reads the specification and derives nothing; it stands "
               "beside no other flag", file=sys.stderr)
@@ -2031,7 +2083,8 @@ def main() -> int:
     if len(args) != 1 or args[0].startswith("--"):
         print("cannot run: expected [--project | --digest | "
               "--shape [--of <identity>[,<identity>...]] | --node <file> | "
-              "--impact <identity>[,<identity>...] | --decide <identity>] <spec-root>",
+              "--impact <identity>[,<identity>...] | --pack <identity>[,<identity>...] | "
+              "--decide <identity>] <spec-root>",
               file=sys.stderr)
         return CANNOT_RUN
     root = Path(args[0])
@@ -2043,6 +2096,8 @@ def main() -> int:
         print(f"cannot run: {root} is a project root, and its {PROJECT_FILE} declares "
               f"the specification at {declared_root} — spec.py {declared_root}", file=sys.stderr)
         return CANNOT_RUN
+    if pack is not None:
+        return print_pack(root, pack)
     try:
         validators = contracts()
     except (FileNotFoundError, json.JSONDecodeError) as broken:

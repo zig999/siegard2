@@ -246,11 +246,10 @@ Spawn one `siegard:execution-contract-binder` subagent per skeleton — its judg
 
 - the skeleton as its title, summary, objective and criteria — never its `rationale`, its
   dependencies or its body, which carry an opinion about the reference;
-- the candidates' file paths: its epic's `covers` less its `uncovered`;
+- the path of a file outside the work root holding `spec.py --pack` over its epic's `covers`
+  less its `uncovered`: every candidate verbatim, and the path of each one's decision log;
 - the binding slice, `plan.py --contract task --fields implements`, printed once and pasted whole
-  into every spawn;
-- the path of the decision log beside each candidate where one exists, so a claim that one rule
-  replaced another is settled by the entry that records it.
+  into every spawn.
 
 The binder returns the task's `implements`, and a classified note for every divergence —
 including a fact the specification does not state, and a `compound` note on a criterion that

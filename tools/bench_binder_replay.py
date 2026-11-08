@@ -18,8 +18,9 @@ similarity between repetitions, the recorded `implements` of the delivered task,
 
 Usage:
     python3 tools/bench_binder_replay.py freeze <consumer-root> <work-slug> <out> --tasks <epic/task,...>
+    python3 tools/bench_binder_replay.py pack   <out>
     python3 tools/bench_binder_replay.py run    <out> --arm <label> --plugin-dir <dir> --reps N
-                                                [--model M] [--parallel P]
+                                                [--model M] [--parallel P] [--inputs paths|pack]
     python3 tools/bench_binder_replay.py grade  <out> [--arm <label>...]
 """
 from __future__ import annotations
@@ -50,6 +51,15 @@ Binding slice (the contract of the implements field): read {slice}.
 
 Return the YAML your instructions define: `implements` and `notes`.
 """
+PACK_PROMPT = """Decide which specification nodes govern this task and return its `implements`, with a classified note for every divergence.
+
+Skeleton (title, summary, objective, criteria): read {skeleton} and use only those four fields.
+Candidate pack: read {pack} (`spec.py --pack` output: every candidate node verbatim under its identity and digest, and the decision log beside each listed by path at the end).
+Binding slice (the contract of the implements field): read {slice}.
+
+Return the YAML your instructions define: `implements` and `notes`.
+"""
+SPEC_PY = REPO / "src/claude/bin/spec.py"
 
 
 def front(path: Path) -> dict:
@@ -105,6 +115,7 @@ def freeze(consumer: Path, slug: str, out: Path, tasks: list[str]) -> None:
         cand.write_text("\n".join(lines) + "\n", encoding="utf-8")
         prompt = PROMPT.format(skeleton=skel, candidates=cand, slice=inputs / "slice.json")
         (inputs / f"prompt_{key}.txt").write_text(prompt, encoding="utf-8")
+        write_pack(inputs, spec, key, nodes, skel)
         manifest["tasks"][key] = {"recorded_implements": sorted(tfm.get("implements") or []),
                                   "candidates": nodes,
                                   "candidate_files": len(lines)}
@@ -112,12 +123,33 @@ def freeze(consumer: Path, slug: str, out: Path, tasks: list[str]) -> None:
     print(f"froze {len(tasks)} tasks; specification digest {manifest['specification_digest'][:12]}")
 
 
-def run_one(out: Path, arm: str, key: str, rep: int, plugin_dir: Path, model: str | None) -> str:
+def write_pack(inputs: Path, spec: Path, key: str, nodes: list[str], skel: Path) -> None:
+    """The candidate set as `spec.py --pack` prints it, and the prompt that hands it."""
+    pack = inputs / f"pack_{key}.txt"
+    pack.write_text(subprocess.run([sys.executable, "-B", str(SPEC_PY), "--pack", ",".join(nodes),
+                                    str(spec)], check=True, capture_output=True,
+                                   text=True).stdout, encoding="utf-8")
+    (inputs / f"prompt_pack_{key}.txt").write_text(
+        PACK_PROMPT.format(skeleton=skel, pack=pack, slice=inputs / "slice.json"),
+        encoding="utf-8")
+
+
+def pack_inputs(out: Path) -> None:
+    """Write the pack inputs over an existing freeze, from the snapshot it already holds."""
+    manifest = json.loads((out / "manifest.json").read_text())
+    spec = out / "project/siegard/specification"
+    for key, meta in manifest["tasks"].items():
+        write_pack(out / "inputs", spec, key, meta["candidates"], out / "inputs" / f"skel_{key}.yaml")
+
+
+def run_one(out: Path, arm: str, key: str, rep: int, plugin_dir: Path, model: str | None,
+            inputs: str = "paths") -> str:
     dest = out / "runs" / arm / f"{key}--{rep}.json"
     if dest.exists():
         return f"skip {dest.name}"
     dest.parent.mkdir(parents=True, exist_ok=True)
-    prompt = (out / "inputs" / f"prompt_{key}.txt").read_text(encoding="utf-8")
+    name = f"prompt_{key}.txt" if inputs == "paths" else f"prompt_pack_{key}.txt"
+    prompt = (out / "inputs" / name).read_text(encoding="utf-8")
     cmd = ["claude", "-p", "--agent", AGENT, "--plugin-dir", str(plugin_dir),
            "--output-format", "json", "--add-dir", str(out / "inputs"),
            "--allowedTools", "Read", "Grep", "Glob", "--no-session-persistence"]
@@ -132,11 +164,12 @@ def run_one(out: Path, arm: str, key: str, rep: int, plugin_dir: Path, model: st
     return f"ok {dest.name}"
 
 
-def run(out: Path, arm: str, plugin_dir: Path, reps: int, model: str | None, parallel: int) -> None:
+def run(out: Path, arm: str, plugin_dir: Path, reps: int, model: str | None, parallel: int,
+        inputs: str = "paths") -> None:
     keys = list(json.loads((out / "manifest.json").read_text())["tasks"])
     jobs = [(k, r) for r in range(1, reps + 1) for k in keys]
     with cf.ThreadPoolExecutor(max_workers=parallel) as pool:
-        for line in pool.map(lambda j: run_one(out, arm, j[0], j[1], plugin_dir, model), jobs):
+        for line in pool.map(lambda j: run_one(out, arm, j[0], j[1], plugin_dir, model, inputs), jobs):
             print(line, flush=True)
 
 
@@ -220,6 +253,9 @@ def main() -> int:
     r.add_argument("--reps", type=int, default=3)
     r.add_argument("--model")
     r.add_argument("--parallel", type=int, default=5)
+    r.add_argument("--inputs", choices=("paths", "pack"), default="paths")
+    k = sub.add_parser("pack")
+    k.add_argument("out", type=Path)
     g = sub.add_parser("grade")
     g.add_argument("out", type=Path)
     g.add_argument("--arm", action="append")
@@ -227,7 +263,9 @@ def main() -> int:
     if a.cmd == "freeze":
         freeze(a.consumer.resolve(), a.slug, a.out.resolve(), a.tasks.split(","))
     elif a.cmd == "run":
-        run(a.out.resolve(), a.arm, a.plugin_dir.resolve(), a.reps, a.model, a.parallel)
+        run(a.out.resolve(), a.arm, a.plugin_dir.resolve(), a.reps, a.model, a.parallel, a.inputs)
+    elif a.cmd == "pack":
+        pack_inputs(a.out.resolve())
     else:
         grade(a.out.resolve(), a.arm)
     return 0
