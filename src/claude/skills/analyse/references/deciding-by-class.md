@@ -70,6 +70,21 @@ class may declare; this is the judgment that decides what goes in it:
   (SPEC-003 §Contract): the contract consuming it names that capability as its `upstream`. A consumed contract's payload says how the boundary is crossed: the upstream's
   own element adopts that model, an element of the consuming context translates it, and the
   context map reads the difference from the payload alone — declare it nowhere else.
+- **A behaviour takes the first home that holds it.** «A fact takes the first of these homes that
+  holds it» (SPEC-003 §Rule): what an operation answers is the contract's `answers`; a condition
+  on an element is a rule constraining that element; a condition on an operation no element is
+  the subject of — what it notifies, leaves unchanged or retries — is a `policy` constraining its
+  contract, «A `policy` may also constrain a Contract» (SPEC-003 §Rule); and only what limits how
+  the solution is built or runs is an architecture constraint. A constraint you are about to write
+  with no `fitness`, describing what a caller's request meets or breaks, belongs to an earlier home.
+
+  ```yaml
+  type: policy
+  statement: A deletion of a product offering notifies each version it removed.
+  constrains:
+    - contracts/catalog/product-catalog-management-api
+  ```
+
 - **An architecture constraint limits the solution, never the domain.** An integration
   strategy, a storage choice, an anti-corruption layer — state its `scope` (`system` or one
   context) and, where a mechanical check exists, its `fitness`.

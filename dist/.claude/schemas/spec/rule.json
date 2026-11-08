@@ -35,8 +35,8 @@
     "constrains": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/domainRef" },
-      "description": "The Domain Model elements this rule binds, by full identity."
+      "items": { "anyOf": [{ "$ref": "#/$defs/domainRef" }, { "$ref": "#/$defs/contractRef" }] },
+      "description": "The Domain Model elements this rule binds, by full identity — and, on a `policy` alone, a Contract whose operation meets the condition with no element its subject: «A `policy` may also constrain a Contract» (SPEC-003 §Rule), and «A Contract it names counts toward no aggregate» (SPEC-003 §Rule)."
     },
     "consistency": {
       "enum": ["immediate", "eventual"],
@@ -75,6 +75,7 @@
       "if": { "properties": { "type": { "const": "invariant" } }, "required": ["type"] },
       "then": {
         "required": ["constrains"],
+        "properties": { "constrains": { "items": { "$ref": "#/$defs/domainRef" } } },
         "propertyNames": { "enum": ["type", "statement", "expression", "constrains", "excludes"] },
         "examples": [
           {
@@ -132,6 +133,11 @@
     "slug": {
       "type": "string",
       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "contractRef": {
+      "type": "string",
+      "pattern": "^contracts/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "A Contract, by full identity."
     },
     "domainRef": {
       "type": "string",

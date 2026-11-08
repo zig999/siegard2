@@ -74,7 +74,10 @@ obligation lives.
   - `invariant` — `constrains` must resolve inside one aggregate; holds immediately.
   - `policy` — `constrains` may cross aggregates or contexts and `consistency`
     (`immediate` | `eventual`) is then required; immediate across an aggregate boundary is a
-    validation error — that demand is a boundary redrawn, not a rule.
+    validation error — that demand is a boundary redrawn, not a rule. A `policy` may also
+    constrain a Contract: a condition an operation of that boundary meets that no element is the
+    subject of — what it notifies, what it leaves unchanged, what it retries. A Contract it names
+    counts toward no aggregate.
   - `state-machine` — anchored to one `aggregate-root` and its status `enumeration`, and an
     aggregate root is the subject of at most one; carries `initial` and `transitions`, and
     `terminal` and `rejections` where it has them; the validator checks totality over the set:
@@ -97,6 +100,12 @@ obligation lives.
   reading of `statement` can hold the specification to, and two normative fields with no
   precedence make which one binds a matter of which the reader opened. An `expression` whose
   claims exceed its `statement` is a `statement` owed the claim, or a second rule.
+- **Where a behaviour lives.** What an operation answers is its Contract's `answers`
+  (§Contract); a condition on an element is a Rule constraining that element; a condition on an
+  operation that no element is the subject of is a `policy` constraining its Contract; and an
+  Architecture Constraint holds what limits how the solution is built or runs — its runtime,
+  integration, storage or timing — never a condition a caller's request meets or breaks. A fact
+  takes the first of these homes that holds it.
 
 ### Scenario
 
@@ -274,3 +283,5 @@ layer → Architecture Constraint.
 9. For `excludes`: an entry whose `node` does not resolve, names the node itself, or repeats a
    node for the same case, and a `case` of more than one sentence, are each refused — a fixture
    proves each — and a node declaring `excludes` validates sound.
+10. A `policy` constraining a Contract validates sound, and counts it toward no aggregate; an
+    `invariant` or a `state-machine` constraining a Contract is refused — a fixture proves each.

@@ -1654,3 +1654,35 @@ def test_an_excludes_case_of_two_sentences_is_refused(spec_root):
     with_excludes(spec_root, [{"case": "Whether a hypothesis needs evidence. And how much.",
                                "node": DECIDER}])
     assert hits(problems_of(spec_root), "excludes[0].case carries 2 sentences")
+
+
+# ------------------------------------------------------------ policy on a contract
+
+CONTRACT = "contracts/troubleshooting/case-resolved"
+
+
+def test_a_policy_constraining_a_contract_is_sound_and_counts_toward_no_aggregate(spec_root):
+    """«A `policy` may also constrain a Contract» (SPEC-003 §Rule): a condition an operation meets
+    that no element is the subject of. «A Contract it names counts toward no aggregate»
+    (SPEC-003 §Rule), so a policy naming one element and one contract crosses nothing and owes
+    no consistency."""
+    rewrite(spec_root, "rules/troubleshooting/alert-opens-case.md",
+            lambda front: (front.update(constrains=["domain/troubleshooting/case", CONTRACT]),
+                           front.pop("consistency")))
+    assert problems_of(spec_root) == []
+    done = run_node("--impact", CONTRACT, str(spec_root))
+    assert "named by  <- rules/troubleshooting/alert-opens-case" in done.stdout
+
+
+def test_an_invariant_constraining_a_contract_is_refused(spec_root):
+    rewrite(spec_root, "rules/troubleshooting/hypothesis-requires-evidence.md",
+            lambda front: front.update(constrains=[CONTRACT]))
+    assert hits(problems_of(spec_root), "rules/troubleshooting/hypothesis-requires-evidence: "
+                                        "constrains.0")
+
+
+def test_a_state_machine_constraining_a_contract_is_refused(spec_root):
+    rewrite(spec_root, "rules/troubleshooting/case-transitions.md",
+            lambda front: front.update(constrains=[CONTRACT]))
+    assert hits(problems_of(spec_root), "rules/troubleshooting/case-transitions: frontmatter: "
+                                        "'constrains' is not one of")
