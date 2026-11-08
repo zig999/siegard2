@@ -203,6 +203,9 @@ limit the solution. Two rules bind the analysis:
   step can bend the specification to fit what was built. Disclosure answers that: every decided
   value lands in the log, the diff over the specification root is the review, and disagreeing
   with one is an ordinary change.
+- **A fact takes the first home that holds it.** Before writing a rule, a contract's `answers`
+  or a constraint, read `references/where-a-behaviour-lives.md`: the order of homes, applied
+  kind by kind.
 - **An operative claim is recorded where something can hold the specification to it.** A
   sentence that constrains the domain — a MUST, a never, an exactly-one, an at-least — is a
   Rule's `statement`, a declared attribute or relationship, a Scenario's `given`/`when`/`then`,

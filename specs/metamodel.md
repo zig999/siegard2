@@ -151,7 +151,9 @@ obligation lives.
   unavailable, an internal failure — is read by the caller like any refusal, and enters `answers`
   under `when`. A refusal two operations answer alike is written once, under a YAML anchor,
   and named by alias at its place in each operation's list: the reading is the same data, and
-  each operation's order stays its own.
+  each operation's order stays its own. An operation's `refusals` are listed in the order it
+  considers them: where a request meets more than one, the answer is the first listed, and that
+  order is the operation's precedence — never a rule's or a constraint's to state.
 
 ### Architecture Constraint
 
@@ -288,3 +290,7 @@ layer → Architecture Constraint.
    proves each — and a node declaring `excludes` validates sound.
 10. A `policy` constraining a Contract validates sound, and counts it toward no aggregate; an
     `invariant` or a `state-machine` constraining a Contract is refused — a fixture proves each.
+11. `spec.py --shape` reports, and refuses none of: a rule or a constraint whose `statement`
+    states what an operation answers, a constraint declaring no `fitness`, and a refusal condition
+    written alike under more than one operation — a fixture proves each is reported, and that a
+    specification carrying them still validates sound.

@@ -30,3 +30,15 @@ open, and each has one answer:
 
 Each is yours to fix now, in this invocation. What you leave standing, say so in the report and
 say why — a number carried into the report unexamined is a measurement nobody acted on.
+
+## Class signals
+
+`--shape` closes on class signals: a rule or a constraint whose `statement` states what an
+operation answers, a constraint declaring no `fitness`, a refusal condition written alike under
+more than one operation. Each is a fact that may sit in the wrong home, and none is refused —
+«A fact takes the first of these homes that holds it» (SPEC-003 §Rule). For every signal on a node
+this analysis wrote, marked `>`, read the node against `references/where-a-behaviour-lives.md`:
+move the fact to the home the table names, or, where it stays, say why in the report. A refusal
+condition written under several operations is written once under an anchor; a status in a rule's
+or a constraint's `statement` moves to the contract's `answers`. Signals on nodes this analysis did
+not write are the specification's history, reported and left as they are.

@@ -1848,3 +1848,50 @@ def test_delta_stands_beside_no_other_flag(repo):
     assert done.returncode == 2 and "derives nothing" in done.stderr
     done = run_node("--delta", "HEAD", "--pack", "domain/troubleshooting/case", str(repo))
     assert done.returncode == 2 and "derives nothing" in done.stderr
+
+
+# ------------------------------------------------------------------ class signals
+
+
+def signals_of(root: Path) -> str:
+    done = run_node("--shape", str(root))
+    assert done.returncode == 0, done.stderr
+    return done.stdout.split("\nclass signals", 1)[1]
+
+
+def test_shape_reports_each_class_signal_and_refuses_none(spec_root):
+    """«`spec.py --shape` reports, and refuses none of» the class signals SPEC-003's validation
+    names: a status in a rule's or a constraint's statement, a constraint with no `fitness`, and a
+    refusal condition written alike under two operations — over a specification still sound."""
+    rewrite(spec_root, "rules/troubleshooting/hypothesis-requires-evidence.md",
+            lambda front: front.update(statement="A hypothesis without evidence MUST be refused "
+                                                 "with HTTP 422 before its case resolves."))
+    unheld = {"when": "No case is held at the requested identity.",
+              "answer": "HTTP 404 reporting case-not-found"}
+    write_desk(spec_root, [{"operation": "resolve-case", "refusals": [dict(unheld)]},
+                           {"operation": "read-case", "refusals": [dict(unheld)]}])
+    assert problems_of(spec_root) == [], "a signal is never a problem"
+    said = signals_of(spec_root)
+    assert "a rule whose statement states what an operation answers — 1" in said
+    assert "rules/troubleshooting/hypothesis-requires-evidence  HTTP 422" in said
+    assert "a refusal condition written alike under more than one operation — 1" in said
+    assert "contracts/troubleshooting/case-desk  2 operations: No case is held" in said
+    assert "a constraint declaring no `fitness` —" in said
+
+
+def test_a_refusal_named_again_by_alias_is_written_once(spec_root):
+    """An alias is the same refusal to the composer, so the anchored form carries no signal for
+    the condition it writes once."""
+    (spec_root / DESK).write_text(ANCHORED_DESK, encoding="utf-8")
+    said = signals_of(spec_root)
+    assert "a refusal condition written alike under more than one operation — 0" in said
+
+
+def test_a_constraint_stating_an_answer_is_a_signal(spec_root):
+    path = next((spec_root / "constraints").glob("*.md"))
+    rewrite(spec_root, f"constraints/{path.name}",
+            lambda front: front.update(statement="Every refused request MUST be answered HTTP 503 "
+                                                 "while the store is down."))
+    said = signals_of(spec_root)
+    assert "a constraint whose statement states what an operation answers — 1" in said
+    assert f"constraints/{path.stem}  HTTP 503" in said

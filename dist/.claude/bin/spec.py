@@ -114,7 +114,12 @@ speaking about the specification rather than the domain, every long statement no
 how far each `why` across the decision logs runs, which fields a log decided more than
 once, and how many of each node's declared fields its log decided — ranked, the far end named,
 so the node the material barely described is the first line a reviewer reads, and a node the
-analysis introduced counts its own existence among them. Two readings are kept apart. A declared
+analysis introduced counts its own existence among them. It closes on class signals — a
+status in a rule's or a constraint's `statement`, a constraint no `fitness` verifies, a refusal
+condition written out again under a second operation rather than named by alias — each a fact
+that may sit in the wrong home,
+«A fact takes the first of these homes that holds it» (SPEC-003 §Rule). Two readings are kept
+apart. A declared
 reference passes through the same walk that validates it and is passed in rather than
 recomputed; a node named in prose passes through no field and no check, so it is counted
 separately, a bare slug two nodes answer to is reported ambiguous rather than resolved to
@@ -1749,7 +1754,84 @@ def print_shape(nodes: dict[str, dict], root: Path, problems: list[str],
         print(f"  {count:>4} node(s)  `{name}`  ->  {', '.join(holds)}")
     if not unsure:
         print("  (none)")
+
+    signals = class_signals(nodes)
+    print("\nclass signals — reported, never refused; each is a fact that may sit in the wrong "
+          "home: «A fact takes the first of these homes that holds it» (SPEC-003 §Rule):")
+    for key, said in (("answer_rule", "a rule whose statement states what an operation answers"),
+                      ("answer_constraint",
+                       "a constraint whose statement states what an operation answers"),
+                      ("no_fitness", "a constraint declaring no `fitness`"),
+                      ("repeated_when",
+                       "a refusal condition written alike under more than one operation")):
+        rows = signals[key]
+        print(f"  {said} — {len(rows)}")
+        listed = [r for r in rows if r[0] in named] + \
+            [r for r in rows if r[0] not in named][:ROWS_SHOWN]
+        for identity, detail in sorted(listed):
+            print(f"   {mark(identity)} {identity}{('  ' + detail) if detail else ''}")
+        if len(rows) > len(listed):
+            print(f"      … and {len(rows) - len(listed)} more")
     return 0
+
+
+ANSWER = re.compile(r"\bHTTP\s*[1-5]\d\d\b")
+
+
+def class_signals(nodes: dict[str, dict]) -> dict[str, list[tuple[str, str]]]:
+    """The facts whose class can be read off the text as probably not their home, each as
+    (identity, detail). What an operation answers is the contract's, so a status in a rule's or a
+    constraint's `statement` is one; a constraint no `fitness` verifies is held by reading alone;
+    and a refusal condition written out again under a second operation, rather than once under an
+    anchor, is the contract carrying one fact twice. Read with the composer, so an alias — the
+    same refusal named again — is told apart from a copy."""
+    signals: dict[str, list[tuple[str, str]]] = {
+        "answer_rule": [], "answer_constraint": [], "no_fitness": [], "repeated_when": []}
+    for identity, node in sorted(nodes.items()):
+        cls, front = node["cls"], node["front"]
+        statement = front.get("statement") if isinstance(front, dict) else None
+        if cls in ("rule", "constraint") and isinstance(statement, str) \
+                and ANSWER.search(statement):
+            signals[f"answer_{cls}"].append((identity, ANSWER.search(statement).group(0)))
+        if cls == "constraint" and isinstance(front, dict) and not front.get("fitness"):
+            signals["no_fitness"].append((identity, ""))
+        if cls == "contract" and isinstance(front, dict) and front.get("answers"):
+            for when, operations in repeated_whens(node["path"]):
+                signals["repeated_when"].append(
+                    (identity, f"{len(operations)} operations: {when[:80]}"))
+    return signals
+
+
+def repeated_whens(path: Path) -> list[tuple[str, list[str]]]:
+    """Each `when` a contract writes out under more than one operation as separate refusals —
+    an alias of one anchored refusal is the same node to the composer, and is not counted."""
+    text, _ = read_node(path)
+    match = FENCE.match(text or "")
+    if not match:
+        return []
+    try:
+        root = yaml.compose(match.group(1), Loader=yaml.SafeLoader)
+    except yaml.YAMLError:
+        return []
+    if not isinstance(root, yaml.MappingNode):
+        return []
+    field = {k.value: v for k, v in root.value if isinstance(k, yaml.ScalarNode)}
+    answers = field.get("answers")
+    written: dict[str, dict[int, str]] = {}
+    for answer in getattr(answers, "value", []) or []:
+        if not isinstance(answer, yaml.MappingNode):
+            continue
+        parts = {k.value: v for k, v in answer.value if isinstance(k, yaml.ScalarNode)}
+        operation = getattr(parts.get("operation"), "value", "?")
+        for refusal in getattr(parts.get("refusals"), "value", []) or []:
+            if not isinstance(refusal, yaml.MappingNode):
+                continue
+            inner = {k.value: v for k, v in refusal.value if isinstance(k, yaml.ScalarNode)}
+            when = inner.get("when")
+            if isinstance(when, yaml.ScalarNode):
+                written.setdefault(" ".join(when.value.split()), {})[id(refusal)] = operation
+    return [(when, sorted(set(copies.values()))) for when, copies in sorted(written.items())
+            if len(copies) > 1 and len(set(copies.values())) > 1]
 
 
 # ---------------------------------------------------------------- projections

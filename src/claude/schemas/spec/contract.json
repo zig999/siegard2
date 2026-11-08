@@ -160,7 +160,7 @@
           "type": "array",
           "minItems": 1,
           "items": { "$ref": "#/$defs/refusalAnswer" },
-          "description": "Each refusal the operation answers, in the order the operation considers them. «A refusal two operations answer alike is written once, under a YAML anchor, and named by alias at its place in each operation's list» (SPEC-003 §Contract): an alias reads as the refusal it names, and its place in this list is this operation's."
+          "description": "Each refusal the operation answers, in the order the operation considers them — «where a request meets more than one, the answer is the first listed, and that order is the operation's precedence» (SPEC-003 §Contract). «A refusal two operations answer alike is written once, under a YAML anchor, and named by alias at its place in each operation's list» (SPEC-003 §Contract): an alias reads as the refusal it names, and its place in this list is this operation's."
         }
       }
     },

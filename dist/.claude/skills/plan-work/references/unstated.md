@@ -43,7 +43,8 @@ never from the notification that relays it.
   ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --decide <the return's log.node> <specification-root>`, with the
   rest of `log` as one JSON object on stdin. Its first line is what the report quotes. Once the root
   passes, run `spec.py --project`, and re-run step 4's binder for every skeleton whose candidates
-  include a touched node.
+  include a touched node. Run `spec.py --shape --of <every touched node>` too, and carry each class
+  signal on a touched node into the report: it reports, and stops nothing.
 - **Edits landed in a node no skeleton's candidates hold**: the fact is now stated, and the
   candidate set that lacks it is the cut — grow the epic's `covers` to that node or move the task,
   and re-run step 4.
