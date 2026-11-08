@@ -21,11 +21,10 @@ implements to those files, the door is the plan over this slug carrying `stands`
 it does not, the door is the reconciliation over them, and the plan waits for that binding.»
 (SPEC-004 R20):
 
-- **Every node bound to those files**: recommend `/plan-work` over this slug naming the task and
-  those files, which writes `stands` only where `--encodes` confirms them — «every file it names is
-  bound in the trace, before the task is written, to every node the task implements»
-  (SPEC-004 R18). Hand `/reconcile` over those files beside it.
-- **Any node not bound**: recommend `/reconcile` over those files. Hand `/plan-work` beside it,
+- **Every node bound to some of those files**: recommend `/plan-work` over this slug naming the
+  task and those of the files bound to one of its nodes; it writes `stands` only where `--encodes`
+  confirms them. Hand `/reconcile` over those files beside it.
+- **Any node bound to none**: recommend `/reconcile` over those files. Hand `/plan-work` beside it,
   marked as refusing: it would not write `stands` over files the trace does not bind.
 
 Report the stop with the output verbatim and both doors ready to paste, the recommendation's kind

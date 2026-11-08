@@ -58,18 +58,18 @@ implementation record names or on the node alone:
 ## A task carrying `stands`
 
 **A task carrying `stands` is delivered the same way from its first delivery, because its plan
-says so.** `/plan-work` writes `stands` only over files the trace already binds to every node the
-task implements. The implementation stands at the files `stands` lists, and nothing in this
-delivery writes source.
+says so.** `/plan-work` writes `stands` only over files the trace binds, together, to every node
+the task implements. The implementation stands at those files, and this delivery writes no source.
 
 Before anything is written, `trace.py --encodes <target-source-root> <each file>` must still list
-every node the task implements for those files, and the same `trace.py --check --all` is read for
-the findings that name a node the task implements, on one of those files or on the node alone:
+each node the task implements for some file and some such node for each file, and the same
+`trace.py --check --all` is read for the findings that name a node the task implements, on one of
+those files or on the node alone:
 
-- **Any such finding means the task is not delivered** — «a binding the trace does not hold, a file
-  changed since the binding was written, or a node whose text moved since the file was read against
-  it makes the implementation not stand» (SPEC-004 R26). The door is `/reconcile` over the files
-  those findings name, handed with those files.
+- **Any such finding means the task is not delivered** — «a file changed since the binding was
+  written, or a node whose text moved since the file was read against it makes the implementation
+  not stand» (SPEC-004 R26). The door is `/reconcile` over the files those findings name,
+  handed with those files.
 - **A finding that names any other node on those files is not this task's.** The delivery proceeds,
   and the implementation record's `## Notes` names each such node and file, one `--note` line
   apiece — «A binding of a node the task does not implement to one of those files is never that
@@ -77,7 +77,7 @@ the findings that name a node the task implements, on one of those files or on t
   it.» (SPEC-004 R26).
 
 `--write-implementation` holds the same reading over the trace and refuses the record where a
-binding of the task's own nodes is out of date or absent.
+binding of the task's own nodes is out of date, or a node or a file is bound to none of the other.
 
 Step 3 does not run. Step 4 does, over the tree as it stands, and the record points at that build
 run. No producer is spawned for the record: you compose the mapping yourself, as plain YAML in a

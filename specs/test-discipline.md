@@ -132,7 +132,7 @@ left out — so the file set the review that followed was handed never held them
 
 ### Where a proof is cut
 
-- **R18** — A task writes source, or its implementation already stands. A task that writes no source carries `stands`, and every file it names is bound in the trace, before the task is written, to every node the task implements. A fact the plan's own deliveries will write into source is proven by the task that writes it, as that task's criterion, never by a task of its own.
+- **R18** — A task writes source, or its implementation already stands. A task that writes no source carries `stands`, and before the task is written the trace binds each node the task implements to a file it names, and each file it names to a node the task implements. A fact the plan's own deliveries will write into source is proven by the task that writes it, as that task's criterion, never by a task of its own.
 - **R19** — A node whose fact already stands in source the trace does not bind to it gets no proof task. The plan reports the reconciliation that would bind it, over the files that hold it, and the proof waits for that binding.
 
   Grounds: on 2026-10-26 three successive plans of one consumer cut proof-only tasks in the
@@ -206,7 +206,7 @@ left out — so the file set the review that followed was handed never held them
   carrying a testable remainder — only other nodes' bindings, so the same question gets the
   same answer on both routes.
 
-- **R26** — A task carrying `stands` is delivered only while every binding of a node the task implements to a file `stands` names is current: a binding the trace does not hold, a file changed since the binding was written, or a node whose text moved since the file was read against it makes the implementation not stand, and the record writer refuses the record. A binding of a node the task does not implement to one of those files is never that refusal: the review that follows reads each `stands` file against every node the trace binds to it.
+- **R26** — A task carrying `stands` is delivered only while the trace holds the bindings R18 requires and every binding of a node the task implements to a file `stands` names is current: a node the task implements bound to no `stands` file, a `stands` file bound to no node the task implements, a file changed since the binding was written, or a node whose text moved since the file was read against it makes the implementation not stand, and the record writer refuses the record. A node the task implements and a `stands` file the trace does not bind to each other are never that refusal while the node is bound to another `stands` file and the file to another node the task implements: the files hold the implementation together, and no file need hold all of it. A binding of a node the task does not implement to one of those files is never that refusal: the review that follows reads each `stands` file against every node the trace binds to it.
 
   Grounds: `/implement-task` held every `stands` file to `trace.py --check --all` and read any
   finding on it as "stands" false, whichever node the finding named — a reading inherited from
@@ -220,6 +220,20 @@ left out — so the file set the review that followed was handed never held them
   and four deliveries proceeded, one disclosing it in its notes. Since 3.37.0 the review's
   conformance pass reads every file it reviews against every node the trace binds to it and
   restamps what that judgment clears, and a review of a `stands` task lists the `stands` files.
+
+  The bindings R18 requires were read two ways until 2026-11-08: R20's door, `/plan-work`'s
+  `--encodes` check and validation item 13 asked that every node be bound to some `stands` file,
+  while R18 and the record writer asked that every file be bound to every node. One consumer
+  plan's last task, its seven nodes held across four files that bound one to three of them each,
+  was handed the plan's door, given `stands`, refused by the writer, reverted and withdrawn from
+  the plan. Reading every task carrying `stands` in the four consumer trees that carry one
+  against today's trace, 57 tasks: 38 bind every file to every node, 12 bind every node and every
+  file to some node of the task, 2 name a file bound to no node of the task, 2 cover neither way
+  and 3 name files the tree no longer holds. The 12 and the 2 were all written before the writer
+  held the bindings (5.53.0), so the writer's form never refused a `stands` the other form admits
+  but the one above; their reviews were not read for this measurement. The two forms that name a file bound to no node the task implements were so at the
+  commit that wrote each record, and are refused by this requirement: such a file is not where
+  the implementation stands.
 
 ### What a review answers for
 
@@ -265,7 +279,8 @@ left out — so the file set the review that followed was handed never held them
    (`test_a_live_proof_naming_a_test_the_target_does_not_hold_is_refused`,
    `test_a_closed_proof_naming_a_test_the_target_does_not_hold_is_a_receipt`).
 6. For R18 and R19: `/plan-work` holds every task carrying `stands` to `trace.py --encodes`
-   before it writes it, and states both requirements in the words above; the backlog decomposer
+   before it writes it — every node the task implements listed for some file, and every file
+   listing some node the task implements — and states both requirements in the words above; the backlog decomposer
    states R18's last sentence; `tests/test_spec_citations.py` proves each quote is a substring of
    the requirement it names.
 7. For R20: `/implement-task` runs `trace.py --encodes` over the files a no-write return names
@@ -298,9 +313,11 @@ left out — so the file set the review that followed was handed never held them
     owning task implements — `tests/test_skill_contract.py` proves
     each.
 13. For R26: `bin/deliver.py --write-implementation` refuses a record carrying `stands` where a
-    node the task implements has no binding to a `stands` file, or one whose file changed or whose
-    node moved since it was written, and writes it where only a node the task does not implement
-    has a binding out of date on one; `/implement-task` states the requirement in the words above
+    node the task implements has no binding to a `stands` file, where a `stands` file has no
+    binding to a node the task implements, or where a binding between them has a file changed or
+    a node moved since it was written; it writes the record where the files hold the nodes between
+    them and no file binds every node, and where only a node the task does not implement has a
+    binding out of date on one; `/implement-task` states the requirement in the words above
     — `tests/test_deliver.py` and `tests/test_spec_citations.py` prove each.
 14. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
     criterion, covered share per review, and the count of nodes decided by a test. A covered share

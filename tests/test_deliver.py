@@ -3099,10 +3099,83 @@ def test_a_record_that_stands_keeps_the_empty_file_list_its_contract_requires(
     assert front["files"] == [] and front["stands"] == [STANDING_FILE]
 
 
+SECOND_STANDING_FILE = "src/orders/bill.ts"
+
+
+def bind_file(target: Path, root: Path, node: str, path: str) -> None:
+    """Bind one node to one file through the trace's own writer."""
+    import subprocess
+    import sys
+    done = subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/trace.py"), "--bind",
+                           str(target), str(root), node, path],
+                          capture_output=True, text=True)
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def two_standing(work, root, target, standing, write_plan, implements: list[str]) -> None:
+    """The fixture task implementing `implements`, and a return standing at both standing files
+    and answering each node."""
+    front = json_front(work, "task/checkout/record-order")
+    front["implements"] = implements
+    write_plan("task/checkout/record-order", front)
+    derive_plan(work, root)
+    (target / SECOND_STANDING_FILE).write_text("export const bill = () => 1\n", encoding="utf-8")
+    mapping = yaml.safe_load(standing.read_text(encoding="utf-8"))
+    mapping["stands"] = [STANDING_FILE, SECOND_STANDING_FILE]
+    mapping["nodes"] = [{"node": node, "how": "it stands at the standing files"}
+                        for node in implements]
+    standing.write_text(yaml.safe_dump(mapping, sort_keys=False), encoding="utf-8")
+
+
+def test_a_record_that_stands_where_its_files_hold_its_nodes_between_them_is_written(
+        planned, delivery, work, root, target, standing, write_plan):
+    """«the files hold the implementation together, and no file need hold all of it» (SPEC-004
+    R26): each node bound to one standing file, no file bound to both, and the record stands."""
+    two_standing(work, root, target, standing, write_plan,
+                 ["domain/sales/order", "domain/sales/invoice"])
+    bind_file(target, root, "domain/sales/order", STANDING_FILE)
+    bind_file(target, root, "domain/sales/invoice", SECOND_STANDING_FILE)
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = json_front(delivery, "implementation/checkout/record-order")
+    assert front["stands"] == [STANDING_FILE, SECOND_STANDING_FILE]
+
+
+def test_a_record_that_stands_where_a_node_is_bound_to_none_of_its_files_is_refused(
+        planned, delivery, work, root, target, standing, write_plan):
+    """«a node the task implements bound to no `stands` file ... makes the implementation not
+    stand» (SPEC-004 R26)."""
+    two_standing(work, root, target, standing, write_plan,
+                 ["domain/sales/order", "domain/sales/invoice"])
+    bind_file(target, root, "domain/sales/order", STANDING_FILE)
+    bind_file(target, root, "domain/sales/order", SECOND_STANDING_FILE)
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 1
+    assert ("the trace binds domain/sales/invoice to no file `stands` names "
+            f"({STANDING_FILE}, {SECOND_STANDING_FILE})") in done.stdout
+    assert "domain/sales/order to no file" not in done.stdout
+    assert not (delivery / "implementation/checkout/record-order.md").exists()
+
+
+def test_a_record_that_stands_over_a_file_bound_to_none_of_its_nodes_is_refused(
+        planned, delivery, work, root, target, standing, write_plan):
+    """«a `stands` file bound to no node the task implements ... makes the implementation not
+    stand» (SPEC-004 R26), even where another node binds that file."""
+    two_standing(work, root, target, standing, write_plan, ["domain/sales/order"])
+    bind_file(target, root, "domain/sales/order", STANDING_FILE)
+    bind_file(target, root, "domain/sales/invoice", SECOND_STANDING_FILE)
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 1
+    assert (f"the trace binds {SECOND_STANDING_FILE} to no node the task implements"
+            in done.stdout)
+    assert f"the trace binds {STANDING_FILE} to no node" not in done.stdout
+    assert not (delivery / "implementation/checkout/record-order.md").exists()
+
+
 def test_a_record_that_stands_where_the_trace_binds_its_node_to_nothing_is_refused(
         planned, delivery, work, root, target, standing):
-    """«a binding the trace does not hold ... makes the implementation not stand» (SPEC-004
-    R26)."""
+    """«a node the task implements bound to no `stands` file ... makes the implementation not
+    stand» (SPEC-004 R26)."""
     done = write_standing(delivery, planned, standing)
     assert done.returncode == 1
     assert (f"the trace binds domain/sales/order to no file `stands` names ({STANDING_FILE})"

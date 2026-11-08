@@ -70,17 +70,17 @@ three, never widening the reference by hand:
 
 ## A skeleton carrying `stands`
 
-Once the binder has returned its `implements`, a skeleton carrying `stands` is held to the trace
-before it is written — «every file it names is bound in the trace, before the task is written, to
-every node the task implements» (SPEC-004 R18):
+Once the binder returns its `implements`, a skeleton carrying `stands` is held to the trace
+— «before the task is written the trace binds each node the task implements to a file it names,
+and each file it names to a node the task implements» (SPEC-004 R18):
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes <target-source-root> <each file stands names>
 ```
 
 A file the command cannot read — a path spelled from the repository rather than from the target
-source root among them — or a node the task implements that the output does not list for those
-files sends the skeleton back to the decomposer once, with the output verbatim:
+source root among them — a node no file lists, or a file with no node of the task, sends the
+skeleton back to the decomposer once, with the output verbatim:
 
 - **Where a task of this plan writes the source that holds the fact**, the proof becomes a criterion
   of that task, and the skeleton goes.

@@ -2164,9 +2164,14 @@ def parse_write_args(args: list[str]) -> tuple[dict | None, str | None]:
 
 def stands_binding_problems(nid: str, front: dict, task_file: Path, root: Path) -> list[str]:
     """Whether an implementation that stands still stands, read from the trace at the moment its
-    record is written — «a binding the trace does not hold, a file changed since the binding was
-    written, or a node whose text moved since the file was read against it makes the
-    implementation not stand» (SPEC-004 R26).
+    record is written — «a node the task implements bound to no `stands` file, a `stands` file
+    bound to no node the task implements, a file changed since the binding was written, or a node
+    whose text moved since the file was read against it makes the implementation not stand»
+    (SPEC-004 R26).
+
+    Coverage is read over the files together: «the files hold the implementation together, and
+    no file need hold all of it» (SPEC-004 R26). Drift is read over the bindings the trace holds
+    between those nodes and files; a pair the trace never bound has no drift to read.
 
     Only the nodes the task implements are read. Another node's binding out of date on the same
     file says nothing about this task's: «A binding of a node the task does not implement to one
@@ -2198,11 +2203,16 @@ def stands_binding_problems(nid: str, front: dict, task_file: Path, root: Path) 
         bound.setdefault(entry.get("node"), set()).update(
             held["path"] for held in entry.get("files") or []
             if isinstance(held, dict) and isinstance(held.get("path"), str))
-    found = [f"the trace binds {node} to no file `stands` names ({spelled}); the "
-             f"implementation stands only where the trace holds that binding, and "
-             f"/reconcile over the file is what writes it"
-             for node in implements for path, spelled in anchored.items()
-             if path not in bound.get(node, set())]
+    named = ", ".join(anchored.values())
+    found = [f"the trace binds {node} to no file `stands` names ({named}); the implementation "
+             f"stands only where the trace binds each node the task implements to some `stands` "
+             f"file, and /reconcile over the file that holds it is what writes that binding"
+             for node in implements if not bound.get(node, set()) & anchored.keys()]
+    found += [f"the trace binds {spelled} to no node the task implements; a `stands` file is one "
+              f"the trace binds to some node the task implements, so name only those, or "
+              f"/reconcile over {spelled} where it holds one of them"
+              for path, spelled in anchored.items()
+              if not any(path in bound.get(node, set()) for node in implements)]
     if declared is None or found:
         return found
     findings, refusals = trace.drift_of(declared, home)
