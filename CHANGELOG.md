@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.76.0 — 2026-11-08
+
+A policy may constrain a Contract — a condition an operation meets with no element its subject — and SPEC-003 orders where a behaviour lives: answers, a rule on the element, a policy on the contract, then an architecture constraint for what limits how the solution is built or runs. The analyse guidance applies the order. (`aa1c1d8`)
+
 ## 5.75.0 — 2026-11-08
 
 A boundary another node decides is declared in a node's `excludes` — a case and the node that decides it — rather than written into its prose, so the validator resolves the reference; nodes written before keep their prose. SPEC-001 R14 and SPEC-003 state it, the analyse skill writes it, and the binder reads it. (`fb4b70f`)
