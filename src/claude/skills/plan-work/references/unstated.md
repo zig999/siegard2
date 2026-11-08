@@ -49,6 +49,9 @@ never from the notification that relays it.
   and re-run step 4.
 - **`contradicted`**: the note was `blocking` wearing the wrong class. It takes the blocking
   route of `references/notes.md`, and the report says the decider refused it and why.
+- **`standard`**: the fact is the stack's, and «The stack is never a node» (SPEC-003 §Rule).
+  Nothing is written to the specification and the task is not stopped: the report hands the
+  person the returned `rule` to add to the standard the project declares, which is theirs alone.
 - **`noticed`**: a watch item for the report, never a second decision.
 
 Every decided fact is a claim a reviewer can reject: the log entry lets them, the diff over the

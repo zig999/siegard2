@@ -103,9 +103,12 @@ obligation lives.
 - **Where a behaviour lives.** What an operation answers is its Contract's `answers`
   (§Contract); a condition on an element is a Rule constraining that element; a condition on an
   operation that no element is the subject of is a `policy` constraining its Contract; and an
-  Architecture Constraint holds what limits how the solution is built or runs — its runtime,
-  integration, storage or timing — never a condition a caller's request meets or breaks. A fact
-  takes the first of these homes that holds it.
+  Architecture Constraint holds what limits how the solution is built or runs — its integration,
+  its storage, its timing and how its processes behave while they run — never a condition a
+  caller's request meets or breaks. The stack is never a node: the language, the runtime and its
+  version, a package, a tool, a command, an image and how the tests are arranged are the
+  project's standard (`schemas/standard.json`), which the person authors. A fact takes the first
+  of these homes that holds it.
 
 ### Scenario
 

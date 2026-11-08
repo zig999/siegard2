@@ -178,3 +178,20 @@ def test_the_contract_says_which_fields_a_plugin_subagent_ignores(field):
     described = schema["properties"][field]["description"]
     assert "Inert" in described and "plugin" in described, \
         f"the contract admits `{field}` without saying a plugin subagent ignores it"
+
+
+def test_a_stack_fact_has_a_home_outside_the_specification_wherever_nodes_are_written():
+    """«The stack is never a node» (SPEC-003 §Rule): the two writers of specification nodes — the
+    analyse skill and the unstated-fact decider — each carry it, the decider returns such a fact
+    as `standard` with the rule the person could add, and plan-work routes that outcome without
+    writing the specification or stopping the task."""
+    quote = "The stack is never a node"
+    decider = (AGENTS_DIR / "unstated-fact-decider.md").read_text(encoding="utf-8")
+    analyse = "".join(p.read_text(encoding="utf-8")
+                      for p in (REPO / "src/claude/skills/analyse").rglob("*.md"))
+    routing = (REPO / "src/claude/skills/plan-work/references/unstated.md").read_text(
+        encoding="utf-8")
+    assert quote in decider and quote in analyse and quote in routing
+    assert "outcome: <stated | decided | contradicted | standard>" in decider
+    assert "rule: <one sentence the person could add to the standard" in decider
+    assert "**`standard`**" in routing and "the task is not stopped" in routing

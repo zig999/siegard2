@@ -75,7 +75,10 @@ class may declare; this is the judgment that decides what goes in it:
   on an element is a rule constraining that element; a condition on an operation no element is
   the subject of — what it notifies, leaves unchanged or retries — is a `policy` constraining its
   contract, «A `policy` may also constrain a Contract» (SPEC-003 §Rule); and only what limits how
-  the solution is built or runs is an architecture constraint. A constraint you are about to write
+  the solution is built or runs — its integration, storage, timing and how its processes behave —
+  is an architecture constraint. The stack is no node at all: a language, a runtime version, a
+  package, a tool, a command, an image or a test arrangement is the project's standard, «which
+  the person authors» (SPEC-003 §Rule), and its line is `outside` in the ledger. A constraint you are about to write
   with no `fitness`, describing what a caller's request meets or breaks, belongs to an earlier home.
 
   ```yaml

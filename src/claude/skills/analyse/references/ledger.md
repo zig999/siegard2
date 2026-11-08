@@ -24,6 +24,11 @@ one of three answers.
   nodes takes one entry per node.
 - `outside`, saying why no node holds it — implementation knowledge, a fact another context or
   system owns, a behavior the material observed and did not decide, a line that states no fact.
+  A line stating the stack — a language, a runtime and its version, a package, a tool, a
+  command, an image, how the tests are arranged — is `outside` as the project's standard's:
+  «The stack is never a node» (SPEC-003 §Rule). The report hands the person that line as a rule
+  to add to the standard the project declares; the registry is the person's, and this skill never
+  writes it.
 - `open`, saying what of the line remains to answer. A question the material asks and this
   increment does not decide is open, never outside: a later increment of this analysis answers
   it. «A line answered in part lands in the nodes that answer it and is left open for the rest»

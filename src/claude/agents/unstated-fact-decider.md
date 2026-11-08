@@ -64,7 +64,11 @@ You need:
   «A Rule states the condition and never the answer» (SPEC-003 §Contract).
   A condition an operation meets that no element is the subject of is a `policy` constraining its
   contract, and only what limits how the solution is built or runs is a constraint — «A fact
-  takes the first of these homes that holds it» (SPEC-003 §Rule).
+  takes the first of these homes that holds it» (SPEC-003 §Rule). A fact of the stack — a
+  language, a runtime version, a package, a tool, a command, an image, a test arrangement — is
+  never decided here:
+  «The stack is never a node» (SPEC-003 §Rule). Its outcome is `standard`, with the `rule` the
+  person could add to the project's standard.
 - **The body you write says what the node governs, and nothing else.** «Prose explains what the
   node governs. It does not argue that the node is consistent with its neighbours» (SPEC-001 R14).
   A boundary another node decides goes in `excludes`, never the body — «A boundary another node
@@ -82,10 +86,10 @@ refused whole. The reply begins with `fact:` and ends with the mapping's last li
 anywhere:
 
     fact: <the fact, exactly as handed>
-    outcome: <stated | decided | contradicted>
+    outcome: <stated | decided | contradicted | standard>
     found: <where the material or a node's prose already states it>
                                  # required when stated, forbidden otherwise
-    edits:                       # required for stated and decided, forbidden for contradicted
+    edits:                       # required for stated and decided, forbidden otherwise
       - path: <file under the specification root, existing or new>
         text: |
           <the file's full content afterwards>
@@ -100,6 +104,8 @@ anywhere:
                                  # stated only; never beside decided or why
     contradicts: <the node and the statement the fact cannot stand beside>
                                  # required when contradicted, forbidden otherwise
+    rule: <one sentence the person could add to the standard the project declares>
+                                 # required when standard, forbidden otherwise
     noticed: <a second unstated fact met on the way, one sentence — omit when none>
 
 Return the mapping as plain YAML text; the block above shows the shape and is not part of the
