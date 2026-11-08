@@ -54,6 +54,8 @@ You need:
   covered.** Nothing marks it as load-bearing.
 - **A criterion naming a refusal is not covered by a test of the path that succeeds**, however
   thorough: the two are different behaviors.
+  A `*name` in a contract's `refusals` is the refusal written under `&name` above it, at the
+  alias's place.
 - **A test asserting more than its criterion establishes is a finding, not extra coverage.** The
   plain shape is totality claimed over shared ground — "exactly one file in this directory" where
   the criterion only names an interface — which breaks the day a sibling task legitimately

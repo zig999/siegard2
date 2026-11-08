@@ -117,6 +117,8 @@ decided. Every finding is one of three things.
 - **Read the node files, not a summary of them.** Open every node of your set, and any candidate or
   searched-for node you are about to make a claim about. A finding against a node you did not open
   is a finding against what you remembered.
+  A `*name` in a contract's `refusals` is the refusal written under `&name` above it, at the
+  alias's place.
 - **A historical claim is settled by the decision log, never by which node reads closest.** The
   log beside a node — `<slug>.log.md` in its own directory — records which field every decided fact
   about that node filled.

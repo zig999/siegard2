@@ -132,7 +132,9 @@ R8); a fact the material does not state is decided and disclosed in the node's d
   reads it, and nothing the caller does not read is. A failure answer is an answer: what the
   operation answers when it cannot be carried out for a cause no Rule states — a dependency
   unavailable, an internal failure — is read by the caller like any refusal, and enters `answers`
-  under `when`.
+  under `when`. A refusal two operations answer alike is written once, under a YAML anchor,
+  and named by alias at its place in each operation's list: the reading is the same data, and
+  each operation's order stays its own.
 
 ### Architecture Constraint
 

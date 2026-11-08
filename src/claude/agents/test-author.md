@@ -115,6 +115,8 @@ does, which is what is under question.
   it sets up, it tears down.
 - **An error path is a behavior.** A criterion naming a refusal needs a test that triggers it and
   asserts what came back, not merely that something was raised.
+  A `*name` in a contract's `refusals` is the refusal written under `&name` above it, at the
+  alias's place.
 - **An assertion of totality is scoped by what this task establishes.** "The only implementation",
   "no other adapter", "exactly one file": scope such a claim by the task's criteria and the
   implementation record's `files`. A count over a directory another task may land in fails the day

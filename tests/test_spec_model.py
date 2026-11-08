@@ -451,6 +451,52 @@ def test_an_api_declaring_answers_is_sound(spec_root):
     assert problems_of(spec_root) == []
 
 
+ANCHORED_DESK = """---
+type: api
+direction: published
+operations:
+  - resolve-case
+  - read-case
+answers:
+  - operation: resolve-case
+    refusals:
+      - &unheld
+        when: No case is held at the requested identity.
+        answer: HTTP 404 reporting case-not-found
+      - rule: rules/troubleshooting/hypothesis-requires-evidence
+        answer: HTTP 422 reporting hypothesis-without-evidence
+  - operation: read-case
+    refusals:
+      - *unheld
+---
+
+## Description
+
+The desk operators work cases through.
+"""
+
+
+def test_a_refusal_written_once_under_an_anchor_reads_as_the_same_data(spec_root):
+    """«A refusal two operations answer alike is written once, under a YAML anchor, and named by
+    alias at its place in each operation's list» (SPEC-003 §Contract): the anchored file is
+    sound, and its reading is the reading of the same answers written out in full, so a contract
+    converted to anchors is carried by `trace.py --carry` rather than re-read."""
+    (spec_root / DESK).write_text(ANCHORED_DESK, encoding="utf-8")
+    assert problems_of(spec_root) == []
+    unheld = {"when": "No case is held at the requested identity.",
+              "answer": "HTTP 404 reporting case-not-found"}
+    written_out = {"type": "api", "direction": "published",
+                   "operations": ["resolve-case", "read-case"],
+                   "answers": [{"operation": "resolve-case", "refusals": [
+                       unheld, {"rule": "rules/troubleshooting/hypothesis-requires-evidence",
+                                "answer": "HTTP 422 reporting hypothesis-without-evidence"}]},
+                       {"operation": "read-case", "refusals": [dict(unheld)]}]}
+    full = ("---\n" + yaml.safe_dump(written_out, sort_keys=False) + "---\n\n## Description\n\n"
+            "The desk operators work cases through.\n")
+    assert "&" not in full.split("---")[1] and "*" not in full.split("---")[1]
+    assert spec.reading_of(ANCHORED_DESK.encode()) == spec.reading_of(full.encode())
+
+
 def test_an_answer_to_an_undeclared_operation_is_refused(spec_root):
     write_desk(spec_root, [{"operation": "reopen-case", "accepted": "HTTP 200"}])
     assert hits(problems_of(spec_root), "answers `reopen-case`, which `operations` does not declare")

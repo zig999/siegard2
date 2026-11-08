@@ -101,3 +101,21 @@ class may declare; this is the judgment that decides what goes in it:
   out at all — «A failure answer is an answer» (SPEC-003 §Contract): the internal failure and the
   unavailable dependency the material shows the caller receiving are answers under `when`, and
   leaving them out sends them into the code as facts no node holds.
+
+  A refusal several operations answer alike is written once — «A refusal two operations answer
+  alike is written once, under a YAML anchor» (SPEC-003 §Contract) — at its first place, and
+  named by alias at its place in every later list, so each operation keeps its own order:
+
+  ```yaml
+  answers:
+    - operation: create-order
+      refusals:
+        - &unauthenticated
+          when: The request carries no verified credential.
+          answer: HTTP 401 carrying an Error body
+        - rule: rules/sales/order-total-positive
+          answer: HTTP 422 carrying an Error body
+    - operation: cancel-order
+      refusals:
+        - *unauthenticated
+  ```
