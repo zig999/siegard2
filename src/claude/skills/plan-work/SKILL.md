@@ -224,7 +224,7 @@ Spawn a `siegard:backlog-decomposer` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/backlog-decomposer.md` — passing:
 
 - the scope's path;
-- the impact set's file paths under the specification root;
+- the path of a file outside the work root holding `spec.py --pack` over the impact set;
 - the surveyor's inventory;
 - the `--contract epic` and `--contract task --without implements` slices, printed here and pasted
   whole;

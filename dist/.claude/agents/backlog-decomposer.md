@@ -16,9 +16,11 @@ A missing input is a refusal, not a default. Reply with one line naming what is 
 You need:
 
 1. **the scope** — the path to the persisted scope file.
-2. **the impact set** — the specification nodes the scope speaks to, as file paths under the
-   specification root. Open them yourself: a node carries no title or summary of its own, only
-   `type`, its declared fields and a body under `## Description`.
+2. **the impact set** — the specification nodes the scope speaks to, as the path of one file
+   `spec.py --pack` printed: every node verbatim under `=== <identity>  sha256:<digest>`. A node
+   carries no title or summary of its own, only `type`, its declared fields and a body under
+   `## Description`. Read the pack whole, in consecutive windows where one Read cannot hold it,
+   skipping none; open no node's own file and no decision log it lists.
 3. **the inventory** — what the surveyor found in the target tree, so no task is invented for what
    exists and none rewrites what must be reused.
 4. **the plan-node contract's `epic` and skeleton slices** — `plan.py --contract epic` and
