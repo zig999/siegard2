@@ -76,6 +76,16 @@ where a claim that one node replaced another needs the entry that recorded it. L
 is a reading, so it answers over a specification that has problems; a name that holds no file is
 refused.
 
+**A change is read, never derived.** `--delta <revision>` or `--delta <revision>..<revision>`
+prints what a change did to the specification under the root: the nodes it added, modified and
+removed, grouped by identity and class, and beside each node the decision-log entries the change
+appended — what was decided and why, or what was recorded as read. A modified node says which
+declared fields changed and whether its body did, or that only its form did, which is what
+`reading_of` compares. With one revision the other end is the working tree, untracked files
+included. It reads git and the files, writes nothing, never needs the specification sound, and
+leaves out `projections/`: a projection is derived from the collection, and a change is between
+two of them, which is why this is a reading like `--impact` and `--shape`.
+
 **A decision is written by this script, never by hand.** `--decide <identity>` reads one entry
 as a JSON object on stdin and appends it to the decision log beside the named node,
 `<identity>.log.md`, creating the log where none exists — «One decision log beside every node
@@ -149,6 +159,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
@@ -1147,6 +1158,150 @@ def print_pack(root: Path, named: list[str]) -> int:
     return 0
 
 
+def delta_git(root: Path, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", "-C", str(root), *args], capture_output=True)
+
+
+def delta_text(root: Path, revision: str | None, relative: str) -> bytes | None:
+    """One file as it stood at `revision` — or in the working tree where there is none — or None
+    where it did not exist there."""
+    if revision is None:
+        path = root / relative
+        return path.read_bytes() if path.is_file() else None
+    shown = delta_git(root, "show", f"{revision}:./{relative}")
+    return shown.stdout if shown.returncode == 0 else None
+
+
+def delta_entries(data: bytes | None) -> list[dict]:
+    """The entries of a decision log's text; none where the text is absent or does not parse."""
+    reading = reading_of(data) if data is not None else None
+    entries = reading[0].get("entries") if reading and isinstance(reading[0], dict) else None
+    return [e for e in entries if isinstance(e, dict)] if isinstance(entries, list) else []
+
+
+def entry_line(entry: dict) -> str:
+    """One log entry as the line a reviewer reads: what it decided and why, or what it recorded
+    as read, or which field it retired."""
+    said = lambda key: " ".join(str(entry.get(key, "")).split())  # noqa: E731
+    field = said("field")
+    if "decided" in entry:
+        return f"decided {field}: {said('decided')} — why: {said('why')}"
+    if "found" in entry:
+        return f"read {field}: {said('found')}"
+    if "retired" in entry:
+        return f"retired {field}: {said('retired')}"
+    return f"{field}: " + " ".join(f"{k}={said(k)}" for k in entry if k != "field")
+
+
+def node_change(old: bytes | None, new: bytes | None) -> str:
+    """What a modified node's change was: the declared fields and the body that differ, or form
+    alone where the two texts have one reading."""
+    before = reading_of(old) if old is not None else None
+    after = reading_of(new) if new is not None else None
+    if before is None or after is None:
+        return "changed; a text that does not parse has no reading to compare"
+    if before == after:
+        return "form only: the same reading"
+    fields = sorted(k for k in {*before[0], *after[0]} if before[0].get(k) != after[0].get(k))
+    said = ", ".join(fields) if fields else "none"
+    return f"fields changed: {said}; body {'changed' if before[1] != after[1] else 'unchanged'}"
+
+
+def print_delta(root: Path, given: str) -> int:
+    """`--delta`'s own body: what a change did to the nodes under `root`, with the decisions it
+    appended beside each. A reading over git and the files; nothing is written."""
+    first, dots, second = given.partition("..")
+    if not first or (dots and (not second or second.startswith("."))):
+        print(f"cannot run: --delta takes a revision or <revision>..<revision>, not {given!r}",
+              file=sys.stderr)
+        return CANNOT_RUN
+    if delta_git(root, "rev-parse", "--show-toplevel").returncode != 0:
+        print(f"cannot run: {root} is not inside a git repository; a change is read from history",
+              file=sys.stderr)
+        return CANNOT_RUN
+    for revision in (first, second):
+        if revision and delta_git(root, "rev-parse", "--verify", "--quiet",
+                                  f"{revision}^{{commit}}").returncode != 0:
+            print(f"cannot run: {revision} names no commit in the repository of {root}",
+                  file=sys.stderr)
+            return CANNOT_RUN
+    listed = delta_git(root, "diff", "--relative", "--name-status", "--no-renames", first,
+                       *([second] if second else []), "--", ".")
+    changes: dict[str, str] = {}
+    for line in listed.stdout.decode("utf-8", "replace").splitlines():
+        status, _, path = line.partition("\t")
+        if path:
+            changes[path] = "A" if status == "A" else "D" if status == "D" else "M"
+    if not second:
+        others = delta_git(root, "ls-files", "--others", "--exclude-standard", "--", ".")
+        for path in others.stdout.decode("utf-8", "replace").splitlines():
+            changes.setdefault(path, "A")
+    ends = (first, second or None)
+    nodes: dict[str, tuple[str, str, bytes | None, bytes | None]] = {}
+    logs: dict[str, tuple[str, bytes | None, bytes | None]] = {}
+    for path, status in sorted(changes.items()):
+        relative = Path(path)
+        if relative.parts[0] == PROJECTIONS:
+            continue
+        placed = classify(relative)
+        if placed is None:
+            continue
+        old = None if status == "A" else delta_text(root, ends[0], path)
+        new = None if status == "D" else delta_text(root, ends[1], path)
+        if placed[0] == "log":
+            logs[path[:-len(".log.md")]] = (status, old, new)
+        else:
+            nodes[path[:-len(".md")]] = (status, placed[0], old, new)
+
+    appended: dict[str, list[dict]] = {}
+    rewritten: set[str] = set()
+    for identity, (status, old, new) in logs.items():
+        before, after = delta_entries(old), delta_entries(new)
+        if status == "D":
+            continue
+        if before and after[:len(before)] != before:
+            rewritten.add(identity)
+        appended[identity] = after[len(before):] if after[:len(before)] == before else after
+    shown = {"A": "added", "M": "modified", "D": "removed"}
+    counts = {key: sum(1 for n in nodes.values() if n[0] == key) for key in shown}
+    form_only = sum(1 for n in nodes.values()
+                    if n[0] == "M" and node_change(n[2], n[3]).startswith("form only"))
+    decisions = sum(len(entries) for entries in appended.values())
+    where = f"{first}..{second}" if second else f"{first}..working tree"
+    if not nodes and not appended:
+        print(f"delta {where}: no node and no decision log under {root} changed.")
+        return 0
+    print(f"delta {where}: {counts['A']} node(s) added, {counts['M']} modified "
+          f"({form_only} in form only), {counts['D']} removed; {decisions} decision entr"
+          f"{'y' if decisions == 1 else 'ies'} over {len(appended)} log(s).")
+    for status, heading in shown.items():
+        chosen = sorted(i for i, n in nodes.items() if n[0] == status)
+        if not chosen:
+            continue
+        print(f"\n{heading}")
+        for identity in chosen:
+            kind = nodes[identity][1]
+            detail = f" — {node_change(nodes[identity][2], nodes[identity][3])}" \
+                if status == "M" else ""
+            print(f"  {identity}  ({kind}){detail}")
+            for entry in appended.get(identity, []):
+                print(f"      {entry_line(entry)}")
+            if identity in rewritten:
+                print("      earlier entries of this log changed — «An entry is never edited or "
+                      "removed» (SPEC-001 R9)")
+    beside = sorted(i for i in appended if i not in nodes and appended[i])
+    if beside:
+        print("\ndecisions beside nodes this change left as they were")
+        for identity in beside:
+            print(f"  {identity}")
+            for entry in appended[identity]:
+                print(f"      {entry_line(entry)}")
+            if identity in rewritten:
+                print("      earlier entries of this log changed — «An entry is never edited or "
+                      "removed» (SPEC-001 R9)")
+    return 0
+
+
 # ---------------------------------------------------------------- shape
 
 
@@ -2112,6 +2267,15 @@ def main() -> int:
         if not pack:
             print("cannot run: --pack names no node", file=sys.stderr)
             return CANNOT_RUN
+    delta = None
+    if "--delta" in args:
+        at = args.index("--delta")
+        if at + 1 >= len(args) or args[at + 1].startswith("--"):
+            print("cannot run: --delta takes a revision or <revision>..<revision>",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        delta = args[at + 1]
+        del args[at:at + 2]
     single = None
     if "--node" in args:
         at = args.index("--node")
@@ -2134,8 +2298,14 @@ def main() -> int:
         print("cannot run: --decide writes one entry and revalidates; it stands beside no "
               "other flag", file=sys.stderr)
         return CANNOT_RUN
+    if delta is not None and (write or show_digests or shape or single is not None
+                              or impact is not None or deciding is not None
+                              or pack is not None):
+        print("cannot run: --delta reads a change and derives nothing; it stands beside no "
+              "other flag", file=sys.stderr)
+        return CANNOT_RUN
     if pack is not None and (write or show_digests or shape or single is not None
-                             or impact is not None or deciding is not None):
+                             or impact is not None or deciding is not None or delta is not None):
         print("cannot run: --pack reads the named nodes and derives nothing; it stands beside "
               "no other flag", file=sys.stderr)
         return CANNOT_RUN
@@ -2155,7 +2325,7 @@ def main() -> int:
         print("cannot run: expected [--project | --digest | "
               "--shape [--of <identity>[,<identity>...]] | --node <file> | "
               "--impact <identity>[,<identity>...] | --pack <identity>[,<identity>...] | "
-              "--decide <identity>] <spec-root>",
+              "--delta <revision>[..<revision>] | --decide <identity>] <spec-root>",
               file=sys.stderr)
         return CANNOT_RUN
     root = Path(args[0])
@@ -2169,6 +2339,8 @@ def main() -> int:
         return CANNOT_RUN
     if pack is not None:
         return print_pack(root, pack)
+    if delta is not None:
+        return print_delta(root, delta)
     try:
         validators = contracts()
     except (FileNotFoundError, json.JSONDecodeError) as broken:

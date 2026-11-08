@@ -1686,3 +1686,165 @@ def test_a_state_machine_constraining_a_contract_is_refused(spec_root):
             lambda front: front.update(constrains=[CONTRACT]))
     assert hits(problems_of(spec_root), "rules/troubleshooting/case-transitions: frontmatter: "
                                         "'constrains' is not one of")
+
+
+# ------------------------------------------------------------------------ --delta
+
+
+def git_in(root: Path, *args: str) -> None:
+    subprocess.run(["git", "-C", str(root), "-c", "user.name=t", "-c", "user.email=t@t", *args],
+                   check=True, capture_output=True)
+
+
+def commit_all(root: Path, message: str) -> None:
+    git_in(root, "add", "-A")
+    git_in(root, "commit", "-qm", message)
+
+
+@pytest.fixture
+def repo(spec_root):
+    """The fixture specification committed once: a change is then read against that commit."""
+    git_in(spec_root, "init", "-q")
+    commit_all(spec_root, "base")
+    return spec_root
+
+
+EVIDENCE_LOG = "domain/troubleshooting/evidence.log.md"
+
+
+def append_entry(root: Path, relative: str, entry: dict) -> None:
+    path = root / relative
+    front = yaml.safe_load(path.read_text(encoding="utf-8").split("---")[1])
+    front["entries"].append(entry)
+    path.write_text("---\n" + yaml.safe_dump(front, sort_keys=False) + "---\n", encoding="utf-8")
+
+
+def delta(root: Path, given: str) -> subprocess.CompletedProcess:
+    return run_node("--delta", given, str(root))
+
+
+def test_a_change_is_read_as_nodes_added_modified_and_removed(repo):
+    """A change read as the nodes it added, modified and removed — by identity and class — and, for
+    a modified node, which declared fields changed and whether the body did."""
+    rewrite(repo, "domain/troubleshooting/case.md",
+            lambda front: front.update(operations=list(reversed(front["operations"]))))
+    (repo / "rules/troubleshooting/alert-opens-case.md").unlink()
+    (repo / "rules/troubleshooting/escalation-needs-owner.md").write_text(
+        "---\ntype: invariant\nstatement: An escalation MUST name its owner.\n"
+        "constrains:\n  - domain/troubleshooting/case\n---\n", encoding="utf-8")
+    commit_all(repo, "change")
+    done = delta(repo, "HEAD~1..HEAD")
+    assert done.returncode == 0, done.stderr
+    assert "1 node(s) added, 1 modified (0 in form only), 1 removed" in done.stdout
+    assert "  rules/troubleshooting/escalation-needs-owner  (rule)" in done.stdout
+    assert ("  domain/troubleshooting/case  (element) — fields changed: operations; "
+            "body unchanged") in done.stdout
+    assert "  rules/troubleshooting/alert-opens-case  (rule)" in done.stdout
+    assert done.stdout.index("\nadded\n") < done.stdout.index("\nmodified\n") \
+        < done.stdout.index("\nremoved\n")
+
+
+def test_a_node_changed_in_form_alone_is_said_to_be(repo):
+    """What `reading_of` compares: a re-serialised node is a modification whose reading is the
+    same, and the count says how many of the modified were so."""
+    path = repo / "domain/troubleshooting/case.md"
+    front, body, _ = spec.parse_node(path)
+    path.write_text(f"---\n{yaml.safe_dump(front, sort_keys=True, width=30)}---\n{body}",
+                    encoding="utf-8")
+    commit_all(repo, "reform")
+    done = delta(repo, "HEAD~1..HEAD")
+    assert "1 modified (1 in form only)" in done.stdout
+    assert "(element) — form only: the same reading" in done.stdout
+
+
+def test_the_decisions_a_change_appended_are_read_beside_their_node(repo):
+    """What was decided and why, beside the node — and only what the change appended: the entry
+    the log already held is not read again."""
+    append_entry(repo, EVIDENCE_LOG, {"field": "attributes.value.required",
+                                      "unstated": "The material does not say whether one is owed.",
+                                      "decided": "true", "why": "A sample with no value proves nothing."})
+    rewrite(repo, "domain/troubleshooting/evidence.md", lambda front: front.update(operations=["add"]))
+    commit_all(repo, "decide")
+    done = delta(repo, "HEAD~1..HEAD")
+    assert "1 decision entry over 1 log(s)" in done.stdout
+    assert ("      decided attributes.value.required: true — why: A sample with no value proves "
+            "nothing.") in done.stdout
+    assert "Every evidence sample" not in done.stdout, "an entry the log already held is not new"
+    assert done.stdout.index("domain/troubleshooting/evidence  (element)") \
+        < done.stdout.index("decided attributes.value.required")
+
+
+def test_a_decision_beside_a_node_the_change_left_as_it_was_is_still_read(repo):
+    append_entry(repo, EVIDENCE_LOG, {"field": "attributes.value.type", "found": "intake/scope.md",
+                                      "unstated": "The material says it, elsewhere."})
+    commit_all(repo, "read")
+    done = delta(repo, "HEAD~1..HEAD")
+    assert "decisions beside nodes this change left as they were" in done.stdout
+    assert "  domain/troubleshooting/evidence\n      read attributes.value.type: intake/scope.md" \
+        in done.stdout
+
+
+def test_a_log_whose_earlier_entry_changed_is_said_to_have(repo):
+    path = repo / EVIDENCE_LOG
+    path.write_text(path.read_text(encoding="utf-8").replace("string", "number"), encoding="utf-8")
+    commit_all(repo, "edit an entry")
+    done = delta(repo, "HEAD~1..HEAD")
+    assert "  domain/troubleshooting/evidence\n" in done.stdout
+    assert "earlier entries of this log changed — «An entry is never edited or removed»" \
+        in done.stdout
+
+
+def test_one_revision_is_read_against_the_working_tree_untracked_files_included(repo):
+    rewrite(repo, "domain/troubleshooting/case.md", lambda front: front.update(operations=["open"]))
+    (repo / "rules/troubleshooting/escalation-needs-owner.md").write_text(
+        "---\ntype: invariant\nstatement: An escalation MUST name its owner.\n"
+        "constrains:\n  - domain/troubleshooting/case\n---\n", encoding="utf-8")
+    done = delta(repo, "HEAD")
+    assert "HEAD..working tree" in done.stdout
+    assert "rules/troubleshooting/escalation-needs-owner  (rule)" in done.stdout
+    assert "domain/troubleshooting/case  (element) — fields changed: operations" in done.stdout
+    assert "no node and no decision log" in delta(repo, "HEAD..HEAD").stdout
+
+
+def test_a_projection_is_never_a_node_of_a_change(repo):
+    (repo / "projections").mkdir()
+    (repo / "projections" / "overview.md").write_text("# overview\n", encoding="utf-8")
+    commit_all(repo, "project")
+    assert "no node and no decision log" in delta(repo, "HEAD~1..HEAD").stdout
+
+
+def test_delta_writes_nothing_and_reads_the_same_twice(repo):
+    rewrite(repo, "domain/troubleshooting/case.md", lambda front: front.update(operations=["open"]))
+    before = sorted((p.relative_to(repo).as_posix(), p.read_bytes())
+                    for p in repo.rglob("*") if p.is_file() and ".git" not in p.parts)
+    first, second = delta(repo, "HEAD"), delta(repo, "HEAD")
+    after = sorted((p.relative_to(repo).as_posix(), p.read_bytes())
+                   for p in repo.rglob("*") if p.is_file() and ".git" not in p.parts)
+    assert first.returncode == 0 and first.stdout == second.stdout
+    assert before == after
+
+
+def test_delta_answers_over_a_specification_that_has_problems(repo):
+    rewrite(repo, "rules/troubleshooting/case-transitions.md",
+            lambda front: front.update(subject="domain/troubleshooting/nonexistent"))
+    done = delta(repo, "HEAD")
+    assert done.returncode == 0, done.stderr
+    assert "rules/troubleshooting/case-transitions  (rule)" in done.stdout
+
+
+def test_delta_refuses_a_revision_that_names_no_commit_and_a_directory_outside_git(repo, tmp_path):
+    done = delta(repo, "no-such-revision")
+    assert done.returncode == 2 and "names no commit" in done.stderr
+    assert delta(repo, "HEAD..").returncode == 2
+    outside = tmp_path / "elsewhere"
+    shutil.copytree(FIXTURE, outside)
+    shutil.rmtree(outside / "projections", ignore_errors=True)
+    done = delta(outside, "HEAD")
+    assert done.returncode == 2 and "not inside a git repository" in done.stderr
+
+
+def test_delta_stands_beside_no_other_flag(repo):
+    done = run_node("--delta", "HEAD", "--digest", str(repo))
+    assert done.returncode == 2 and "derives nothing" in done.stderr
+    done = run_node("--delta", "HEAD", "--pack", "domain/troubleshooting/case", str(repo))
+    assert done.returncode == 2 and "derives nothing" in done.stderr
