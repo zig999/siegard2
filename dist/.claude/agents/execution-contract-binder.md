@@ -19,7 +19,8 @@ You need:
 2. **the candidate pack** — the path of one file `spec.py --pack` printed: every candidate node
    verbatim under a `=== <identity>  sha256:<digest>` header, the only nodes this task may name in
    `implements`. What belongs in the set is the caller's rule, not yours. Read the pack whole, once;
-   every candidate is in it, so open no candidate's own file beside it.
+   every candidate is in it, so open no candidate's own file beside it. A pack too large for one
+   Read is read in consecutive windows until its `logs:` line, skipping none and searching none.
 3. **the plan-node contract's `implements` slice** — `plan.py --contract task --fields implements`'s
    output, pasted whole. It carries the one field you write and nothing around it. Read it before
    writing that field.

@@ -142,3 +142,12 @@ by a third: across arms 0.648, B naming 3, 6 and 3 nodes where A named 3, 2 and 
 The cold repetition costs 27% less and takes 33% less time. The one task the pack made dearer is
 `version-visibility` (A 0.39/0.08/0.14, B 0.62/0.39/0.39): a binder that implements a few nodes of a
 large set pays the whole pack where it used to open a handful.
+
+## Iteration 3b — reading the pack in windows (5.73.1)
+
+The binder gains one sentence: a pack too large for one Read is read in consecutive windows until
+its `logs:` line, skipping none and searching none. Arm `pack-5.73.1`, the two tasks whose packs
+pass 1,800 lines, 3 repetitions each: 6 of 6 runs read every line of the pack (4 after a
+25,000-token refusal), none opened a node file. `version-visibility` still varies as it did in both
+arms before (3, 3 and 5 nodes; within-arm Jaccard 1.0, 0.6, 0.6; against the recorded `implements`
+1.0, 1.0, 0.6); `product-offering/patch` across arms 0.966. US$ 3.89 for the six runs.
