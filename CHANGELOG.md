@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.74.0 — 2026-11-08
+
+The decomposer reads the plan's impact set in one candidate pack, in windows where one Read cannot hold it, instead of one file per node and log. The decider keeps reading the nodes a fact needs. (`0d896bf`)
+
 ## 5.73.1 — 2026-11-08
 
 The binder reads a candidate pack too large for one Read in consecutive windows to its end, searching none in place of reading. (`3a5f88a`)
