@@ -147,6 +147,9 @@ R8); a fact the material does not state is decided and disclosed in the node's d
   node carries no artifact the project chose, and a registry can be reported against the
   constraints it leaves undecided. A step decided by nothing is a constraint held by reading
   alone, and the report says which.
+- **Every constraint is a candidate of every planned scope.** A constraint declares no
+  reference, so no search over a scope's terms and no closure from the nodes it names reaches it;
+  a planning step holds every constraint among its candidates, whatever its search returned.
 
 ## Identity and references
 

@@ -158,8 +158,9 @@ Specification nodes carry no title or summary of their own, so narrow before ope
 - **The specification.** `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --digest
   <specification-root>` lists every node's identity. Grep the specification root for the scope's
   vocabulary — its nouns and the terms the material uses — to find candidate files. **Every
-  `constraints/` node is a candidate, whatever the grep returned**: a constraint declares no
-  reference and its scope is the system or a whole context, so no grep and no closure reaches it.
+  `constraints/` node is a candidate, whatever the grep returned** — «A constraint declares no
+  reference, so no search over a scope's terms and no closure from the nodes it names reaches
+  it» (SPEC-003 §Architecture Constraint).
 
   Where the scope is open-ended rather than named, list the nodes no initiative has ever named,
   over the directory the initiatives sit in, not one of them:
