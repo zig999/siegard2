@@ -161,6 +161,9 @@ release. When unclear, treat the change as ordinary and say so.
   read from a record is not a figure read from what ran, and the two disagree; where a later
   measurement supersedes an earlier one, the change corrects it where it was recorded rather than
   leaving two numbers for the next reader to choose between.
+- A change to the specification format cites the read volume it moves — per class, from consumer
+  transcripts — and the estimator that produced it; a form whose cost lands on every task is
+  weighed by what every task pays.
 - A proposal to add a field, a check, a channel or an agent first names what already exists for the
   need and shows why it does not suffice — read from that thing's record, never from its
   description. A mechanism's prompt or docstring is what it says it does; its returns, its outputs
