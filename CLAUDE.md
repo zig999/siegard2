@@ -21,6 +21,19 @@ agent creates and changes without asking. **No artifact needs approval to take e
 effect because it exists.** An artifact that is wrong is corrected by the next change, not held
 behind a gate.
 
+## Whose rules apply where
+
+This file binds the work on this repository and nothing else. It never ships, and no consumer
+session reads it, as no consumer reads `specs/`. What binds a consumer project is what the plugin
+ships: `src/claude/hooks/rules.md`, which the hooks place in every session and every agent of a
+project declaring `siegard.json`, and each skill, agent, schema and script in the flow it runs. A
+consumer's own `CLAUDE.md` is that project's, never the framework's.
+
+A rule this file sets for the framework's behaviour reaches a consumer only through a shipped
+artifact that states it, and a change that relies on one names that artifact. An argument about
+what a consumer session does cites what ships to it; this file is cited only as the reason the
+shipped artifact was designed so, never as a rule that session obeys.
+
 ## Language
 
 Write every artifact in this repository in English (en-US): source, generated distribution, specs,
