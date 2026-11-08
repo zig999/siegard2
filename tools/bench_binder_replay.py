@@ -17,7 +17,7 @@ JSON result. `grade` parses every run's `implements`, and reports per task the p
 similarity between repetitions, the recorded `implements` of the delivered task, and tokens.
 
 Usage:
-    python3 tools/bench_binder_replay.py freeze <consumer-root> <work-slug> <out> --tasks <epic/task,...>
+    python3 tools/bench_binder_replay.py freeze <consumer-root> <work-slug> <out> --tasks <[slug:]epic/task,...>
     python3 tools/bench_binder_replay.py pack   <out>
     python3 tools/bench_binder_replay.py run    <out> --arm <label> --plugin-dir <dir> --reps N
                                                 [--model M] [--parallel P] [--inputs paths|pack]
@@ -95,11 +95,15 @@ def freeze(consumer: Path, slug: str, out: Path, tasks: list[str]) -> None:
     manifest = {"consumer": str(consumer), "work_slug": slug,
                 "specification_digest": tree_digest(spec), "tasks": {}}
     for name in tasks:
+        plan_slug, _, name = name.rpartition(":")
+        work = consumer / "siegard/work" / (plan_slug or slug)
         epic, task = name.split("/")
         tfm = front(work / "task" / epic / f"{task}.md")
         efm = front(work / "epic" / f"{epic}.md")
         uncovered = {u["node"] if isinstance(u, dict) else u for u in efm.get("uncovered") or []}
-        nodes = [n for n in efm.get("covers") or [] if n not in uncovered]
+        claimed = [n for n in efm.get("covers") or [] if n not in uncovered]
+        nodes = [n for n in claimed if (spec / f"{n}.md").is_file()]
+        missing = [n for n in claimed if n not in nodes]
         lines = []
         for n in nodes:
             node = spec / f"{n}.md"
@@ -116,8 +120,10 @@ def freeze(consumer: Path, slug: str, out: Path, tasks: list[str]) -> None:
         prompt = PROMPT.format(skeleton=skel, candidates=cand, slice=inputs / "slice.json")
         (inputs / f"prompt_{key}.txt").write_text(prompt, encoding="utf-8")
         write_pack(inputs, spec, key, nodes, skel)
-        manifest["tasks"][key] = {"recorded_implements": sorted(tfm.get("implements") or []),
+        manifest["tasks"][key] = {"plan": plan_slug or slug,
+                                  "recorded_implements": sorted(tfm.get("implements") or []),
                                   "candidates": nodes,
+                                  "missing_candidates": missing,
                                   "candidate_files": len(lines)}
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(f"froze {len(tasks)} tasks; specification digest {manifest['specification_digest'][:12]}")
@@ -144,14 +150,14 @@ def pack_inputs(out: Path) -> None:
 
 def run_one(out: Path, arm: str, key: str, rep: int, plugin_dir: Path, model: str | None,
             inputs: str = "paths") -> str:
-    dest = out / "runs" / arm / f"{key}--{rep}.json"
-    if dest.exists():
+    dest = out / "runs" / arm / f"{key}--{rep}.jsonl"
+    if dest.exists() or dest.with_suffix(".json").exists():
         return f"skip {dest.name}"
     dest.parent.mkdir(parents=True, exist_ok=True)
     name = f"prompt_{key}.txt" if inputs == "paths" else f"prompt_pack_{key}.txt"
     prompt = (out / "inputs" / name).read_text(encoding="utf-8")
     cmd = ["claude", "-p", "--agent", AGENT, "--plugin-dir", str(plugin_dir),
-           "--output-format", "json", "--add-dir", str(out / "inputs"),
+           "--output-format", "stream-json", "--verbose", "--add-dir", str(out / "inputs"),
            "--allowedTools", "Read", "Grep", "Glob", "--no-session-persistence"]
     if model:
         cmd += ["--model", model]
@@ -181,6 +187,64 @@ def implements_of(result: str) -> set[str] | None:
     return set(IDENTITY.findall(match.group(1)))
 
 
+def load_run(f: Path) -> tuple[dict, list[dict] | None]:
+    """A run's result, and — where it was captured as a stream — every Read it made, with the
+    file, the window asked for and whether the tool refused it."""
+    if f.suffix == ".json":
+        return json.loads(f.read_text()), None
+    result: dict = {}
+    calls: dict[str, dict] = {}
+    for line in f.read_text().splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if event.get("type") == "result":
+            result = event
+        for block in (event.get("message") or {}).get("content") or []:
+            if not isinstance(block, dict):
+                continue
+            if block.get("type") == "tool_use" and block.get("name") == "Read":
+                given = block.get("input") or {}
+                calls[block["id"]] = {"path": given.get("file_path"), "offset": given.get("offset"),
+                                      "limit": given.get("limit"), "error": None}
+            elif block.get("type") == "tool_result" and block.get("tool_use_id") in calls:
+                content = block.get("content")
+                text = content if isinstance(content, str) else "".join(
+                    part.get("text", "") for part in content or [] if isinstance(part, dict))
+                if block.get("is_error"):
+                    calls[block["tool_use_id"]]["error"] = text[:300]
+                else:
+                    calls[block["tool_use_id"]]["lines"] = [
+                        int(n) for n in re.findall(r"(?m)^\s*(\d+)\t", text)]
+    return result, list(calls.values())
+
+
+def read_summary(reads: list[dict] | None, out: Path, key: str) -> dict | None:
+    """How a run read its candidates: the share of the pack's lines its successful Reads covered,
+    the refused Reads, and how many node files it opened beside the pack."""
+    if reads is None:
+        return None
+    pack = out / "inputs" / f"pack_{key}.txt"
+    total = len(pack.read_text(encoding="utf-8").splitlines()) if pack.is_file() else 0
+    covered: set[int] = set()
+    errors = []
+    for read in reads:
+        if read["path"] != str(pack):
+            continue
+        if read["error"]:
+            errors.append(read["error"])
+            continue
+        covered.update(n for n in read.get("lines") or [] if 1 <= n <= total)
+    spec = str(out / "project/siegard/specification")
+    return {"pack_lines": total, "pack_lines_read": len(covered),
+            "pack_reads": sum(1 for r in reads if r["path"] == str(pack)),
+            "pack_read_errors": errors,
+            "node_files_opened": sum(1 for r in reads if (r["path"] or "").startswith(spec)
+                                     and not (r["path"] or "").endswith(".log.md")),
+            "logs_opened": sum(1 for r in reads if (r["path"] or "").endswith(".log.md"))}
+
+
 def jaccard(a: set[str], b: set[str]) -> float:
     return 1.0 if not a and not b else len(a & b) / len(a | b)
 
@@ -193,8 +257,9 @@ def grade(out: Path, arms: list[str] | None) -> dict:
         tasks = {}
         for key, meta in manifest["tasks"].items():
             runs = []
-            for f in sorted((out / "runs" / arm).glob(f"{key}--*.json")):
-                data = json.loads(f.read_text())
+            for f in sorted([*(out / "runs" / arm).glob(f"{key}--*.json"),
+                             *(out / "runs" / arm).glob(f"{key}--*.jsonl")]):
+                data, reads = load_run(f)
                 usage = data.get("usage") or {}
                 runs.append({"file": f.name, "implements": implements_of(data.get("result", "")),
                              "cost_usd": data.get("total_cost_usd"),
@@ -202,7 +267,9 @@ def grade(out: Path, arms: list[str] | None) -> dict:
                                  "input_tokens", "cache_creation_input_tokens",
                                  "cache_read_input_tokens")),
                              "output_tokens": usage.get("output_tokens", 0),
-                             "models": sorted((data.get("modelUsage") or {}).keys())})
+                             "models": sorted((data.get("modelUsage") or {}).keys()),
+                             "turns": data.get("num_turns"),
+                             "reads": reads})
             parsed = [r["implements"] for r in runs if r["implements"] is not None]
             pairs = [jaccard(a, b) for a, b in itertools.combinations(parsed, 2)]
             recorded = set(meta["recorded_implements"])
@@ -217,6 +284,8 @@ def grade(out: Path, arms: list[str] | None) -> dict:
                 "input_tokens": [r["input_tokens"] for r in runs],
                 "models": sorted({m for r in runs for m in r["models"]}),
                 "implements": [sorted(p) for p in parsed],
+                "turns": [r["turns"] for r in runs],
+                "reading": [read_summary(r["reads"], out, key) for r in runs],
             }
         allpairs = [p for t in tasks.values() for p in t["pairwise_jaccard"]]
         allrec = [p for t in tasks.values() for p in t["vs_recorded_jaccard"]]

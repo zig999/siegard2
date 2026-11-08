@@ -92,3 +92,53 @@ floor iteration 1 measured.
 - **Repetitions 2 and 3 cost about half** of A's, but their inputs are byte-identical to
   repetition 1's, so the pack is read from cache; a plan does not repeat a task, and these rows
   bound the saving from above.
+
+# Iteration 3 — the pack over productcatalog's largest candidate sets (2026-11-08)
+
+Six productcatalog tasks: four from the four largest epics of plan `dominio-inicial`
+(`product-offering/patch`, `catalog-core/version-visibility`, `product-specification/create`,
+`product-offering-price/patch`; packs of 1,563–2,112 lines, 116–125 KB) and two controls (packs of
+321 and 666 lines). Two candidates the old epics name no longer exist and were skipped. Arm
+`before-5.69.0` is `dist/.claude` at `1c6b8c7`, handed one path per node and log; arm
+`pack-5.73.0` is the current tree, handed the pack. Same model (`claude-opus-5-5`), 3 repetitions,
+arms interleaved by repetition, every Read captured from `stream-json` and the pack's coverage
+counted from the line numbers each Read returned. 36 runs, 0 failures.
+
+## Decision
+
+| measure | before (A) | pack (B) |
+|---|---|---|
+| tasks identical across all 3 repetitions | 2 / 6 | 1 / 6 |
+| mean pairwise Jaccard within the arm | 0.926 | 0.888 |
+| minimum pairwise Jaccard within the arm | 0.667 | 0.50 |
+| mean Jaccard against the recorded `implements` | 0.840 | 0.853 |
+| mean Jaccard across arms | 0.903 | |
+
+Five tasks diverge across arms within A's own divergence (0.87–1.00). The sixth,
+`catalog-core/version-visibility`, implements 2–3 of 52 candidates, so one identity moves Jaccard
+by a third: across arms 0.648, B naming 3, 6 and 3 nodes where A named 3, 2 and 2.
+
+## Reading
+
+- 17 of 18 pack runs read every line of the pack; 4 of them met the Read tool's 25,000-token
+  refusal on a window and read it again smaller or with `allow_large`. None opened a node file or
+  a log beside the pack.
+- One run (`catalog-core/version-visibility`, repetition 3) read lines 1–1,598 and 2,040–2,113 and
+  reached the rest by Grep: 1,671 of 2,112 lines, 79%.
+- Arm A opened 34–49 node files per large task, 5 on `version-visibility`, where it narrowed by
+  search instead of reading every candidate.
+
+## Cost
+
+| repetition | arm | cost (US$) | turns, median | seconds, median |
+|---|---|---|---|---|
+| 1 (cold) | A | 4.18 | 34.5 | 88 |
+| 1 (cold) | B | 3.05 | 5 | 59 |
+| 2 | A | 2.78 | 30.5 | 82 |
+| 2 | B | 1.82 | 5 | 63 |
+| 3 | A | 2.75 | 35 | 92 |
+| 3 | B | 1.39 | 5 | 58 |
+
+The cold repetition costs 27% less and takes 33% less time. The one task the pack made dearer is
+`version-visibility` (A 0.39/0.08/0.14, B 0.62/0.39/0.39): a binder that implements a few nodes of a
+large set pays the whole pack where it used to open a handful.
