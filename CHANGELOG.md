@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.72.0 — 2026-11-08
+
+The rule that every constraint is a candidate of every planned scope moves from the plan-work skill into SPEC-003, and the skill quotes it. Nothing a plan does changes. (`2da99a9`)
+
 ## 5.71.0 — 2026-11-08
 
 A node whose text changed in form alone no longer owes its files a judgment: `trace.py --carry` restamps every pair whose stamped node text, recovered from git, has the node's present reading, and leaves each other pair with its reason. `/reconcile` runs it before `--check`. SPEC-003 R7 defines the reading; SPEC-005 R13 the carry. (`93a2f72`)
