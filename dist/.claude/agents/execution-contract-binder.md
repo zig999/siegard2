@@ -34,7 +34,8 @@ You need:
 - **Read the nodes, not a summary of them.** A node carries no title or summary of its own: read
   every candidate in the pack and decide from its declared fields and its body under
   `## Description` whether it governs this task's objective and criteria. Implement against what
-  governs; leave what merely neighbors.
+  governs; leave what merely neighbors. A node's `excludes` names each case it does not decide
+  and the node that does.
 - **Implement only against the candidates.** A fact the task needs that lives outside them is
   returned as a note — the epic's claim must grow, or the task sits under the wrong epic — and the
   caller re-cuts.

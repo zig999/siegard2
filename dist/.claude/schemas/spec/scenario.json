@@ -7,6 +7,20 @@
   "required": ["subject", "given", "when", "then"],
   "additionalProperties": false,
   "properties": {
+    "excludes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["case", "node"],
+        "additionalProperties": false,
+        "properties": {
+          "case": { "type": "string", "minLength": 1, "description": "One sentence naming what this node does not decide, naming no node." },
+          "node": { "type": "string", "pattern": "^((domain|rules|scenarios|contracts)/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*|constraints/[a-z0-9]+(-[a-z0-9]+)*|[a-z0-9]+(-[a-z0-9]+)*)$", "description": "The node that decides the case, as a reference: a bare slug inside this node's directory, the full identity everywhere else." }
+        }
+      },
+      "description": "The boundaries another node decides — «Any node may declare `excludes`: a list of entries, each a `case` — one sentence naming what this node does not decide — and the `node` that decides it, written as a reference (R2)» (SPEC-003 §The five classes). «It adds no obligation» (SPEC-003 §The five classes): a boundary declared here is one the validator resolves, and is not written into the prose a second time."
+    },
     "subject": {
       "$ref": "#/$defs/identity",
       "description": "The one anchor: a Domain Model element, a Rule, or a Contract, by full identity."

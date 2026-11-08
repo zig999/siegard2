@@ -48,6 +48,11 @@ Every node of every class is complete: no provenance meta-fields, no open marker
 R8); a fact the material does not state is decided and disclosed in the node's decision log
 (SPEC-001 R9–R10).
 
+Any node may declare `excludes`: a list of entries, each a `case` — one sentence naming what
+this node does not decide — and the `node` that decides it, written as a reference (R2). It adds
+no obligation: what a node obliges is its own fields', and `excludes` says where a neighbouring
+obligation lives.
+
 ### Domain Model
 
 - **Subtypes** — `aggregate-root`, `entity`, `value-object`, `domain-service`, `enumeration`,
@@ -266,3 +271,6 @@ layer → Architecture Constraint.
    and `when` or neither, the same rule refused twice in one operation, and a `when` of more
    than one sentence are each refused — a fixture proves each — and an api declaring `answers`
    validates sound.
+9. For `excludes`: an entry whose `node` does not resolve, names the node itself, or repeats a
+   node for the same case, and a `case` of more than one sentence, are each refused — a fixture
+   proves each — and a node declaring `excludes` validates sound.

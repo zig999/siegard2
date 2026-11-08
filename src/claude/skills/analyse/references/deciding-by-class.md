@@ -102,6 +102,15 @@ class may declare; this is the judgment that decides what goes in it:
   unavailable dependency the material shows the caller receiving are answers under `when`, and
   leaving them out sends them into the code as facts no node holds.
 
+  A boundary another node decides is declared in `excludes`, never written into the body:
+
+  ```yaml
+  statement: A case changes status only along the declared transitions.
+  excludes:
+    - case: Which evidence a hypothesis needs.
+      node: rules/troubleshooting/hypothesis-requires-evidence
+  ```
+
   A refusal several operations answer alike is written once — «A refusal two operations answer
   alike is written once, under a YAML anchor» (SPEC-003 §Contract) — at its first place, and
   named by alias at its place in every later list, so each operation keeps its own order:

@@ -968,6 +968,51 @@ def cross_problems(nodes: dict[str, dict], root: Path,
                                 f"{' and '.join(k for k in ('decided', 'why') if k in entry)} — "
                                 f"an entry recorded as read «decides no value and carries no "
                                 f"`why`» (SPEC-001 R9)")
+
+    # --- excludes, on any node: where a neighbouring obligation lives, never one of its own
+    problems += excludes_problems(nodes, record)
+    return problems
+
+
+def excludes_problems(nodes: dict[str, dict], record) -> list[str]:
+    """A node's `excludes`, held to what no schema sees — «Any node may declare `excludes`: a list
+    of entries, each a `case` — one sentence naming what this node does not decide — and the
+    `node` that decides it, written as a reference (R2)» (SPEC-003 §The five classes): the
+    reference resolves to a node, never the node itself, one node once per case, and a case is
+    one sentence. A resolved entry is an edge `--impact` reads; it reaches nothing for the floor,
+    since `excludes` adds no obligation."""
+    problems: list[str] = []
+    for identity, node in sorted(nodes.items()):
+        if node["cls"] in ("log", "context"):
+            continue
+        seen: set[tuple[str, str]] = set()
+        for index, entry in enumerate(listed(node["front"], "excludes")):
+            if not isinstance(entry, dict):
+                continue  # the schema already reported the shape
+            at = f"excludes[{index}]"
+            ref, case = entry.get("node"), entry.get("case")
+            if isinstance(case, str):
+                count = len([s for s in SENTENCE.split(case) if s.strip()])
+                if count > 1:
+                    problems.append(f"{identity}: {at}.case carries {count} sentences; a case "
+                                    f"is one sentence naming what this node does not decide")
+            if not isinstance(ref, str):
+                continue
+            target = ref if "/" in ref else f"{identity.rsplit('/', 1)[0]}/{ref}"
+            held = target in nodes and nodes[target]["cls"] not in ("log", "context")
+            if record is not None:
+                record(identity, f"{at}.node", target, held)
+            if not held:
+                problems.append(f"{identity}: {at}.node names {ref}, which the specification "
+                                f"does not hold")
+            elif target == identity:
+                problems.append(f"{identity}: {at}.node names the node itself; a boundary "
+                                f"names the node that decides what this one does not")
+            if isinstance(case, str):
+                if (target, case) in seen:
+                    problems.append(f"{identity}: {at} names {target} a second time for the "
+                                    f"same case")
+                seen.add((target, case))
     return problems
 
 

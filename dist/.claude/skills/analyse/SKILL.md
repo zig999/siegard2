@@ -211,9 +211,12 @@ limit the solution. Two rules bind the analysis:
   obligation living only there is one nothing downstream can hold the specification to.
   Catching yourself writing one into prose is the signal that you owe a field, a rule, or a
   scenario, and then you point at it.
-- **Prose says what the node governs, never that the node agrees with its neighbours.** Write
-  the boundary: what this node does not decide, and which node does — «It does not argue that the
-  node is consistent with its neighbours» (SPEC-001 R14). Do not write the case that it does not contradict a sibling — that a sibling's predicate does
+- **Prose says what the node governs, never that the node agrees with its neighbours.** A
+  boundary another node decides is declared, not written —
+  «A boundary another node decides is declared in the node's `excludes`, one entry per case naming the node that decides it» (SPEC-001 R14):
+  `case` one sentence naming no node, `node` the reference. A boundary no node decides stays in
+  the prose. «It does not argue that the node is consistent with its neighbours» (SPEC-001 R14).
+  Do not write the case that it does not contradict a sibling — that a sibling's predicate does
   not reach here, that another rule's reasoning transfers, that one gesture keeps one answer.
   The reader you are writing for opens this node to conform to it, not to review whether the
   specification composes; the argument that it composes belongs to the log entry or the change

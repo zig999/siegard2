@@ -1607,3 +1607,50 @@ def test_a_text_with_no_fence_or_broken_frontmatter_has_no_reading():
     assert spec.reading_of(b"no fence here\n") is None
     assert spec.reading_of(b"---\nkey: [unclosed\n---\nbody\n") is None
     assert spec.reading_of(b"\xff\xfe---\n") is None
+
+
+# ------------------------------------------------------------------ excludes
+
+HOLDER = "rules/troubleshooting/alert-opens-case.md"
+DECIDER = "rules/troubleshooting/hypothesis-requires-evidence"
+
+
+def with_excludes(root: Path, entries: list) -> None:
+    rewrite(root, HOLDER, lambda front: front.update(excludes=entries))
+
+
+def test_a_node_declaring_excludes_is_sound_and_its_reference_is_an_edge(spec_root):
+    """«Any node may declare `excludes`» (SPEC-003 §The five classes): the boundary is a
+    reference the validator resolves, and `--impact` reads it like any declared one — a full
+    identity and a bare slug inside the node's own directory alike."""
+    with_excludes(spec_root, [{"case": "Whether a hypothesis needs evidence.", "node": DECIDER},
+                              {"case": "How a case moves between states.",
+                               "node": "case-transitions"}])
+    assert problems_of(spec_root) == []
+    done = run_node("--impact", DECIDER, str(spec_root))
+    assert "named by  <- rules/troubleshooting/alert-opens-case" in done.stdout
+    assert "excludes[0].node" in done.stdout
+
+
+def test_an_excludes_entry_naming_no_node_is_refused(spec_root):
+    with_excludes(spec_root, [{"case": "Whether a hypothesis needs evidence.",
+                               "node": "rules/troubleshooting/nonexistent"}])
+    assert hits(problems_of(spec_root), "excludes[0].node names rules/troubleshooting/nonexistent")
+
+
+def test_an_excludes_entry_naming_the_node_itself_is_refused(spec_root):
+    with_excludes(spec_root, [{"case": "Whether an alert opens a case.",
+                               "node": "rules/troubleshooting/alert-opens-case"}])
+    assert hits(problems_of(spec_root), "names the node itself")
+
+
+def test_an_excludes_entry_repeating_a_node_for_the_same_case_is_refused(spec_root):
+    entry = {"case": "Whether a hypothesis needs evidence.", "node": DECIDER}
+    with_excludes(spec_root, [entry, dict(entry)])
+    assert hits(problems_of(spec_root), f"names {DECIDER} a second time for the same case")
+
+
+def test_an_excludes_case_of_two_sentences_is_refused(spec_root):
+    with_excludes(spec_root, [{"case": "Whether a hypothesis needs evidence. And how much.",
+                               "node": DECIDER}])
+    assert hits(problems_of(spec_root), "excludes[0].case carries 2 sentences")

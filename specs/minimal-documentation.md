@@ -79,9 +79,12 @@ enforces mechanically.
   no `proposal`. What the material stated and what the analysis decided read identically in the
   specification; the decision log is where the two are told apart.
 - **R14** — Prose explains what the node governs. It does not argue that the node is consistent
-  with its neighbours. What a node does not govern is a boundary and belongs in its prose: an
-  agent deciding which node governs a task reads that boundary and would otherwise decide from
-  a resemblance. Why it does not contradict a sibling is an argument about the specification's
+  with its neighbours. What a node does not govern is a boundary: an agent deciding which node
+  governs a task reads that boundary and would otherwise decide from a resemblance. A boundary
+  another node decides is declared in the node's `excludes`, one entry per case naming the node
+  that decides it, and is not written into its prose, so the reference is one the validator
+  resolves; a boundary no node decides stays in the prose. A node written before `excludes` keeps
+  its boundary prose until a change rewrites the node. Why it does not contradict a sibling is an argument about the specification's
   own composition, and its home is the change that made it — never the artifact a downstream
   reader must open to conform, and not the log either (R9). A sentence carrying both keeps the
   boundary and drops the argument. This is judgment, not a mechanical check: the report is where
