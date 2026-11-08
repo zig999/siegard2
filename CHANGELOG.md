@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.79.0 — 2026-11-08
+
+The specification's ontology is applied in four layers: SPEC-003 makes the order of an operation's refusals its precedence; the class schemas, which both node writers read, state what each class holds and what it does not; `spec.py --shape` reports class signals — an answer in a rule or a constraint, a constraint with no fitness, a refusal condition written again — and refuses none; and the analyse skill reads one table applying the order of homes kind by kind. (`330d0b9`)
+
 ## 5.78.0 — 2026-11-08
 
 The stack is never a node: a language, a runtime version, a package, a tool, a command, an image or a test arrangement belongs to the project's standard, which the person authors. The analyse skill leaves such a line outside the specification and hands it to the person as a rule; the decider returns it as a new `standard` outcome, which plan-work reports without stopping the task. (`7d759b1`)
