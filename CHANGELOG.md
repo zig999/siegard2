@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.79.1 — 2026-11-08
+
+`trace.py --carry` over a target nothing has been bound in carries nothing and exits 0, as `--check` does, so a first adoption's `/reconcile` step 2 no longer meets a refusal. (`9d2f4d3`)
+
 ## 5.79.0 — 2026-11-08
 
 The specification's ontology is applied in four layers: SPEC-003 makes the order of an operation's refusals its precedence; the class schemas, which both node writers read, state what each class holds and what it does not; `spec.py --shape` reports class signals — an answer in a rule or a constraint, a constraint with no fitness, a refusal condition written again — and refuses none; and the analyse skill reads one table applying the order of homes kind by kind. (`330d0b9`)
