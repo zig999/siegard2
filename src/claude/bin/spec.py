@@ -41,6 +41,11 @@ so something outside this script, living beside generated code rather than insid
 specification, can pin which version of a node it was written against and later ask whether that
 node moved. Refused entirely while the specification has problems, the same as `--project`.
 
+**Two texts of a node can oblige the same.** `reading_of` is the one place that says when: the
+frontmatter as data — key order, quoting and wrapping set aside — and the body byte for byte,
+«Two texts of one node with the same reading oblige the same» (SPEC-003 R7). The digest still
+names the bytes; the reading is what `trace.py --carry` compares when a node's digest moved.
+
 **A file can be checked on its own while it is being written.** `--node <file>` applies the
 one schema its class demands and nothing else: no reference resolution, no reachability, no
 check that a log's node exists — those need the whole specification, and a file mid-authoring has not
@@ -349,6 +354,27 @@ def parse_node(path: Path) -> tuple[dict | None, str, str | None]:
                      "compose the frontmatter with yaml.safe_dump instead of typing it by hand")
         return None, "", said
     return front, text[match.end():], None
+
+
+def reading_of(data: bytes) -> tuple[object, str] | None:
+    """A node text's reading: its frontmatter as data and its body exactly as written — «A node's
+    reading is its frontmatter as data» (SPEC-003 R7). Two texts whose readings are equal differ
+    in key order, quoting or wrapping alone, and oblige the same; any byte of the body, or any
+    value of the frontmatter, that differs is a different reading. None where the text is not
+    UTF-8, carries no fence or its frontmatter does not parse: a text nobody can read has no
+    reading to be the same as."""
+    try:
+        text = data.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return None
+    match = FENCE.match(text)
+    if not match:
+        return None
+    try:
+        front = load_yaml(match.group(1)) or {}
+    except yaml.YAMLError:
+        return None
+    return front, text[match.end():]
 
 
 def reduce_display(display: str) -> str:

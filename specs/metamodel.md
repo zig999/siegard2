@@ -163,6 +163,10 @@ R8); a fact the material does not state is decided and disclosed in the node's d
   it, and one that two nodes answer to resolves differently for two readers. What a reader
   cannot resolve, a report names rather than guesses.
 - **R3** — `system` is a reserved namespace: no bounded context may take that slug.
+- **R7** — A node's reading is its frontmatter as data — keys unordered, each value by what it
+  is and never by how it is quoted or wrapped — together with its body's exact bytes. Two texts
+  of one node with the same reading oblige the same: what changed between them is form, and
+  nothing a file bound to the node answers for moved.
 
 ## Storage mapping
 

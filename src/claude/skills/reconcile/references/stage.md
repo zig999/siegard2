@@ -15,6 +15,7 @@ incomplete node set, and the record that comes back reads exactly like a complet
 - The four states
 - The mechanical tier
 - A rewrite
+- A carry
 - Nodes written since the bind
 
 ## Two anchors
@@ -112,6 +113,12 @@ reproduces the current text exactly and every step the declaration names passed 
 - **Where the receipt says the rewrite reproduces nothing, stop and show the person the
   transcription before any judge runs.** Either it says something other than what they stated, or
   the change was not that rewrite alone, and only they can say which.
+
+## A carry
+
+«A carried pair is no reading: it clears no finding and closes none» (SPEC-005 R13). A pair
+`--carry` left names why — no stamped text in git, a changed reading, an open finding, a live
+plan's pin — and stays `moved`, judged as before.
 
 ## Nodes written since the bind
 

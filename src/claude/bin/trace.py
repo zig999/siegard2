@@ -28,6 +28,9 @@ What this script does, and nobody else does any of it:
                                                                   following a node git renamed
     trace.py --release <target-root> <file> ...                   drop a file the tree no longer
                                                                   holds from every binding naming it
+    trace.py --carry <target-root> [--node <node> ...]            restamp every pair whose node
+                                                                  changed in form alone to the node
+                                                                  as it stands
     trace.py --release <target-root> <file> ... --node <node>     drop only those files from one
                                                                   node's binding, each a pair a
                                                                   reconciliation read `nowhere`
@@ -422,6 +425,17 @@ each carried file's `judged` as it stood, and restamps a carried node's certifie
 same rewrite reproduced every one that moved. A carried pair was read by no judge, and `--owed`
 counts it as neither a clearance nor a finding.
 
+`--carry` answers the one `moved` drift no reading needs to answer: a node whose text changed in
+form alone — key order, quoting, wrapping — while what it obliges stayed. For each file of each
+binding it recovers from git the node text the file was stamped against and compares its reading
+with the node's now, through `spec.reading_of`; where they are equal the pair is restamped to the
+node as it stands, «A carried pair is no reading: it clears no finding and closes none»
+(SPEC-005 R13). A pair is left as it stood, with the reason on its own line, where git holds no
+text at the stamped digest, the reading changed, an open finding stands against it, or a live
+plan pins the node at the stamped digest. The file's own digest, its `judged`, `decided_by` and
+proof are never touched, so `code` and `proof` drift report as before. A second run carries
+nothing the first left.
+
 `--fold` writes the reconciliation record from the subagents' returns, mechanically. Every rule
 it applies is a fold over structured answers — a node conforms exactly where every subagent that
 read one of its files cleared it; a finding naming a node lands on that node wherever its own judge
@@ -457,6 +471,7 @@ Usage:  trace.py <target-root>
                  [--workspace <workspace-dir>] [--replace]
         trace.py --prune <target-root>
         trace.py --release <target-root> <file> [<file> ...] [--node <node>]
+        trace.py --carry <target-root> [--node <node> ...]
         trace.py --reconciliation <reconciliation-record>
         trace.py --owed <target-root> [--all] [--plan <work-root>]
         trace.py --encodes <target-root> <file> [<file> ...]
@@ -476,7 +491,7 @@ Usage:  trace.py <target-root>
         trace.py --ledger <ledger.md> <spec-root>
         trace.py --help
                 print this text and stop
-Exit:   0 sound / drift-free / bound / pruned / released / the record holds / nothing is owed /
+Exit:   0 sound / drift-free / bound / pruned / released / carried / the record holds / nothing is owed /
           staged / folded
         1 problems: an invalid file, drift found, an unsound specification, an unknown node
           or file, a record its contract refuses, a finding no bind closed, a return a
@@ -6352,6 +6367,120 @@ def release_pairs(target: Path, node_id: str, files: list[str]) -> int:
     return 0
 
 
+def live_pins(home: Path) -> set[tuple[str, str]]:
+    """Every (node, digest) a live plan's `implements` edges pin. A plan derived against a node's
+    text holds its tasks to that text: carrying a pair past it would leave the plan pinning a
+    digest no file of the trace was stamped against, so such a pair is left for the plan to close."""
+    pins: set[tuple[str, str]] = set()
+    work_root = work_root_of(home)
+    if work_root is None or not work_root.is_dir():
+        return pins
+    for initiative in sorted(p for p in work_root.iterdir() if p.is_dir()):
+        index = initiative / "plan.json"
+        if (initiative / plan.CLOSURE_FILE).is_file() or not index.is_file():
+            continue
+        try:
+            derived = json.loads(index.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        for edge in derived.get("edges") or [] if isinstance(derived, dict) else []:
+            if isinstance(edge, dict) and edge.get("kind") == "implements" \
+                    and isinstance(edge.get("to"), str) and isinstance(edge.get("digest"), str):
+                pins.add((edge["to"], edge["digest"]))
+    return pins
+
+
+def carry(target: Path, named: list[str]) -> int:
+    """Restamp every pair whose node changed in form alone to the node as it stands.
+
+    For each file of each binding, the node text it was stamped against is recovered from git
+    and its reading compared with the node's now — «A pair whose node changed in form alone is
+    carried to the node as it stands without a judgment» (SPEC-005 R13). A carried pair gets the
+    node's present digest as the text it was stamped against, and nothing else of it changes: its
+    file digest, `judged`, `decided_by` and proof stay as they were, so `code` and `proof` drift
+    still report. A pair is left as it stood, and the receipt says why, where git holds no text at
+    the stamped digest, the reading differs, an open finding stands against it, or a live plan pins
+    the node at the stamped digest. Nothing here is a reading: the carry clears no finding."""
+    if not target.is_dir():
+        print(f"cannot run: {target} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    path = trace_path(target)
+    declared = load(target)
+    if declared is None:
+        print(f"cannot carry: {path} does not exist; nothing has been bound, so nothing moved")
+        return 1
+    problems = problems_of(declared)
+    if problems:
+        for problem in problems:
+            print(f"{path}: {problem}")
+        return 1
+    home = home_of(target)
+    spec_rel = PurePosixPath(declared["specification"])
+    spec_root = home / spec_rel
+    nodes, status = sound_specification(spec_root)
+    if nodes is None:
+        return status
+    bound = {entry["node"] for entry in declared["bindings"]}
+    unknown = [node_id for node_id in named if node_id not in bound]
+    if unknown:
+        print(f"cannot carry: {', '.join(unknown)} — no binding names it; `--check` lists what "
+              f"the trace binds")
+        return 1
+
+    open_pairs = open_owed(home)
+    pins = live_pins(home)
+    texts: dict[tuple[str, str], bytes | None] = {}
+    carried: dict[str, tuple[str, str, int]] = {}
+    left: list[str] = []
+    for entry in declared["bindings"]:
+        node_id = entry["node"]
+        if (named and node_id not in named) or node_id not in nodes:
+            continue
+        current = nodes[node_id]["digest"]
+        now = spec.reading_of(nodes[node_id]["path"].read_bytes())
+        files = entry.get("files") or []
+        for file_entry in files:
+            stamped = stamped_against(entry, file_entry)
+            if stamped == current:
+                continue
+            why = None
+            if (node_id, file_entry["path"]) in open_pairs:
+                why = "an open finding stands against this pair"
+            elif (node_id, stamped) in pins:
+                why = "a live plan pins the node at the text this file was stamped against"
+            else:
+                key = (node_id, stamped)
+                if key not in texts:
+                    texts[key] = pinned_text(home, (spec_rel / f"{node_id}.md").as_posix(),
+                                             stamped)[1]
+                old = texts[key]
+                if old is None:
+                    why = "git holds no text of the node at the digest this file was stamped against"
+                elif now is None or spec.reading_of(old) != now:
+                    why = "the node's reading changed, not its form alone"
+            if why is not None:
+                left.append(f"left {node_id} {file_entry['path']}: {why}")
+                continue
+            file_entry[NODE_DIGEST] = current
+            was, _, count = carried.get(node_id, (stamped, current, 0))
+            carried[node_id] = (was, current, count + 1)
+        if files and entry["digest"] != current and all(
+                stamped_against(entry, file_entry) == current for file_entry in files):
+            entry["digest"] = current
+
+    if carried and write_trace(target, declared, act="carry") != 0:
+        return 1
+    for node_id, (was, now_digest, count) in sorted(carried.items()):
+        print(f"carried {node_id}: {count} pair(s), stamped {was[7:19]}… -> {now_digest[7:19]}…; "
+              f"same reading, no judgment")
+    for line in left:
+        print(line)
+    total = sum(count for _, _, count in carried.values())
+    print(f"\n{total} pair(s) carried over {len(carried)} node(s) at {path}; "
+          f"{len(left)} left as they stood.")
+    return 0
+
+
 def main() -> int:
     args = sys.argv[1:]
     if "--help" in args:
@@ -6366,6 +6495,7 @@ def main() -> int:
     do_record = "--bind-record" in args
     do_prune = "--prune" in args
     do_release = "--release" in args
+    do_carry = "--carry" in args
     do_reconciliation = "--reconciliation" in args
     do_owed = "--owed" in args
     do_encodes = "--encodes" in args
@@ -6486,7 +6616,7 @@ def main() -> int:
             return CANNOT_RUN
     args = [a for a in args
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
-                         "--release", "--reconciliation", "--owed", "--encodes", "--stage",
+                         "--release", "--carry", "--reconciliation", "--owed", "--encodes", "--stage",
                          "--fold", "--save-return", "--rank", "--changed", "--audit", "--review",
                          "--convergence", "--untraced", "--adopt", "--ledger", "--survey",
                          "--area", "--reconcile-set")]
@@ -6497,6 +6627,7 @@ def main() -> int:
                                       ("--bind-record", do_record),
                                       ("--prune", do_prune),
                                       ("--release", do_release),
+                                      ("--carry", do_carry),
                                       ("--reconciliation", do_reconciliation),
                                       ("--owed", do_owed),
                                       ("--encodes", do_encodes),
@@ -6560,8 +6691,9 @@ def main() -> int:
         print("cannot run: --demonstrated is a mode of --stage --review; a proof's claim is "
               "settled by the review that reads the proof, and by nothing else", file=sys.stderr)
         return CANNOT_RUN
-    if also and not (do_stage or do_release) or also and do_audit:
-        print("cannot run: --node is a mode of --stage or --release, and never of an audit; an "
+    if also and not (do_stage or do_release or do_carry) or also and do_audit:
+        print("cannot run: --node is a mode of --stage, --release or --carry, and never of an "
+              "audit; an "
               "audit stages no candidate index, and a reconciliation's node set is the trace's "
               "alone", file=sys.stderr)
         return CANNOT_RUN
@@ -6642,6 +6774,13 @@ def main() -> int:
         if also:
             return release_pairs(Path(args[0]), also[0], args[1:])
         return release(Path(args[0]), args[1:])
+
+    if do_carry:
+        if len(args) != 1 or args[0].startswith("--"):
+            print("cannot run: expected --carry <target-root> [--node <node> ...]",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        return carry(Path(args[0]), also)
 
     if do_owed:
         plan_root: Path | None = None

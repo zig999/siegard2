@@ -16,9 +16,10 @@ its record, and the report that counts a target's files.
 
 It decides where an adopted system's first specification comes from, what a binding of adopted
 source rests on, which files an adopted node is bound to, the states a tracked file is in, and
-when an adoption is complete. Three requirements reach past adoption to every reconciliation: R10,
-which pairs a judgment binds, R11, which pairs a declared rewrite carries without one, and R12,
-what a judgment returns for each node it was handed. Each is one rule whether the source was
+when an adoption is complete. Four requirements reach past adoption to every reconciliation: R10,
+which pairs a judgment binds, R11, which pairs a declared rewrite carries without one, R12, what a
+judgment returns for each node it was handed, and R13, which pairs a change of a node's form
+carries without one. Each is one rule whether the source was
 adopted or delivered, and is stated here beside R3 and R4, which say what a binding rests on,
 rather than in a second home.
 
@@ -157,6 +158,13 @@ constraints spent 26 judges on files the notes never cited while the notes named
   one session alone received 662 of them, 8.2M characters, in a project that compacted 19 times —
   figures as the evaluation that asked for this change reported them, not re-read here.
 
+- **R13** — A pair whose node changed in form alone is carried to the node as it stands without a
+  judgment, where the text the file was stamped against, recovered from the repository's history,
+  has the reading the node has now (SPEC-003 R7). A pair whose stamped text the history does not
+  hold, whose reading differs, that an open finding stands against, or whose node a live plan pins
+  at the earlier text, is left as it stood. A carried pair is no reading: it clears no finding and
+  closes none, and the file's own digest and judgment stay as they were.
+
 ### What the tree holds
 
 - **R5** — Every tracked file under a target is in exactly one state: bound — a binding names it,
@@ -288,3 +296,9 @@ constraints spent 26 judges on files the notes never cited while the notes named
    domain surveyor cite the requirement each step carries in «…», `tests/test_spec_citations.py`
    proves each quote is a substring of the requirement it names, and `tests/test_adopt_scope.py`
    holds the skill's R1, R6 and R8 sentences.
+11. For R13: a pair whose stamped text has the node's present reading is carried without a judge;
+   a pair whose body or frontmatter value changed, whose stamped text git does not hold, that an
+   open finding stands against, or whose node a live plan pins, is left as it stood; the carry
+   keeps the file's digest, `judged`, `decided_by` and `proof`; a file stamped against an earlier
+   equivalent text is carried and one stamped against a non-equivalent text is not; and a second
+   carry changes nothing — `tests/test_trace_carry.py` proves each.

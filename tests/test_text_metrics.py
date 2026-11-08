@@ -205,8 +205,8 @@ def test_the_review_change_skill_names_its_trigger_first():
 RECONCILE_AGENTS = ("coverage-auditor", "specification-conformance-reviewer")
 RECONCILE_BASELINE = REPO / "tests/fixtures/benchmarks/reconcile/text-metrics-5.66.0.json"
 RECONCILE_PINS = {
-    "chars": 82_050,
-    "skill_chars": 17_100,
+    "chars": 82_335,
+    "skill_chars": 17_127,
     "sentence_words_median": 19,
     "sentence_words_p90": 38,
     "sentences_over_60_words": 1,

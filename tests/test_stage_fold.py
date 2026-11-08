@@ -1935,7 +1935,7 @@ def test_review_and_node_are_modes_of_stage_and_exclude_audit(consumer):
     done = run("--check", consumer / "backend", "--review")
     assert done.returncode == 2 and "--review is a mode of --stage" in done.stderr
     done = run("--check", consumer / "backend", "--node", NODE)
-    assert done.returncode == 2 and "--node is a mode of --stage or --release" in done.stderr
+    assert done.returncode == 2 and "--node is a mode of --stage, --release or --carry" in done.stderr
     done = run("--stage", consumer / "backend", consumer / "specs", "audit-with-node",
                consumer / "ws-audit-with-node", FILE, "--audit", "--node", NODE)
     assert done.returncode == 2 and "never of an audit" in done.stderr

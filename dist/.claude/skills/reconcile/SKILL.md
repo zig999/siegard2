@@ -33,7 +33,7 @@ its step is reached, before acting on it.
       nothing; siegard-trace.json clean; the target under git
 - [ ] Contract: read schemas/reconciliation.json
 - [ ] 1 Situate: spec.py; trace.py <target-source-root>; siegard-reconcile/<slug>.md free
-- [ ] 2 Stage: trace.py --check; trace.py --stage into a fresh workspace: references/stage.md;
+- [ ] 2 Stage: trace.py --carry, --check, --stage into a fresh workspace: references/stage.md;
       certifications: references/certify.md; adoption: references/adoption.md
 - [ ] 3 Judge: one conformance subagent per file, by waves; every return saved verbatim:
       references/judge.md; one coverage-auditor per certification: references/certify.md
@@ -167,12 +167,13 @@ Each judgment is a subagent's, in a clean context, and lives in its agent file.
 ### 2. Stage
 
 ```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --carry <target-source-root>
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check <target-source-root>
 ```
 
-Drift is all it reports: the `code` class lists one line per file, naming every binding the change
-staled. Keep the lines whose path is in the file set. Then stage the whole file set into a fresh
-workspace directory nothing commits (`mktemp -d`):
+Drift is all `--check` reports: the `code` class lists one line per file, naming every binding
+the change staled. Keep the lines whose path is in the file set. Then stage the whole file set
+into a fresh workspace directory nothing commits (`mktemp -d`):
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --stage <target-source-root> <specification-root> \

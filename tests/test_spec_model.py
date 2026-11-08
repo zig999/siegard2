@@ -1526,3 +1526,38 @@ def test_yaml_is_read_through_libyaml_where_the_interpreter_has_it():
     assert spec.load_yaml("a: [1, 2]\nb: {c: d}\n") == {"a": [1, 2], "b": {"c": "d"}}
     with pytest.raises(yaml.YAMLError):
         spec.load_yaml("a: b: c\n")
+
+
+# ------------------------------------------------------------------ reading_of
+
+
+def test_a_reading_sets_aside_key_order_quoting_and_wrapping(spec_root):
+    """«Two texts of one node with the same reading oblige the same» (SPEC-003 R7): what a
+    serialiser chooses — the order of keys, which scalars it quotes, where it wraps — is form."""
+    path = spec_root / "domain/troubleshooting/case.md"
+    front, body, problem = spec.parse_node(path)
+    assert problem is None
+    reformed = f"---\n{yaml.safe_dump(front, sort_keys=True, width=30)}---\n{body}".encode()
+    assert reformed != path.read_bytes()
+    assert spec.reading_of(reformed) == spec.reading_of(path.read_bytes())
+
+
+def test_a_reading_differs_on_a_value_a_list_order_or_a_byte_of_the_body(spec_root):
+    path = spec_root / "domain/troubleshooting/case.md"
+    original = path.read_bytes()
+    front, body, _ = spec.parse_node(path)
+    valued = dict(front, operations=list(reversed(front["operations"])))
+    as_text = f"---\n{yaml.safe_dump(valued, sort_keys=False)}---\n{body}".encode()
+    assert spec.reading_of(as_text) != spec.reading_of(original)
+    assert spec.reading_of(original.replace(b"A customer", b"A  customer")) != \
+        spec.reading_of(original)
+    quoted = original.replace(b'cardinality: "1"', b"cardinality: 1")
+    assert quoted != original
+    assert spec.reading_of(quoted) != spec.reading_of(original), \
+        "the string 1 and the number 1 are two values, not two quotings of one"
+
+
+def test_a_text_with_no_fence_or_broken_frontmatter_has_no_reading():
+    assert spec.reading_of(b"no fence here\n") is None
+    assert spec.reading_of(b"---\nkey: [unclosed\n---\nbody\n") is None
+    assert spec.reading_of(b"\xff\xfe---\n") is None
