@@ -215,7 +215,7 @@ limit the solution. Two rules bind the analysis:
   boundary another node decides is declared, not written —
   «A boundary another node decides is declared in the node's `excludes`, one entry per case naming the node that decides it» (SPEC-001 R14):
   `case` one sentence naming no node, `node` the reference. A boundary no node decides stays in
-  the prose. «It does not argue that the node is consistent with its neighbours» (SPEC-001 R14).
+  the prose, and a node you rewrite moves the boundary prose it carried into `excludes`. «It does not argue that the node is consistent with its neighbours» (SPEC-001 R14).
   Do not write the case that it does not contradict a sibling — that a sibling's predicate does
   not reach here, that another rule's reasoning transfers, that one gesture keeps one answer.
   The reader you are writing for opens this node to conform to it, not to review whether the

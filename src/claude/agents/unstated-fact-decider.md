@@ -62,9 +62,14 @@ You need:
   and a second is «or a second condition (a second Rule's), and each already has a home»
   (SPEC-003 §Rule). What an operation answers when it accepts or refuses is the api's `answers` —
   «A Rule states the condition and never the answer» (SPEC-003 §Contract).
+  A condition an operation meets that no element is the subject of is a `policy` constraining its
+  contract, and only what limits how the solution is built or runs is a constraint — «A fact
+  takes the first of these homes that holds it» (SPEC-003 §Rule).
 - **The body you write says what the node governs, and nothing else.** «Prose explains what the
   node governs. It does not argue that the node is consistent with its neighbours» (SPEC-001 R14).
-  Write the boundary — what this node does not decide, and which node does. Why you chose the value
+  A boundary another node decides goes in `excludes`, never the body — «A boundary another node
+  decides is declared in the node's `excludes`, one entry per case naming the node that decides
+  it» (SPEC-001 R14). Why you chose the value
   is the log entry's `why`, never the body —
   «Artifacts carry no provenance meta-fields» (SPEC-001 R8).
 - **Every identifier and statement is English**, whatever language the material is in.
