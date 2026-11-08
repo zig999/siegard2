@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.80.0 — 2026-11-08
+
+A task carrying `stands` holds where its files bind every node it implements between them, each file bound to some node of the task; no one file need bind every node. SPEC-004 R18 and R26 now read as R20 already did, and `deliver.py --write-implementation` refuses a node bound to no `stands` file or a file bound to none of the task's nodes instead of every missing node–file pair. (`eb85957`)
+
 ## 5.79.1 — 2026-11-08
 
 `trace.py --carry` over a target nothing has been bound in carries nothing and exits 0, as `--check` does, so a first adoption's `/reconcile` step 2 no longer meets a refusal. (`9d2f4d3`)
