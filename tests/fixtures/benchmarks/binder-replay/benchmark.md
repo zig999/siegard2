@@ -151,3 +151,27 @@ pass 1,800 lines, 3 repetitions each: 6 of 6 runs read every line of the pack (4
 25,000-token refusal), none opened a node file. `version-visibility` still varies as it did in both
 arms before (3, 3 and 5 nodes; within-arm Jaccard 1.0, 0.6, 0.6; against the recorded `implements`
 1.0, 1.0, 0.6); `product-offering/patch` across arms 0.966. US$ 3.89 for the six runs.
+
+# Iteration 4 — the boundary as data (`excludes`) against the boundary as prose (2026-11-08)
+
+The ten configurator tasks of iteration 1, over a copy of the same snapshot in which every boundary
+sentence of the 44 nodes whose body names another node — "it does not decide X; N decides that" —
+moved into a frontmatter list `excludes: [{case, node}]`. The conversion was written by an agent and
+checked mechanically: 43 files changed, 132 entries, every identity a removed sentence named present
+as a `node`, no other field changed. Body characters of those nodes 27,086 -> 9,747; whole files
+50,354 -> 52,034 (+3%): the structured form saves no bytes. Arm `excludes` reads packs over the
+converted copy; arm `pack-p2` the prose (repetitions 1–3 at 5.70.0's binder text, 4–5 at 5.74.0's,
+whose pairwise Jaccard is 0.929 and 0.941). Five repetitions each, interleaved; 70 new runs.
+
+| measure | prose | excludes |
+|---|---|---|
+| mean pairwise Jaccard within the arm | 0.936 | 0.950 |
+| minimum pairwise Jaccard | 0.80 | 0.69 |
+| tasks identical across all 5 repetitions | 2 / 10 | 3 / 10 |
+| identities that oscillated (constraints among them) | 16 (7) | 12 (5) |
+| mean Jaccard against the recorded `implements` | 0.925 | 0.928 |
+| tasks steadier / less steady / same | | 5 / 1 / 4 |
+
+The direction favours the data form — fewer identities oscillate, five tasks steadier and one less —
+but the mean moves 0.014 against a floor of about 0.06, and five against one is no significant sign
+on ten tasks. Read as: no worse, possibly steadier, not shown. US$ 14.07 for the 70 runs.

@@ -154,7 +154,7 @@ def run_one(out: Path, arm: str, key: str, rep: int, plugin_dir: Path, model: st
     if dest.exists() or dest.with_suffix(".json").exists():
         return f"skip {dest.name}"
     dest.parent.mkdir(parents=True, exist_ok=True)
-    name = f"prompt_{key}.txt" if inputs == "paths" else f"prompt_pack_{key}.txt"
+    name = f"prompt_{key}.txt" if inputs == "paths" else f"prompt_{inputs}_{key}.txt"
     prompt = (out / "inputs" / name).read_text(encoding="utf-8")
     cmd = ["claude", "-p", "--agent", AGENT, "--plugin-dir", str(plugin_dir),
            "--output-format", "stream-json", "--verbose", "--add-dir", str(out / "inputs"),
@@ -322,7 +322,8 @@ def main() -> int:
     r.add_argument("--reps", type=int, default=3)
     r.add_argument("--model")
     r.add_argument("--parallel", type=int, default=5)
-    r.add_argument("--inputs", choices=("paths", "pack"), default="paths")
+    r.add_argument("--inputs", default="paths",
+                   help="paths, pack, or the name of a prompt variant written as prompt_<name>_<task>")
     k = sub.add_parser("pack")
     k.add_argument("out", type=Path)
     g = sub.add_parser("grade")
