@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.73.0 — 2026-11-08
+
+A refusal several operations of an api answer alike is written once, under a YAML anchor, and aliased at its place in each operation's list; the reading is the same data, so a converted contract is carried rather than re-read. SPEC-003 §Contract states it, the analyse guidance shows it, and the agents that read contracts know the alias. (`5ba63ad`)
+
 ## 5.72.0 — 2026-11-08
 
 The rule that every constraint is a candidate of every planned scope moves from the plan-work skill into SPEC-003, and the skill quotes it. Nothing a plan does changes. (`2da99a9`)
