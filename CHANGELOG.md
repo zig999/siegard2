@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.82.0 — 2026-11-09
+
+A registry may declare steps whose role is `fix` — a formatter that writes — and a delivery runs them after the install and before every check in its build and suite, so a producer never reformats by hand; a review and a reconciliation never run them, and `deliver.py --standard` prints the review's selection on its own line (SPEC-007 R5). (`086ea23`)
+
 ## 5.81.0 — 2026-11-09
 
 A delivery whose implementer finds the task already met writes its implementation record carrying `stands` itself, instead of stopping for a plan; where the trace lacks the bindings, `deliver.py --write-implementation` prints the one door — an adoption `/reconcile` whose candidates are the nodes bound to none of the files, or an ordinary one where a binding moved — and `/deliver-scope` takes it once per task. `/deliver-scope` takes every derived door under the person's own ask, with or without a goal (SPEC-006 R7, SPEC-008 R8). (`69e982d`)
