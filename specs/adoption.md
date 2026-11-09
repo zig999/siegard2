@@ -96,8 +96,11 @@ constraints spent 26 judges on files the notes never cited while the notes named
 
 - **R10** — A reconciliation binds each pair on its own file's judgment. Where a node's fact is
   still held in some files bound to it and read nowhere in another, with nothing found against
-  the node, the files that hold it are bound, and the file that stopped holding it is a release a
-  person decides, never one a fold or a bind makes. That release drops the pair alone, and so does
+  the node, the files that hold it are bound, and the file that stopped holding it is released by
+  the bind where a second judgment, blind to the first, also reads the fact nowhere in it and the
+  node stays bound to a file whose binding is current; where the second judgment reads it held in
+  whole or in part, or no other file bound to the node is current, the release is a person's to
+  decide, never one a fold or a bind makes. That release drops the pair alone, and so does
   the release of a pair read nowhere where no file of the set holds the fact: every other file
   bound to the node keeps the stamp it had, and a pair no record reads nowhere is never released.
 
@@ -116,6 +119,16 @@ constraints spent 26 judges on files the notes never cited while the notes named
   and run in a clone it dropped one such file beside the pair. Where no file of the set held the
   fact, the bind handed no release at all, and 731 such entries were still bound; one session
   built the release by hand and dropped four files the person had not been asked about.
+
+  Grounds for the release on two readings, read on 2026-11-09 over the traces and the 223
+  reconciliation records of five sales consumers: 1,229 pairs a record read `nowhere` were still
+  bound, 1,194 of them to a node that stayed bound to a file whose binding was current, and
+  releasing those would have cleared 543 of the 1,008 stale pairs the traces held. Thirty of them,
+  drawn across the five, were each read again by two judges blind to the first reading and to
+  each other: 28 read the fact nowhere, 2 split one reading part and one nowhere, and none read it
+  held. The release waits for a second reading because one reading is the judgment the 2026-10-19
+  audit found wrong in part on 5 of 73 such pairs; the two that split are the kind it sends back
+  to the person.
 
 - **R11** — A pair whose file changed by a rewrite the reconciliation declares is carried to the
   file as it stands without a judgment, where the declared rewrite applied to the text the binding
@@ -216,6 +229,14 @@ constraints spent 26 judges on files the notes never cited while the notes named
    delivery names over files already bound to other nodes binds its candidate beside them and
    leaves their intact bindings as they were
    (`test_an_adoption_a_delivery_names_binds_its_candidate_beside_a_file_s_own_nodes`).
+   For R10: `trace.py --stage-release` stages a second reading only of a pair a record read
+   `nowhere` whose node stays bound to a current file or to a holder the record clears, telling
+   the judge nothing of the first reading; `--bind-record` releases that pair only where the saved
+   second reading also names it `nowhere` and the node keeps a current file once stamped, and
+   leaves it to the person where the second reading finds the fact in whole or in part, where none
+   was saved, or where no current file is left — `tests/test_stage_fold.py` proves each
+   (`test_a_pair_read_nowhere_twice_is_released_by_the_bind_and_its_holder_kept` and the four
+   beside it).
 2. For R5: `trace.py --untraced` puts every tracked file in exactly one of the five states, a
    certification's proof counts as bound, a declared test no certification names counts as
    uncertified and that line is absent where no test is declared, and a submodule is kept outside

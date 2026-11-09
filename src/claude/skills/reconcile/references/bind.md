@@ -2,14 +2,20 @@
 
 Read at step 5, before running `--bind-record`.
 
+## Second reading
+
+Where the record reads a pair `nowhere`, run `trace.py --stage-release <target-source-root>
+<specification-root> siegard-reconcile/<slug>.md <new workspace>`, then one conformance subagent
+per printed pack, each saved there by `--save-return`. The bind releases what it confirms.
+
 ## What lands
 
 The record is read the same way an implementation record is, and the whole of it is refused
 before anything is written where its form is wrong — a node this specification does not hold, or
 a file that is not there. That is a defect in what you wrote, never the judgment's answer.
 
-- `--workspace` names the staging's own. The bind refuses a file or a node that moved since the
-  staging read it: it stamps what the judges read, and the workspace recorded what that was.
+- `--workspace` names the staging's own: the bind refuses a file or a node that moved since the
+  staging read it, because it stamps what the judges read.
 - What lands is the union: a file an earlier bind put on a node and this record does not name
   stays bound. Two things landing one node in two files is not one undoing the other's work.
 - **Where a node carries a finding, that node is not bound, and the nodes that cleared still are.**
@@ -24,12 +30,10 @@ than into an additional one, the report hands that invocation ready to paste and
 signal there is.
 
 A node whose fact left part of its ground, with nothing found against it, is bound on the files
-that still hold it. The file read `nowhere` is a release the bind's receipt hands with its
-`--release ... --node` invocation ready, and the report relays it as the person's decision.
-«That release drops the pair alone, and so does the release of a pair read nowhere where no file
-of the set holds the fact: every other file bound to the node keeps the stamp it had, and a pair
-no record reads nowhere is never released.» (SPEC-005 R10) A release built any other way — a
-`--replace` naming the files to keep — is the loss that invocation exists to prevent.
+that still hold it. A file read `nowhere` that the second reading did not confirm is a release the
+bind's receipt hands with its `--release ... --node` invocation ready, and the report relays it as
+the person's decision. It drops that pair alone; a `--replace` naming the files to keep is the
+loss that invocation exists to prevent.
 
 ## What it rechecks
 

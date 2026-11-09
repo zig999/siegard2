@@ -43,6 +43,13 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --reconciliation siegard-reconcile
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --bind-record <target-source-root> <specification-root> siegard-reconcile/<review-name>.md --workspace <workspace>
 ```
 
+Between the check and the bind, where the record reads a pair `nowhere`, stage its second reading
+with `trace.py --stage-release <target-source-root> <specification-root>
+siegard-reconcile/<review-name>.md <a fresh workspace>`, spawn one conformance subagent per file it
+prints with that pack, and save each return into that workspace with `--save-return`. The bind
+then releases each pair the second reading also reads `nowhere` and the node keeps a current file;
+the rest stays the person's.
+
 `--workspace` names the staging's own: the bind refuses a file or a node that moved since the
 staging read it, because it stamps what the subagents read, and the workspace is where the staging
 recorded what that was.

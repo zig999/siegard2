@@ -3569,3 +3569,126 @@ def test_a_certification_refused_for_a_file_set_names_the_files_the_trace_binds_
     assert (f"{OTHER} is bound to none of the named files; a certification rides the reading of "
             f"a file that encodes the node, so name one the trace binds it to; the trace binds "
             f"it to {FILE}") in done.stderr
+
+
+# ------------------------------------- a release on two blind readings (SPEC-005 R10)
+
+
+def read_nowhere_in_second(consumer: Path) -> Path:
+    """NODE held in FILE and read `nowhere` in SECOND, folded: the shape the partymgmt and
+    productcatalog traces held 1,194 times on 2026-11-09 — a binding the code no longer backs,
+    while the node stays bound to a file that does."""
+    with (consumer / "backend" / SECOND).open("a", encoding="utf-8") as drifted:
+        drifted.write("// drift too\n")
+    staged(consumer)
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    save_return(consumer, "round", SECOND, {"read": [{
+        "node": NODE, "held_at": "nowhere. The file bills; it opens no case",
+        "evidence": "export function bill() {}"}]})
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    return record
+
+
+def second_reading(consumer: Path, given: str, front: dict) -> Path:
+    path = (consumer / "siegard-reconcile" / "round.returns"
+            / ("release__" + given.replace("/", "__") + ".yaml"))
+    path.write_text(yaml.safe_dump(front, sort_keys=False), encoding="utf-8")
+    return path
+
+
+def test_a_pair_read_nowhere_twice_is_released_by_the_bind_and_its_holder_kept(consumer):
+    """«the file that stopped holding it is released by the bind where a second judgment, blind
+    to the first, also reads the fact nowhere in it and the node stays bound to a file whose
+    binding is current» (SPEC-005 R10). Validated on 2026-11-09: two blind judges over 30 such
+    pairs confirmed 28, split on 2, and read the fact held in none."""
+    record = read_nowhere_in_second(consumer)
+    staging = run("--stage-release", consumer / "backend", consumer / "specs", record,
+                  consumer / "ws-release")
+    assert staging.returncode == 0, staging.stdout + staging.stderr
+    assert "staged a second reading of 1 pair(s) over 1 file(s)" in staging.stdout
+    manifest = json.loads((consumer / "ws-release" / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["release"] is True and manifest["files"][SECOND]["also"] == [NODE]
+    pack = Path(manifest["files"][SECOND]["pack"]).read_text(encoding="utf-8")
+    assert f"=== {NODE} (beside)" in pack and "read `nowhere`" not in pack.split("===")[1], \
+        "the second judge is told nothing of the first reading"
+    second_reading(consumer, SECOND, {"read": [], "nowhere": [NODE]})
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    files = {f["path"] for f in binding_of(consumer, NODE)["files"]}
+    assert files == {f"backend/{FILE}"}, "the pair read nowhere twice is gone, the holder bound"
+    assert f"{NODE}: backend/{SECOND} (second reading: release__" in bound.stdout
+    assert "a release is owed, and it is a person's decision" not in bound.stdout
+
+
+@pytest.mark.parametrize("answer", [
+    {"read": [{"node": NODE, "held_at": "the case opens at line 2",
+               "evidence": "export function bill() {}"}]},
+    {"read": [{"node": NODE, "held_at": "part of it: the refusal branch",
+               "evidence": "export function bill() {}"}]},
+])
+def test_a_second_reading_that_finds_the_fact_leaves_the_release_to_the_person(consumer, answer):
+    """«where the second judgment reads it held in whole or in part ... the release is a person's
+    to decide» (SPEC-005 R10)."""
+    record = read_nowhere_in_second(consumer)
+    second_reading(consumer, SECOND, answer)
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    assert f"backend/{SECOND}" in {f["path"] for f in binding_of(consumer, NODE)["files"]}
+    assert "a release is owed, and it is a person's decision" in bound.stdout
+
+
+def test_no_second_reading_leaves_the_release_to_the_person(consumer):
+    record = read_nowhere_in_second(consumer)
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    assert f"backend/{SECOND}" in {f["path"] for f in binding_of(consumer, NODE)["files"]}
+    assert "a release is owed, and it is a person's decision" in bound.stdout
+
+
+def test_a_node_no_current_file_holds_is_never_released_by_the_bind(consumer):
+    """«or no other file bound to the node is current, the release is a person's to decide»
+    (SPEC-005 R10): read nowhere on every file of the set, the node keeps no holder, so neither
+    the staging nor the bind releases anything, whatever the second reading says."""
+    with (consumer / "backend" / SECOND).open("a", encoding="utf-8") as drifted:
+        drifted.write("// drift too\n")
+    staged(consumer)
+    save_return(consumer, "round", FILE, {"read": [
+        {"node": NODE, "held_at": "nowhere. The file places; it opens no case",
+         "evidence": "export function place() {}"},
+        {"node": OTHER, "held_at": "the declaration, line 1",
+         "evidence": "export function place() {}"}]})
+    save_return(consumer, "round", SECOND, {"read": [{
+        "node": NODE, "held_at": "nowhere. The file bills; it opens no case",
+        "evidence": "export function bill() {}"}]})
+    _, record = folded(consumer)
+    staging = run("--stage-release", consumer / "backend", consumer / "specs", record,
+                  consumer / "ws-release")
+    assert staging.returncode == 0, staging.stdout + staging.stderr
+    assert "staged a second reading of 0 pair(s)" in staging.stdout
+    assert "no other file bound to the node is current" in staging.stdout
+    second_reading(consumer, SECOND, {"read": [], "nowhere": [NODE]})
+    second_reading(consumer, FILE, {"read": [], "nowhere": [NODE]})
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    assert {f["path"] for f in binding_of(consumer, NODE)["files"]} == {
+        f"backend/{FILE}", f"backend/{SECOND}"}
+
+
+def test_a_second_reading_is_saved_beside_the_record_and_a_later_fold_reads_past_it(consumer):
+    """`--save-return` into a release staging names the return `release__<file>`, the one name
+    the bind reads, and a fold of the same slug run again does not take it for a stray."""
+    record = read_nowhere_in_second(consumer)
+    run("--stage-release", consumer / "backend", consumer / "specs", record,
+        consumer / "ws-release")
+    transcript = consumer / "t.jsonl"
+    reply = yaml.safe_dump({"read": [], "nowhere": [NODE]}, sort_keys=False)
+    transcript.write_text(json.dumps({"type": "assistant", "message": {"content": [
+        {"type": "text", "text": reply}]}}) + "\n", encoding="utf-8")
+    saved = run("--save-return", consumer / "backend", consumer / "ws-release", SECOND, transcript)
+    assert saved.returncode == 0, saved.stdout + saved.stderr
+    assert (consumer / "siegard-reconcile" / "round.returns"
+            / ("release__" + SECOND.replace("/", "__") + ".yaml")).is_file()
+    again = run("--fold", consumer / "backend", consumer / "ws-round", premised(consumer, None),
+                consumer / "siegard-reconcile" / "round-again.md")
+    assert "which no staged file explains" not in again.stdout

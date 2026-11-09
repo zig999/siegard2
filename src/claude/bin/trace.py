@@ -34,6 +34,9 @@ What this script does, and nobody else does any of it:
     trace.py --release <target-root> <file> ... --node <node>     drop only those files from one
                                                                   node's binding, each a pair a
                                                                   reconciliation read `nowhere`
+    trace.py --stage-release <target-root> <spec-root> <record> <workspace>
+                                                                  stage the second reading a
+                                                                  release by the bind rests on
     trace.py --reconciliation <record>                            hold a reconciliation to its
                                                                   contract before it is bound
     trace.py --owed <target-root> [--all] [--plan <work-root>]    what the reconciliations found
@@ -483,6 +486,7 @@ Usage:  trace.py <target-root>
                  [--certify <certifications-file>] [--rewrite <rewrite-file>]
                  [--concurrency <n>]
         trace.py --save-return <target-root> <workspace-dir> <file> <transcript>
+        trace.py --stage-release <target-root> <spec-root> <record> <workspace>
         trace.py --fold <target-root> <workspace-dir> <premise-file> <record> [--run <run-dir>]
         trace.py --encodes --rank <target-root> [--all]
         trace.py --untraced <target-root> [--all]
@@ -606,10 +610,13 @@ RECORD_VERSION = "siegard-reconcile/11"
 # What a record says of a pair that stopped holding a fact other files of its node still hold. The
 # route is structural, not this text: an entry carrying both `encoded_at` and `observed_at` exists
 # only where nothing stands against the node, so each observed pair it does not encode is a release.
-RELEASE_OWED = ("the pair that stopped holding it is a release a person decides — `--release ... "
-                "--node` naming that pair alone — and never one a fold or a bind makes")
+RELEASE_OWED = ("the pair that stopped holding it is released by the bind where a second blind "
+                "reading also finds it nowhere and the node keeps a current file, and is otherwise "
+                "a release a person decides — `--release ... --node` naming that pair alone — and "
+                "never one a fold makes")
 TESTABLE = "testable"
 CERTIFY_PREFIX = "certify__"
+RELEASE_PREFIX = "release__"
 CERTIFICATION_CONTRACT = PLUGIN_ROOT / "schemas" / "certification-return.json"
 SURVEY_CONTRACT = PLUGIN_ROOT / "schemas" / "survey.json"
 INTENT_CONTRACT = PLUGIN_ROOT / "schemas" / "intent.json"
@@ -2124,6 +2131,156 @@ def release_receipt(owed: list[tuple[str, list[str], list[str]]], target: Path,
     lines.append("    until then each such pair stays as it stood, and `--owed` keeps the "
                  "record's reading of it")
     return "\n".join(lines)
+
+
+def current_holders(entry: dict, home: Path, leaving: str) -> list[str]:
+    """The files a node stays bound to, other than `leaving`, whose binding is current: the file
+    on disk still has the digest the binding stamped."""
+    return [held["path"] for held in entry.get("files") or []
+            if isinstance(held, dict) and held.get("path") != leaving
+            and (home / held["path"]).is_file()
+            and spec.digest_of(home / held["path"]) == held.get("digest")]
+
+
+def read_nowhere_again(answer: object, node_id: str) -> bool:
+    """Whether a second reading names the node under `nowhere` and holds it nowhere in `read`."""
+    if not isinstance(answer, dict) or node_id not in (answer.get("nowhere") or []):
+        return False
+    return not any(isinstance(e, dict) and e.get("node") == node_id
+                   and not str(e.get("held_at") or "").strip().lower().startswith("nowhere")
+                   for e in answer.get("read") or [])
+
+
+def releasable(record: Path, target: Path, declared: dict) -> tuple[dict[str, list[str]],
+                                                                    list[str]]:
+    """The pairs a reconciliation read `nowhere` that a second reading may release, by file, and
+    the ones it may not, each with why: «the file that stopped holding it is released by the bind
+    where a second judgment, blind to the first, also reads the fact nowhere in it and the node
+    stays bound to a file whose binding is current» (SPEC-005 R10)."""
+    home = home_of(target)
+    offset = offset_of(target, home)
+    entries = {e.get("node"): e for e in declared.get("bindings") or []}
+    staged: dict[str, list[str]] = {}
+    kept: list[str] = []
+    for node_id, holders, lost in releases_owed(record):
+        entry = entries.get(node_id)
+        if entry is None:
+            continue
+        bound = {held["path"] for held in entry.get("files") or [] if isinstance(held, dict)}
+        for given in lost:
+            stored = given if offset == "." else (PurePosixPath(offset) / given).as_posix()
+            if stored not in bound:
+                continue
+            # A holder the record clears is stamped by the bind that follows, so it counts as
+            # current here; the bind checks again once it has stamped.
+            if holders or current_holders(entry, home, stored):
+                staged.setdefault(given, []).append(node_id)
+            else:
+                kept.append(f"{node_id}: {given} — no other file bound to the node is current, so "
+                            f"its release stays a person's")
+    return staged, kept
+
+
+def confirmed_releases(record: Path, target: Path, declared: dict) -> list[tuple[str, str, str]]:
+    """Drop from `declared` every pair the record read `nowhere` that a second reading, saved
+    beside the record's returns, also read `nowhere`, where the node stays bound to a current
+    file once this bind has stamped it. Anything less leaves the pair as it stood, its release a
+    person's: «where the second judgment reads it held in whole or in part, or no other file
+    bound to the node is current, the release is a person's to decide, never one a fold or a
+    bind makes» (SPEC-005 R10)."""
+    home = home_of(target)
+    offset = offset_of(target, home)
+    returns_dir = record.parent / f"{record.stem}.returns"
+    entries = {e.get("node"): e for e in declared.get("bindings") or []}
+    done: list[tuple[str, str, str]] = []
+    for node_id, _, lost in releases_owed(record):
+        entry = entries.get(node_id)
+        if entry is None:
+            continue
+        for given in lost:
+            answer_path = returns_dir / (RELEASE_PREFIX + return_name(given))
+            if not answer_path.is_file():
+                continue
+            try:
+                answer = load_return(answer_path.read_text(encoding="utf-8"))
+            except yaml.YAMLError:
+                continue
+            stored = given if offset == "." else (PurePosixPath(offset) / given).as_posix()
+            bound = {held["path"] for held in entry.get("files") or [] if isinstance(held, dict)}
+            if (stored not in bound or not read_nowhere_again(answer, node_id)
+                    or not current_holders(entry, home, stored)):
+                continue
+            entry["files"] = [held for held in entry["files"] if held.get("path") != stored]
+            done.append((node_id, stored, answer_path.name))
+    return done
+
+
+def stage_release(target: Path, spec_root: Path, record: Path, workspace: Path) -> int:
+    """Stage the second reading a release by the bind rests on: one pack per file holding the
+    pairs the record read `nowhere` whose node stays bound to a current file, each node marked
+    `(beside)` so the judge names it under `nowhere` or reads it held. The judge is told nothing
+    of the first reading. Its return is saved with `--save-return` into this workspace and lands
+    beside the record's returns as `release__<file>.yaml`, which `--bind-record` reads."""
+    if not target.is_dir() or not spec_root.is_dir():
+        print(f"cannot run: {target} and {spec_root} must both be directories", file=sys.stderr)
+        return CANNOT_RUN
+    if workspace.exists() and any(workspace.iterdir()):
+        print(f"cannot run: {workspace} is not empty; a staging writes into a fresh workspace",
+              file=sys.stderr)
+        return CANNOT_RUN
+    if as_reconciliation(record) is None:
+        print(f"cannot run: {record} is no reconciliation record", file=sys.stderr)
+        return CANNOT_RUN
+    declared = load(target)
+    if declared is None:
+        print(f"cannot run: {trace_path(target)} does not exist; nothing is bound to release",
+              file=sys.stderr)
+        return CANNOT_RUN
+    returns_dir = record.parent / f"{record.stem}.returns"
+    if not returns_dir.is_dir():
+        print(f"cannot run: {returns_dir} does not exist; the second reading is saved beside the "
+              f"first", file=sys.stderr)
+        return CANNOT_RUN
+    nodes, status = sound_specification(spec_root)
+    if nodes is None:
+        return status
+    staged, kept = releasable(record, target, declared)
+    staged = {given: [n for n in found if n in nodes] for given, found in staged.items()}
+    staged = {given: found for given, found in staged.items() if found}
+    packs_dir = workspace / "packs"
+    packs_dir.mkdir(parents=True, exist_ok=True)
+    files: dict[str, dict] = {}
+    for given, found in sorted(staged.items()):
+        pack = packs_dir / (given.replace("/", "__") + ".md")
+        lines = [f"# Node pack for {given} — derived by trace.py --stage-release from the "
+                 f"specification; a reading copy, never a home. Doubt a line, open the source it "
+                 f"names.",
+                 f"# resolved, nothing here needs searching for — "
+                 f"file under judgment: {(target / given).resolve()}",
+                 f"# named in a finding's `file` as: {given} — copy this spelling; never "
+                 f"compose one",
+                 f"#   return contract: {RETURN_CONTRACT}",
+                 "#   (beside): read beside this file's bindings — one the file does not hold is "
+                 "named under `nowhere`, by identity alone"]
+        for node_id in found:
+            source = spec_root / f"{node_id}.md"
+            lines += [f"\n=== {node_id} (beside)", f"source: {source}",
+                      f"digest: {nodes[node_id]['digest']}", "---",
+                      source.read_text(encoding="utf-8").rstrip("\n")]
+        pack.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        files[given] = {"nodes": [], "also": found, "pack": str(pack)}
+    (workspace / "manifest.json").write_text(json.dumps(
+        {"slug": record.stem, "release": True, "record": str(record), "files": files},
+        indent=2) + "\n", encoding="utf-8")
+    pairs = sum(len(found) for found in staged.values())
+    print(f"staged a second reading of {pairs} pair(s) over {len(staged)} file(s) — one judge per "
+          f"file, its pack below, its return saved with --save-return {target} {workspace} "
+          f"<file> <transcript>:")
+    for given, entry in sorted(files.items()):
+        print(f"  {given}: {entry['pack']}")
+    for line in kept:
+        print(f"  not staged: {line}")
+    return 0
 
 
 def left_owed(held: list[str], record: Path) -> str:
@@ -3775,7 +3932,8 @@ def expected_returns(manifest: dict) -> dict[str, str]:
     waves name it by — the staged file's path, or `certify__<node>` for a certification. The one
     definition the save and the fold both read, so what one reports pending is what the other
     refuses to fold without."""
-    expected = {return_name(given): given for given in manifest["files"]}
+    prefix = RELEASE_PREFIX if manifest.get("release") else ""
+    expected = {prefix + return_name(given): given for given in manifest["files"]}
     for entry in manifest.get("certify") or []:
         expected[certify_return_name(entry["node"])] = f"{CERTIFY_PREFIX}{entry['node']}"
     return expected
@@ -4795,7 +4953,8 @@ def save_return_from(target: Path, workspace: Path, given: str, transcript: Path
     node_id = given[len(CERTIFY_PREFIX):] if given.startswith(CERTIFY_PREFIX) else given
     ask = None
     if given in manifest["files"]:
-        name, subagent = return_name(given), given
+        name, subagent = ((RELEASE_PREFIX if manifest.get("release") else "") + return_name(given),
+                          given)
     elif node_id in certified:
         name, subagent, ask = (certify_return_name(node_id), f"{CERTIFY_PREFIX}{node_id}",
                                  certified[node_id])
@@ -5093,6 +5252,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     # evidence of the same kind as the returns and outlive the workspace the same way.
     stray = sorted(p.name for p in returns_dir.iterdir()
                    if p.name not in expected and p.name not in certify_expected
+                   and not p.name.startswith(RELEASE_PREFIX)
                    and not (p.name == RUN_DIR and p.is_dir()))
     if stray:
         print(f"cannot fold: {returns_dir} holds {', '.join(stray)}, which no staged file "
@@ -6095,6 +6255,7 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
         count, dropped = fold(declared, node_id, nodes[node_id]["digest"], traced, replace,
                               certification)
         held.append((node_id, count, dropped, certification if fresh else None, let_go))
+    confirmed = confirmed_releases(record, target, declared)
     if write_trace(target, declared) != 0:
         return 1
     for node_id, count, dropped, fresh_certification, let_go in held:
@@ -6119,6 +6280,12 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
     owed = withheld(record)
     if owed:
         print(left_owed(owed, record))
+    if confirmed:
+        print(f"  released {len(confirmed)} pair(s) read `nowhere` twice — by {record.name} and by a "
+              f"second reading blind to it — each node still bound to a file whose binding is "
+              f"current:")
+        for node_id, stored, answer in confirmed:
+            print(f"    {node_id}: {stored} (second reading: {answer})")
     releases = release_receipt(releases_owed(record), target, declared)
     if releases:
         print(releases)
@@ -6510,6 +6677,7 @@ def main() -> int:
     do_stage = "--stage" in args
     do_fold = "--fold" in args
     do_save_return = "--save-return" in args
+    do_stage_release = "--stage-release" in args
     replace = "--replace" in args
     do_rank = "--rank" in args
     do_changed = "--changed" in args
@@ -6625,7 +6793,7 @@ def main() -> int:
     args = [a for a in args
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
                          "--release", "--carry", "--reconciliation", "--owed", "--encodes", "--stage",
-                         "--fold", "--save-return", "--rank", "--changed", "--audit", "--review",
+                         "--fold", "--save-return", "--stage-release", "--rank", "--changed", "--audit", "--review",
                          "--convergence", "--untraced", "--adopt", "--ledger", "--survey",
                          "--area", "--reconcile-set")]
     if reconcile_set and not check:
@@ -6642,6 +6810,7 @@ def main() -> int:
                                       ("--stage", do_stage),
                                       ("--fold", do_fold),
                                       ("--save-return", do_save_return),
+                                      ("--stage-release", do_stage_release),
                                       ("--convergence", do_convergence),
                                       ("--untraced", do_untraced),
                                       ("--ledger", do_ledger),
@@ -6865,6 +7034,14 @@ def main() -> int:
         return stage(Path(target), Path(spec_root), slug, Path(workspace), files, do_audit,
                      do_review, [] if ordinary else also, certify, demonstrated, do_adopt,
                      outside, ledger_given, concurrency, rewrite, also if ordinary else [])
+
+    if do_stage_release:
+        if len(args) != 4 or any(a.startswith("--") for a in args):
+            print("cannot run: expected --stage-release <target-root> <spec-root> <record> "
+                  "<workspace>", file=sys.stderr)
+            return CANNOT_RUN
+        target, spec_root, record, workspace = args
+        return stage_release(Path(target), Path(spec_root), Path(record), Path(workspace))
 
     if do_save_return:
         if len(args) != 4 or any(a.startswith("--") for a in args):
