@@ -30,7 +30,7 @@ saying what it is:
 write:
 
 - `implement-task` — the project file's roots; the plan's `closure.md`; `plan.py --check`; the
-  tree under the delivery root, the target source root and the task's file; `deliver.py
+  tree under the delivery root, the target source root, the task's file and the trace; `deliver.py
   --outstanding`, and in it the task's own line — not in the plan, waiting on a dependency or a
   re-bind, a standing BLOCKING note — or, where no task is named, the deliverable set holding
   exactly one; and the standard for the target, held by `deliver.py --standard` with `--against`
@@ -38,7 +38,7 @@ write:
 - `plan-work` — the roots; `closure.md`; `spec.py`; the tree under the work and specification
   roots; the standard for the target, held by `deliver.py --standard`.
 - `review-change` — the roots; `plan.py --check`; `deliver.py --check`; the tree under the
-  delivery root; each named task holding an implementation record, or the delivery holding at
+  delivery root and the trace; each named task holding an implementation record, or the delivery holding at
   least one where none is named; the review's name free under `review/`, `run/` and
   `siegard-reconcile/`; the standard for the target, held by `deliver.py --standard`.
 - `deliver-scope` — the roots, the telemetry root among them; the specification root existing
@@ -376,6 +376,9 @@ def door_implement_task(fields: dict, target: str, slug: str, args: dict, answer
             task = None
 
     paths = [delivery, source]
+    top = toplevel(source) if source.is_dir() else None
+    if top is not None:
+        paths.append(Path(top) / TRACE_FILE)
     if task:
         task_file = work / f"{task}.md"
         if not task_file.is_file():
@@ -444,7 +447,8 @@ def door_review_change(fields: dict, target: str, slug: str, args: dict, answer:
     code, out = script("deliver.py", "--check", str(delivery), str(work), str(source), *live)
     run_check(answer, " ".join(["deliver.py --check", str(delivery), str(work), str(source),
                                 *live]), code, out)
-    check_tree([delivery], answer)
+    top = toplevel(source) if source.is_dir() else None
+    check_tree([delivery, *([Path(top) / TRACE_FILE] if top is not None else [])], answer)
 
     records = sorted(p.relative_to(delivery / "implementation").with_suffix("").as_posix()
                      for p in (delivery / "implementation").rglob("*.md")) \

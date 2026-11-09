@@ -25,10 +25,10 @@ is reached, before acting on it.
       prints nothing; note HEAD
 - [ ] Contract: read schemas/plan.json
 - [ ] 1 Plan: skipped where the ask names a reach; else /plan-work
-- [ ] 2 Commit the plan
-- [ ] 3 Deliver: --outstanding, then /implement-task, per task; commit each; a stop:
+- [ ] 2 The plan is committed by /plan-work; log it
+- [ ] 3 Deliver: --outstanding, then /implement-task, per task; it commits; a stop:
       references/doors.md, references/stops.md; under a goal: references/goal.md
-- [ ] 4 Review: /review-change under the name the rule gives; commit
+- [ ] 4 Review: /review-change under the name the rule gives; it commits
 - [ ] 5 Prove what the review left testable, once: references/prove.md
 - [ ] 6 Measure: telemetry.py --probe; commit; after a stop too
 - [ ] Log: a line per step in <delivery_root>/<slug>/orchestration.md; the stop line:
@@ -147,8 +147,10 @@ Two rules bind every step:
   «a step declared after a record was written is owed by the records written after it»
   (SPEC-007 R3). They route nothing here.
 
-Every commit this skill makes names its paths; none sweeps the tree. Each message is
-`deliver-scope <slug>: <step>`, as each step below names it.
+Each skill this run invokes commits what it wrote itself, under its own name. Every commit this
+skill makes names its paths — its log, the measure, a stopped delivery's runs — and none sweeps
+the tree. Each message is `deliver-scope <slug>: <step>`; the log is committed alone, as
+`deliver-scope <slug>: log`, before each invocation, so the next skill finds its roots clean.
 
 ### 1. Plan
 
@@ -159,18 +161,17 @@ anything is left to plan against. A task `/plan-work` reports with a
 `BLOCKING, from the specification —` note is not yet a stop: step 3 delivers the deliverable set,
 and stops where the set is exhausted while such a note still stands.
 
-### 2. Commit the plan
+### 2. The plan is committed
 
-Commit the work root and the specification root in one commit, `deliver-scope <slug>: plan` — the
-decided-fact route writes into both.
+`/plan-work` commits the work root and the specification root itself, as `plan-work <slug>:
+plan`; append the step's line to the log.
 
 ### 3. Deliver, one task per invocation
 
 Run `deliver.py --outstanding`. While the deliverable set is non-empty, take `/implement-task`'s
 invocation from the previous report's handoff, fill the one open slot with one task from the set,
-and invoke. After each delivery that wrote both its records — the implementation and the proof —
-commit the delivery root, the target source root and the trace file in one commit,
-`deliver-scope <slug>: deliver <task>`, and append the step's line to the log.
+and invoke. A delivery that wrote both its records — the implementation and the proof — commits
+them itself, as `implement-task <slug>: deliver <task>`; append the step's line to the log.
 
 A delivery that ends in a stop instead of records ends the loop, unless `references/doors.md` or,
 under a goal, `references/goal.md` answers it. Read `references/stops.md`: relay that report's own
@@ -198,8 +199,7 @@ by the counts that review's own report opens with, and never acted on here: whic
 deserves, or whether it deserves one, is the decision that skill does not make, and neither do you.
 Repairing anything a finding names is a new ask.
 
-Commit the delivery root, the trace file and `siegard-reconcile/`, where the review's conformance
-pass writes, in one commit, `deliver-scope <slug>: review`.
+`/review-change` commits what it wrote itself, as `review-change <slug>: review <name>`.
 
 ### 5. Close what the review left testable, once
 

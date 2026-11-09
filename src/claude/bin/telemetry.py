@@ -217,15 +217,17 @@ OUTCOME_STATES = {
 }
 CORRECTIVE, FRAMEWORK, HAND_EDIT = "corrective", "framework", "hand-edit"
 ROUTES = {
-    CORRECTIVE: "a /deliver-scope commit whose slug names a correction — corrective, hotfix, fix, "
+    CORRECTIVE: "a framework skill's commit whose slug names a correction — corrective, hotfix, fix, "
                 "abandon or revert — read as behavior contradicting the decision and a person "
                 "routing the correction; the reading rests on the slug's words",
-    FRAMEWORK: "a /deliver-scope commit whose slug names no correction — the framework "
+    FRAMEWORK: "a framework skill's commit whose slug names no correction — the framework "
                "re-authoring the field",
     HAND_EDIT: "a commit no framework skill wrote — a person changed the artifact directly",
 }
-ROUTE_PREFIX = re.compile(r"^deliver-scope [^\s:]+:")
-GOAL_ANALYSE = re.compile(r"^deliver-scope [^\s:]+: analyse\b")
+ROUTE_SKILLS = ("deliver-scope", "adopt-scope", "analyse", "plan-work", "implement-task",
+               "review-change", "reconcile")
+ROUTE_PREFIX = re.compile(r"^(?:" + "|".join(ROUTE_SKILLS) + r") [^\s:]+(?::|$)")
+GOAL_ANALYSE = re.compile(r"^(?:deliver-scope [^\s:]+: analyse|analyse [^\s:]+: specify)\b")
 CORRECTION_WORDS = re.compile(r"corrective|hotfix|\bfix\b|abandon|revert", re.I)
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 TELEMETRY_CONTRACT = PLUGIN_ROOT / "schemas" / "telemetry.json"
@@ -1415,10 +1417,13 @@ def apart_from_retirements(entries: list[dict]) -> tuple[list[dict], list[dict]]
 
 def route_of(subject: str) -> str:
     """Which route a commit that changed a decided field came through, read off the one subject a
-    shipped skill writes: `/deliver-scope` is the only entry point that commits, every commit it
-    makes opens `deliver-scope <slug>:`, and a subject with no such opening is a person's.
+    shipped skill writes: «A route skill — `/analyse`, `/plan-work`, `/implement-task`,
+    `/review-change`, `/reconcile` — commits what its own invocation wrote once its validator
+    passes» (SPEC-010 R7), and the orchestrating entry points commit under their own names, so a
+    subject opening with one of those names and a slug is the framework's and any other a
+    person's.
     Authorship separates nothing here — every commit a skill makes is made under the person's
-    identity. Whether a deliver-scope commit is corrective rests on its slug's words, which the
+    identity. Whether a framework commit is corrective rests on its slug's words, which the
     person's ask chose: a heuristic, and `route_meanings` says so beside every count."""
     if not ROUTE_PREFIX.match(subject or ""):
         return HAND_EDIT
@@ -1582,8 +1587,7 @@ def outcomes_of(added: list[dict]) -> dict:
 
     The decisions a goal's own `/analyse` landed are tallied apart, by the same states — «Under a
     goal whose condition asks to specify a prose objective, the orchestrating entry point invokes
-    `/analyse` once, before the plan, over the objective as the person armed it, and commits the
-    specification root apart.» (SPEC-008 R10) — because their revision rate beside the rest is
+    `/analyse` once, before the plan, over the objective as the person armed it» (SPEC-008 R10) — because their revision rate beside the rest is
     the reading that keeps that leave or narrows it."""
     states = {state: 0 for state in OUTCOME_STATES}
     routes = {route: 0 for route in ROUTES}

@@ -36,7 +36,7 @@ its step is reached, before acting on it.
 - [ ] 4 Compose: review/<review-name>.md, frontmatter by yaml.safe_dump; deliver.py --node:
       references/compose.md
 - [ ] 5 Validate: deliver.py --review; its output verbatim
-- [ ] 6 Report: handoff.py --prepare; read references/report.md; deliver.py --findings;
+- [ ] 6 Commit; report: handoff.py --prepare; references/report.md; deliver.py --findings;
       --save-report, --render; stop
 ```
 
@@ -132,9 +132,10 @@ a task that changed since is never refused for it: «a task some review names an
 it stands is owed a review, and a review written before the task or its records changed is never
 refused for it» (SPEC-004 R22). The check above is no stop on the review that answers the change.
 
-Before any write, `git status --porcelain -- <delivery-root>` must print nothing; a pending change
-elsewhere is somebody else's work. A dirty delivery root is reported, and what to do with it is
-the person's call. The target source root, which holds the change, is not held to this.
+Before any write, `git status --porcelain -- <delivery-root>` and over the trace file must print
+nothing; a pending change elsewhere is somebody else's work. A dirty delivery root is reported, and
+what to do with it is the person's call. The target source root, which holds the change, is not held
+to this.
 
 ## Read the contract
 
@@ -281,6 +282,9 @@ better, and a pass that did not run is never recorded as having run.
 
 ### 6. Report, and stop
 
+Commit the delivery root, the trace and `siegard-reconcile/<review-name>.*` as the plugin's rules
+state: `review-change <slug>: review <review-name>`.
+
 «The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill review-change --project
 <project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>`, then read
@@ -296,8 +300,8 @@ by rewriting the field it names; a state it says has moved, by running `--prepar
 carrying its `state` and `state_from` whole.
 
 Then stop. Do not compute a verdict, rank the findings, decide what blocks, open work from them,
-or fix any of them. A disagreement a proof record holds stays a disagreement. `git diff` over the
-delivery root is this review's own review, and what the findings mean is the person's.
+or fix any of them. A disagreement a proof record holds stays a disagreement. The commit is this
+review's review; what the findings mean is the person's.
 
 ## What you never do
 
@@ -314,4 +318,4 @@ delivery root is this review's own review, and what the findings mean is the per
 - Write into the work root, the specification root, or the target source root. The one write
   outside the delivery root is the fold and bind — `siegard-reconcile/<review-name>.md`, its
   returns, and `siegard-trace.json`, at the target's git toplevel.
-- Commit, stash, or otherwise change the consumer's git state.
+- Commit past what you wrote, or stash, branch, push or rewrite.

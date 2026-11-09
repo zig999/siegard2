@@ -26,7 +26,7 @@ read `${CLAUDE_PLUGIN_ROOT}/skills/analyse/SKILL.md` again before acting on it.
 - [ ] 4 Validate: spec.py clean; spec.py --project; spec.py --shape --of; read references/reading-shape.md
 - [ ] 4b Ledger (material given as a file): read references/ledger.md; trace.py --ledger sound
 - [ ] 5 Cross-check: the pairs --shape names; log a decided conflict; rerun spec.py
-- [ ] 6 Report: handoff.py --prepare, --save-report, --render; then stop
+- [ ] 6 Commit root and ledger; report: handoff.py --prepare, --save-report, --render; stop
 ```
 
 ## Required inputs
@@ -79,8 +79,8 @@ and there is no subagent between you and the material.
 
 ## Before anything: the tree
 
-The review is `git diff` over the specification root, and a diff only says what this invocation
-did when the root starts clean. Before any write, `git status --porcelain -- <specification-root>`
+The commit at step 6 takes the specification root, and it holds only what you did when
+the root starts clean. Before any write, `git status --porcelain -- <specification-root>`
 must print nothing. Output is a stop: report what is pending and go no further — committing,
 discarding, or overriding is the person's decision, never the analysis's. A root not under git
 control is the same stop: without git there is no review.
@@ -424,6 +424,8 @@ Recording a decision moves frontmatter: rerun the validation of step 4 before re
 
 ### 6. Report, and stop
 
+Commit the specification root and the ledger by path, as the plugin's rules state, as
+`analyse <the invocation's slug, else the material's stem>: <specify under a goal, else analyse>`.
 «The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Hand off
 in four steps:
 
@@ -487,12 +489,11 @@ Report, in this order, in the file:
   source alone» (SPEC-005 R2), so where the person also holds documentation, the increment it
   feeds is this skill again, after the adoption — and so is intent material read from the tests.
 
-Then stop. `git diff` over the specification root and the ledger is the review, and it belongs
-to a person; whoever commits the specification commits the ledger in the same commit, by path.
+Then stop. The commit is the review, and it belongs to a person.
 
 ## What you never do
 
 - Record a status, a maturity level or an approval state — no class admits one, and nothing
   else says how "done" a node is.
-- Commit, stash, or otherwise change the consumer's git state — a dirty root is reported, and
-  what to do with it is the person's call.
+- Commit past what you wrote, or stash, branch, push or rewrite — a dirty root is
+  reported, and what to do with it is the person's call.

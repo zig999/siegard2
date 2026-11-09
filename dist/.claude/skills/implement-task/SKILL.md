@@ -18,7 +18,7 @@ its step is reached, before acting on it.
 - [ ] Inputs: task, project root, target, slug, else one stop naming all; standard: references/standard.md
 - [ ] Root: bin/project.py <project-root>, or --here where none is named
 - [ ] Plan: plan.py --check clean, else stop
-- [ ] Tree: git status --porcelain over delivery root, target, task file prints nothing, else stop
+- [ ] Tree: git status --porcelain over delivery root, target, task file, trace: nothing, else stop
 - [ ] Contract: deliver.py --contract implementation, proof, finding
 - [ ] 1 Situate: deliver.py --outstanding; BLOCKING note: references/blocking.md; re-delivery or
       stands: references/redelivery.md; deliver.py --standard, keep its three phase lines
@@ -30,7 +30,7 @@ its step is reached, before acting on it.
 - [ ] 5 Prove: spawn siegard:test-author with the block references/delegation.md holds
 - [ ] 6 Suite: run.py --run <epic>-<slug>-suite; red: references/red-suite.md; deliver.py --write-proof
 - [ ] 7 Validate: deliver.py --unrecorded, then deliver.py; read references/finish.md
-- [ ] 8 Bind: trace.py --bind-record; keep any stale-bindings receipt
+- [ ] 8 Bind: trace.py --bind-record; keep any stale-bindings receipt; commit: finish.md
 - [ ] 9 Report: handoff.py --prepare; read references/report.md; --save-report, --render; stop
 ```
 
@@ -105,10 +105,10 @@ Before any write, this must print nothing:
 git status --porcelain -- <delivery-root> <target-source-root> <work-root>/task/<epic>/<slug>.md
 ```
 
-The review is `git diff`, so these paths start clean: the roots you write plus the one task file
-you read and pin. A pending change elsewhere in the work root is somebody else's work in progress
-and does not stop you. Output is a stop: report what is pending. Committing, discarding or
-overriding it is the person's decision. A root not under git control is the same stop.
+and over the trace file. The commit at the end takes the roots you write, so they start clean, with
+the one task file you read and pin. A pending change elsewhere in the work root is somebody else's
+work in progress and does not stop you. Output is a stop: report what is pending. Committing,
+discarding or overriding it is the person's decision. A root not under git control is the same stop.
 
 ## Read the contract
 
@@ -316,8 +316,7 @@ its entry point answered: a `refuses` is said excluded beside its `refused:` fac
 recommended. A refusal is answered by rewriting the field it names. A state it says has moved is
 answered by running `--prepare` again and carrying its `state` and `state_from` whole.
 
-Then stop. `git diff` over the target source root and the delivery root is the review, and it
-belongs to a person.
+Then stop. The commit is the review, and it belongs to a person.
 
 ## What you never do
 
@@ -330,8 +329,8 @@ belongs to a person.
   registry's string, run through `bin/run.py`.
 - Write the tests in the context that wrote the source, except on the inline fallback, declared in
   the report.
-- Commit, stash, branch, or otherwise change the consumer's git state. A dirty tree is reported,
-  and what to do with it is the person's call.
+- Commit past what you wrote, or stash, branch, push or rewrite. A dirty tree is
+  reported, and what to do with it is the person's call.
 - Record which rules of the standard were in scope: the pin and the files written already answer
   it.
 - Treat a disclosed departure as leave to depart. Disclosure settles nothing: the review holds the

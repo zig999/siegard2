@@ -97,8 +97,8 @@ PLAN_AGENTS = ("backlog-decomposer", "codebase-surveyor", "execution-contract-bi
                "unstated-fact-decider")
 PLAN_BASELINE = REPO / "tests/fixtures/benchmarks/plan-work/text-metrics-5.64.0.json"
 PLAN_PINS = {
-    "chars": 75_718,
-    "skill_chars": 19_500,
+    "chars": 76_094,
+    "skill_chars": 19_872,
     "sentence_words_median": 17,
     "sentence_words_p90": 35,
     "sentences_over_60_words": 3,
@@ -150,8 +150,8 @@ REVIEW_AGENTS = ("coverage-auditor", "specification-conformance-reviewer",
                  "standard-conformance-reviewer")
 REVIEW_BASELINE = REPO / "tests/fixtures/benchmarks/review-change/text-metrics-5.65.0.json"
 REVIEW_PINS = {
-    "chars": 90_625,
-    "skill_chars": 19_850,
+    "chars": 90_775,
+    "skill_chars": 19_987,
     "sentence_words_median": 19,
     "sentence_words_p90": 37,
     "sentences_over_60_words": 1,
@@ -205,8 +205,8 @@ def test_the_review_change_skill_names_its_trigger_first():
 RECONCILE_AGENTS = ("coverage-auditor", "specification-conformance-reviewer")
 RECONCILE_BASELINE = REPO / "tests/fixtures/benchmarks/reconcile/text-metrics-5.66.0.json"
 RECONCILE_PINS = {
-    "chars": 82_610,
-    "skill_chars": 17_127,
+    "chars": 82_690,
+    "skill_chars": 17_177,
     "sentence_words_median": 19,
     "sentence_words_p90": 38,
     "sentences_over_60_words": 1,
@@ -281,7 +281,7 @@ DELIVER_AGENTS = ("door-decider",)
 DELIVER_BASELINE = REPO / "tests/fixtures/benchmarks/deliver-scope/text-metrics-5.67.0.json"
 DELIVER_PINS = {
     "chars": 34_360,
-    "skill_chars": 16_700,
+    "skill_chars": 16_825,
     "sentence_words_median": 19,
     "sentence_words_p90": 35,
     "sentences_over_60_words": 3,
@@ -358,7 +358,7 @@ def test_the_deliver_scope_terms_are_schemas_terms_json_s_and_each_is_used_outsi
 # in no other measure.
 IMPLEMENT_B_BASELINE = REPO / "tests/fixtures/benchmarks/implement-task/text-metrics-5.68.0.json"
 IMPLEMENT_B_PINS = {
-    "chars": 102_331,
+    "chars": 102_586,
     "skill_chars": 19_900,
     "sentence_words_median": 18,
     "sentence_words_p90": 35,

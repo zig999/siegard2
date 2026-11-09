@@ -30,7 +30,8 @@ step is reached, before acting on it.
 - [ ] 4 Implement against: spawn one siegard:execution-contract-binder per skeleton, together;
       unstated notes: references/unstated.md; every other note: references/notes.md; plan.py --node
 - [ ] 5 Validate: plan.py --check, then plan.py (--standard --against where named)
-- [ ] 6 Report: handoff.py --prepare; read references/report.md; --save-report, --render; stop
+- [ ] 6 Commit the roots this ran over as plan-work <slug>: <mode>; report: handoff.py --prepare;
+      read references/report.md; --save-report, --render; stop
 ```
 
 ## Terms
@@ -108,8 +109,8 @@ plan is live, by convention.
 ## Before anything: the tree
 
 Before any write, `git status --porcelain -- <work-root> <specification-root>` must print nothing;
-a closing invocation names the work root alone. The review is `git diff` over those roots, and a
-diff shows only this invocation when they start clean. Output is a stop: report what is pending.
+a closing invocation names the work root alone. The commit at step 6 takes those roots, and it
+holds only your work when they start clean. Output is a stop: report what is pending.
 Committing, discarding or overriding it is the person's decision. A root not under git control is
 the same stop.
 
@@ -304,6 +305,11 @@ is settled only through `references/unstated.md`, never filled in to make a chec
 
 ### 6. Report, and stop
 
+Once `plan.py` derived the plan, commit those roots as the plugin's rules state, one commit,
+`plan-work <slug>: <mode>` — `plan`, `close` or the increment's name — «A route skill — `/analyse`,
+`/plan-work`, `/implement-task`, `/review-change`, `/reconcile` — commits what its own invocation
+wrote once its validator passes» (SPEC-010 R7).
+
 «The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill plan-work --project
 <project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>`. Write the
@@ -316,12 +322,12 @@ what needs the person — «A handoff opens with what needs the person, and expl
 rewriting the field it names; a state it says has moved, by running `--prepare` again and carrying
 its `state` and `state_from` whole.
 
-Then stop. `git diff` over the work root is the review, and it belongs to a person.
+Then stop. The commit is the review, and it belongs to a person.
 
 ## What you never do
 
 - Record a status, an estimate, a priority or an execution order — the contract has no such field,
   and prose does not hold one either.
-- Commit, stash, or otherwise change the consumer's git state. A dirty root is reported, and what to
-  do with it is the person's call.
+- Commit past what you wrote, or stash, branch, push or rewrite. A dirty root is
+  reported, and what to do with it is the person's call.
 - Remove a closure — a closed plan is history, and reopening it is the person's git act.

@@ -69,6 +69,18 @@ project, and a ready command saved under `/tmp` was gone when it was needed.
 
 - **R6** — A skill runs over the project root its invocation names. Where the invocation names none, the project root is the git toplevel of the session's working directory, as `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`. An unnamed root that holds none is a stop, and `siegard.json` is never created under a root the invocation did not name.
 
+### Who commits what a skill wrote
+
+- **R7** — A route skill — `/analyse`, `/plan-work`, `/implement-task`, `/review-change`, `/reconcile` — commits what its own invocation wrote once its validator passes: one commit, pathspec-scoped to the roots it held clean before its first write, under the message `<skill> <slug>: <step>`, and never a push, a branch, a stash or a rewrite. A root it would commit that holds a change it did not make is a stop, and the commit is never widened to take it. Invoked by an orchestrating entry point, it commits the same way, and the orchestrator commits its own log, measure and captured runs. A session commits anything else only under the person's own words.
+
+  Grounds, read on 2026-11-09 from the transcripts of five sales consumers between 2026-11-02 and
+  2026-11-09: 92 of the person's messages authorized a commit — 48 with nothing beside the commit,
+  41 with the next step, 3 with a push — almost all after a route skill run alone (`/plan-work`
+  21, `/implement-task` 18, `/analyse` 15, `/review-change` 11) and 3 inside `/deliver-scope`,
+  which commits already. The classification is a word match, so a share of the 48 carried a
+  question beside the commit. The skills' own clean-tree checks are what make every pending
+  change under their roots, at their last step, the invocation's own.
+
 ## Validation required before acceptance
 
 1. Tests hold `ask.py` to R1 and R2 over a fixture project: an ask recorded byte for byte and its
@@ -88,6 +100,11 @@ project, and a ready command saved under `/tmp` was gone when it was needed.
    from a tree whose toplevel holds no `siegard.json`, it refuses and prints no field; combined
    with a named root, it refuses. A test holds every shipped skill that lists the project root as
    a required input to quote R6 in that input.
+5. For R7: each route skill states the commit, its roots and its message at its last step, and
+   none of them states that it never commits; the session rules state the mechanism once; and
+   telemetry reads a commit whose subject opens with a route skill's name and a slug as the
+   framework's, never as a hand edit — `tests/test_skill_contract.py`, `tests/test_rules_health.py`
+   and `tests/test_telemetry.py` prove each.
 
 ## Readings
 

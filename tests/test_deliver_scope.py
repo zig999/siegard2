@@ -113,7 +113,7 @@ def test_the_one_analyse_a_goal_may_ask_for_is_bounded():
     assert "references/goal.md" in text
     section = flat("src/claude/skills/deliver-scope/references/goal.md")
     assert "`stop: no-fact —` or `stop: no-change —` is nothing to specify" in section
-    assert "`deliver-scope <slug>: analyse`" in section
+    assert "`analyse <slug>: specify`" in section, "the analysis commits itself (SPEC-010 R7)"
     analyse = flat("src/claude/skills/analyse/SKILL.md")
     assert "`stop: no-fact — <what the material would have to state>`" in analyse
 
@@ -144,7 +144,7 @@ def test_a_record_the_writer_refused_is_reconciled_and_delivered_again_once():
     next delivery starts from a clean tree, and a second refusal ends the run as the person's."""
     assert "**A record carrying `stands` the writer refused**" in DOORS
     assert "from the writer's `door:` line" in DOORS
-    assert "`deliver-scope <slug>: reconcile <task>`" in DOORS
+    assert "`deliver-scope <slug>: runs <task>`" in DOORS, "the stopped delivery's runs"
     assert "each `passed`" in DOORS
     assert "A second refusal ends the run" in DOORS
     stops = flat("src/claude/skills/deliver-scope/references/stops.md")
@@ -157,11 +157,22 @@ def test_the_re_bind_and_the_decided_fact_are_taken_without_a_goal():
     """SPEC-008 R8 holds in an orchestrating run under a goal or under the ask alike; the two
     sections left the goal's file for the doors' file, and the goal's file names what a goal
     still changes alone."""
-    assert "`deliver-scope <slug>: rebind <task>`" in DOORS
-    assert "`deliver-scope <slug>: decide <task>`" in DOORS
+    assert "**A task waiting on a re-bind**" in DOORS and "**A fact no node states**" in DOORS
+    assert "it commits what it wrote" in DOORS, "each door's skill commits itself (SPEC-010 R7)"
     goal = flat("src/claude/skills/deliver-scope/references/goal.md")
     assert "## A task waiting on a re-bind" not in goal
     assert "## A derived recommendation" not in goal
     assert "the derived doors stay this run's either way" in goal
     decided_fact = flat("src/claude/skills/plan-work/references/decided-fact.md")
     assert "A `/deliver-scope` run takes this one, with or without a goal" in decided_fact
+
+
+def test_each_skill_the_run_invokes_commits_itself_and_the_run_commits_its_log():
+    """SPEC-010 R7. Read on 2026-11-09: 92 of the person's messages over one week authorized a
+    commit, nearly all after a route skill run alone. The orchestrator keeps its own commits — the
+    log before each invocation, so the next skill finds its roots clean, the measure, and a stopped
+    delivery's runs — and never the skills' own."""
+    assert "Each skill this run invokes commits what it wrote itself, under its own name" in SKILL
+    assert "`deliver-scope <slug>: log`, before each invocation" in SKILL
+    assert "`plan-work <slug>: plan`" in SKILL and "`implement-task <slug>: deliver <task>`" in SKILL
+    assert "`deliver-scope <slug>: deliver <task>`" not in SKILL

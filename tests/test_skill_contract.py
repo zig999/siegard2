@@ -665,7 +665,7 @@ def test_the_ledger_is_committed_with_the_specification_it_accounts_for():
     assert ("The ledger is part of the increment it records: the commit that takes the "
             "specification the analysis wrote takes the ledger with it, and no ledger is left "
             "untracked") in analyse
-    assert "commits the ledger in the same commit, by path" in analyse
+    assert "Commit the specification root and the ledger by path" in analyse
     assert "references/goal.md" in skill_text("deliver-scope")
     deliver = unwrapped(skill_corpus("deliver-scope"))
     assert ("That commit takes the ledger the analysis answered beside the objective with it"
@@ -1187,3 +1187,28 @@ def test_a_note_asking_which_value_a_node_leaves_open_is_unstated():
     assert ("whether a node's statement reaches a case it does not name, asks a fact no node "
             "states» (SPEC-001 R17) — `unstated`") in binder
     assert "names, where one exists, the change to the criteria that would answer it" in binder
+
+
+ROUTE_SKILL_COMMITS = {
+    "analyse": "`analyse <the invocation's slug, else the material's stem>:",
+    "plan-work": "`plan-work <slug>: <mode>`",
+    "implement-task": "`implement-task <slug>: deliver <task>`",
+    "review-change": "`review-change <slug>: review <review-name>`",
+    "reconcile": "`reconcile <slug>`",
+}
+
+
+@pytest.mark.parametrize("skill", sorted(ROUTE_SKILL_COMMITS))
+def test_every_route_skill_commits_what_its_own_invocation_wrote(skill):
+    """«A route skill — `/analyse`, `/plan-work`, `/implement-task`, `/review-change`,
+    `/reconcile` — commits what its own invocation wrote once its validator passes» (SPEC-010 R7).
+    Read on 2026-11-09: 92 of the person's messages over one week authorized a commit, nearly all
+    after one of these run alone. Each states its message, and none still says it never commits."""
+    corpus = " ".join(skill_corpus(skill).split())
+    assert ROUTE_SKILL_COMMITS[skill] in corpus, f"{skill} states no commit of its own"
+    for stale in ("Commit, stash, or otherwise change the consumer's git state",
+                  "Commit, stash, branch, or otherwise change the consumer's git state",
+                  "**It never commits.**"):
+        assert stale not in corpus, f"{skill} still says {stale!r}"
+    rules = " ".join((REPO / "src/claude/hooks/rules.md").read_text(encoding="utf-8").split())
+    assert 'git commit -m "<skill> <slug>: <step>" -- <roots>' in rules

@@ -362,6 +362,7 @@ def test_the_rules_bound_the_session_s_own_commits():
     this session, to what the skill wrote, and to a pathspec — and says a summary of an earlier
     context is not an authorization."""
     rules = CONSUMER_RULES.read_text(encoding="utf-8")
-    assert "A session commits only what the person's own words in this session authorized" in rules
-    assert "A summary of an earlier context is not an authorization" in rules
-    assert "never `git add -A` without a pathspec" in rules
+    assert ("A route skill commits what its own invocation wrote; a session commits anything "
+            "else only under the person's own words in this session") in " ".join(rules.split())
+    assert "A summary of an earlier context is not one" in " ".join(rules.split())
+    assert "never `git add -A`" in " ".join(rules.split())

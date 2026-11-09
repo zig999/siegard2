@@ -41,7 +41,8 @@ its step is reached, before acting on it.
       references/capture.md
 - [ ] 4 Fold: premise; trace.py --fold; trace.py --reconciliation: references/fold.md
 - [ ] 5 Bind: trace.py --bind-record --workspace, once; read its receipt: references/bind.md
-- [ ] 6 Report: handoff.py --prepare; read references/report.md; --save-report, --render; stop
+- [ ] 6 Commit as reconcile <slug>; report: handoff.py --prepare; references/report.md;
+      --save-report, --render; stop
 ```
 
 ## Terms
@@ -255,6 +256,8 @@ what it refuses and what its receipt names, and carry the receipt into the repor
 
 ### 6. Report
 
+Commit the trace and `siegard-reconcile/<slug>.*` as the plugin's rules state: `reconcile <slug>`.
+
 «The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill reconcile --project
 <project-root> --target <target> --language <en or pt-BR, the session's>` — with `--slug` only
@@ -289,5 +292,4 @@ adds. Read `references/adoption.md` at step 2.
   node states it; what closes a testable remainder is a test the person writes and offers again.
 - **It is not a review.** It says nothing about coverage, the standard or proof; those are
   `/review-change`'s, over a delivery.
-- **It never commits.** The trace, the record and the returns are the person's to commit, or
-  `/adopt-scope`'s over an adoption it carries.
+- **It commits what it wrote and nothing else** — never a source file, a push or a rewrite.

@@ -71,3 +71,9 @@ whether this code and the specification it followed have since moved apart.
   changed. Keep the receipt whole for the report. The `/review-change` that follows reads every
   file of the change against every node bound to it and restamps what cleared; where no review
   follows, the report's `/reconcile` door is what answers it.
+
+## The commit
+
+Once the bind has run, commit the delivery root, the target source root and the trace as the
+plugin's rules state, `door.py --check commit` first: `implement-task <slug>: deliver <task>`. A
+stop commits nothing; its runs stay for whoever takes its door.

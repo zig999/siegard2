@@ -103,8 +103,8 @@ Usage:  goal.py --state <project-root> --slug <slug> --since <commit> --version 
         and `contradicts` is the one kind a route corrects. --specify, over an objective alone,
         asks /deliver-scope to run /analyse once over it before the plan — «Under a goal whose
         condition asks to specify a prose objective, the orchestrating entry point invokes
-        `/analyse` once, before the plan, over the objective as the person armed it, and commits
-        the specification root apart.» (SPEC-008 R10)
+        `/analyse` once, before the plan, over the objective as the person armed it»
+        (SPEC-008 R10)
 Exit:   0 state A or state B; a condition composed or armed; a goal disarmed, or none armed
         1 not yet; a composition or an arming refused, with every reason
         2 cannot run

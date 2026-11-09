@@ -926,13 +926,21 @@ def test_a_commit_no_skill_wrote_is_a_hand_edit(consumer):
 
 
 def test_only_the_subject_a_shipped_skill_writes_is_a_framework_route():
-    """`/deliver-scope` is the one entry point that commits; a subject opened by any other
-    skill's name is a convention nothing ships, and reads as what it is — a person's commit."""
+    """«A route skill — `/analyse`, `/plan-work`, `/implement-task`, `/review-change`,
+    `/reconcile` — commits what its own invocation wrote once its validator passes» (SPEC-010 R7),
+    under `<skill> <slug>:`; the orchestrating entry points commit under their own names. A subject
+    a skill's name opens without a slug is a convention nothing ships, and reads as a person's."""
     import telemetry
     assert telemetry.route_of("deliver-scope pricing: deliver task/x/total") == "framework"
     assert telemetry.route_of("deliver-scope hotfix-total: review") == "corrective"
+    assert telemetry.route_of("plan-work pricing: plan") == "framework"
+    assert telemetry.route_of("analyse pricing: specify") == "framework"
+    assert telemetry.route_of("implement-task hotfix-total: deliver task/x/total") == "corrective"
     assert telemetry.route_of("plan-work: corrective increment over the total") == "hand-edit"
     assert telemetry.route_of("analyse: re-decide the total") == "hand-edit"
+    assert telemetry.GOAL_ANALYSE.match("analyse pricing: specify")
+    assert telemetry.GOAL_ANALYSE.match("deliver-scope pricing: analyse")
+    assert not telemetry.GOAL_ANALYSE.match("analyse pricing: analyse")
 
 
 def test_a_decision_committed_after_the_window_closes_is_not_counted(consumer):

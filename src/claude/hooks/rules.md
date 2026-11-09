@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.84.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.85.0. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -81,26 +81,24 @@ not. Three things hold that route:
   never invokes an entry point it was not handed, and never reports a step it did not run. When
   what it was handed is done or stopped, it returns; what comes next is the invoking context's
   to decide.
-- **A session commits only what the person's own words in this session authorized, and only
-  what the skill it invoked wrote or the registry entry the next rule admits.** A commit word,
-  a go-ahead that names the next step, or an ask
-  stating the whole route end to end, is the authorization; a go-ahead covers the one
-  pathspec-scoped commit of what the previous invocation wrote that the next step needs before it
-  runs, and never a push. A summary of an earlier context is not an authorization: a route resumed
-  after a compaction is re-authorized before its next commit by the person, by a goal condition
-  naming the route, or by the ask `bin/ask.py --read` prints, run as the `read:` line its
-  `--record` printed — «A route resumed
-  after a compaction reads its authorization from a recorded ask, printed by `ask.py --read`, in
-  place of a summary of an earlier context» (SPEC-010 R3). Record the person's authorizing words
-  with `bin/ask.py --record <project-root> --text-file -` in the turn they are given, whole, and
-  never words the person did not write. Each commit is pathspec-scoped to the roots that
-  invocation wrote, one per invocation, under a message naming the skill and the slug — a message
-  naming `/deliver-scope` only from an invocation of it that accepted the ask —
-  never `git add -A` without a pathspec, never a branch, a push, a stash or a rewrite. Before
-  committing what a delivery wrote, run `bin/door.py --check commit --project <project-root>
-  --slug <slug> --file <path>...`; a first line `refuses` stops the commit: «A run whose
-  orchestration log closes on a stop line commits nothing after it but the measure: the telemetry
-  root, and the log that carries the stop line.» (SPEC-008 R18)
+- **A route skill commits what its own invocation wrote; a session commits anything else only
+  under the person's own words in this session.** At its last step a route skill commits the roots
+  it held clean before its first write, `git add -- <roots> && git commit -m "<skill> <slug>:
+  <step>" -- <roots>`, and stops on a root holding a change it did not make. For any other commit,
+  a commit word, a go-ahead that names the next step, or an ask stating the whole route end to
+  end, is the authorization. A summary of an earlier context is not one: a route resumed after a
+  compaction is re-authorized before its next commit by the person, by a goal condition naming the
+  route, or by the ask `bin/ask.py --read` prints, run as the `read:` line its `--record` printed
+  — «A route resumed after a compaction reads its authorization from a recorded ask, printed by
+  `ask.py --read`, in place of a summary of an earlier context» (SPEC-010 R3). Record the person's
+  authorizing words with `bin/ask.py --record <project-root> --text-file -` in the turn they are
+  given, whole, and never words the person did not write. Every commit is pathspec-scoped, one per
+  invocation, under a message naming the skill and the slug — `/deliver-scope` only from an
+  invocation of it that accepted the ask — and never `git add -A`, a branch, a push, a stash or a
+  rewrite. Before committing what a delivery wrote, run `bin/door.py --check commit --project
+  <project-root> --slug <slug> --file <path>...`; a first line `refuses` stops the commit: «A run
+  whose orchestration log closes on a stop line commits nothing after it but the measure: the
+  telemetry root, and the log that carries the stop line.» (SPEC-008 R18)
 - **Write the project's standard only where the person's own words name the entry.** Record
   those words with `bin/ask.py --record` first, then write the package or the step they name, by
   name, into the registry `siegard.json` declares, and commit that file alone, pathspec-scoped,

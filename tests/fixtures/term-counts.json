@@ -107,7 +107,7 @@
   "the session": 22
  },
  "src/claude/skills/analyse/SKILL.md": {
-  "this invocation": 11
+  "this invocation": 10
  },
  "src/claude/skills/analyse/references/deciding-by-class.md": {
   "the caller": 1
@@ -130,7 +130,7 @@
  },
  "src/claude/skills/plan-work/SKILL.md": {
   "the session": 1,
-  "this invocation": 2
+  "this invocation": 1
  },
  "src/claude/skills/plan-work/references/decided-fact.md": {
   "this invocation": 1

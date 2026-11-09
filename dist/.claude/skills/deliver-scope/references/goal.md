@@ -20,17 +20,16 @@ of evidence, a finding's worth — is never taken. The taking is yours; the judg
 
 Before the plan, and once: «Under a goal whose condition asks to specify a prose objective, the
 orchestrating entry point invokes `/analyse` once, before the plan, over the objective as the person
-armed it, and commits the specification root apart.» (SPEC-008 R10)
+armed it, and the specification root is committed apart, by `/analyse` itself» (SPEC-008 R10).
 
 1. The material is the objective file's text, read whole after its digest is checked against the
    condition; the project root is the condition's.
 2. A report opening `stop: no-fact —` or `stop: no-change —` is nothing to specify: write the line
    to the log and plan. Any other stop of `/analyse` ends the run.
-3. Where it wrote, run the gate again — `spec.py` over the specification root — and commit the
-   specification root, with the ledger `/analyse` answered beside the objective and nothing else, as
-   `deliver-scope <slug>: analyse`. A ledger left untracked is a tree the goal's state never reads
-   as clean: «That commit takes the ledger the analysis answered beside the objective with it»
-   (SPEC-008 R10).
+3. Invoke it with the run's slug and the step `specify`: where it wrote, it commits the
+   specification root and the ledger it answered beside the objective as `analyse <slug>: specify`
+   — «That commit takes the ledger the analysis answered beside the objective with it»
+   (SPEC-008 R10). Run the gate again, `spec.py` over the specification root.
 4. Plan with the same objective as the scope.
 
 The report carries what `/analyse`'s own report states for a reviewer: the decided fields per node,
@@ -68,6 +67,6 @@ run, once» (SPEC-008 R9).
 1. The review hands no invocation forward, so this is the one invocation you compose, and only from
    the review's record: `/plan-work`'s corrective increment with the file the finding names, the
    finding's own words as the wrong behavior, and the node it names.
-2. Commit the plan as `deliver-scope <slug>: correct <file>`, deliver the corrective task as step 3
-   does, review the corrective tasks once, and commit.
+2. `/plan-work` commits the increment itself; deliver the corrective task as step 3 does, and
+   review the corrective tasks once.
 3. What that review finds is reported, never corrected again.

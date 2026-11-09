@@ -16,8 +16,8 @@ registry step's decision, wherever one exists» (SPEC-004 R10).
    and the clean-tree stop each invocation opens with keeps them apart. A re-delivery that stops red
    leaves its files for the person, every one already committed stands, and those not yet begun are
    relayed as not reached.
-3. Then invoke `/review-change` once more over exactly those tasks, named by step 4's rule, and
-   commit it as `deliver-scope <slug>: review again`.
+3. Then invoke `/review-change` once more over exactly those tasks, named by step 4's rule; it
+   commits itself.
 
 This step runs once per run: a certification refused again is relayed with its new remainder, and a
 third attempt is the person's decision about cost. A remainder over a node no task of this run
