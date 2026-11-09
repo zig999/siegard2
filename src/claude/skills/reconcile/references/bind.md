@@ -2,11 +2,12 @@
 
 Read at step 5, before running `--bind-record`.
 
-## Second reading
+## Second reading, never skipped
 
 Where the record reads a pair `nowhere`, run `trace.py --stage-release <target-source-root>
 <specification-root> siegard-reconcile/<slug>.md <new workspace>`, then one conformance subagent
-per printed pack, each saved there by `--save-return`. The bind releases what it confirms.
+per printed pack, each saved there by `--save-return`. The bind releases what it confirms;
+skipped, every such release falls to the person.
 
 ## What lands
 
@@ -17,7 +18,7 @@ a file that is not there. That is a defect in what you wrote, never the judgment
 - `--workspace` names the staging's own: the bind refuses a file or a node that moved since the
   staging read it, because it stamps what the judges read.
 - What lands is the union: a file an earlier bind put on a node and this record does not name
-  stays bound. Two things landing one node in two files is not one undoing the other's work.
+  stays bound.
 - **Where a node carries a finding, that node is not bound, and the nodes that cleared still are.**
   The join is structural: a pair the judgment refused is under no `encoded_at`, and the bind reads
   only the pairs that are, so it writes exactly the cleared set however anyone runs it.
@@ -25,9 +26,7 @@ a file that is not there. That is a defect in what you wrote, never the judgment
 ## `--replace` and the release
 
 **This skill never passes `--replace`.** Where the person says a fact moved out of a file rather
-than into an additional one, the report hands that invocation ready to paste and stops:
-`--replace` substitutes the whole entry, and its receipt of what stopped being claimed is the only
-signal there is.
+than into an additional one, the report hands that invocation ready to paste and stops.
 
 A node whose fact left part of its ground, with nothing found against it, is bound on the files
 that still hold it. A file read `nowhere` that the second reading did not confirm is a release the

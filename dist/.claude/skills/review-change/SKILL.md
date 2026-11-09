@@ -32,7 +32,7 @@ its step is reached, before acting on it.
 - [ ] 3 Passes: coverage, conformance by waves, standard, certification, failures:
       references/passes.md
 - [ ] 3b Fold and bind: premise; every return saved verbatim; --fold; --reconciliation;
-      --bind-record --workspace: references/fold-and-bind.md
+      --stage-release and its judges, never skipped; --bind-record: references/fold-and-bind.md
 - [ ] 4 Compose: review/<review-name>.md, frontmatter by yaml.safe_dump; deliver.py --node:
       references/compose.md
 - [ ] 5 Validate: deliver.py --review; its output verbatim
@@ -282,8 +282,8 @@ better, and a pass that did not run is never recorded as having run.
 
 ### 6. Report, and stop
 
-Commit the delivery root, the trace and `siegard-reconcile/<review-name>.*` as the plugin's rules
-state: `review-change <slug>: review <review-name>`.
+Commit the delivery root, the trace and `siegard-reconcile/<review-name>.*`:
+`review-change <slug>: review <review-name>`.
 
 «The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill review-change --project

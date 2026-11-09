@@ -40,7 +40,8 @@ its step is reached, before acting on it.
 - [ ] 3b Capture: run.py into siegard-reconcile/<slug>.returns, or skip and say so:
       references/capture.md
 - [ ] 4 Fold: premise; trace.py --fold; trace.py --reconciliation: references/fold.md
-- [ ] 5 Bind: trace.py --bind-record --workspace, once; read its receipt: references/bind.md
+- [ ] 5 Bind: trace.py --stage-release and its judges first, never skipped; then --bind-record
+      --workspace, once: references/bind.md
 - [ ] 6 Commit as reconcile <slug>; report: handoff.py --prepare; references/report.md;
       --save-report, --render; stop
 ```

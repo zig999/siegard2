@@ -1212,3 +1212,15 @@ def test_every_route_skill_commits_what_its_own_invocation_wrote(skill):
         assert stale not in corpus, f"{skill} still says {stale!r}"
     rules = " ".join((REPO / "src/claude/hooks/rules.md").read_text(encoding="utf-8").split())
     assert 'git commit -m "<skill> <slug>: <step>" -- <roots>' in rules
+
+
+@pytest.mark.parametrize("skill", ["reconcile", "review-change"])
+def test_the_second_reading_is_a_checklist_step_never_skipped(skill):
+    """SPEC-005 R10's release rests on a second reading staged before the bind. Read on
+    2026-11-09 in configurator under 5.86.0: with the step held only in a reference, the session
+    called it optional and skipped it, and three releases fell to the person. The checklist the
+    skill opens with — the one part a compaction keeps whole — names it and says it is never
+    skipped."""
+    checklist = skill_text(skill).split("```", 2)[1]
+    flat = " ".join(checklist.split())
+    assert "--stage-release" in flat and "never skipped" in flat
