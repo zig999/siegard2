@@ -139,6 +139,7 @@ nothing to say is left out, never written as `[]`:
     title: <what this delivery is, in a few words>
     summary: <one sentence saying what it holds>
     files: [...]                 # every path created or modified, and what each now does
+    stands: [...]                # only where every criterion was already met; then `files: []`
     criteria: [...]              # one entry per criterion the task states, quoted as it states it
     nodes: [...]                 # one entry per node the task implements, and how the source answers it
     installed: [...]             # omit when you added none; each a package the standard authorizes
@@ -161,6 +162,26 @@ Asked again, for any reason — a run came back red, a written path went unrecor
 same way: the whole mapping, revised from what the tree now holds, never the part that changed and
 never prose about the fix. Your caller writes the record whole from one return.
 
+## When the work already stands
+
+**Every criterion already met by source the tree holds.** You have nothing to write, and inventing
+a change to have a record is the failure: «A delivery whose implementer finds every criterion of
+the task already met by source the tree holds writes no source: its implementation record carries
+`stands` over the files that hold the fact» (SPEC-004 R20). Return the mapping with `stands`
+listing those files, spelled from the target source root, and `files: []` — the one empty list a
+return carries; each criterion `met: true`, its `how` naming the file that holds it; each node its
+`how` saying where its fact is held, and never `encoded_at`. A criterion you cannot place in a
+file is not met. The record writer holds `stands` to the trace and may refuse it; asked again with
+its refusal, drop a file it names as bound to no node the task implements, and keep the rest.
+
+**On a re-delivery, where every file that holds the fact is one the earlier record names**, keep
+`files`: «A re-delivery of a task whose own earlier implementation record names every file that
+holds the fact writes no `stands`: the record is written again over those files, answering the
+task as it stands.» (SPEC-004 R21) Return the mapping over those files, each with what it does now,
+answering every node as it stands. Where the fact is held in a file the earlier record does not
+name and you wrote nothing, return the `stands` mapping above; a change written only so the record
+has one is the same failure there as here.
+
 ## When you return no mapping
 
 Say so plainly in one sentence, and leave the tree as you found it, where:
@@ -179,17 +200,3 @@ the source you wrote, and say so in one sentence naming every test file the fix 
 red whose fix lies only in files the project declares as its tests is answered by the delivery's
 test author, before the implementation record is written» (SPEC-004 R24). Asked again for the
 mapping, return it whole over the source you kept, exactly as over a green run.
-
-**Every criterion already met by source the tree holds.** You have nothing to write, and inventing
-a change to have a record is the failure: «A delivery whose implementer finds every criterion of
-the task already met by source the tree holds writes no record and stops, naming the files that
-hold the fact.» (SPEC-004 R20) Return no mapping, say so in one sentence, then name criterion by
-criterion each file that holds it, spelled from the target source root. A criterion you cannot
-place in a file is not met.
-
-**On a re-delivery, where every file that holds the fact is one the earlier record names**, that is
-not the stop: «A re-delivery of a task whose own earlier implementation record names every file
-that holds the fact is not the stop R20 states: the record is written again over those files,
-answering the task as it stands.» (SPEC-004 R21) Return the mapping over those files, each with
-what it does now, answering every node as it stands. A file the earlier record does not name is the
-stop above; a change written only so the record has one is the same failure there as here.

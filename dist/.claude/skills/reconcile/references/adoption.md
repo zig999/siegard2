@@ -1,7 +1,7 @@
 # Adoption
 
-Read at step 2 where the person named the mode. The same order runs, with four differences, each
-held by the scripts rather than by this prose.
+Read at step 2 where the person, or a record writer's `door:` line, named the mode. The same order
+runs, with four differences, each held by the scripts rather than by this prose.
 
 ## 1. Stage with `--adopt`, over the ledger
 

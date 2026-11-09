@@ -132,7 +132,7 @@ left out — so the file set the review that followed was handed never held them
 
 ### Where a proof is cut
 
-- **R18** — A task writes source, or its implementation already stands. A task that writes no source carries `stands`, and before the task is written the trace binds each node the task implements to a file it names, and each file it names to a node the task implements. A fact the plan's own deliveries will write into source is proven by the task that writes it, as that task's criterion, never by a task of its own.
+- **R18** — A task writes source, or its implementation already stands. A task planned to write no source carries `stands`, and before the task is written the trace binds each node the task implements to a file it names, and each file it names to a node the task implements. A task whose delivery finds its implementation already standing carries `stands` in its implementation record instead, held to the same bindings before the record is written (R20). A fact the plan's own deliveries will write into source is proven by the task that writes it, as that task's criterion, never by a task of its own.
 - **R19** — A node whose fact already stands in source the trace does not bind to it gets no proof task. The plan reports the reconciliation that would bind it, over the files that hold it, and the proof waits for that binding.
 
   Grounds: on 2026-10-26 three successive plans of one consumer cut proof-only tasks in the
@@ -146,7 +146,7 @@ left out — so the file set the review that followed was handed never held them
   on 96 tasks across five consumers, 94 of which wrote source, so R18's second sentence is held by
   the decomposer's judgment and not by a validator.
 
-- **R20** — A delivery whose implementer finds every criterion of the task already met by source the tree holds writes no record and stops, naming the files that hold the fact. Where the trace binds every node the task implements to those files, the door is the plan over this slug carrying `stands` over them; where it does not, the door is the reconciliation over them, and the plan waits for that binding.
+- **R20** — A delivery whose implementer finds every criterion of the task already met by source the tree holds writes no source: its implementation record carries `stands` over the files that hold the fact, and its proof follows as for any task. Where the trace does not hold the bindings R26 reads between those files and the task's nodes, the record writer refuses the record and names the reconciliation that would write them — an adoption over those files whose candidates are the task's nodes bound to none of them, or an ordinary one where every node is bound and a binding moved — and that reconciliation is the delivery's one door: an orchestrating run takes it, once per task, and delivers the task again. A node the adoption leaves bound to none of the files is a stop, and the person's: the implementer and the reconciliation's judges read the same files two ways.
 
   Grounds: on 2026-10-30, reading every `orchestration.md` under the delivery roots of the sales consumers
   for a line naming a task whose implementer found the criteria met and wrote no file, 20 tasks in 5
@@ -155,7 +155,21 @@ left out — so the file set the review that followed was handed never held them
   return, and nothing stated what the delivery then hands: each orchestration chose its own door,
   withdrawing the task from the plan in some and planning it again with `stands` in others.
 
-- **R21** — A re-delivery of a task whose own earlier implementation record names every file that holds the fact is not the stop R20 states: the record is written again over those files, answering the task as it stands. A re-delivery names a file the tree did not change only where the record it replaces named it.
+  Grounds for the record carrying `stands` and the reconciliation being an adoption, read on
+  2026-11-09 from the orchestration logs and transcripts of five sales consumers between
+  2026-11-07 and 2026-11-09 (Siegard 5.47.1 to 5.79.1): about ten tasks in four plans stopped on
+  this requirement's earlier form, which wrote no record and handed the person the plan over the
+  slug carrying `stands`, or the reconciliation. Every one was taken by the person after the stop,
+  and none reached a record without a loss: one delivery added a field to the logger's redaction
+  list so the writer would admit a record (productorder `762ba5d`), one plan withdrew its last task
+  (configurator `1dab02b`), and one run deleted six records and the review naming them (partymgmt
+  `968d87c`). Where the trace bound a node to none of the files, the reconciliation handed was an
+  ordinary one, which judges a file against the nodes the trace already binds to it: in partymgmt
+  it read the two unbound nodes as candidates only and bound neither, so that door could not have
+  closed. An adoption reads every candidate it is handed on every file and binds each where the
+  judgment holds its fact (SPEC-005 R3, R4).
+
+- **R21** — A re-delivery of a task whose own earlier implementation record names every file that holds the fact writes no `stands`: the record is written again over those files, answering the task as it stands. A re-delivery names a file the tree did not change only where the record it replaces named it. A re-delivery that writes no source and finds the fact held in a file the earlier record does not name is R20's: its record replaces the earlier one carrying `stands`.
 
   Grounds: on 2026-10-30 one consumer re-bound eight delivered tasks whose implemented nodes had
   moved; the re-bind widened what each task implements and changed no criterion, so `deliver.py
@@ -206,7 +220,7 @@ left out — so the file set the review that followed was handed never held them
   carrying a testable remainder — only other nodes' bindings, so the same question gets the
   same answer on both routes.
 
-- **R26** — A task carrying `stands` is delivered only while the trace holds the bindings R18 requires and every binding of a node the task implements to a file `stands` names is current: a node the task implements bound to no `stands` file, a `stands` file bound to no node the task implements, a file changed since the binding was written, or a node whose text moved since the file was read against it makes the implementation not stand, and the record writer refuses the record. A node the task implements and a `stands` file the trace does not bind to each other are never that refusal while the node is bound to another `stands` file and the file to another node the task implements: the files hold the implementation together, and no file need hold all of it. A binding of a node the task does not implement to one of those files is never that refusal: the review that follows reads each `stands` file against every node the trace binds to it.
+- **R26** — A task carrying `stands`, in its plan or in its implementation record, is delivered only while the trace holds the bindings R18 requires and every binding of a node the task implements to a file `stands` names is current: a node the task implements bound to no `stands` file, a `stands` file bound to no node the task implements, a file changed since the binding was written, or a node whose text moved since the file was read against it makes the implementation not stand, and the record writer refuses the record. A node the task implements and a `stands` file the trace does not bind to each other are never that refusal while the node is bound to another `stands` file and the file to another node the task implements: the files hold the implementation together, and no file need hold all of it. A binding of a node the task does not implement to one of those files is never that refusal: the review that follows reads each `stands` file against every node the trace binds to it.
 
   Grounds: `/implement-task` held every `stands` file to `trace.py --check --all` and read any
   finding on it as "stands" false, whichever node the finding named — a reading inherited from
@@ -283,13 +297,20 @@ left out — so the file set the review that followed was handed never held them
    listing some node the task implements — and states both requirements in the words above; the backlog decomposer
    states R18's last sentence; `tests/test_spec_citations.py` proves each quote is a substring of
    the requirement it names.
-7. For R20: `/implement-task` runs `trace.py --encodes` over the files a no-write return names
-   and hands the door that output decides, and the task implementer returns that case without a
-   record — `tests/test_skill_contract.py` proves both.
+7. For R20: the task implementer returns that case as a mapping carrying `stands`;
+   `bin/deliver.py --check` admits an implementation record carrying `stands` over a task that
+   carries none, and still refuses one whose task carries other files;
+   `--write-implementation` refuses such a record where a node is bound to none of its files and
+   prints the adoption that would bind it, its candidates those nodes, or the ordinary
+   reconciliation where only a binding moved; `/implement-task` hands that line as its one door,
+   and `/deliver-scope` takes it once per task — `tests/test_deliver.py`,
+   `tests/test_skill_contract.py` and `tests/test_deliver_scope.py` prove each.
 8. For R21: `bin/deliver.py --unrecorded` refuses a re-delivered implementation naming a file the
    tree did not change that the record it replaces did not name, and admits one the record it
-   replaces named; `/implement-task` hands the implementer the record a re-delivery replaces —
-   `tests/test_unrecorded.py` and `tests/test_skill_contract.py` prove each.
+   replaces named; `--write-implementation --replace` writes a re-delivered record carrying
+   `stands` over files the earlier record did not name; `/implement-task` hands the implementer the
+   record a re-delivery replaces — `tests/test_unrecorded.py`, `tests/test_deliver.py` and
+   `tests/test_skill_contract.py` prove each.
 9. For R22: `bin/deliver.py --check` admits a review that lists fewer files than its tasks'
    records now name, or answers criteria its tasks no longer state, and refuses it under `--review`
    naming it; `--outstanding` names a task some review names and none answers as it stands, and

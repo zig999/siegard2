@@ -41,7 +41,7 @@
         "minLength": 1,
         "pattern": "^[^/]"
       },
-      "description": "The files where the implementation this delivery answers already stands, exactly as the task's own `stands` lists them, spelled from the target source root. A record carrying it wrote no source: `files` is empty, no node answer carries `encoded_at`, and the delivery binds nothing — the proof it is paired with is what the review reads, together with these files, to certify the node. Each node answer's `how` says where in these files the node's fact is held now."
+      "description": "The files where the implementation this delivery answers already stands, spelled from the target source root: exactly as the task's own `stands` lists them, or, where the task carries none, the files its implementer found holding the fact: «its implementation record carries `stands` over the files that hold the fact» (SPEC-004 R20). A record carrying it wrote no source: `files` is empty, no node answer carries `encoded_at`, and the delivery binds nothing — the proof it is paired with is what the review reads, together with these files, to certify the node. Each node answer's `how` says where in these files the node's fact is held now."
     },
     "files": {
       "type": "array",

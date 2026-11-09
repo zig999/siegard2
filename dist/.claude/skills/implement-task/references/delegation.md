@@ -63,7 +63,7 @@ remainder:             <the node's identity, the assertion an auditor named as w
                         its certification, verbatim, and the proof file(s) the record named —
                         omit unless this is the proof-only re-delivery over a refused
                         certification, or a task carrying `stands`, where each criterion is
-                        the assertion and the files are the task's `stands`>
+                        the assertion and the files are the `stands` its record carries>
 reproduction:          <how the failure is observed — omit unless the task's criteria name a
                         failure that must stop happening>
 

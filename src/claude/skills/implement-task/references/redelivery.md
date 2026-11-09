@@ -60,6 +60,8 @@ implementation record names or on the node alone:
 **A task carrying `stands` is delivered the same way from its first delivery, because its plan
 says so.** `/plan-work` writes `stands` only over files the trace binds, together, to every node
 the task implements. The implementation stands at those files, and this delivery writes no source.
+A task whose implementer returned `stands` is delivered the same way from step 4, its record
+written from that return (`references/implementer-returns.md`); what follows holds for both.
 
 Before anything is written, `trace.py --encodes <target-source-root> <each file>` must still list
 each node the task implements for some file and some such node for each file, and the same

@@ -116,3 +116,52 @@ def test_the_one_analyse_a_goal_may_ask_for_is_bounded():
     assert "`deliver-scope <slug>: analyse`" in section
     analyse = flat("src/claude/skills/analyse/SKILL.md")
     assert "`stop: no-fact — <what the material would have to state>`" in analyse
+
+
+DOORS = flat("src/claude/skills/deliver-scope/references/doors.md")
+
+
+def test_a_derived_door_is_taken_under_the_ask_that_invoked_the_run():
+    """SPEC-006 R7: the ask that invoked the route is the go-ahead for a derived door, with or
+    without a goal. Measured on 2026-11-09 over five sales consumers: no goal was armed in any run
+    of the window, and every stop handing a door a fact decided waited for "siga", "Sim" or "Pq
+    parou?". The bounds stay in the text: the door's own entry point accepts it, the same door
+    over the same task once, and the judged door and the three reserved questions never."""
+    assert "references/doors.md" in SKILL
+    assert "the go-ahead, with or without a goal" in DOORS
+    assert "SPEC-006 R7" in DOORS
+    assert "`door.py --check` accepts" in DOORS
+    assert "no `decided:` line of this run took over the same task" in DOORS
+    assert "A judged door is `references/goal.md`'s" in DOORS
+    assert "the three reserved questions are never taken" in DOORS
+    assert "`decided: <door> — <criterion> — <deciding fact>`" in DOORS
+    assert "take its derived door (`references/doors.md`)" in SKILL
+
+
+def test_a_record_the_writer_refused_is_reconciled_and_delivered_again_once():
+    """SPEC-004 R20: the reconciliation the record writer names is the delivery's one door, taken
+    once per task; it is committed with the passed runs the stopped delivery left, so the task's
+    next delivery starts from a clean tree, and a second refusal ends the run as the person's."""
+    assert "**A record carrying `stands` the writer refused**" in DOORS
+    assert "from the writer's `door:` line" in DOORS
+    assert "`deliver-scope <slug>: reconcile <task>`" in DOORS
+    assert "each `passed`" in DOORS
+    assert "A second refusal ends the run" in DOORS
+    stops = flat("src/claude/skills/deliver-scope/references/stops.md")
+    assert ("a task found already met that the record writer refuses again after its "
+            "reconciliation") in stops
+    assert "where the door the trace decides is not one this run takes" not in stops
+
+
+def test_the_re_bind_and_the_decided_fact_are_taken_without_a_goal():
+    """SPEC-008 R8 holds in an orchestrating run under a goal or under the ask alike; the two
+    sections left the goal's file for the doors' file, and the goal's file names what a goal
+    still changes alone."""
+    assert "`deliver-scope <slug>: rebind <task>`" in DOORS
+    assert "`deliver-scope <slug>: decide <task>`" in DOORS
+    goal = flat("src/claude/skills/deliver-scope/references/goal.md")
+    assert "## A task waiting on a re-bind" not in goal
+    assert "## A derived recommendation" not in goal
+    assert "the derived doors stay this run's either way" in goal
+    decided_fact = flat("src/claude/skills/plan-work/references/decided-fact.md")
+    assert "A `/deliver-scope` run takes this one, with or without a goal" in decided_fact

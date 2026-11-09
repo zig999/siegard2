@@ -216,3 +216,23 @@ def test_a_first_delivery_is_not_held_to_a_record_it_replaces(consumer):
     impl = record(consumer, "implementation",
                   files=[{"path": "orders/legacy.ts", "effect": "named, unchanged"}])
     assert run(consumer / "src", impl).returncode == 0
+
+
+def test_a_re_delivery_finding_the_fact_in_a_file_its_task_never_wrote_carries_it_as_stands(
+        consumer):
+    """«A re-delivery that writes no source and finds the fact held in a file the earlier record
+    does not name is R20's: its record replaces the earlier one carrying `stands`.» (SPEC-004 R21)
+    The partymgmt shape of 2026-11-08: six re-delivered identification tasks whose fact had moved
+    into a file a sibling wrote, each stopped and later deleted with its review. The same file
+    under `stands` is admitted; under `files` it stays refused, and the refusal names the way."""
+    committed_record(consumer, files=[{"path": "orders/place.ts", "effect": "places"}])
+    impl = record(consumer, "implementation", files=[],
+                  stands=["orders/place.ts", "orders/legacy.ts"])
+    done = run(consumer / "src", impl)
+    assert done.returncode == 0, done.stdout + done.stderr
+    impl = record(consumer, "implementation",
+                  files=[{"path": "orders/place.ts", "effect": "places"},
+                         {"path": "orders/legacy.ts", "effect": "already answers the node"}])
+    done = run(consumer / "src", impl)
+    assert done.returncode == 1
+    assert "the files that hold the fact go under `stands` instead" in done.stdout

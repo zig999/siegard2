@@ -1555,11 +1555,13 @@ def implementation_problems(nid: str, front: dict, task: dict, work: Path,
                             f"later delivery refuses on this artifact's absence and a record "
                             f"saying it stands is what would hide that it does not")
 
+    # A record alone carries `stands` where its delivery found a task the plan said nothing about
+    # already standing; what the plan does say, the record repeats exactly.
     said_stands = {p for p in listed(tfront, "stands") if isinstance(p, str)}
     record_stands = {p for p in listed(front, "stands") if isinstance(p, str)}
-    if said_stands != record_stands:
+    if said_stands and said_stands != record_stands:
         problems.append(f"{nid}: the task says its implementation stands at "
-                        f"{', '.join(sorted(said_stands)) or 'nothing'} and this record says "
+                        f"{', '.join(sorted(said_stands))} and this record says "
                         f"{', '.join(sorted(record_stands)) or 'nothing'}; a record answering a "
                         f"task whose implementation already stands writes no source and names "
                         f"exactly where it stands, and one that disagrees with its task is either "
@@ -2181,15 +2183,29 @@ def stands_binding_problems(nid: str, front: dict, task_file: Path, root: Path) 
 
     Held at write time and never by `--check`: a record that stood when it was written stays sound
     when a later change moves its file, as every other record here does."""
+    return stands_reading(nid, front, task_file, root)[0]
+
+
+def stands_reading(nid: str, front: dict, task_file: Path,
+                   root: Path) -> tuple[list[str], str | None]:
+    """`stands_binding_problems`' problems, and the one door that answers them where one does —
+    «the record writer refuses the record and names the reconciliation that would write them — an
+    adoption over those files whose candidates are the task's nodes bound to none of them, or an
+    ordinary one where every node is bound and a binding moved» (SPEC-004 R20).
+
+    The door is a line of its own, `door: /reconcile …`, so the delivery hands it as printed and
+    never composes the file set or the candidates. A refusal naming only a file bound to no node
+    the task implements has no door: the file is no `stands` file, and the return that named it
+    answers again without it."""
     stands = [p for p in listed(front, "stands") if isinstance(p, str)]
     if not stands:
-        return []
+        return [], None
     roots, trouble = target_roots(root)
     if trouble is not None:
-        return [trouble]
+        return [trouble], None
     target, problems = anchor_of(nid, front, roots)
     if target is None:
-        return [said.removeprefix(f"{nid}: ") for said in problems]
+        return [said.removeprefix(f"{nid}: ") for said in problems], None
     task_front = spec.parse_node(task_file)[0]
     implements = [n for n in listed(task_front if isinstance(task_front, dict) else {},
                                     "implements") if isinstance(n, str)]
@@ -2204,21 +2220,26 @@ def stands_binding_problems(nid: str, front: dict, task_file: Path, root: Path) 
             held["path"] for held in entry.get("files") or []
             if isinstance(held, dict) and isinstance(held.get("path"), str))
     named = ", ".join(anchored.values())
+    unbound = [node for node in implements if not bound.get(node, set()) & anchored.keys()]
     found = [f"the trace binds {node} to no file `stands` names ({named}); the implementation "
              f"stands only where the trace binds each node the task implements to some `stands` "
-             f"file, and /reconcile over the file that holds it is what writes that binding"
-             for node in implements if not bound.get(node, set()) & anchored.keys()]
+             f"file, and an adoption over those files naming it as a candidate is what writes "
+             f"that binding"
+             for node in unbound]
     found += [f"the trace binds {spelled} to no node the task implements; a `stands` file is one "
-              f"the trace binds to some node the task implements, so name only those, or "
-              f"/reconcile over {spelled} where it holds one of them"
+              f"the trace binds to some node the task implements, so name only those"
               for path, spelled in anchored.items()
               if not any(path in bound.get(node, set()) for node in implements)]
+    if unbound:
+        return found, (f"door: /reconcile, an adoption — files: {' '.join(stands)} — "
+                       f"candidates: {' '.join(unbound)}")
     if declared is None or found:
-        return found
+        return found, None
     findings, refusals = trace.drift_of(declared, home)
     if refusals:
         return [f"whether the implementation stands cannot be read: {said}"
-                for said in refusals]
+                for said in refusals], None
+    moved: list[str] = []
     for cls, node, where, why in findings:
         if node not in implements or cls == trace.PROOF:
             continue
@@ -2229,7 +2250,10 @@ def stands_binding_problems(nid: str, front: dict, task_file: Path, root: Path) 
                      f"stand until /reconcile over "
                      f"{', '.join(sorted(anchored.values())) if where is None else anchored[where]} "
                      f"reads it again")
-    return found
+        moved += sorted(anchored.values()) if where is None else [anchored[where]]
+    if not moved:
+        return found, None
+    return found, f"door: /reconcile — files: {' '.join(dict.fromkeys(moved))}"
 
 
 def write_record(kind: str, args: list[str]) -> int:
@@ -2347,14 +2371,18 @@ def write_record(kind: str, args: list[str]) -> int:
     problems = node_problems(front, kind, validator, names)
     problems += body_problems(body)
     problems += record_run_problems(nid, front, root)
+    door = None
     if kind == "proof":
         problems += red_run_problems(nid, body, root)
     elif not problems:
-        problems += stands_binding_problems(nid, front, pinned_from, root)
+        standing, door = stands_reading(nid, front, pinned_from, root)
+        problems += standing
     if problems:
         for found in problems:
             print(f"{nid}: {found}")
         print(f"\n{len(problems)} problem(s); {path} was not written")
+        if door is not None:
+            print(door)
         return 1
 
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -2990,8 +3018,8 @@ def unrecorded(target: str, named: list[str]) -> int:
     one `HEAD` holds may name a file the tree did not change only where the record it replaces
     named it — «A re-delivery names a file the tree did not change only where the record it
     replaces named it» (SPEC-004 R21): those are the files the task already wrote, and any other
-    unchanged file is source the task never wrote, whose stop is R20's. A first delivery is not
-    held to it here."""
+    unchanged file is source the task never wrote, which a record names under `stands` and never
+    under `files`. A first delivery is not held to it here."""
     import trace
 
     target_root = Path(target)
@@ -3064,12 +3092,11 @@ def unrecorded(target: str, named: list[str]) -> int:
         for line in uncarried:
             print(f"uncarried: {line}")
         print(f"\n{len(uncarried)} unchanged path(s) a re-delivery names that the record it "
-              f"replaces did not. A re-delivery carries only the files its task already wrote; "
-              f"source the task never wrote that already holds the fact is a stop — «A delivery "
-              f"whose implementer finds every criterion of the task already met by source the "
-              f"tree holds writes no record and stops, naming the files that hold the fact» "
-              f"(SPEC-004 R20) — and its door is the one `trace.py --encodes` decides over "
-              f"those files.")
+              f"replaces did not. A re-delivery carries in `files` only the files its task "
+              f"already wrote; where it writes no source, the files that hold the fact go under "
+              f"`stands` instead — «A re-delivery that writes no source and finds the fact held "
+              f"in a file the earlier record does not name is R20's: its record replaces the "
+              f"earlier one carrying `stands`.» (SPEC-004 R21)")
         return 1
     print(f"every path this tree changed under {target_root} is named by the "
           f"{len(named)} record(s) given")

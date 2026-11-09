@@ -27,7 +27,7 @@ is reached, before acting on it.
 - [ ] 1 Plan: skipped where the ask names a reach; else /plan-work
 - [ ] 2 Commit the plan
 - [ ] 3 Deliver: --outstanding, then /implement-task, per task; commit each; a stop:
-      references/stops.md; under a goal: references/goal.md
+      references/doors.md, references/stops.md; under a goal: references/goal.md
 - [ ] 4 Review: /review-change under the name the rule gives; commit
 - [ ] 5 Prove what the review left testable, once: references/prove.md
 - [ ] 6 Measure: telemetry.py --probe; commit; after a stop too
@@ -96,12 +96,11 @@ and hold the specification root to `git status --porcelain`: anything but a clea
 committed root is a stop. An uncommitted specification is one nobody reviewed.
 
 **This skill never invokes `/analyse`** — not to open the run, not to unblock it. A fact the
-specification turns out not to state mid-route — the implementer's stop over a silence — ends the
-run, and the `/analyse` invocation that stop hands over is relayed to the person verbatim. The one
-writer the run admits into the specification root is `/plan-work`'s own decided-fact route, inside
-that skill's invocation and under its own decision log. The one exception is a goal whose condition
-asks to specify a prose objective: `/analyse` once, before the plan and never to unblock a stop —
-read `references/goal.md` before the plan.
+specification turns out not to state mid-route — the implementer's stop over a silence — goes to
+`/plan-work`'s decided-fact route (`references/doors.md`), the one writer the run admits into the
+specification root, under its own decision log; the `/analyse` invocation beside it is relayed
+verbatim. The one exception is a goal whose condition asks to specify a prose objective: `/analyse`
+once, before the plan and never to unblock a stop — read `references/goal.md` before the plan.
 
 **The tree.** Before any step,
 `git status --porcelain -- <work-root> <delivery-root> <target-source-root> <specification-root>`
@@ -173,11 +172,12 @@ and invoke. After each delivery that wrote both its records — the implementati
 commit the delivery root, the target source root and the trace file in one commit,
 `deliver-scope <slug>: deliver <task>`, and append the step's line to the log.
 
-A delivery that ends in a stop instead of records ends the loop, unless `references/goal.md` answers
-it under a goal. Read `references/stops.md`: relay that report's own doors whole, commit nothing
-further but the measure, and go to step 6. A delivery that stopped is never committed, whatever it
-left in the tree: what it wrote is the person's to read, keep or discard. A task whose delivery gave
-up is not re-attempted in this run: the same invocation again is the person's decision about cost.
+A delivery that ends in a stop instead of records ends the loop, unless `references/doors.md` or,
+under a goal, `references/goal.md` answers it. Read `references/stops.md`: relay that report's own
+doors whole, commit nothing further but the measure, and go to step 6. A delivery that stopped is
+never committed but for runs `references/doors.md` names: what it wrote is the person's to read,
+keep or discard. A task whose delivery gave up is not re-attempted in this run: the same invocation
+again is the person's decision about cost.
 
 ### 4. Review
 
@@ -227,8 +227,8 @@ per line. It is a marker, never a node: no contract holds it, and the validator 
 the delivery root as `plan.py` keeps `closure.md` at the work root. The run's own decisions — the
 slug derived, the target decided, the order taken, the stop that ended it — are written there.
 
-A run a stop ended closes the log with one stop line, and under a goal each door taken is one
-`decided:` line: `references/stops.md` and `references/goal.md` give both forms.
+A run a stop ended closes the log with one stop line, and each door taken is one `decided:` line:
+`references/stops.md` and `references/doors.md` give both forms.
 
 ## Report, and stop
 
@@ -262,4 +262,4 @@ Then stop. The commit range is the review, and it belongs to the person.
   what the condition lacks and that `/goal clear` and the composed condition answer it, and you
   carry nothing on by hand.
 - Override, soften or skip any stop an entry point raised — its rules bind its invocation whole, and
-  your only grant over a stop is to relay it.
+  your grant over a stop is to relay it or take its derived door (`references/doors.md`).

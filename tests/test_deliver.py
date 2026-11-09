@@ -1523,6 +1523,38 @@ def test_a_review_that_did_not_read_where_the_implementation_stands_is_refused(
     assert problems_of(delivery, work, target, root) == []
 
 
+def found_standing(delivery: Path, target: Path, write_delivery,
+                   record_stands: list[str]) -> None:
+    """The fixture task left as the plan wrote it, carrying no `stands`, and its record rewritten
+    as a delivery that found the work already standing — repinned, the proof repinned under it."""
+    (target / "src" / "orders").mkdir(parents=True, exist_ok=True)
+    (target / "src" / "orders" / "place.ts").write_text("export {};\n", encoding="utf-8")
+    record = json_front(delivery, "implementation/checkout/record-order")
+    record["stands"] = record_stands
+    record["files"] = []
+    for entry in record["nodes"]:
+        entry.pop("encoded_at", None)
+    write_delivery("implementation/checkout/record-order", record)
+    repin_proof(delivery, write_delivery)
+
+
+def test_a_record_found_standing_where_the_plan_said_nothing_is_sound(
+        delivery, work, root, target, sound_delivery, write_delivery):
+    """«A task whose delivery finds its implementation already standing carries `stands` in its
+    implementation record instead» (SPEC-004 R18). The configurator shape of 2026-11-08: the EDG-07
+    sweep task changed one test, its three nodes already held in the rate-limit source, and the
+    delivery stopped for a person to plan `stands` the trace had already decided."""
+    found_standing(delivery, target, write_delivery, ["src/orders/place.ts"])
+    assert problems_of(delivery, work, target, root) == []
+
+
+def test_a_record_found_standing_still_names_a_file_the_target_holds(
+        delivery, work, root, target, sound_delivery, write_delivery):
+    found_standing(delivery, target, write_delivery, ["src/orders/gone.ts"])
+    said(problems_of(delivery, work, target, root),
+         "says the implementation stands at src/orders/gone.ts, and")
+
+
 def test_a_proof_task_builds_no_substrate_and_always_implements_a_node():
     """`stands` is a proof task's mark: what it proves is a node's fact, so a task without
     `implements` has nothing to demonstrate, and one that also `produces` would be building the
@@ -3215,6 +3247,65 @@ def test_a_record_that_stands_is_written_where_only_another_nodes_binding_is_out
     done = write_standing(delivery, planned, standing)
     assert done.returncode == 0, done.stdout + done.stderr
     assert (delivery / "implementation/checkout/record-order.md").is_file()
+
+
+def test_a_record_found_standing_over_nodes_the_trace_binds_nowhere_names_the_adoption(
+        planned, delivery, work, root, target, standing, write_plan):
+    """«the record writer refuses the record and names the reconciliation that would write them —
+    an adoption over those files whose candidates are the task's nodes bound to none of them»
+    (SPEC-004 R20). The productorder shape of 2026-11-06: two nodes bound to nothing, a delivery
+    that then invented a change so the writer would admit a record. The door is printed whole, and
+    once the adoption binds the candidates the same return is written."""
+    two_standing(work, root, target, standing, write_plan,
+                 ["domain/sales/order", "domain/sales/invoice"])
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 1
+    assert (f"door: /reconcile, an adoption — files: {STANDING_FILE} {SECOND_STANDING_FILE} — "
+            f"candidates: domain/sales/order domain/sales/invoice") in done.stdout
+    assert not (delivery / "implementation/checkout/record-order.md").exists()
+    bind_file(target, root, "domain/sales/order", STANDING_FILE)
+    bind_file(target, root, "domain/sales/invoice", SECOND_STANDING_FILE)
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "door:" not in done.stdout
+
+
+def test_a_record_found_standing_with_one_node_unbound_names_only_that_candidate(
+        planned, delivery, work, root, target, standing, write_plan):
+    """The partymgmt shape of 2026-11-08: the files bound to the task's domain nodes and not to
+    two of its rules. An ordinary reconciliation judges a file against the nodes already bound to
+    it and could not bind the rules; the adoption names exactly the nodes bound nowhere."""
+    two_standing(work, root, target, standing, write_plan,
+                 ["domain/sales/order", "domain/sales/invoice"])
+    bind_file(target, root, "domain/sales/order", STANDING_FILE)
+    bind_file(target, root, "domain/sales/order", SECOND_STANDING_FILE)
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 1
+    assert (f"door: /reconcile, an adoption — files: {STANDING_FILE} {SECOND_STANDING_FILE} — "
+            f"candidates: domain/sales/invoice") in done.stdout
+
+
+def test_a_record_found_standing_over_a_moved_binding_names_an_ordinary_reconciliation(
+        planned, delivery, work, root, target, standing):
+    """«or an ordinary one where every node is bound and a binding moved» (SPEC-004 R20)."""
+    bind_standing(target, root, "domain/sales/order")
+    (target / STANDING_FILE).write_text("export const place = () => 2\n", encoding="utf-8")
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 1
+    assert f"door: /reconcile — files: {STANDING_FILE}" in done.stdout
+    assert "an adoption" not in done.stdout
+
+
+def test_a_stands_file_bound_to_no_node_of_the_task_hands_no_door(
+        planned, delivery, work, root, target, standing, write_plan):
+    """A file the trace binds to no node the task implements is no `stands` file: the return
+    answers again without it, and no reconciliation is handed for it."""
+    two_standing(work, root, target, standing, write_plan, ["domain/sales/order"])
+    bind_file(target, root, "domain/sales/order", STANDING_FILE)
+    bind_file(target, root, "domain/sales/invoice", SECOND_STANDING_FILE)
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 1
+    assert "door:" not in done.stdout
 
 
 def test_a_return_read_from_a_rendered_notification_is_refused(tmp_path, planned, delivery):

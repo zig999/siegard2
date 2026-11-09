@@ -5,22 +5,16 @@ later where a step stopped under a goal.
 
 ## What a goal changes
 
-A goal condition naming this skill is the person's ask armed as a standing automation, and it
-changes what four stops do — nothing else: «Under a goal condition naming the orchestrating route,
-the orchestrating entry point takes the door a derived recommendation names where that door is an
-entry point the route invokes, and takes the door a judged choice leaves only as the door decider
-returned it, blind to the condition and while the condition's budget of judged doors is not spent.»
-(SPEC-006 R7)
+A goal changes three things, and the derived doors stay this run's either way
+(`references/doors.md`): an objective it asks to specify, a finding its findings policy names, and a
+judged choice, which a run «takes the door a judged choice leaves only under a goal condition naming
+the route, as the door decider returned it, blind to the condition and while the condition's budget
+of judged doors is not spent» (SPEC-006 R7).
 
-Every door taken is one line of the log, on its own,
-`decided: <door> — <criterion> — <deciding fact>`, and its commit names the run as every other does.
-The plugin's `PreToolUse` hook refuses a commit that adds a line opening with `decided:` or
-`recommended:` out of that form, or a judged `decided:` line where no goal armed through the
-framework names this initiative: a choice no fact decides, outside such a goal, is handed to the
-person and never written as taken. A door the three reserved questions hold — a contradiction, two
-readings of one piece of evidence, a finding's worth — is never taken.
-
-The taking is yours; the judgment never is.
+A judged door taken is one `decided: <door> — <criterion> — <deciding fact>` line, which the
+plugin's `PreToolUse` hook refuses where no goal armed through the framework names this
+initiative. A door the three reserved questions hold — a contradiction, two readings of one piece
+of evidence, a finding's worth — is never taken. The taking is yours; the judgment never is.
 
 ## An objective the condition asks to specify
 
@@ -43,27 +37,6 @@ The report carries what `/analyse`'s own report states for a reviewer: the decid
 the nodes written, what the increment may have put delivered code in breach of, and the
 reconciliation candidates it named. The person reviews this specification after the goal, not
 before.
-
-## A task waiting on a re-bind
-
-The door is the one `--outstanding` names: `/plan-work` over the slug, the plan's ordinary
-evolution. Take it, commit the work root and the specification root as
-`deliver-scope <slug>: rebind <task>`, and resume the loop — «a task waiting on a re-bind by
-planning over its slug, each once per task, before the run resumes; a second time over one task is a
-stop.» (SPEC-008 R8)
-
-## A delivery that stopped over a fact no node states
-
-`/implement-task`'s report hands the `/plan-work` invocation of the decided-fact route beside the
-`/analyse` one. Take the first, commit the work root and the specification root as
-`deliver-scope <slug>: decide <task>`, and resume: the task re-delivers against the fact now stated.
-Once per task, as above. Where the decider returns the fact as one the specification contradicts,
-that is a contradiction, and the run stops on it.
-
-## A derived recommendation
-
-Where a stopping report recommends a door on one of the four derived grounds and that door is
-`/plan-work`, `/implement-task` or `/review-change`, take it, with the criterion the report gave.
 
 ## A judged choice
 

@@ -27,7 +27,7 @@ its step is reached, before acting on it.
 
 ```
 - [ ] Inputs: file set, project root, target, slug, else one stop naming all; certifications,
-      a rewrite or adoption only where the person names them
+      a rewrite or adoption only where named
 - [ ] Root: bin/project.py <project-root>, or --here where none is named
 - [ ] Tree: git status --porcelain -- <named paths> <proof paths> <specification root> prints
       nothing; siegard-trace.json clean; the target under git
@@ -76,7 +76,7 @@ A missing input is a stop, not a default:
    toplevel. A slug already taken is a stop and not a suffix: the record it would overwrite
    justifies a binding still in the trace.
 
-Two optional inputs, and one mode, each named by the person and never inferred:
+Two optional inputs, and one mode, each named and never inferred:
 
 - **certifications** — per node, the test file(s) the person offers as its proof and the registry
   step that runs them. Absent, every binding stays decided by reading. `references/certify.md`

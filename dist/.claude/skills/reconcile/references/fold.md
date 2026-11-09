@@ -11,8 +11,8 @@ a small YAML file in the workspace carrying:
 - `summary` — what changed and why the person states it is correct, as theirs, never restated as a
   finding of yours;
 - `said` — the person's own words that asked for this reconciliation, quoted verbatim from their
-  message: never a paraphrase, and never words they did not type. The fold refuses a premise
-  without it;
+  message: never a paraphrase, and never words they did not type — under `/deliver-scope`, the ask
+  its log quotes. The fold refuses a premise without it;
 - `target`;
 - one `files` entry per named file, with its `change` line: what the file now does differently,
   not what was typed into it.

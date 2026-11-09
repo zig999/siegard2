@@ -693,21 +693,32 @@ def test_a_proof_task_is_bound_against_the_nodes_that_name_its_node():
     assert "BLOCKING, from the specification" in increment
 
 
-def test_a_return_that_writes_nothing_is_a_stop_whose_door_the_trace_decides():
-    """An implementer that finds the criteria already met returns no record, and the record
-    writer admits a task writing no source only with `stands`. What the delivery hands then is
-    the trace's answer over the files the return names: a plan carrying `stands` where every
-    node is bound to them, the reconciliation where one is not."""
+def test_a_return_that_finds_the_work_standing_is_delivered_and_hands_one_door():
+    """«A delivery whose implementer finds every criterion of the task already met by source the
+    tree holds writes no source: its implementation record carries `stands` over the files that
+    hold the fact» (SPEC-004 R20). The implementer returns that mapping; the skill writes it from
+    the return and never composes it; a refusal hands the one reconciliation the writer's `door:`
+    line names, never the plan over the slug, and a refusal after that reconciliation is the
+    person's. Measured on 2026-11-09: every earlier form of this stop waited on a person."""
     returns = reference_text("implement-task", "implementer-returns")
-    stop = returns.split("## A return that writes nothing", 1)[1].split("## A return that stopped", 1)[0]
-    assert "A return that writes nothing because the work already stands" in stop
-    assert "trace.py --encodes <target-source-root> <each file named>" in stop
-    assert "`/plan-work` over this slug" in stop
-    assert "`/reconcile` over those files" in stop
-    assert "SPEC-004 R20" in stop
-    agent = (REPO / "src/claude/agents/task-implementer.md").read_text(encoding="utf-8")
+    section = " ".join(returns.split("## A return that carries `stands`", 1)[1]
+                       .split("## A return that stopped", 1)[0].split())
+    assert "is delivered, never improvised around" in section
+    assert "written through `--write-implementation --from`" in section
+    assert "**A refusal ending in a `door:` line**" in section
+    assert "ready to paste from that line alone" in section
+    assert "Hand no other door" in section
+    assert "`<epic>-<slug>-stands`" in section
+    assert "recommend no door" in section, "the second refusal is two readings, the person's"
+    assert "`/plan-work` over this slug" not in section, "the plan door is gone from this stop"
+    assert "SPEC-004 R20" in section
+    agent = " ".join((REPO / "src/claude/agents/task-implementer.md")
+                     .read_text(encoding="utf-8").split())
     assert "already met by source the tree holds" in agent
-    assert "return no mapping" in agent.lower()
+    assert "Return the mapping with `stands`" in agent and "`files: []`" in agent
+    assert "inventing a change to have a record is the failure" in agent
+    skill = " ".join(skill_text("implement-task").split())
+    assert "A return carrying `stands`, or no mapping at all, is never improvised around" in skill
 
 
 def test_a_re_delivery_hands_the_record_it_replaces_and_carries_its_files():
@@ -723,7 +734,8 @@ def test_a_re_delivery_hands_the_record_it_replaces_and_carries_its_files():
     agent = " ".join((REPO / "src/claude/agents/task-implementer.md")
                      .read_text(encoding="utf-8").split())
     assert "**the earlier record**" in agent
-    assert "is not the stop R20 states" in agent
+    assert "holds the fact writes no `stands`" in agent
+    assert "return the `stands` mapping above" in agent
 
 
 

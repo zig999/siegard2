@@ -1,6 +1,7 @@
 # What ends the run
 
-Read where a step stops, before the log's last line is written.
+Read where a step stops and `references/doors.md` takes no door, before the log's last line is
+written.
 
 Every stop below ends the run with the doors the stopping report already carried, relayed verbatim,
 and with the log naming it — where that report recommended a door, on a line of its own,
@@ -10,10 +11,8 @@ report stated in plain words — never a recommendation the report did not make.
 around, and none is retried. Each carries its class, in backticks after it:
 
 - a `BLOCKING, from the specification —` note standing on every task the set has left — `blocking`;
-- a specification silence outside a goal — the report hands the `/analyse` invocation beside
-  `/plan-work`'s decided-fact route, and which one is taken is the person's — `silence`;
-- a task `deliver.py --outstanding` lists as waiting on a re-bind — a node it implements moved since
-  the plan was derived, and the door is `/plan-work` over the slug, never a derivation — `rebind`;
+- a silence over a task the decided-fact route already answered in this run — `silence`;
+- a task waiting on a re-bind a second time in this run — `rebind`;
 - a suite whose diagnosis names a disagreement between the two producers — `producers`;
 - a delivery that gave up, a red the task's own files could still answer and its producer did not —
   `gave-up`;
@@ -22,11 +21,9 @@ around, and none is retried. Each carries its class, in backticks after it:
 - a pending change you did not make, anywhere the pathspec of the tree check reaches —
   `pending-change`;
 - a specification the gate does not pass — `specification`;
-- under a goal, a fact the decided-fact route returns as one the specification contradicts —
-  `contradiction`;
+- a fact the decided-fact route returns as one the specification contradicts — `contradiction`;
 - under a goal, a judged choice once the condition's budget of judged doors is spent — `budget`;
-- a task carrying `stands` whose own nodes' bindings to those files this run's own deliveries left
-  out of date — the door is `/reconcile` over those files, the person's to ask for — `stands`;
+- a planned `stands` the record writer refuses again after its reconciliation — `stands`;
 - under a goal that asks to specify, a stop of `/analyse` other than one over material that states
   no fact or names nodes and changes none — `analyse`;
 - a red no change to the task's own files can answer — a build red over a tree the delivery left
@@ -35,8 +32,8 @@ around, and none is retried. Each carries its class, in backticks after it:
   again. A fix that lies only in tests the target declares is not this stop: `/implement-task` hands
   it to its test-author before the record, and only the test of another task whose files this
   delivery shares none of comes back here — `outside-task`;
-- a delivery whose implementer found every criterion already met by source the task never wrote,
-  where the door the trace decides is not one this run takes — `already-met`;
+- a task found already met that the record writer refuses again after its reconciliation, or
+  whose door `bin/door.py --check` refuses — `already-met`;
 - a stop no class above names — its fact the stopping report's own words, which is the whole of what
   the person reads — `unclassified`.
 

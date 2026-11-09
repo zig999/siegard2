@@ -9,7 +9,7 @@ task, disclosed in the node's log.
 
 **The invocation names it; it is never inferred.** `/implement-task`'s report hands this invocation
 beside an `/analyse` one, both filled with the fact and the task; the choice between them is the
-person's. Under a goal the person armed, `/deliver-scope` takes this one.
+person's. A `/deliver-scope` run takes this one, with or without a goal.
 
 ```
 situate → intake → step 4's settlement of the one fact → re-bind the task → validate → report → stop

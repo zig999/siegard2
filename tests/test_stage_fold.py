@@ -3515,3 +3515,41 @@ def test_a_rewrite_names_registry_steps_and_rides_no_other_staging(carried):
     for mode in ("--audit", "--review"):
         done, _ = staged_rewrite(carried, f"round{mode}", mode)
         assert done.returncode == 2 and "--rewrite is a mode of --stage over drift" in done.stderr
+
+
+def test_an_adoption_a_delivery_names_binds_its_candidate_beside_a_file_s_own_nodes(adopting):
+    """«A delivery that finds its task already met by source names the adoption itself» (SPEC-005
+    R3): files a delivery wrote, bound to other nodes, and a task node bound to none of them. The
+    partymgmt shape of 2026-11-08: an ordinary reconciliation read the unbound rules as candidates
+    only and bound neither. The adoption reads the candidate beside each file's own nodes, binds
+    it where the judgment holds it, and leaves an intact binding already there unjudged and as it
+    was."""
+    adopt_staged(adopting)
+    _, first = adopted_record(adopting, {
+        FILE: read_as({NODE: "line 1", OTHER: "nowhere", RULE: "nowhere"}),
+        SECOND: read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+        THIRD: read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+    })
+    assert run("--bind-record", adopting / "backend", adopting / "specs", first).returncode == 0
+    staged, workspace = adopt_staged(adopting, slug="epic-task-stands", files=[FILE, SECOND],
+                                     nodes=[RULE])
+    assert staged.returncode == 0, staged.stdout + staged.stderr
+    manifest = manifest_of(workspace)
+    assert manifest["files"][FILE]["also"] == [RULE]
+    save_return(adopting, "epic-task-stands", FILE, read_as({RULE: "line 1"}))
+    save_return(adopting, "epic-task-stands", SECOND, read_as({RULE: "nowhere"}))
+    premise = {**ADOPT_PREMISE, "title": "Bind the task's rule where its delivery found it",
+               "said": "deliver the scope end to end",
+               "files": [{"path": given, "change": "unchanged; read for the task's candidate"}
+                         for given in (FILE, SECOND)]}
+    done, record = folded(adopting, "epic-task-stands", premise)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    by_node = {entry["node"]: entry for entry in front["nodes"]}
+    assert by_node[RULE]["conforms"] and by_node[RULE]["encoded_at"] == [FILE]
+    bound = run("--bind-record", adopting / "backend", adopting / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    trace_file = json.loads((adopting / "siegard-trace.json").read_text(encoding="utf-8"))
+    held = {e["node"]: sorted(f["path"] for f in e["files"]) for e in trace_file["bindings"]}
+    assert held[RULE] == [f"backend/{FILE}"]
+    assert held[NODE] == [f"backend/{FILE}"]

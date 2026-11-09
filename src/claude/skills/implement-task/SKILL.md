@@ -24,7 +24,7 @@ its step is reached, before acting on it.
       stands: references/redelivery.md; deliver.py --standard, keep its three phase lines
 - [ ] 2 Set up: run.py --run <epic>-<slug>-setup where the registry declares an install
 - [ ] 3 Implement: read references/delegation.md; spawn siegard:task-implementer with its block;
-      a return that writes nothing: references/implementer-returns.md
+      a return carrying `stands`, or none: references/implementer-returns.md
 - [ ] 4 Build: run.py --run <epic>-<slug>-build; red: references/red-build.md; produces:
       references/substrate.md; read references/records.md; deliver.py --write-implementation
 - [ ] 5 Prove: spawn siegard:test-author with the block references/delegation.md holds
@@ -209,8 +209,8 @@ Spawn a `siegard:task-implementer` subagent — its judgment lives at
 `references/delegation.md`, filled by the rules beside it. Every path is absolute and the slice
 pasted.
 
-A return that writes nothing because the work already stands is a stop with its doors, never an
-improvisation: read `references/implementer-returns.md`.
+A return carrying `stands`, or no mapping at all, is never improvised around: read
+`references/implementer-returns.md`.
 
 ### 4. Build
 

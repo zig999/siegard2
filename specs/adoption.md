@@ -53,7 +53,8 @@ constraints spent 26 judges on files the notes never cited while the notes named
   to.
 - **Candidate** — a node an analysis wrote from material read from adopted source, named to the
   staging that judges that source — by the ledger, per file the material read it at or governs,
-  or by the invocation.
+  or by the invocation; or a node a delivery found held in source the trace binds it to none of,
+  named by the invocation its record writer printed (R3).
 - **Intent material** — material read from a target's declared tests: what the source should do,
   each fact beside the test it was read at and the file of the source it governs.
 - **Ledger** — the record beside survey or intent material saying, per fact line, the node that
@@ -85,7 +86,10 @@ constraints spent 26 judges on files the notes never cited while the notes named
 
 - **R3** — A binding of adopted source rests on a reconciliation record whose judgment cleared
   the pair. The candidates are named in the invocation, never discovered; a raw bind the caller
-  states is not an adoption.
+  states is not an adoption. A delivery that finds its task already met by source names the
+  adoption itself (SPEC-004 R20): its files are those the implementer found holding the fact, and
+  its candidates the task's nodes the trace binds to none of them, as the record writer printed
+  them.
 - **R4** — An adopted node binds the files whose judgment holds its fact and no others. A
   candidate no file of the set holds is reported and bound to nothing; a file the trace already
   binds it to must still hold it.
@@ -208,7 +212,10 @@ constraints spent 26 judges on files the notes never cited while the notes named
    (`test_an_adoption_stages_without_a_trace_and_reads_every_candidate_on_every_file`,
    `test_an_adoption_needs_candidates_and_is_no_other_staging`,
    `test_the_fold_binds_each_adopted_node_to_the_files_that_hold_its_fact`,
-   `test_a_fact_held_nowhere_with_no_finding_binds_nothing_and_says_why`).
+   `test_a_fact_held_nowhere_with_no_finding_binds_nothing_and_says_why`); an adoption a
+   delivery names over files already bound to other nodes binds its candidate beside them and
+   leaves their intact bindings as they were
+   (`test_an_adoption_a_delivery_names_binds_its_candidate_beside_a_file_s_own_nodes`).
 2. For R5: `trace.py --untraced` puts every tracked file in exactly one of the five states, a
    certification's proof counts as bound, a declared test no certification names counts as
    uncertified and that line is absent where no test is declared, and a submodule is kept outside

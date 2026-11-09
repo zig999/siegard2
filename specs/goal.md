@@ -105,7 +105,7 @@ session that stopped while its subagents were still running. The harness refuses
 
 ### What a goal answers without a person
 
-- **R8** — Under a goal, a delivery that stopped over a fact no node states is answered by planning's decided-fact route, and a task waiting on a re-bind by planning over its slug, each once per task, before the run resumes; a second time over one task is a stop.
+- **R8** — In an orchestrating run, under a goal or under the person's own ask alike, a delivery that stopped over a fact no node states is answered by planning's decided-fact route, a task waiting on a re-bind by planning over its slug, and a delivery whose record carrying `stands` the writer refused by the reconciliation the refusal names (SPEC-004 R20), each once per task, before the run resumes; a second time over one task is a stop.
 - **R9** — Under a goal whose findings policy names a finding's kind, each such finding of the run's review is answered by one corrective increment over the file it names, delivered and reviewed in the same run, once: what that review finds is reported and never corrected again.
 
 - **R10** — Under a goal whose condition asks to specify a prose objective, the orchestrating entry point invokes `/analyse` once, before the plan, over the objective as the person armed it, and commits the specification root apart. That commit takes the ledger the analysis answered beside the objective with it (SPEC-001 R16). A stop of `/analyse` over material that states no fact, or that names nodes and changes none, is nothing to specify, and the plan follows; every other stop of it ends the run. Each of those two stops is printed as one line of its own, `stop: no-fact — <what the material would have to state>` or `stop: no-change — <the nodes it names>`.
@@ -172,6 +172,10 @@ session that stopped while its subagents were still running. The harness refuses
    to the script on stdin; no other shipped skill and not the session rules running
    `goal.py --arm`; and the handoff it renders, followed by the two lines it hands to paste,
    passing `handoff.py --check`.
+12. Tests hold `/deliver-scope` to R8 over its text: the re-bind, the decided-fact route and the
+   reconciliation a record writer names each taken in a run with or without a goal, each under
+   its commit message, once per task, a second time over one task a stop —
+   `tests/test_deliver_scope.py` proves each.
 
 ## Readings
 

@@ -1,46 +1,44 @@
-# A return that writes nothing, or stops
+# A return that stands, or stops
 
-Read at step 3 or step 4 when the implementer returns no mapping.
+Read at step 3 when the implementer's return carries `stands`, or returns no mapping.
 
-## A return that writes nothing
+## A return that carries `stands`
 
-**A return that writes nothing because the work already stands is a stop with its doors, never an
-improvisation.** The tree stays as it was found and the delivery root gains nothing: the record
-writer admits a task that writes no source only with `stands`, and `stands` is `/plan-work`'s to
-write. «A delivery whose implementer finds every criterion of the task already met by source the
-tree holds writes no record and stops, naming the files that hold the fact.» (SPEC-004 R20)
+**A return that writes nothing because the work already stands is delivered, never improvised
+around:** «A delivery whose implementer finds every criterion of the task already met by source
+the tree holds writes no source: its implementation record carries `stands` over the files that
+hold the fact, and its proof follows as for any task.» (SPEC-004 R20) From step 4 on, deliver it as
+`references/redelivery.md` states for a task carrying `stands`. Two things differ. The mapping is
+the implementer's return, written through `--write-implementation --from`. The record carries the
+`--note` line `Found met by source the tree holds; no source written.`
 
-Run, over the files the return names:
+The writer holds `stands` to the trace, as for a planned one, and may refuse the record:
 
-```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes <target-source-root> <each file named>
-```
+- **Only a file bound to no node the task implements**: re-enter the implementer once with the
+  refusal verbatim, to answer again without that file. The same refusal again is a stop.
+- **A refusal ending in a `door:` line**: the line names the reconciliation that writes the
+  missing bindings, «and that reconciliation is the delivery's one door» (SPEC-004 R20). Stop, and
+  hand `/reconcile` ready to paste from that line alone. Its file set and, for an adoption, its
+  mode and candidates are as printed; its slug is `<epic>-<slug>-stands`, or the least `-N` from 2
+  that `siegard-reconcile/` leaves free. Recommend it, derived, `precondition unmet`, the refusal
+  as the deciding fact. Hand no other door, and name `/implement-task` over this task as what
+  follows it. The orchestrating skill logs this stop as `already-met` wherever it does not take
+  the door itself.
+- **A `door:` line after `siegard-reconcile/<epic>-<slug>-stands.md` exists**: the reconciliation
+  ran and left the binding unwritten. «A node the adoption leaves bound to none of the files is a
+  stop, and the person's» (SPEC-004 R20). Hand both readings — each node's `how` from the return,
+  and the record's `unheld` entries — and recommend no door: which holds is the person's own
+  decision.
 
-The output decides which door is recommended — «Where the trace binds every node the task
-implements to those files, the door is the plan over this slug carrying `stands` over them; where
-it does not, the door is the reconciliation over them, and the plan waits for that binding.»
-(SPEC-004 R20):
-
-- **Every node bound to some of those files**: recommend `/plan-work` over this slug naming the
-  task and those of the files bound to one of its nodes; it writes `stands` only where `--encodes`
-  confirms them. Hand `/reconcile` over those files beside it.
-- **Any node bound to none**: recommend `/reconcile` over those files. Hand `/plan-work` beside it,
-  marked as refusing: it would not write `stands` over files the trace does not bind.
-
-Report the stop with the output verbatim and both doors ready to paste, the recommendation's kind
-derived, as `references/report.md` states for a stop that hands more than one door. Taking either
-is the person's. The orchestrating skill logs this stop as `already-met` wherever it does not take
-the door itself.
-
-**A re-delivery whose task's own files already hold the fact is not that stop.** «A re-delivery of
-a task whose own earlier implementation record names every file that holds the fact is not the stop
-R20 states: the record is written again over those files, answering the task as it stands.»
+**A re-delivery whose task's own files already hold the fact keeps `files`.** «A re-delivery of a
+task whose own earlier implementation record names every file that holds the fact writes no
+`stands`: the record is written again over those files, answering the task as it stands.»
 (SPEC-004 R21) That is the re-delivery a re-plan leaves owed — a re-bind that widened what the task
 implements, or a criterion that reads differently and is already met. The `earlier record` line
 lets the implementer see it; its return names those files, each with what it does now and every
 node answered as it stands, and is written through `--write-implementation --replace`, with the
-proof following it whole. A return that finds the fact in a file the earlier record does not name
-is the stop above, and step 7 refuses a record that names one anyway.
+proof following it whole. A return that writes nothing and finds the fact in a file the earlier
+record does not name carries `stands`, as above, written with `--replace`.
 
 ## A return that stopped
 
@@ -55,10 +53,10 @@ A stop over a silence ends with two doors, each filled with everything you know:
 - `/plan-work`'s decided-fact increment, with the project root, the target, the slug, the task and
   the same fact — the fact is decided blind and disclosed in the node's log.
 
-Which one is the person's; under a goal the person armed, `/deliver-scope` takes the second. Once
-the specification holds the fact, the task re-runs through `/plan-work`'s implement-against step,
-as after a settled BLOCKING note: the binder classes whether the decided value contradicts a
-criterion, and the re-bind adds the node to the task's `implements` where it was missing.
+Which one is the person's; `/deliver-scope` takes the second. Once the specification holds the
+fact, the task re-runs through `/plan-work`'s implement-against step, as after a settled BLOCKING
+note: the binder classes whether the decided value contradicts a criterion, and the re-bind adds
+the node to the task's `implements` where it was missing.
 
 Where the implementer wrote files and then stopped, the run failed: name the files that exist and
 leave them for a person to look at, never tidied away.

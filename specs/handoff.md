@@ -88,7 +88,7 @@ and the reviewers' evidence-only returns already hold.
 
 ### What a goal takes
 
-- **R7** — Under a goal condition naming the orchestrating route, the orchestrating entry point takes the door a derived recommendation names where that door is an entry point the route invokes, and takes the door a judged choice leaves only as the door decider returned it, blind to the condition and while the condition's budget of judged doors is not spent. Each door taken is one line of the run's orchestration log, `decided: <door> — <criterion> — <deciding fact>`, and a door R3 reserves is never taken. Outside a goal, a session takes a derived recommendation only where the person's own message says to proceed, `bin/door.py --check` accepts the door and every other door is excluded, and the door taken is recorded the same way: one `decided:` line in the orchestration log of the run it continues where one exists, and otherwise in the body of the commit that follows it.
+- **R7** — The orchestrating entry point takes the door a derived recommendation names where that door is an entry point the route invokes and `bin/door.py --check` accepts it — under a goal condition naming the route and under the person's own ask that invoked the route alike, the same door over the same task once in one run — and takes the door a judged choice leaves only under a goal condition naming the route, as the door decider returned it, blind to the condition and while the condition's budget of judged doors is not spent. Each door taken is one line of the run's orchestration log, `decided: <door> — <criterion> — <deciding fact>`, and a door R3 reserves is never taken. Outside a goal, a session takes a derived recommendation only where the person's own message says to proceed, `bin/door.py --check` accepts the door and every other door is excluded, and the door taken is recorded the same way: one `decided:` line in the orchestration log of the run it continues where one exists, and otherwise in the body of the commit that follows it.
 
 - **R12** — A `git commit` a session runs in a project that declares `siegard.json` is refused by the plugin's `PreToolUse` hook where a line it adds to an orchestration log opens with `decided:` or `recommended:` and is not of the form R5 and R7 state with a criterion R2 names, or opens with `decided:` over a judged criterion while no goal armed through the framework names that log's initiative. A line the commit adds is one the log holds on disk, read past an opening `- ` and its backticks, beyond what the log holds at `HEAD`, and a log `HEAD` does not hold is read whole; the commit reaches a log the index holds changed, a log a path the command names is or holds, and every changed log where the command stages or commits all that is tracked. The refusal names each line and the form it misses, and is said to the session; where the hook cannot read the command, the project or a log, the commit goes ahead.
 
@@ -177,7 +177,22 @@ and the reviewers' evidence-only returns already hold.
    that is no commit, a tool other than Bash and an event record that does not parse are all
    allowed in silence.
 
+9. A test holds `/deliver-scope` to R7 over its text: a derived door taken under the ask that
+   invoked the run, with or without a goal, where `bin/door.py --check` accepts it and no
+   `decided:` line of the run took it over the same task; a judged door left to a goal; and the
+   three questions R3 reserves never taken — `tests/test_deliver_scope.py` proves each.
+
 ## Readings
+
+- 2026-11-09 — grounds for R7's derived doors under the person's ask, read from the orchestration
+  logs and transcripts of five sales consumers between 2026-11-07 and 2026-11-09 (Siegard 5.47.1
+  to 5.79.1): no goal was armed in any `/deliver-scope` run of the window, and a run that met a
+  stop handing a door the trace or a script decided ended there and waited for the person; where
+  the transcripts show the answer, it was "siga", "Sim", "1" or "Pq parou?". R7 took a derived door
+  only under a goal, and outside one only where a later message of the person said to proceed;
+  the ask that invoked the route already names it, as the generator's `CLAUDE.md` reads a message
+  that names the route. A judged door stays under a goal alone: the 2026-11-05 reading above is a session
+  spending a delegation the person wrote in prose on skipping a step.
 
 - 2026-11-05 — grounds for R12, read from the four sales consumers' transcripts and trees over
   2026-11-01T23:00Z..2026-11-05T23:46Z (Siegard 5.47.1–5.53.0): 416 commits, and
