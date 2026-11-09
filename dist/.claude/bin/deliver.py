@@ -2845,6 +2845,10 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
     owed = reviews_owed(nodes, plan_nodes, pass_names(), target_roots(target)[0])
     lines += [f"{tid}: owed a review — no review answers it as it stands: {'; '.join(said)}"
               for tid, said in sorted(owed.items()) if tid in tasks and tid in delivered]
+    named = {t for node in nodes.values() if node["kind"] == "review"
+             for t in listed(node["front"], "tasks") if isinstance(t, str)}
+    lines += [f"{tid}: never reviewed — no review names it"
+              for tid in sorted(tasks) if tid in delivered and tid not in named]
     return "\n".join(heading + lines + standards_held(nodes, target))
 
 

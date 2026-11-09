@@ -1043,8 +1043,10 @@ def test_the_outstanding_report_derives_what_no_field_records(delivery, work, ro
     plan_nodes, _ = deliver.load_plan(work, root)
     report = deliver.outstanding_report(nodes, plan_nodes, target)
     assert "task/checkout/bill-order: no record" in report
-    assert "task/checkout/record-order:" not in report, \
-        "a task with a record and a proof is not outstanding"
+    about = [line for line in report.splitlines() if line.startswith("task/checkout/record-order:")]
+    assert about == ["task/checkout/record-order: never reviewed — no review names it"], \
+        "a task with a record and a proof is not outstanding; the one line naming it is the " \
+        "receipt that no review names it, which bars nothing"
 
 
 def test_the_outstanding_report_names_the_set_a_caller_may_take_now(delivery, work, root, target,
@@ -3560,3 +3562,24 @@ def test_a_review_is_never_held_to_the_fix_step(delivery, work, root, target, so
     review reads the tree a delivery left and writes nothing into it."""
     write_delivery("review/first", green_review(work, root, write_standard(with_fix()), run_dir))
     assert problems_of(delivery, work, target, root) == []
+
+
+def never_reviewed_lines(delivery: Path, work: Path, target: Path, root: Path) -> list[str]:
+    validator = deliver.contract()
+    nodes, _ = deliver.collect(delivery, validator, deliver.pass_names())
+    plan_nodes, _ = deliver.load_plan(work, root)
+    report = deliver.outstanding_report(nodes, plan_nodes, target)
+    return [line for line in report.splitlines() if "never reviewed" in line]
+
+
+def test_a_delivered_task_no_review_names_is_reported_as_never_reviewed(
+        delivery, work, root, target, sound_delivery, write_delivery):
+    """«A delivered task no review names is reported as never reviewed beside the outstanding
+    tasks, and refused nowhere» (SPEC-004 R22). The productcatalog shape of 2026-11-08: status said
+    nothing blocked while one delivered task had never been reviewed, and the person had to ask
+    "o review já rodou sobre as tarefas?"."""
+    assert never_reviewed_lines(delivery, work, target, root) == [
+        "task/checkout/record-order: never reviewed — no review names it"]
+    assert problems_of(delivery, work, target, root) == [], "the line refuses nothing"
+    write_delivery("review/first", review_front(work, root))
+    assert never_reviewed_lines(delivery, work, target, root) == []

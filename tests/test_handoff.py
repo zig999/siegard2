@@ -722,3 +722,10 @@ def test_save_report_refuses_a_report_already_written_and_an_empty_one(tmp_path)
     assert path.read_text(encoding="utf-8") == "first\n"
     empty = save_report(path.with_name("other.md"), "  \n")
     assert empty.returncode == 1 and "empty" in empty.stdout
+
+
+def test_a_recommendation_written_as_convem_is_read_as_one():
+    """Read on 2026-11-09 over 77 stops the Stop hook flagged in the sales consumers: one opened
+    "Convém rodar…" — a recommendation in plain Portuguese the stems did not hold."""
+    text = "Convém rodar o /reconcile sobre os três arquivos antes de entregar a tarefa de novo."
+    assert handoff.decision_word_at(text, CONTRACT, ("recommendation",)) == 0

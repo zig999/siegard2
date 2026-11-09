@@ -63,8 +63,9 @@ one's output, so a round trip per command pays the wait once per command instead
 
    It answers that question in the plan's terms, which are implementation and proof, and a
    review is neither: `review/<name>.md` under the delivery root is the record `/review-change`
-   writes, and no command reports whether one exists. So list `<delivery-root>/<slug>/review/`
-   and say what it holds. **As a fact and never as an obligation** — nothing in this framework
+   writes. `--outstanding` names each delivered task no review names, «reported as never reviewed
+   beside the outstanding tasks, and refused nowhere» (SPEC-004 R22); quote those lines, then list
+   `<delivery-root>/<slug>/review/` and say what it holds. **As a fact and never as an obligation** — nothing in this framework
    makes a review owed, so "no review record" is not a task outstanding and not a step skipped.
    It is reported because without it an initiative every task has delivered reads as finished,
    and the reading a review would have made — the tests against the task's criteria, the source

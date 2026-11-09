@@ -3553,3 +3553,19 @@ def test_an_adoption_a_delivery_names_binds_its_candidate_beside_a_file_s_own_no
     held = {e["node"]: sorted(f["path"] for f in e["files"]) for e in trace_file["bindings"]}
     assert held[RULE] == [f"backend/{FILE}"]
     assert held[NODE] == [f"backend/{FILE}"]
+
+
+def test_a_certification_refused_for_a_file_set_names_the_files_the_trace_binds_the_node_to(
+        consumer):
+    """Read on 2026-11-09 over the sales consumers: this refusal met 13 stagings in 9 sessions,
+    and each session found the bound file again by hand or asked the person which to name. The
+    trace already knows it, so the refusal says it: OTHER is bound to FILE alone."""
+    registry_deciding(consumer)
+    proof_at(consumer)
+    ask = certifying(consumer, {"node": OTHER, "proof": [PROOF], "step": "lint"})
+    done = run("--stage", consumer / "backend", consumer / "specs", "named", consumer / "ws-n",
+               SECOND, "--certify", ask)
+    assert done.returncode == 2, done.stdout + done.stderr
+    assert (f"{OTHER} is bound to none of the named files; a certification rides the reading of "
+            f"a file that encodes the node, so name one the trace binds it to; the trace binds "
+            f"it to {FILE}") in done.stderr
