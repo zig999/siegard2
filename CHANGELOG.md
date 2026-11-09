@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.84.0 — 2026-11-09
+
+`trace.py --stage` names the files the trace binds a node to when it refuses a certification over others; `deliver.py --outstanding` reports a delivered task no review names as never reviewed (SPEC-004 R22); "convém" reads as a word of recommendation. (`0645e43`)
+
 ## 5.83.0 — 2026-11-09
 
 A blocking note goes back to the decomposer with the note whole, at most twice, and stands for a person only where the cut keeps the criterion on a sentence the scope states verbatim or the second cut leaves it; a note asking which of a node's values applies, or whether its statement reaches a case it does not name, is `unstated` and decided (SPEC-001 R17). (`55f72ba`)
