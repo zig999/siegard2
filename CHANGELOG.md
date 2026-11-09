@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.83.0 — 2026-11-09
+
+A blocking note goes back to the decomposer with the note whole, at most twice, and stands for a person only where the cut keeps the criterion on a sentence the scope states verbatim or the second cut leaves it; a note asking which of a node's values applies, or whether its statement reaches a case it does not name, is `unstated` and decided (SPEC-001 R17). (`55f72ba`)
+
 ## 5.82.0 — 2026-11-09
 
 A registry may declare steps whose role is `fix` — a formatter that writes — and a delivery runs them after the install and before every check in its build and suite, so a producer never reformats by hand; a review and a reconciliation never run them, and `deliver.py --standard` prints the review's selection on its own line (SPEC-007 R5). (`086ea23`)
