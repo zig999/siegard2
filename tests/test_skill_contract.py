@@ -1154,3 +1154,36 @@ def test_the_reconcile_skill_keeps_its_handoff_and_bind_in_skill_md():
     report = (REPO / "src/claude/skills/reconcile/references/report.md").read_text(encoding="utf-8")
     assert report.startswith("# The report\n")
 
+
+
+def test_a_blocking_note_is_the_cut_s_to_answer_before_it_is_a_person_s():
+    """«the task goes back to be cut again with the note whole, at most twice, and the note stands
+    for a person only where the cut keeps the criterion on a sentence the scope states verbatim, or
+    where the second cut leaves it standing» (SPEC-001 R17). Read on 2026-11-09 over configurator's
+    two plans: 6 of 10 blocking notes were the cut's own, and the routing by `rationale` let a
+    session leave one standing after a single re-cut while six tasks waited on it."""
+    notes = " ".join(reference_text("plan-work", "notes").split("## `blocking`", 1)[1]
+                     .split("## `remainder`", 1)[0].split())
+    assert "SPEC-001 R17" in notes
+    assert "The skeleton's `rationale` decides nothing here" in notes
+    assert "goes back once more" in notes
+    assert "`Kept, the scope states:`" in notes and "grep -F --" in notes
+    assert "one not found is no sentence of the scope, and the skeleton goes back" in notes
+    assert "the skeleton's `rationale` says which" not in notes, "the old routing is gone"
+    decomposer = " ".join((REPO / "src/claude/agents/backlog-decomposer.md")
+                          .read_text(encoding="utf-8").split())
+    assert "with a `blocking` note" in decomposer
+    assert "`Kept, the scope states:`" in decomposer
+    assert "the scope's sentence verbatim, character for character" in decomposer
+    assert "misroutes the settlement of a blocking note" not in decomposer
+
+
+def test_a_note_asking_which_value_a_node_leaves_open_is_unstated():
+    """SPEC-001 R17's second sentence. The configurator shape of 2026-11-07: "no node says which
+    code the 503 of the deadline carries", classed blocking because a node lists the codes, and
+    left for the person although the decider settles exactly that kind of question."""
+    binder = " ".join((REPO / "src/claude/agents/execution-contract-binder.md")
+                      .read_text(encoding="utf-8").split())
+    assert ("whether a node's statement reaches a case it does not name, asks a fact no node "
+            "states» (SPEC-001 R17) — `unstated`") in binder
+    assert "names, where one exists, the change to the criteria that would answer it" in binder

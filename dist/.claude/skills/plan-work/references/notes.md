@@ -36,14 +36,19 @@ criterion yourself: the decomposer is the author of criteria.
 
 ## `blocking`
 
-Settling a blocking note takes one of two routes, and the skeleton's `rationale` says which:
+A blocking note is the cut's to answer before it is a person's: «the task goes back to be cut
+again with the note whole, at most twice, and the note stands for a person only where the cut
+keeps the criterion on a sentence the scope states verbatim, or where the second cut leaves it
+standing» (SPEC-001 R17). The skeleton's `rationale` decides nothing here.
 
-- **The blocked statement was the decomposer's decision** — the skeleton carries `rationale` over
-  that cut: the skeleton goes back to the decomposer with the note, is re-cut, and runs through step
-  4 again.
-- **It came from the scope**: the task is written with the note, and the report names it as a
-  conflict only the person settles — through the scope, or through `/analyse` extending the
-  specification.
+1. **Re-cut.** Hand the decomposer the skeleton and the note whole, and run what it returns
+   through step 4 again; a blocking note on the re-cut skeleton goes back once more.
+2. **Kept on the scope.** A `Kept, the scope states:` line is checked with
+   `grep -F -- '<the quoted sentence>' <the scope's files under intake/>`; one not found is no
+   sentence of the scope, and the skeleton goes back as in 1.
+3. **What stands** — a note kept on a sentence found, standing after the second re-cut, or naming
+   no criterion — is written to the task, and the report names it as a conflict only the person
+   settles, through the scope or through `/analyse` extending the specification.
 
 The class is never yours to overrule: a blocking note you disagree with is still settled as
 blocking, and the disagreement goes in the report.

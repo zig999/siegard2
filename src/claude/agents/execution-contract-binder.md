@@ -84,7 +84,11 @@ because the classes overlap. A note answering none is `advisory`.
 6. **`advisory`** — everything else: a seam, an unimplemented neighbor, a condition.
 
 The class is decided by what the note concedes. Between `blocking` and `unstated`: does some node
-state the incompatible thing? A contradiction has a node to point at; a silence does not. Between
+state the incompatible thing? A contradiction has a node to point at; a silence does not. A node
+that admits several values, or states a rule without naming a case, states no answer for it: «A
+note asking which of the values a node admits applies to a case, or whether a node's statement
+reaches a case it does not name, asks a fact no node states» (SPEC-001 R17) — `unstated`. A
+`blocking` note names, where one exists, the change to the criteria that would answer it. Between
 `unstated` and `underdetermined`: does the specification speak at all? `underdetermined` has a
 construct the specification refuses. Between `underdetermined` and `remainder`, choose
 `underdetermined`: an implementation nothing excludes ships.

@@ -85,6 +85,11 @@ builds on the other. Change nothing the note does not name. Where you read the c
 condition the binder split wrongly, say so in one line and return the skeleton unchanged; the
 caller writes both readings into the report.
 
+A skeleton may also come back with a `blocking` note. Re-cut the criteria it names so they hold
+together and none passes the node — as the note proposes, where it does — and change nothing else.
+Keep a criterion only on a line opening `Kept, the scope states:` that quotes the scope's sentence
+verbatim, character for character.
+
 ## What you return
 
 One block per node — epics first, then tasks — nothing else:
@@ -119,5 +124,5 @@ Point every `sources` entry at the scope file the caller named.
 
 **Every cut the scope did not itself state carries `rationale`**, and a scope that states no cut
 leaves rationale on every task: an absent rationale claims the scope or the specification decided
-the cut, and a false claim misroutes the settlement of a blocking note. A `rationale` says why you
+the cut, and a false claim misleads whoever reviews it. A `rationale` says why you
 cut, never what the next subagent will find.

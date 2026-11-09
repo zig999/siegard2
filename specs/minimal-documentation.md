@@ -145,8 +145,25 @@ enforces mechanically.
   and an entry per node would restate the specification, but a node the specification gains
   after authoring has the log as its only index, and a work root is not kept. Where a delivery
   hands the material route (`/analyse`) beside the decided-fact route, the choice between them is
-  the person's outside a goal, because either is a door no fact decides; under a goal SPEC-008 R8
-  takes the decision.
+  the person's outside an orchestrating run, because either is a door no fact decides; in an
+  orchestrating run SPEC-008 R8 takes the decision.
+- **R17** — A planning note that finds a task's criteria contradicting one another, or a criterion
+  exceeding what a node states, is the cut's to answer before it is a person's: the task goes back
+  to be cut again with the note whole, at most twice, and the note stands for a person only where
+  the cut keeps the criterion on a sentence the scope states verbatim, or where the second cut
+  leaves it standing. A note asking which of the values a node admits applies to a case, or
+  whether a node's statement reaches a case it does not name, asks a fact no node states and is
+  decided as R13 states.
+
+  Grounds, read on 2026-11-09 from configurator's two plans of 2026-11-07 and 2026-11-08 and
+  their sessions: of 10 blocking notes, 6 set a task's criteria against one another or a
+  criterion past what a node states — the session itself called four of them the skeletons'
+  wording — 1 asked which code a node leaves open, 1 set two committed nodes against each other,
+  and 2 set a criterion or a rule against a value the same run had just decided; none set a
+  sentence of the scope against a node a person had reviewed. The skill sent a blocking note back
+  to the cut only where the session judged the cut its source, so one task kept a
+  criteria-against-criteria note after a single re-cut although the binder's note named the change
+  that answered it, and six tasks waited on it and on the second note.
 
 ### What the material must hold
 
@@ -247,7 +264,13 @@ enforces mechanically.
    same test holds the skill's sentence. For a thing the material names only as a question, an
    option or a proposal: the analyse skill and the decision-log schema state that the material
    names it, and the same test holds both.
-9. For R16: over material declaring no Siegard contract, `bin/trace.py --ledger` reads every
+9. For R17: `/plan-work` sends every blocking note back to the decomposer with the note whole, at
+   most twice per skeleton, and writes it to the task only where a `Kept, the scope states:` line
+   is found in the scope by `grep -F` or the second re-cut left it; the decomposer answers a
+   blocking note by re-cutting or by quoting the scope verbatim; and the binder classes a note
+   asking which of a node's values applies, or whether its statement reaches an unnamed case, as
+   `unstated` — `tests/test_skill_contract.py` proves each.
+10. For R16: over material declaring no Siegard contract, `bin/trace.py --ledger` reads every
    bold-led line, list item at the line's start, table body row and first paragraph line as an
    item line and nothing under a fence, a heading or the frontmatter; refuses a line with no
    entry, a ledger with no digest of the file and a digest that no longer matches; accepts a line
