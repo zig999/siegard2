@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.86.0 — 2026-11-09
+
+A pair a reconciliation read `nowhere` is released by the bind where a second reading, blind to the first, also reads it nowhere and the node keeps a current file; `trace.py --stage-release` stages that reading, and `/reconcile` and `/review-change` run it before the bind. Otherwise the release stays the person's (SPEC-005 R10). (`7d9a916`)
+
 ## 5.85.0 — 2026-11-09
 
 `/analyse`, `/plan-work`, `/implement-task`, `/review-change` and `/reconcile` commit what their own invocation wrote once their validator passes — one pathspec-scoped commit, `<skill> <slug>: <step>`, never a push — and `/deliver-scope` commits its own log, measure and a stopped delivery's runs (SPEC-010 R7). (`e53a5d8`)
