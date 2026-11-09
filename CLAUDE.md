@@ -210,24 +210,20 @@ Five bounds hold it, and giving up any of them is a proposal, never a change:
   the step, by name — once `bin/ask.py` has recorded those words, and commits it alone,
   pathspec-scoped, under a message citing the ask's digest. Words that name no entry approve none,
   and no agent, skill or goal writes the registry unasked.
-- **Only the orchestrating entry points commit, and only under bounds.** `/deliver-scope` and
-  `/adopt-scope` are the two components granted a git commit, each over its own route:
-  pathspec-scoped, one per step, under a message naming the run — never a sweep, a branch, a
-  push or a rewrite — and only under an ask the human's own words state end to end.
-  `/adopt-scope` is the one that invokes `/analyse`, because writing the specification from
-  adopted source is its route, and the specification it commits is disclosed by its ledger, its
-  decision log and its report rather than reviewed before the commit; the gate `/deliver-scope`
-  keeps over `/analyse` stands for every delivery but one a goal condition arms with a prose
-  objective and asks to specify: there `/deliver-scope` invokes `/analyse` once, before the plan,
-  over the objective verbatim, and commits the specification apart, disclosed by its decision
-  log and report rather than reviewed before the commit. Every other skill's refusal to commit
-  stands; a third committer, or a commit outside these bounds, is a proposal, never a change.
-  A session's own commit, made after a skill returned, is no third committer: it commits what
-  that invocation wrote, pathspec-scoped, one per invocation, under the person's own words in
-  that session — a commit word, a go-ahead naming the next step, a goal condition naming the
-  route, or an ask `bin/ask.py` recorded verbatim — and never a push, a branch or a rewrite.
-  The same holds for the one write a session makes itself: the registry entry the bound above
-  admits.
+- **Every route skill commits what its own invocation wrote, and only under bounds.** Once its
+  validator passes, a skill commits the files that invocation wrote — pathspec-scoped to them, one
+  commit per invocation, under a message naming the skill and the slug — and never a file it found
+  pending, a sweep, a branch, a push or a rewrite. A path it would commit that holds a change the
+  invocation did not make is a stop, and the commit is never widened to take it. `/deliver-scope`
+  and `/adopt-scope` commit their own logs and measures the same way, one per step.
+  `/adopt-scope` invokes `/analyse`, because writing the specification from adopted source is its
+  route; `/deliver-scope` invokes it over the person's own words where SPEC-008 R10 or the
+  contradiction bound below says so. A specification `/analyse` commits is disclosed by its ledger,
+  its decision log and its report rather than reviewed before the commit, and the person reviews
+  it after the fact. A session's own commit, made outside a skill, commits only under the person's
+  own words in that session — a commit word, a go-ahead naming the next step, or an ask
+  `bin/ask.py` recorded verbatim — and never a push, a branch or a rewrite; the same holds for the
+  one write a session makes itself: the registry entry the bound above admits.
 - **Only what a delivery is made of holds a write.** `task-implementer` and `test-author` grant
   `Write` and `Edit`; every other agent returns content and the caller writes it, and
   `tests/test_agent_contract.py` is what enforces it. The grant cannot be scoped to a path —
