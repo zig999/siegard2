@@ -64,6 +64,7 @@ never a requirement that one does; nothing said which step such a rule may name.
 - **R2** — A review reports the paths of its file set that no rule of the standard reaches, apart from the rules that do. A check of source against the standard reports them the same way.
 - **R3** — A record owes a run of the steps the registry it pins declared, and nothing of a registry that moved since: a step declared after a record was written is owed by the records written after it, and a record pinning an earlier version of the registry its target declares is reported beside the outstanding tasks. A pin is a citation of what the record read, and it is never compared with the registry as it stands to refuse the record.
 - **R4** — A rule decided by a step other than the one whose role is `suite` holds over a tree that holds no test of the task being delivered; a rule that requires a test file to exist names the `suite` step.
+- **R5** — A step whose role is `fix` rewrites the tree into the form the registry's checks hold: a delivery runs every such step after the install and before every check, in its build and its suite alike, and owes it as it owes a check; it runs neither at setup nor in a review's or a reconciliation's run, it decides no rule, and a file it changes is held to the delivery's records like any other the delivery wrote.
 
 ## Validation required before acceptance
 
@@ -87,8 +88,25 @@ never a requirement that one does; nothing said which step such a rule may name.
    it refuses nothing. The criterion that reverses the report into a refusal: a mechanical
    discriminator between the two kinds that agrees with a reading on every rule of the
    registries above.
+5. For R5: `bin/deliver.py --standard` prints each `fix` step after the install in the build and
+   suite lines and in neither the setup nor the review line; a record whose run lacks it is
+   refused and a review's run is not held to it; a rule naming it as its tool is refused; and a
+   run whose fix rewrote a file no record names is refused by `--unrecorded` —
+   `tests/test_fix_step.py` and `tests/test_deliver.py` prove each.
 
 ## Readings
+
+- 2026-11-09 — grounds for R5, read from the orchestration logs and transcripts of the sales
+  consumers between 2026-11-03 and 2026-11-09: a delivery's producers hold no shell, so a
+  registry's format check failing on a file they wrote went back to them to reformat by hand.
+  configurator `containerizacao-e2e` ended `gave-up` after three such suites on one test file
+  ("only prettier --write answers it, which the registry does not declare"); partymgmt
+  `party-identificacao-e-customer-ampliado` ended `gave-up` after three such builds, and two of
+  its later deliveries each spent one or two red suites on the format step before a green one;
+  configurator `qualification-configuration-price` spent two red builds on one file while the
+  implementer, by its session's words, corrected it "no escuro". Read on 2026-11-09, `prettier
+  --check .` passes over both targets at `HEAD`, so a `fix` step rewrites only what a delivery
+  wrote, and `--unrecorded` refuses one that reached further.
 
 - 2026-10-07 — not yet read: no consumer tree has been re-read under 5.12.0 or later, the
   release that ships R1. The figure is the standard lines `deliver.py --outstanding` prints per

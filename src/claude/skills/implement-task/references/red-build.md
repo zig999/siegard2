@@ -19,6 +19,10 @@ directory and log, so what failed on the way stays readable.
 Giving up is a stop: report every run by path and what the last one printed, and write no record.
 The validator would refuse a record over a red run anyway.
 
+**A form a `fix` step could write is never sent back by hand.** Where the registry declares one,
+the build and suite lines run it before every check; where none is declared, the report names the
+check a `fix` step would answer.
+
 ## A red only a test can answer
 
 **A red only a test can answer is the test-author's, and it is answered before the record.** The

@@ -103,7 +103,10 @@ it provides and which rules cannot be decided while it is absent. Declare `comma
 exact step each `tool` rule's `tool` field names, with the command as the project's own script
 already runs it — never invented, never guessed at a name the manifest does not hold. Declare
 `dependencies` for every package a step's own configuration already names, never a package this
-invocation would like to see used.
+invocation would like to see used. Where a check has a writing form the project already runs — a
+formatter that writes where the check only reads — declare it beside the check as a step whose
+`role` is `fix`, and never as a rule's `tool`: a delivery's producers hold no shell, and that step
+is what answers the check without them.
 
 Where a boundary belongs elsewhere — a domain fact, a severity, an integration strategy, a question
 this framework's own agents already answer — do not write it as a rule: name it in `elsewhere`,

@@ -672,6 +672,7 @@ def command_problems(data: dict) -> list[str]:
                             f"something a caller may pick")
 
     declared = set(names)
+    fixing = {c["step"] for c in entries if c.get("role") == "fix" and isinstance(c.get("step"), str)}
     for rule in listed(data, "rules"):
         if not isinstance(rule, dict) or not isinstance(rule.get("tool"), str):
             continue
@@ -680,6 +681,11 @@ def command_problems(data: dict) -> list[str]:
                             f"registry declares no such command; a rule declared mechanical with "
                             f"nothing named to decide it is a rule nobody applies, which is worse "
                             f"than one nobody wrote")
+        elif rule["tool"] in fixing:
+            problems.append(f"{rule.get('id')} says the step `{rule['tool']}` decides it, and that "
+                            f"step's role is `fix`: «it decides no rule» (SPEC-007 R5) — a step "
+                            f"that rewrites the tree exits 0 over whatever it rewrote, so name the "
+                            f"check that holds the form instead")
 
     return problems
 
@@ -1045,15 +1051,24 @@ def phase_steps(commands: list[dict], phase: str) -> list[dict]:
     to the same list — what a caller was handed to run and what the validator says was owed
     cannot drift apart while both are this function. `prepare` carries neither reader: it runs
     once per worktree, not once per task, so no phase here selects it and no delivery is held to
-    having run it."""
+    having run it.
+
+    A `fix` step runs right after the install, before every check, in the build and the suite —
+    «a delivery runs every such step after the install and before every check, in its build and
+    its suite alike, and owes it as it owes a check; it runs neither at setup nor in a review's or
+    a reconciliation's run» (SPEC-007 R5). `review` is the suite without it: a review reads the
+    tree a delivery left and writes nothing into it."""
     install = [c for c in commands if c.get("role") == "install"]
-    middle = [c for c in commands if c.get("role") not in ("prepare", "install", "suite")]
+    fix = [c for c in commands if c.get("role") == "fix"]
+    middle = [c for c in commands if c.get("role") not in ("prepare", "install", "fix", "suite")]
     suite = [c for c in commands if c.get("role") == "suite"]
     if phase == "setup":
         return install
     if phase == "build":
-        return install + middle
-    return install + middle + suite
+        return install + fix + middle
+    if phase == "review":
+        return install + middle + suite
+    return install + fix + middle + suite
 
 
 def owed_steps(front: dict, data: dict, tfront: dict) -> list[dict]:
@@ -1260,16 +1275,17 @@ def review_run_problems(nid: str, front: dict, target: Path, validator, root: Pa
     whose review runs them over the whole change — the one run that exercises the union of every
     task under review, which no delivery's own run did — so a review naming no run over such a
     registry is a review that read the change and never built it. The run it names is held to
-    every step the registry declares other than `prepare`: a green run that skipped one proved
-    nothing about the rules that step decides. A red run is held to what it ran, because the step
-    it failed at is where the run stopped, and the failures pass is what reads it. The commands
+    every step the registry declares other than `prepare` and a `fix`, which a review never runs:
+    a green run that skipped one proved nothing about the rules that step decides. A red run is
+    held to what it ran, because the step it failed at is where the run stopped, and the failures
+    pass is what reads it. The commands
     and the directory are `run_holding_problems`', for a review's run as for a delivery's. A
     registry that moved since the review was written owes it nothing, as `owed_run_problems`
     states for a delivery's record."""
     data, at, _ = standard_of(nid, front, target, validator)
     if data is None:
         return []  # review_standard_problems reports the registry that does not resolve
-    owed = phase_steps([c for c in listed(data, "commands") if isinstance(c, dict)], "suite")
+    owed = phase_steps([c for c in listed(data, "commands") if isinstance(c, dict)], "review")
     if not owed or registry_moved(front, target):
         return []
     named = ", ".join(str(c.get("step")) for c in owed)
@@ -3206,8 +3222,10 @@ def check_standard(named: str, against: str | None = None,
         print(f"  it declares {len(commands)} command(s): "
               + ", ".join(f"{c.get('step')} = {c.get('command')} "
                           f"({c.get('timeout_seconds')}s)" for c in commands))
+        fixing = [str(c.get("step")) for c in commands if c.get("role") == "fix"]
         print(f"    prepares a fresh worktree with {roles.get('prepare') or 'nothing'}, "
               f"installs with {roles.get('install') or 'nothing'}, "
+              f"fixes with {', '.join(fixing) or 'nothing'}, "
               f"proves with {roles.get('suite') or 'nothing'}, "
               f"and the rest run as checks on both sides of the tests")
         # Each phase composed and ready, because the prose rule ("everything except the suite,
@@ -3217,7 +3235,7 @@ def check_standard(named: str, against: str | None = None,
         print("  each delivery phase, composed for bin/run.py — the delivery root, "
               "--run <slug> and --cwd stay the caller's, and the captured run is held to "
               "exactly these steps:")
-        for phase in ("setup", "build", "suite"):
+        for phase in ("setup", "build", "suite", "review"):
             steps = phase_steps(commands, phase)
             if not steps:
                 print(f"    {phase}: nothing runs — no step carries the role this phase needs")

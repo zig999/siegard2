@@ -3524,3 +3524,39 @@ def test_the_writer_s_invocation_is_held_whole(tmp_path, planned, delivery):
         assert done.returncode == 2, (args, done.stdout, done.stderr)
         assert said_what in done.stderr, (args, done.stderr)
     assert not (delivery / "implementation").exists()
+
+
+# ------------------------------------------------- a step that rewrites the form (SPEC-007 R5)
+
+
+def with_fix() -> dict:
+    """The fixture registry with a formatter that writes declared beside its checks."""
+    from conftest import STANDARD
+    commands = list(STANDARD["commands"])
+    commands.insert(1, {"step": "format-fix", "command": "true", "timeout_seconds": 60,
+                        "role": "fix"})
+    return {**STANDARD, "commands": commands}
+
+
+def test_a_record_whose_run_skipped_the_fix_step_is_refused(
+        delivery, work, root, target, sound_delivery, write_delivery, write_standard, run_dir):
+    """«owes it as it owes a check» (SPEC-007 R5): the build line runs it, and a record pointing
+    at a run without it was not built the way its registry says."""
+    run_dir("passed", "build", steps=("install", "lint"))
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard(with_fix()), run="run/build"))
+    repin_proof(delivery, write_delivery)
+    said(problems_of(delivery, work, target, root), "nothing decided the rules format-fix own")
+    run_dir("passed", "build-2", steps=("install", "format-fix", "lint"))
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard(with_fix()), run="run/build-2"))
+    repin_proof(delivery, write_delivery)
+    assert not any("format-fix" in p for p in problems_of(delivery, work, target, root))
+
+
+def test_a_review_is_never_held_to_the_fix_step(delivery, work, root, target, sound_delivery,
+                                                write_delivery, write_standard, run_dir):
+    """«it runs neither at setup nor in a review's or a reconciliation's run» (SPEC-007 R5): a
+    review reads the tree a delivery left and writes nothing into it."""
+    write_delivery("review/first", green_review(work, root, write_standard(with_fix()), run_dir))
+    assert problems_of(delivery, work, target, root) == []

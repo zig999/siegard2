@@ -195,8 +195,8 @@ Then, in this order:
 
 ### 2. Capture
 
-Run every step the standard declares, in the order it declares them, followed by any the
-invocation added, once, into a run named for this review:
+Run every step the standard declares but a `fix` — its `review:` line — in its order, followed by
+any the invocation added, once, into a run named for this review:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <review-name> --cwd <target-source-root> --timeout-seconds <the largest of the steps'> --step <name>="<command>" [--step ...]
