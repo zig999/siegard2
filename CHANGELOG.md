@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.81.0 — 2026-11-09
+
+A delivery whose implementer finds the task already met writes its implementation record carrying `stands` itself, instead of stopping for a plan; where the trace lacks the bindings, `deliver.py --write-implementation` prints the one door — an adoption `/reconcile` whose candidates are the nodes bound to none of the files, or an ordinary one where a binding moved — and `/deliver-scope` takes it once per task. `/deliver-scope` takes every derived door under the person's own ask, with or without a goal (SPEC-006 R7, SPEC-008 R8). (`69e982d`)
+
 ## 5.80.0 — 2026-11-08
 
 A task carrying `stands` holds where its files bind every node it implements between them, each file bound to some node of the task; no one file need bind every node. SPEC-004 R18 and R26 now read as R20 already did, and `deliver.py --write-implementation` refuses a node bound to no `stands` file or a file bound to none of the task's nodes instead of every missing node–file pair. (`eb85957`)
