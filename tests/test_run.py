@@ -279,3 +279,43 @@ def test_it_refuses_a_slug_whose_directory_is_a_dangling_symlink(delivery, tmp_p
                   "--step", "a=python3 -c 'pass'")
     assert done.returncode == 2, done.stdout
     assert "already exists" in done.stderr, done.stderr
+
+
+def landed(result: subprocess.CompletedProcess) -> str:
+    return json.loads(result.stdout[result.stdout.index("{"):])["run"]
+
+
+def test_next_takes_the_base_where_nothing_holds_it(delivery: Path) -> None:
+    result = invoke(delivery, "--run", "e-t-setup", "--next", "--timeout-seconds", "30",
+                    "--step", "ok=true")
+    assert result.returncode == 0, result.stderr
+    assert landed(result) == "run/e-t-setup"
+
+
+def test_next_takes_two_after_the_base(delivery: Path) -> None:
+    (delivery / "run/e-t-setup").mkdir(parents=True)
+    result = invoke(delivery, "--run", "e-t-setup", "--next", "--timeout-seconds", "30",
+                    "--step", "ok=true")
+    assert landed(result) == "run/e-t-setup-2"
+
+
+@pytest.mark.parametrize("held, expected", [
+    (["e-t-setup", "e-t-setup-1", "e-t-setup-2", "e-t-setup-9"], "run/e-t-setup-10"),
+    (["e-t-setup", "e-t-setup-1"], "run/e-t-setup-2"),
+    (["e-t-setup-3"], "run/e-t-setup-4"),
+    (["e-t-setup", "e-t-setup-2", "e-t-setup-build-7", "e-t-setup-x-4"], "run/e-t-setup-3"),
+])
+def test_next_takes_one_past_the_greatest_number_the_base_holds(
+        delivery: Path, held: list[str], expected: str) -> None:
+    for name in held:
+        (delivery / "run" / name).mkdir(parents=True)
+    result = invoke(delivery, "--run", "e-t-setup", "--next", "--timeout-seconds", "30",
+                    "--step", "ok=true")
+    assert landed(result) == expected
+
+
+def test_a_refused_name_hands_the_flag_that_names_it(delivery: Path) -> None:
+    (delivery / "run/e-t-setup").mkdir(parents=True)
+    result = invoke(delivery, "--run", "e-t-setup", "--timeout-seconds", "30", "--step", "ok=true")
+    assert result.returncode == 2
+    assert "run again with --next" in result.stderr

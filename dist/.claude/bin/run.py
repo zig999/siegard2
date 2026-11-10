@@ -19,6 +19,13 @@ delivery root, beside the nodes, kept the way `intake/` is kept under a work roo
 material a judgment was read from, never a node and never validated as one. A slug that already
 exists is a refusal — evidence is not overwritten, and a second run says so with a second name.
 
+**`--next` makes the second name this script's.** With it, `--run` names a base: the run lands at
+the base where no run holds it or a number of it, and otherwise at `<base>-<N>`, N one past the greatest number any
+run under that base already holds, and never less than 2. Which number is free is read from the
+directory, so it is decided here and never composed by a caller; one past the greatest, never the
+least free, so the names of one base read in the order their runs began: «A run's number is the runner's,
+never its caller's» (SPEC-004 R28). The record's `run` says where it landed.
+
 **No shell.** Each command is split into an argument vector with `shlex.split` and executed
 directly. Nothing expands `&&`, `|`, `>`, `$VAR`, or a glob, and nothing a command prints can
 start another one. A caller who needs a pipeline writes it into a file and names that file as
@@ -68,7 +75,7 @@ it.
 
 Declared dependencies: none beyond the standard library.
 
-Usage:  run.py <delivery-root> --run <slug> --cwd DIR --timeout-seconds N
+Usage:  run.py <delivery-root> --run <slug> [--next] --cwd DIR --timeout-seconds N
                --step NAME="COMMAND" [--step NAME="COMMAND" ...] [--excerpt N]
         run.py --help    print this text and stop
 Exit:   0 every step passed
@@ -101,6 +108,16 @@ def cannot_run(message: str) -> NoReturn:
     default."""
     print(f"cannot run: {message}", file=sys.stderr)
     raise SystemExit(CANNOT_RUN)
+
+
+def next_name(runs: Path, base: str) -> str:
+    """The base where no run holds it or any number of it; otherwise one past the greatest."""
+    numbered = re.compile(re.escape(base) + r"-([0-9]+)")
+    held = [int(m.group(1)) for entry in (runs.iterdir() if runs.is_dir() else ())
+            if (m := numbered.fullmatch(entry.name))]
+    if not held and not (runs / base).exists() and not (runs / base).is_symlink():
+        return base
+    return f"{base}-{max([1, *held]) + 1}"
 
 
 def now() -> str:
@@ -187,6 +204,7 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("delivery_root")
     parser.add_argument("--run", required=True, metavar="SLUG")
+    parser.add_argument("--next", action="store_true")
     parser.add_argument("--timeout-seconds", required=True, type=int)
     parser.add_argument("--step", action="append", required=True, metavar="NAME=COMMAND")
     parser.add_argument("--cwd", required=True)
@@ -213,20 +231,26 @@ def main() -> int:
     # under it would be refused for a run that never happened.
     steps = parse_steps(args.step)
 
-    where = f"{RUN_DIR}/{args.run}"
-    run_dir = root / where
-    if run_dir.exists():
-        cannot_run(f"{run_dir} already exists; a second run under one name would overwrite "
-                   f"the evidence of the first — name this one differently")
-    try:
-        run_dir.mkdir(parents=True)
-    except FileExistsError:
-        # The check above is advisory; this is the guard. A dangling symlink slips past
-        # `exists()`, and two concurrent runs can both reach here — only one mkdir wins.
-        cannot_run(f"{run_dir} already exists; a second run under one name would overwrite "
-                   f"the evidence of the first — name this one differently")
-    except OSError as broken:
-        cannot_run(f"cannot create {run_dir}: {broken}")
+    while True:
+        name = next_name(root / RUN_DIR, args.run) if args.next else args.run
+        where = f"{RUN_DIR}/{name}"
+        run_dir = root / where
+        if run_dir.exists():
+            cannot_run(f"{run_dir} already exists; a second run under one name would overwrite "
+                       f"the evidence of the first — run again with --next, which names it")
+        try:
+            run_dir.mkdir(parents=True)
+            break
+        except FileExistsError:
+            # The check above is advisory; this is the guard. A dangling symlink slips past
+            # `exists()`, and two concurrent runs can both reach here — only one mkdir wins,
+            # and under --next the loser reads the directory again.
+            if not args.next:
+                cannot_run(f"{run_dir} already exists; a second run under one name would "
+                           f"overwrite the evidence of the first — run again with --next, "
+                           f"which names it")
+        except OSError as broken:
+            cannot_run(f"cannot create {run_dir}: {broken}")
 
     recorded: list[dict[str, object]] = []
     stopped = False

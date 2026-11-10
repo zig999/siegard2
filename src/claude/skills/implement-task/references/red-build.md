@@ -13,8 +13,8 @@ input: the `failure-diagnostician` is handed the run's directory and reads all o
 
 **A red build is not the end of the invocation and it is not a stop.** Send what the run printed
 back to the `task-implementer`, re-entered as `references/delegation.md` says — the source is its
-to write — and run again under `<epic>-<slug>-build-2`, then `-3`. Every attempt keeps its
-directory and log, so what failed on the way stays readable.
+to write — and run the same command again: `--next` lands it at `<epic>-<slug>-build-2`, then
+`-3`. Every attempt keeps its directory and log, so what failed on the way stays readable.
 
 Giving up is a stop: report every run by path and what the last one printed, and write no record.
 The validator would refuse a record over a red run anyway.

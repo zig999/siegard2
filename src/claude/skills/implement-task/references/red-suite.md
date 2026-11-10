@@ -43,8 +43,9 @@ file it is, exactly as a red build does.
 
 The diagnosis returns one of the contract's four causes. `test` splits in two by who owns the
 failing test, which the diagnosis is not told and you know: a test the test-author just wrote for
-this proof is this delivery's; any other test belongs to an earlier task. Every rerun takes the
-next free name — `<epic>-<slug>-suite-2`, then `-3` — and every earlier run keeps its own.
+this proof is this delivery's; any other test belongs to an earlier task. Every rerun is the same
+command, and `--next` names it — `<epic>-<slug>-suite-2`, then `-3`; every earlier run keeps
+its own.
 
 | cause | owner of the failing test | what happens | waits on a person |
 |---|---|---|---|

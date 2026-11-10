@@ -6,10 +6,9 @@ computes to, when the person names a proof-only re-delivery, or when the task ca
 ## A record already at the path
 
 **A record already at the path this task computes to makes this a re-delivery**, not a stop, and
-the report says so. Run names are deterministic per task and `bin/run.py` refuses one that already
-exists, so name each run with the next free `-N` suffix the delivery root's `run/` does not yet
-hold, read with `ls <delivery-root>/run` — exactly as a retry within one invocation does. Never
-improvise a name past the refusal or retype a phase from prose to avoid it.
+the report says so. Run names are deterministic per task, and each run command carries `--next`:
+`bin/run.py` numbers an attempt under a name already held, and the record's `run` says where it
+landed. Never compose a `-N` yourself or retype a phase from prose to avoid it.
 
 Both records are rewritten whole, never amended: the proof's pin on the implementation refuses the
 pair if one is rewritten and the other left. `git diff` over the two is the delivery's history.

@@ -283,6 +283,17 @@ left out — so the file set the review that followed was handed never held them
   nothing a judge opens and a path outside the target answers to no standard of it, so the
   review is held to what the root holds and says what it did not read.
 
+- **R28** — A run's number is the runner's, never its caller's. A delivery names each run by its task and phase; an attempt under a name a run already holds lands one past the greatest number that name holds, never less than 2, so the runs of one name read in the order they ran.
+
+  Grounds: on 2026-11-10, the run directories of every consumer delivery root on this machine
+  (278 roots, 5,229 runs, 922 names retried) held 15 runs a session numbered against the rule
+  the skill stated — "the next free `-N` suffix": a jump over a free number (`setup-9` over a
+  free `-2`; `suite-6` over a free `-5`), a first retry named `-1`, and one attempt counter shared
+  across phases (`setup-2`, `suite-3`, `build-4`); 7 more names begin at `-2` where nothing ever
+  held the bare name. Six of the 15 fell in one partymgmt session on 2026-11-09..10, the `-9`
+  after the session had listed `run/` and seen `-2` free. Nothing refused any of them:
+  `bin/run.py` refused only a name already held, so the choice of number was a prompt's.
+
 ## Validation required before acceptance
 
 1. The test author's judgment states R1 to R12 and cites each in the words above; the coverage

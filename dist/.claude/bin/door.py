@@ -394,7 +394,7 @@ def door_implement_task(fields: dict, target: str, slug: str, args: dict, answer
         record = delivery / "implementation" / f"{task.removeprefix('task/')}.md"
         if record.is_file():
             answer.decided.append(f"{record} exists — a re-delivery, which is no stop; its runs "
-                                  f"take the next free -N suffix under run/")
+                                  f"carry run.py --next, which numbers them")
         held = outstanding_lines(out, task)
         if held:
             line = held[0]

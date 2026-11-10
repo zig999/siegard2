@@ -22,13 +22,14 @@ its step is reached, before acting on it.
 - [ ] Contract: deliver.py --contract implementation, proof, finding
 - [ ] 1 Situate: deliver.py --outstanding; BLOCKING note: references/blocking.md; re-delivery or
       stands: references/redelivery.md; deliver.py --standard, keep its three phase lines
-- [ ] 2 Set up: run.py --run <epic>-<slug>-setup where the registry declares an install
+- [ ] 2 Set up: run.py --run <epic>-<slug>-setup --next where the registry declares an install
 - [ ] 3 Implement: read references/delegation.md; spawn siegard:task-implementer with its block;
       a return carrying `stands`, or none: references/implementer-returns.md
-- [ ] 4 Build: run.py --run <epic>-<slug>-build; red: references/red-build.md; produces:
+- [ ] 4 Build: run.py --run <epic>-<slug>-build --next; red: references/red-build.md; produces:
       references/substrate.md; read references/records.md; deliver.py --write-implementation
 - [ ] 5 Prove: spawn siegard:test-author with the block references/delegation.md holds
-- [ ] 6 Suite: run.py --run <epic>-<slug>-suite; red: references/red-suite.md; deliver.py --write-proof
+- [ ] 6 Suite: run.py --run <epic>-<slug>-suite --next; red: references/red-suite.md;
+      deliver.py --write-proof
 - [ ] 7 Validate: deliver.py --unrecorded, then deliver.py; read references/finish.md
 - [ ] 8 Bind: trace.py --bind-record; keep any stale-bindings receipt; commit: finish.md
 - [ ] 9 Report: handoff.py --prepare; read references/report.md; --save-report, --render; stop
