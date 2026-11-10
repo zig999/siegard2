@@ -249,6 +249,20 @@ left out — so the file set the review that followed was handed never held them
   commit that wrote each record, and are refused by this requirement: such a file is not where
   the implementation stands.
 
+- **R27** — A record writer reads the producer's return as one YAML mapping. Where it does not parse, each line whose key the record's contract types as a string, and whose single-line value does not stand alone as a string, has that value quoted whole, and the return is read again; the writer names each line it quoted and repairs nothing else. A return that still does not parse, that opens with a code fence, or that carries text before or after its mapping is refused, and the producer answers again.
+
+  Grounds: on 2026-11-09, every mapping reply of `task-implementer` and `test-author` in the five
+  `sales*` consumers' subagent transcripts (2026-10-10..11-09), read by the writer's own loader:
+  of first replies, 6.1% did not parse in October (127 of 2,069) and 6.5% in November (48 of
+  734), with the agents' instruction to quote such a value in place since 3.48.2. The failing line
+  was a text field holding `: ` — `how` 73 times, `proves` 30, `effect` 21 — mostly code quoted in
+  a sentence. Quoting those values whole read 151 of the 198 failing replies and changed none of
+  the 3,180 that parse; where the producer answered again, its next reply was identical to the
+  quoted one in 21 of 71 and at least 95% the same text in 41 more. Each answer again cost the
+  subagent a median of $0.07 and 43 seconds (90th percentile 522 s), and opens a branch where one
+  consumer committed a delivery with the previous proof. The 47 left are text before or after
+  the mapping, a fence, or list items — two answers or prose, which no reading decides.
+
 ### What a review answers for
 
 - **R22** — A review answers for its tasks as they stood when it was written. A task is reviewed as it stands where a review naming it lists every file the task's records name that its target source root holds and, where its coverage pass ran, answers every criterion the task states; a task some review names and none answers as it stands is owed a review, and a review written before the task or its records changed is never refused for it. A delivered task no review names is reported as never reviewed beside the outstanding tasks, and refused nowhere. The review being written is held to its tasks as they stand, and refused where it falls short. A path the records name that the target source root no longer holds — a file the delivery deleted — or that lies outside that root has no bytes a review reads: no review is held to list it, and the review's report names it as not read.

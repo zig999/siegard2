@@ -2118,6 +2118,86 @@ HTML_ENTITY = re.compile(r"&(?:gt|lt|amp|quot|#\d+);")
 WRITE_VALUED = ("--target", "--task-file", "--run", "--standard", "--standard-file", "--from",
                 "--from-text")
 WRITE_REPEATED = ("--note", "--what")
+KEYED_LINE = re.compile(r"^(?P<lead>[ ]*(?:- )?)(?P<key>[a-z_]+):(?: (?P<value>.*?))?[ \t]*$")
+BLOCK_INDICATOR = re.compile(r"^[>|][+-]?[1-9]?[+-]?$")
+
+
+def text_keys(kind: str) -> frozenset[str]:
+    """The keys the record's contract types as a string wherever they appear in `kind`'s branch,
+    and as nothing else. A key typed a string in one place and a list or a mapping in another is
+    left out: its line alone does not say which it is."""
+    schema = json.loads(DELIVERY_CONTRACT.read_text(encoding="utf-8"))
+    types: dict[str, set[str]] = {}
+
+    def walk(node: object) -> None:
+        if isinstance(node, dict):
+            for key, field in (node.get("properties") or {}).items():
+                if isinstance(field, dict):
+                    shape = field.get("type")
+                    types.setdefault(key, set()).add(shape if isinstance(shape, str) else "other")
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    walk(contract_branch(schema, kind))
+    return frozenset(key for key, shapes in types.items() if shapes == {"string"})
+
+
+def stands_alone(value: str) -> bool:
+    """Whether a plain value parses on its own line as a mapping's value."""
+    try:
+        spec.load_yaml(f"k: {value}")
+    except yaml.YAMLError:
+        return False
+    return True
+
+
+def quoted_text_values(text: str, keys: frozenset[str]) -> tuple[str, list[int]]:
+    """The return with every value that broke it quoted whole, and the lines quoted. «Where it
+    does not parse, each line whose key the record's contract types as a string, and whose
+    single-line value does not stand alone as a string, has that value quoted whole, and the
+    return is read again; the writer names each line it quoted and repairs nothing else.»
+    (SPEC-004 R27) A value already quoted, a block scalar's opening and the lines inside a block
+    scalar are text the producer delimited, and are left as written."""
+    lines = text.split("\n")
+    quoted: list[int] = []
+    inside: int | None = None
+    for number, line in enumerate(lines, start=1):
+        indent = len(line) - len(line.lstrip(" "))
+        if inside is not None:
+            if not line.strip() or indent > inside:
+                continue
+            inside = None
+        keyed = KEYED_LINE.match(line)
+        if keyed is None:
+            continue
+        value = keyed.group("value") or ""
+        if BLOCK_INDICATOR.match(value.strip()):
+            inside = len(keyed.group("lead"))
+            continue
+        if keyed.group("key") not in keys or not value or stands_alone(value):
+            continue
+        lines[number - 1] = (f"{keyed.group('lead')}{keyed.group('key')}: "
+                             f"{json.dumps(value, ensure_ascii=False)}")
+        quoted.append(number)
+    return "\n".join(lines), quoted
+
+
+def read_quoted(text: str, kind: str) -> tuple[object | None, list[int]]:
+    """The return read again with its text values quoted, or `None` where nothing was quoted or
+    it still does not parse. The second reading refuses a key given twice: a return that parses
+    only once quoted, and then holds one key twice, carries two answers, and a reading that kept
+    the last would choose between them."""
+    import trace
+    repaired, quoted = quoted_text_values(text, text_keys(kind))
+    if not quoted:
+        return None, []
+    try:
+        return trace.load_return(repaired), quoted
+    except yaml.YAMLError:
+        return None, quoted
 
 
 def return_text(transcript: str | None, text_file: str | None) -> tuple[str | None, str | None]:
@@ -2351,9 +2431,14 @@ def write_record(kind: str, args: list[str]) -> int:
     try:
         returned = spec.load_yaml(text)
     except yaml.YAMLError as broken:
-        print(f"{nid}: the return does not parse: {broken}. The subagent answers again; a "
-              f"return is never repaired by hand, because the record is a function of it")
-        return 1
+        returned, quoted = read_quoted(text, kind)
+        if returned is None:
+            print(f"{nid}: the return does not parse: {broken}. The subagent answers again; a "
+                  f"return is never repaired by hand, because the record is a function of it")
+            return 1
+        print(f"{nid}: the return did not parse as written; the value on line(s) "
+              f"{', '.join(map(str, quoted))} held `: ` under a key the contract types as text, "
+              f"and was read quoted whole")
     if not isinstance(returned, dict):
         print(f"{nid}: the return is a {type(returned).__name__}, not a mapping")
         return 1

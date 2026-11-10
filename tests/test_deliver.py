@@ -3325,12 +3325,120 @@ def test_a_return_read_from_a_rendered_notification_is_refused(tmp_path, planned
 
 
 def test_a_return_that_does_not_parse_goes_back_to_its_producer(tmp_path, planned, delivery):
+    """`files` is a list in the contract: its line alone does not say what `a: b` was meant to
+    be, so nothing is quoted and the producer answers again."""
     given = tmp_path / "broken.yaml"
-    given.write_text("title: a: b\n", encoding="utf-8")
+    given.write_text("title: Record a placed order\nfiles: a: b\n", encoding="utf-8")
     done = writer("--write-implementation", delivery, TASK, "--target", "app",
                   "--task-file", planned, "--from-text", given)
     assert done.returncode == 1
     assert "never repaired by hand" in done.stdout
+    assert "read quoted whole" not in done.stdout
+
+
+def colon_in_text(mapping: dict) -> str:
+    """The return as a producer writes it when code it quotes holds `: ` and it leaves the value
+    plain: the shape that broke 151 replies in the consumers' transcripts."""
+    text = yaml.safe_dump(mapping, sort_keys=False, width=1000)
+    return text.replace("how: place() returns the persisted order_number unchanged",
+                        "how: place() returns { order_number: stored } unchanged").replace(
+        "proves: Submitting a valid order returns its order_number.",
+        'proves: "Submitting a valid order returns its order_number." The answer reads '
+        '{ order_number: stored }.')
+
+
+def test_a_text_value_holding_a_colon_is_read_quoted_and_said(tmp_path, planned, delivery,
+                                                              work, root, target):
+    """«Where it does not parse, each line whose key the record's contract types as a string, and
+    whose single-line value does not stand alone as a string, has that value quoted whole, and
+    the return is read again; the writer names each line it quoted and repairs nothing else.»
+    (SPEC-004 R27)"""
+    text = colon_in_text(IMPLEMENTATION_RETURN)
+    with pytest.raises(yaml.YAMLError):
+        yaml.safe_load(text)
+    given = tmp_path / "implementation.yaml"
+    given.write_text(text, encoding="utf-8")
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from-text", given)
+    assert done.returncode == 0, done.stdout + done.stderr
+    line = 1 + text.split("\n").index(
+        "  how: place() returns { order_number: stored } unchanged")
+    assert f"the value on line(s) {line} held `: `" in done.stdout
+    assert "read quoted whole" in done.stdout
+    front = json_front(delivery, "implementation/checkout/record-order")
+    assert front["criteria"][0]["how"] == "place() returns { order_number: stored } unchanged"
+    assert front["nodes"] == IMPLEMENTATION_RETURN["nodes"], "every other value is as returned"
+    proof = tmp_path / "proof.yaml"
+    proof.write_text(colon_in_text(PROOF_RETURN), encoding="utf-8")
+    done = writer("--write-proof", delivery, TASK, "--target", "app", "--from-text", proof)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert json_front(delivery, "proof/checkout/record-order")["tests"][0]["proves"] == (
+        '"Submitting a valid order returns its order_number." The answer reads '
+        '{ order_number: stored }.')
+    assert problems_of(delivery, work, target, root, derived=True) == []
+
+
+def test_a_return_that_parses_is_read_as_written(tmp_path, planned, delivery):
+    """Nothing is quoted in a return that parses: a value that stands alone is the producer's,
+    whatever it holds."""
+    mapping = {**IMPLEMENTATION_RETURN, "summary": "'quoted: as the producer chose'"}
+    given = tmp_path / "return.yaml"
+    given.write_text(yaml.safe_dump(mapping, sort_keys=False), encoding="utf-8")
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from-text", given)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "read quoted whole" not in done.stdout
+    assert json_front(delivery, "implementation/checkout/record-order")["summary"] == \
+        "'quoted: as the producer chose'"
+
+
+@pytest.mark.parametrize("tail, refusal", [
+    ("</invoke>\n", "never repaired by hand"),
+    ("Wait: the mapping above is wrong. Corrected mapping below.\n", "'Wait'"),
+])
+def test_text_after_the_mapping_is_refused_though_a_value_was_quoted(tmp_path, planned,
+                                                                      delivery, tail, refusal):
+    """«A return that still does not parse, that opens with a code fence, or that carries text
+    before or after its mapping is refused, and the producer answers again.» (SPEC-004 R27) A
+    tail that parses once quoted reads as a key the contract does not admit, and is refused
+    naming it."""
+    given = tmp_path / "return.yaml"
+    given.write_text(colon_in_text(IMPLEMENTATION_RETURN) + tail, encoding="utf-8")
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from-text", given)
+    assert done.returncode == 1
+    assert refusal in done.stdout, done.stdout
+    assert not (delivery / "implementation/checkout/record-order.md").exists()
+
+
+def test_a_second_mapping_after_the_first_is_refused_once_quoted(tmp_path, planned, delivery):
+    """A reply holding two mappings, one key given twice, is two answers: the second reading
+    refuses the key given twice rather than keep the last."""
+    text = colon_in_text(IMPLEMENTATION_RETURN)
+    given = tmp_path / "return.yaml"
+    given.write_text(text + text.replace("Record a placed order", "Record an order"),
+                     encoding="utf-8")
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from-text", given)
+    assert done.returncode == 1
+    assert "never repaired by hand" in done.stdout
+
+
+def test_lines_inside_a_block_scalar_are_left_as_written():
+    text = ("title: t\nsummary: >-\n  how: a: b\n  stays: x: y\ncriteria:\n"
+            "  - criterion: c\n    met: true\n    how: a { k: v } b\n")
+    repaired, quoted = deliver.quoted_text_values(text, deliver.text_keys("implementation"))
+    assert quoted == [8]
+    assert yaml.safe_load(repaired)["summary"] == "how: a: b stays: x: y"
+    assert yaml.safe_load(repaired)["criteria"][0]["how"] == "a { k: v } b"
+
+
+def test_the_text_keys_are_the_contracts_strings():
+    """Read from the contract, never listed here: a key the contract retypes leaves the set."""
+    keys = deliver.text_keys("implementation")
+    assert {"how", "effect", "inferred", "from", "summary", "title"} <= keys
+    assert not {"files", "criteria", "met", "encoded_at", "nodes"} & keys
+    assert {"proves", "fails_when", "name"} <= deliver.text_keys("proof")
 
 
 def test_a_return_opening_with_a_fence_is_refused_and_nothing_is_written(tmp_path, planned,
