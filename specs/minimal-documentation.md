@@ -92,30 +92,31 @@ enforces mechanically.
 
 ### The decision log
 
-- **R9** — One decision log beside every node that received a decision: `<slug>.log.md` in
-  the node's own directory, append-only, moving with its node. Each entry records: the field it
-  filled (resolvable in the node beside it), what the material left unstated, the value
-  decided, and why that value. An entry is never edited or removed. Where a node leaves the
-  specification, the change that removes it appends an entry to its log retiring the field:
-  where the fact is held now, or that it is held nowhere; where a field leaves a node that
-  stays, the same. A log whose node does not exist fails validation unless its last entry
-  retires a field, and an entry whose field does not resolve fails validation unless a later
-  entry retires that field. The latest entry over a field is the disclosure that stands. A log
-  is frontmatter alone: text after its fence is not an entry and fails validation. `why`
-  carries one claim a reviewer can reject, never the argument that the specification composes:
-  that argument records no decided value, so it has no entry of its own and reaches the log only
-  inside an entry about something else, restating the prose of the node that entry locates
-  (R7, R14). Its home is the change that made it. A fact a planning step read from material
-  outside the specification root — the intake a plan was cut from — and gave an addressable home
-  is recorded in that node's log as read: the field it filled, what no node stated, and where it
-  was found. It decides no value and carries no `why`; a read entry and a decided one are told
-  apart by shape, and the specification root holds the provenance of a node whose material it
-  does not keep. A node the material does not name is disclosed by the entry over the field its
-  class requires — `type` for an element, a rule or a contract, `strategic` for a context,
-  `subject` for a scenario, `statement` for a constraint — whose `unstated` says the material
-  names no such thing; a node beside no such entry is one the material described. Material that
-  names a thing only as a question to decide, an option or a proposal names it, and the entry
-  deciding it says in `unstated` what the material asked or proposed.
+- **R9** — One decision log beside every node that received a decision: `<slug>.log.md` in the
+  node's own directory, append-only, moving with its node. Each entry records: the field it filled
+  (resolvable in the node beside it), what the material left unstated, the value decided, and why
+  that value. An entry is never edited or removed. Where a node leaves the specification, the change
+  that removes it appends an entry to its log retiring the field: where the fact is held now, or
+  that it is held nowhere; where a field leaves a node that stays, the same. A log whose node does
+  not exist fails validation unless its last entry retires a field, and an entry whose field does
+  not resolve fails validation unless a later entry retires that field. The latest entry over a
+  field is the disclosure that stands. A log is frontmatter alone: text after its fence is not an
+  entry and fails validation. `why` carries one claim a reviewer can reject, never the argument that
+  the specification composes: that argument records no decided value, so it has no entry of its own
+  and reaches the log only inside an entry about something else, restating the prose of the node
+  that entry locates (R7, R14). Its home is the change that made it. A fact a planning step read
+  from material outside the specification root — the intake a plan was cut from — and gave an
+  addressable home is recorded in that node's log as read: the field it filled, what no node stated,
+  and where it was found. Where it was found names a file by its path from the root of the
+  repository the specification sits in, never from the machine it was read on. It decides no value
+  and carries no `why`; a read entry and a decided one are told apart by shape, and the
+  specification root holds the provenance of a node whose material it does not keep. A node the
+  material does not name is disclosed by the entry over the field its class requires — `type` for an
+  element, a rule or a contract, `strategic` for a context, `subject` for a scenario, `statement`
+  for a constraint — whose `unstated` says the material names no such thing; a node beside no such
+  entry is one the material described. Material that names a thing only as a question to decide, an
+  option or a proposal names it, and the entry deciding it says in `unstated` what the material
+  asked or proposed.
 - **R10** — The log is disclosure, never a gate: the analysis decides and proceeds, and no
   entry blocks delivery. A human reviews the logs after the fact; disagreement is an ordinary
   change to the artifact, not a ratification protocol. Where no such review is made, a decision
@@ -228,7 +229,10 @@ enforces mechanically.
    score; `tests/test_benchmarks.py` holds every case root sound and every scored case at the
    outcome the corpus expects. A fact read from the intake lands as an entry recorded as read,
    and the validator refuses one carrying `found` beside a decided value or a `why`, and one
-   carrying neither shape — a fixture proves each.
+   carrying neither shape — a fixture proves each. The writer rewrites a `found` path that spells
+   out where the repository, or the directory holding it, sits on the machine into one from the
+   repository's root, and says so; a test proves it, and proves a path inside the quoted sentence
+   left as written.
 4. For R14, and for the judgment halves R11 leaves to the report: `bin/spec.py --shape` reports
    what each class runs to, names every `statement` carrying more than one sentence, closes each
    node's prose transitively, and lists the names that prose holds and no node does — reporting

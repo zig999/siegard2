@@ -87,6 +87,38 @@ def test_a_read_entry_and_a_retirement_print_their_shape(spec_root):
     assert "1 fact(s) recorded as read, 1 location(s) retired" in done.stdout
 
 
+def test_a_found_path_spelled_from_the_machine_is_written_from_the_repository_root(tmp_path):
+    """«Where it was found names a file by its path from the root of the repository the
+    specification sits in, never from the machine it was read on» (SPEC-001 R9). The writer
+    replaces only where the repository, or the directory holding it, sits on this machine, so a
+    sibling repository reads `../`, and a path inside the quoted sentence stays as written."""
+    repository = tmp_path / "workspace" / "consumer"
+    root = repository / "siegard" / "specification"
+    shutil.copytree(FIXTURE, root)
+    shutil.rmtree(root / "projections", ignore_errors=True)
+    subprocess.run(["git", "init", "-q", str(repository)], check=True)
+    top = str(repository.resolve())
+    found = (f"{top}/siegard/work/x/intake/scope.md: «GET /api/v1/cases answers every case, "
+             f"read at postgres://db/x» and {top.rsplit('/', 1)[0]}/tmforum/guide.md, row 3")
+    done = decide(root, CASE, {"field": "type", "unstated": "No node said what a case is.",
+                               "found": found})
+    assert done.returncode == 0, done.stdout + done.stderr
+    lines = done.stdout.splitlines()
+    assert lines[0].startswith("read: "), "the first line a skill quotes keeps its shape"
+    expected = ("siegard/work/x/intake/scope.md: «GET /api/v1/cases answers every case, "
+                "read at postgres://db/x» and ../tmforum/guide.md, row 3")
+    assert lines[1] == f"`found` rewritten from the repository's root: {expected}"
+    assert entries_of(root, CASE_LOG)[0]["found"] == expected
+
+
+def test_a_found_path_already_from_the_root_is_written_as_given(spec_root):
+    found = "work/x/intake/scope.md: a case is the unit an operator opens and closes."
+    done = decide(spec_root, CASE, {"field": "type", "unstated": "No node said.", "found": found})
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "rewritten" not in done.stdout
+    assert entries_of(spec_root, CASE_LOG)[0]["found"] == found
+
+
 def test_a_retirement_may_land_beside_a_node_that_left(spec_root):
     """The tombstone route: the node is gone, its log stays, and the last entry says where the
     fact went — the one write the validator accepts beside no node."""

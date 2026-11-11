@@ -59,7 +59,7 @@
         "found": {
           "type": "string",
           "minLength": 1,
-          "description": "Where material outside the specification root states the fact — the intake path and the sentence — on an entry recorded as read. The path is not resolved: a work root is not the specification's to hold, and this text is what survives when it is gone. Present here, `decided` and `why` are refused: reading chose no value, and an entry carrying both shapes discloses two provenances for one fact."
+          "description": "Where material outside the specification root states the fact — the intake path and the sentence — on an entry recorded as read. «Where it was found names a file by its path from the root of the repository the specification sits in, never from the machine it was read on» (SPEC-001 R9); `spec.py --decide` rewrites a path spelling out where the repository, or the directory holding it, sits on the machine. The path is not resolved: a work root is not the specification's to hold, and this text is what survives when it is gone. Present here, `decided` and `why` are refused: reading chose no value, and an entry carrying both shapes discloses two provenances for one fact."
         },
         "retired": {
           "type": "string",

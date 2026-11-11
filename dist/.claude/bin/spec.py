@@ -92,7 +92,11 @@ as a JSON object on stdin and appends it to the decision log beside the named no
 that received a decision» (SPEC-001 R9). Before writing it applies the log's schema to the
 entry, refuses a node that does not exist unless the entry retires a field, refuses a field
 head the node does not declare, refuses a retirement no earlier entry of that log filled, and
-refuses to append to a log carrying text after its fence. The entry is appended as one block
+refuses to append to a log carrying text after its fence. A read entry's `found` that spells
+out where the repository, or the directory holding it, sits on this machine is rewritten from
+the repository's root, and a line after the first says so — «Where it was found names a file by
+its path from the root of the repository the specification sits in, never from the machine it
+was read on» (SPEC-001 R9). The entry is appended as one block
 with no scalar re-wrapped, so the diff of a log is additions only and «An entry is never
 edited or removed» (SPEC-001 R9) is a property `git diff` shows; the file is never re-serialised.
 Then the whole specification is validated, and the first line printed says what landed —
@@ -163,6 +167,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -2139,6 +2144,29 @@ def entry_block(entry: dict) -> str:
     return yaml.safe_dump([entry], sort_keys=False, allow_unicode=True, width=float("inf"))
 
 
+def relative_found(root: Path, entry: dict) -> bool:
+    """Rewrite, in place, every spelling of where the repository holding `root` — or the
+    directory holding that repository — sits on this machine, into a path from the repository's
+    root: «Where it was found names a file by its path from the root of the repository the
+    specification sits in, never from the machine it was read on» (SPEC-001 R9). Only those exact
+    prefixes are replaced, so a path quoted inside the material's sentence stays as it was
+    written. True where anything changed; a root outside git changes nothing."""
+    shown = delta_git(root, "rev-parse", "--show-toplevel")
+    if shown.returncode != 0:
+        return False
+    top = shown.stdout.decode().strip()
+    text = entry["found"]
+    for spelled in sorted({top, os.path.realpath(top)}, key=len, reverse=True):
+        text = text.replace(spelled + "/", "")
+    for spelled in sorted({os.path.dirname(top), os.path.dirname(os.path.realpath(top))},
+                          key=len, reverse=True):
+        if spelled not in ("", "/"):
+            text = text.replace(spelled + "/", "../")
+    changed = text != entry["found"]
+    entry["found"] = text
+    return changed
+
+
 def decide(root: Path, identity: str, raw: str, validators) -> int:
     """`--decide`'s own body: one entry appended beside one node, then the whole root validated.
 
@@ -2189,6 +2217,7 @@ def decide(root: Path, identity: str, raw: str, validators) -> int:
             return 1
         existing = [e for e in listed(front, "entries") if isinstance(e, dict)]
     field = entry["field"]
+    rewritten = "found" in entry and relative_found(root, entry)
     if retiring:
         if not any("retired" not in e and e.get("field") == field for e in existing):
             print(f"refused: no earlier entry of {log_identity} filled `{field}`; a retirement "
@@ -2227,6 +2256,8 @@ def decide(root: Path, identity: str, raw: str, validators) -> int:
     log_path.write_text(text, encoding="utf-8")
     shape = "retired" if retiring else "read" if "found" in entry else "decided"
     print(f"{shape}: {log_identity}.md entries[{len(existing)}] — {field}")
+    if rewritten:
+        print(f"`found` rewritten from the repository's root: {entry['found']}")
 
     nodes, problems = collect(root, validators)
     problems += cross_problems(nodes, root)
