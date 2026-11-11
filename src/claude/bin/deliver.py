@@ -284,6 +284,20 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         any is. What a delivery runs over its own
                                                         records before it validates, since the
                                                         tree it started from was clean
+        deliver.py --test-owner <delivery-root> <task> <test> [<test> ...]
+                                                        for a suite red on a test this delivery's
+                                                        test-author did not write: per test —
+                                                        `<file>` or `<file>::<name>`, relative to
+                                                        the task's target source root — every
+                                                        other task's proof naming it, that proof's
+                                                        plan live or closed, the files the task's
+                                                        implementation record shares with the
+                                                        owner's, and the exit a red the diagnosis
+                                                        reads as `test` takes: `rewrite` (a file
+                                                        shared), `adopt` (none shared and every
+                                                        owning plan closed), or `re-deliver` over
+                                                        each live owner sharing none. A query: it
+                                                        exits 0 over any answer
         deliver.py --worktreeinclude <file> <target-source-root> [--write]
                                                         print every `presupposes` path, joined
                                                         onto the target source root, as
@@ -3108,6 +3122,124 @@ def framework_paths(home: Path) -> list[Path]:
     return found
 
 
+def record_paths(front: dict | None) -> set[str]:
+    """The paths an implementation record says its task wrote or stands at: `files` and
+    `stands`, each relative to the record's target source root."""
+    if not isinstance(front, dict):
+        return set()
+    written = {entry["path"] for entry in front.get("files") or []
+               if isinstance(entry, dict) and isinstance(entry.get("path"), str)}
+    return written | {path for path in front.get("stands") or [] if isinstance(path, str)}
+
+
+def names_test(entry: object, file: str, name: str | None) -> bool:
+    """Whether one proof `tests` entry is the test named: the same file, and — where a name is
+    given — the same name, or a runner's full name ending in it after a `>` or `›` separator, the
+    way a runner prints a test nested under its suites."""
+    if not isinstance(entry, dict) or entry.get("file") != file:
+        return False
+    if name is None:
+        return True
+    recorded = entry.get("name")
+    if not isinstance(recorded, str):
+        return False
+    return name == recorded or any(name.endswith(f"{mark} {recorded}") for mark in (">", "›"))
+
+
+def test_exit(owners: list[tuple[str, bool, list[str] | None]]) -> str:
+    """The exit a red the diagnosis reads as `test` takes, from each owning task's plan state
+    and the files it shares with this task — «Where every plan whose proof names the test is
+    closed, this delivery adopts the test whatever the files share» (SPEC-004 R25). Otherwise a
+    live owner sharing no file is the one a proof-only re-delivery answers, and any one of them
+    decides it; where every live owner shares a file, the test is this delivery's to rewrite.
+    Before this task's record exists — a build red — what a live owner shares is unread
+    (`None`), and the exit says what decides it."""
+    if all(closed for _, closed, _ in owners):
+        return "adopt"
+    unread = [owner for owner, closed, shared in owners if not closed and shared is None]
+    if unread:
+        return ("rewrite where the implementer's return names a file the record of "
+                + ", ".join(unread) + " names, else re-deliver " + ", ".join(unread))
+    blocking = [owner for owner, closed, shared in owners if not closed and not shared]
+    if blocking:
+        return "re-deliver " + ", ".join(blocking)
+    return "rewrite"
+
+
+def test_owner(delivery: str, task: str, tests: list[str]) -> int:
+    """`--test-owner`'s own body: which exit a suite red on a test this delivery's test-author
+    did not write takes, read from the records and the plans' closure, never from a session's
+    reading of them. Each owning proof is one that names the test in its `tests` under the same
+    target; its plan is closed where `closure.md` sits at its work root; the files shared are the
+    paths both implementation records name. A query: it prints the answer and exits 0, and
+    refuses only what it cannot read."""
+    root = Path(delivery)
+    if not root.is_dir():
+        print(f"cannot run: delivery root {root} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    home = project.toplevel_of(root.resolve())
+    try:
+        declared = json.loads((home / "siegard.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as broken:
+        print(f"cannot run: the project file at {home / 'siegard.json'} cannot be read: {broken}",
+              file=sys.stderr)
+        return CANNOT_RUN
+    delivery_root = declared.get("delivery_root") if isinstance(declared, dict) else None
+    work_root = declared.get("work_root") if isinstance(declared, dict) else None
+    if not isinstance(delivery_root, str) or not isinstance(work_root, str):
+        print(f"cannot run: {home / 'siegard.json'} declares no delivery_root or no work_root",
+              file=sys.stderr)
+        return CANNOT_RUN
+    task_path = task[len("task/"):] if task.startswith("task/") else task
+    record = root / "implementation" / f"{task_path}.md"
+    mine: set[str] | None = None
+    target = None
+    if record.is_file():
+        own, _, unreadable = spec.parse_node(record)
+        if not isinstance(own, dict) or unreadable:
+            print(f"cannot run: the implementation record at {record} cannot be read: "
+                  f"{unreadable}", file=sys.stderr)
+            return CANNOT_RUN
+        target, mine = own.get("target"), record_paths(own)
+    slug = root.resolve().name
+    deliveries = (home / delivery_root).resolve()
+    proofs = []
+    for path in sorted(deliveries.glob("*/proof/**/*.md")):
+        relative = path.relative_to(deliveries)
+        owner_slug, owner_task = relative.parts[0], "/".join(relative.parts[2:])[:-len(".md")]
+        if (owner_slug, owner_task) == (slug, task_path):
+            continue
+        front, _, unreadable = spec.parse_node(path)
+        if isinstance(front, dict) and not unreadable \
+                and (target is None or front.get("target") == target):
+            proofs.append((owner_slug, owner_task, front))
+    for named in tests:
+        file, _, name = named.partition("::")
+        owners = []
+        print(f"{named}:")
+        for owner_slug, owner_task, front in proofs:
+            if not any(names_test(entry, file, name or None) for entry in front.get("tests") or []):
+                continue
+            closed = (home / work_root / owner_slug / plan.CLOSURE_FILE).is_file()
+            theirs = deliveries / owner_slug / "implementation" / f"{owner_task}.md"
+            held = record_paths(spec.parse_node(theirs)[0]) if theirs.is_file() else set()
+            shared = None if mine is None else sorted(mine & held)
+            owner = f"{owner_slug}/{owner_task}"
+            owners.append((owner, closed, shared))
+            if shared is None and closed:
+                said = "no record of this task yet, and a closed plan is adopted whatever is shared"
+            elif shared is None:
+                said = ("no record of this task yet; the owner's names "
+                        + (", ".join(sorted(held)) or "no file"))
+            else:
+                said = f"shares {', '.join(shared)}" if shared else "shares no file"
+            print(f"  {owner} — plan {'closed' if closed else 'live'}, {said}")
+        if not owners:
+            print("  no other task's proof names it, so no plan holds it")
+        print(f"  exit, for a red the diagnosis reads as `test`: {test_exit(owners)}")
+    return 0
+
+
 def unrecorded(target: str, named: list[str]) -> int:
     """`--unrecorded`'s own body: every path the working tree changed under the target source
     root — against `HEAD`, staged, unstaged and untracked together — that none of the named
@@ -3564,6 +3696,17 @@ def main() -> int:
                   file=sys.stderr)
             return CANNOT_RUN
         return unrecorded(rest[0], rest[1:])
+    if "--test-owner" in args:
+        at = args.index("--test-owner")
+        rest = args[at + 1:]
+        del args[at:]
+        if verify or report or single is not None or against is not None \
+                or specification is not None or args or len(rest) < 3 \
+                or any(a.startswith("--") for a in rest):
+            print("cannot run: expected --test-owner <delivery-root> <task> <test> [<test> ...]",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        return test_owner(rest[0], rest[1], rest[2:])
     if "--contract" in args:
         at = args.index("--contract")
         branch = args[at + 1] if at + 1 < len(args) and not args[at + 1].startswith("--") \

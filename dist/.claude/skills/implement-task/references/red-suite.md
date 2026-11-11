@@ -41,18 +41,16 @@ file it is, exactly as a red build does.
 
 ## The five ways out
 
-The diagnosis returns one of the contract's four causes. `test` splits in two by who owns the
-failing test, which the diagnosis is not told and you know: a test the test-author just wrote for
-this proof is this delivery's; any other test belongs to an earlier task. Every rerun is the same
-command, and `--next` names it — `<epic>-<slug>-suite-2`, then `-3`; every earlier run keeps
-its own.
+The diagnosis returns one of the contract's four causes; `test` splits by who owns the failing
+test, which you know and it is not told. Every rerun is the same command, and `--next` names it —
+`<epic>-<slug>-suite-2`, then `-3`; every earlier run keeps its own.
 
 | cause | owner of the failing test | what happens | waits on a person |
 |---|---|---|---|
 | `code` | — | the findings go to the `task-implementer`, re-entered; the suite runs again | no |
 | `build` | — | the suite's own compile failed; the red goes to the producer whose file the compiler named, re-entered; the suite runs again | no |
 | `test` | this delivery | stop: the two producers disagree | yes |
-| `test` | an earlier task | read the two implementation records: see below | where no file is shared |
+| `test` | an earlier task | the exit `deliver.py --test-owner` prints: see below | on `re-deliver` |
 | `setup` | — | nothing goes to a producer; the suite runs again once | on a second `setup` |
 
 - **`code`.** Where the implementer returns that the fix lies only in files no record of this task
@@ -61,23 +59,27 @@ its own.
 - **`test`, on a test this delivery wrote.** The proof asserts what the criterion requires and the
   implementation does not satisfy it; only a person settles that. The report quotes the diagnosis's
   evidence and correction whole, never a summary — even where it looks mechanical.
-- **`test`, on a test an earlier task owns.** This delivery's legitimate files broke it, and which
-  of two shapes it took is read from the two implementation records, never from the assertion's
-  wording: does this delivery's `files` name a path the owning task's `files` names too? — «A suite
-  red on a test the proof of an earlier task names is answered by this delivery only where its
-  files include one that task's implementation record names» (SPEC-004 R25).
-  - **Where none is**, the old assertion claimed more than its task's criteria establish —
-    totality over ground the two tasks share — and this delivery falsified the excess. Do not edit
-    that test. Stop, and hand the proof-only re-delivery `references/redelivery.md` names, over the
-    owning task, ready to paste: the owning task by identifier, the assertion the run named, and
-    the file this delivery added. Say that it runs only after the person commits this delivery,
-    because its own clean-tree stop refuses the pending state.
-  - **Where one is**, this delivery rewrote a file the owning task bound, so that task's
-    implementation no longer stands and the proof-only re-delivery would refuse. The test is this
-    delivery's: the `test-author`, re-entered, rewrites it whole — never trimmed, never narrowed —
-    against the nodes as they stand now; it joins this proof's `tests`; the proof's `## Notes`
-    names the owning task, the assertion the run named and the file this delivery moved; and the
-    suite runs again. The owning task's records stay as they are.
+- **`test`, on a test an earlier task owns.** Its exit is printed, never read from the assertion,
+  and only for this cause: a `code` red is the implementer's whoever owns the test. Name each
+  failing test as `<file>::<name>`, as the run printed it:
+
+  ```
+  python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --test-owner <delivery-root> <task> <file>::<name> [...]
+  ```
+
+  - **`adopt`** — every owning plan is closed: «Where every plan whose proof names the test is
+    closed, this delivery adopts the test whatever the files share» (SPEC-004 R25).
+  - **`rewrite`** — every live owner shares a file with this task, which moved what it bound.
+  - **`re-deliver`** — a live owner shares no file. Do not edit that test: stop, and hand the
+    proof-only re-delivery `references/redelivery.md` names over each owner listed, ready to paste:
+    the task, the assertion the run named, the file this delivery added. It runs once the person
+    commits this delivery: its clean-tree stop refuses the pending state.
+
+  On `adopt` and `rewrite`, the `test-author`, re-entered with the run, the diagnosis and each
+  owning proof's entry, rewrites the test whole — never trimmed, never narrowed. It joins this
+  proof's `tests`, a `--note` names each owner and its plan, and the suite runs again. Returned
+  under `contested`, it keeps a condition a node still states: a contradiction only a person
+  settles — stop, quote the entry whole, hand `/analyse` over the node.
 - **`setup`.** The harness or its environment did not stand up, so neither code nor test was
   reached. Run the suite again once, changing nothing. A second consecutive red the diagnosis reads
   as `setup` is a stop: the report quotes both diagnoses and hands the rerun invocation.
@@ -87,5 +89,5 @@ its own.
 **A test is never weakened, deleted, narrowed or rewritten to make the suite green.** A test edited
 until it passes is one producer overruling the other where nobody would see it. Where a test an
 earlier task owns must change, the producer that owns proofs rewrites it whole — in the owning
-task's own proof-only re-delivery, or in this one where this delivery moved what that task bound —
-and the runs on disk show any test that changed between attempts.
+task's own proof-only re-delivery, or in this one where `--test-owner` prints `adopt` or
+`rewrite` — and the runs on disk show any test that changed between attempts.

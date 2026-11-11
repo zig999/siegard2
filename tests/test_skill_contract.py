@@ -882,24 +882,40 @@ def test_no_shipped_text_carries_a_doubled_comma(path):
     assert ",," not in path.read_text(encoding="utf-8"), f"{path.name} carries ',,'"
 
 
-def test_a_red_on_an_earlier_tasks_test_is_answered_by_the_shape_the_two_records_show():
+def test_a_red_on_an_earlier_tasks_test_is_answered_by_the_exit_test_owner_prints():
     """«A test the proof of another task names is answered here only where this delivery's files
-    include one that task's implementation record names; otherwise the red is a stop» (SPEC-004
-    R24), and «A suite red on a test the proof of an earlier task names is answered by this
-    delivery only where its files include one that task's implementation record names» (SPEC-004
-    R25): the build hands the red to the stop, the suite reads the shape from the two records, and
-    the proof-only re-delivery is the person's and checks the tree before it writes."""
+    include one that task's implementation record names, or where every plan whose proof names it
+    is closed; otherwise the red is a stop» (SPEC-004 R24), and «Where every plan whose proof
+    names the test is closed, this delivery adopts the test whatever the files share» (SPEC-004
+    R25): the build and the suite read the exit from `deliver.py --test-owner`, only a `test`
+    diagnosis takes one, the test-author is handed each owning proof's entry and keeps its
+    conditions, a contested adoption is a stop, and the proof-only re-delivery stays the person's
+    and checks the tree before it writes."""
     skill = " ".join(skill_corpus("implement-task").split())
     build = reference_text("implement-task", "red-build")
     assert "the stop below, naming the test and the task whose proof names it" in build
+    assert "run `deliver.py --test-owner` over it" in build
     assert "references/red-suite.md" in skill.split("### 6. Suite", 1)[1].split("### 7.", 1)[0]
     suite = reference_text("implement-task", "red-suite")
     assert "`test`, on a test an earlier task owns" in suite
-    assert "read from the two implementation records, never from the assertion's wording" in suite
-    assert "**Where none is**" in suite and "**Where one is**" in suite
+    assert "Its exit is printed, never read from the assertion, and only for this cause" in suite
+    assert "a `code` red is the implementer's whoever owns the test" in suite
+    assert "deliver.py --test-owner <delivery-root> <task> <file>::<name>" in suite
+    for shape in ("**`adopt`** — every owning plan is closed",
+                  "**`rewrite`** — every live owner shares a file with this task",
+                  "**`re-deliver`** — a live owner shares no file. Do not edit that test"):
+        assert shape in suite
     assert "the proof-only re-delivery `references/redelivery.md` names" in suite
-    assert "rewrites it whole — never trimmed, never narrowed" in suite
-    assert "it joins this proof's `tests`" in suite
+    assert "each owning proof's entry, rewrites the test whole — never trimmed, never narrowed" \
+        in suite
+    assert "It joins this proof's `tests`" in suite
+    assert "a contradiction only a person settles" in suite
+    author = " ".join((REPO / "src/claude/agents/test-author.md").read_text(
+        encoding="utf-8").split())
+    assert "**an adopted test**" in author
+    assert "keeping every condition an owning proof says it fails when unless a node as it stands" \
+        in author
+    assert "is never rewritten away: leave the test, and return it under `contested`" in author
     redelivery = reference_text("implement-task", "redelivery").split(
         "One narrower re-delivery exists, and only the person names it", 1)[1]
     assert "Steps 3 and 4 do not run: the implementation record is not touched" in redelivery

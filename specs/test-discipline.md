@@ -192,7 +192,7 @@ left out — so the file set the review that followed was handed never held them
 
 ### Who answers a red build
 
-- **R24** — A build red whose fix lies only in files the project declares as its tests is answered by the delivery's test author, before the implementation record is written: the implementer writes no test, and the record cites the build that passed once the test author answered. A test the proof of another task names is answered here only where this delivery's files include one that task's implementation record names; otherwise the red is a stop.
+- **R24** — A build red whose fix lies only in files the project declares as its tests is answered by the delivery's test author, before the implementation record is written: the implementer writes no test, and the record cites the build that passed once the test author answered. A test the proof of another task names is answered here only where this delivery's files include one that task's implementation record names, or where every plan whose proof names it is closed; otherwise the red is a stop.
 
   Grounds: the build runs every step of the registry but the suite, the record is written only
   over a build that passed, and the test author was handed that record — so a red only a test
@@ -206,7 +206,7 @@ left out — so the file set the review that followed was handed never held them
   changed; the session handed the test author a red build and no record, outside any stated
   route. A red worded otherwise in its log is not counted.
 
-- **R25** — A suite red on a test the proof of an earlier task names is answered by this delivery only where its files include one that task's implementation record names: the test author rewrites the test whole and it joins this delivery's proof. Otherwise the test is not edited here: the answer is a proof-only re-delivery of the owning task, which only a person names, which rewrites the proof and never the implementation record, and which runs only while every binding of a node that task implements to a file its implementation record names is current. A binding of another node to one of those files does not close it: the review that follows reads that binding, as it does for a task carrying `stands` (R26).
+- **R25** — A suite red on a test the proof of an earlier task names is answered by this delivery only where its files include one that task's implementation record names, or where no plan whose proof names the test is live: the test author rewrites the test whole and it joins this delivery's proof. Where every plan whose proof names the test is closed, this delivery adopts the test whatever the files share: a closed plan takes no further record, so no re-delivery answers it. The rewrite keeps every condition an owning proof says the test fails when, except where a node as it stands states otherwise; one a node still states is never rewritten away, and the red is then a contradiction only a person settles. The proof's notes name each owning task. Which answer a red takes is printed by `bin/deliver.py --test-owner`, and only a red the diagnosis reads as `test` takes one. Otherwise the test is not edited here: the answer is a proof-only re-delivery of the owning task, which only a person names, which rewrites the proof and never the implementation record, and which runs only while every binding of a node that task implements to a file its implementation record names is current. A binding of another node to one of those files does not close it: the review that follows reads that binding, as it does for a task carrying `stands` (R26).
 
   Grounds: stated in `/implement-task` since the proof-only re-delivery shipped (9a2a3df) and in
   no specification until the audit of 2026-11-01 found the route with no requirement to hold it;
@@ -219,6 +219,23 @@ left out — so the file set the review that followed was handed never held them
   tasks: three had a binding of their own nodes out of date on a named file, and one —
   carrying a testable remainder — only other nodes' bindings, so the same question gets the
   same answer on both routes.
+
+  The closed-owner answer was added on 2026-11-11. One consumer's delivery stopped twice that
+  day on a suite red over tests whose every owning plan was closed — once on a scope table that
+  lacked the identities the delivery added, once on two scans a node had just exempted generated
+  clients from — and the proof-only re-delivery this requirement named could not run, because
+  `/implement-task` writes nothing into a closed plan: the tasks were parked outside the tree and
+  three test files were edited by hand at the person's dictation. Read from the sales consumers'
+  commits of the four days before (40 commits × files modifying a test another plan's proof
+  names; temp/20261111-adopt-scenarios/shared.py): 26 shared a file with the owner, 14 did not,
+  and 12 of those 14 owners' plans were closed at the commit. Eleven of the 14 were edited inside
+  the delivery under the agent text that admits "an existing test adjusted", and every one of the
+  eight whose runs were read had passed its first suite: the test was changed before any red, so
+  this requirement never ran. Replayed before the change: a test
+  author handed the owning proofs' entries adopted the three tests with the person's own edits
+  (2a49391, 5159eba), the whole suite green; with the node unchanged it returned the test
+  contested rather than exempting the files; with a genuine code defect the adopted test stayed
+  red on it.
 
 - **R26** — A task carrying `stands`, in its plan or in its implementation record, is delivered only while the trace holds the bindings R18 requires and every binding of a node the task implements to a file `stands` names is current: a node the task implements bound to no `stands` file, a `stands` file bound to no node the task implements, a file changed since the binding was written, or a node whose text moved since the file was read against it makes the implementation not stand, and the record writer refuses the record. A node the task implements and a `stands` file the trace does not bind to each other are never that refusal while the node is bound to another `stands` file and the file to another node the task implements: the files hold the implementation together, and no file need hold all of it. A binding of a node the task does not implement to one of those files is never that refusal: the review that follows reads each `stands` file against every node the trace binds to it.
 
@@ -352,12 +369,14 @@ left out — so the file set the review that followed was handed never held them
     return; a declared test another task's proof names is answered only where this delivery's
     files include one that task's record names, and is otherwise the stop —
     `tests/test_project.py` and `tests/test_skill_contract.py` prove each.
-12. For R25: `/implement-task`'s suite step reads which shape a red on an earlier task's test
-    took from the two implementation records, rewrites the test where a file is shared, and
-    otherwise hands the proof-only re-delivery, which only a person names and which runs
-    `trace.py --check --all` before anything is written and reads the findings naming a node the
-    owning task implements — `tests/test_skill_contract.py` proves
-    each.
+12. For R25: `bin/deliver.py --test-owner` prints, per test, every other task's proof naming
+    it, that proof's plan live or closed, the files the two implementation records share, and
+    `adopt`, `rewrite` or `re-deliver` — `tests/test_test_owner.py` proves each shape;
+    `/implement-task`'s suite step runs it only on a `test` diagnosis, rewrites or adopts the
+    test as it prints, hands the test author each owning proof's entry, stops on a `contested`
+    adopted test, and otherwise hands the proof-only re-delivery, which only a person names and
+    which runs `trace.py --check --all` before anything is written and reads the findings naming
+    a node the owning task implements — `tests/test_skill_contract.py` proves each.
 13. For R26: `bin/deliver.py --write-implementation` refuses a record carrying `stands` where a
     node the task implements has no binding to a `stands` file, where a `stands` file has no
     binding to a node the task implements, or where a binding between them has a file changed or

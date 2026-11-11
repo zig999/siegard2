@@ -46,12 +46,10 @@ record is written» (SPEC-004 R24).
    written from. Step 5 runs now, ahead of the record: the test-author is handed the implementer's
    transcript in the record's place, and the run and those paths under `red build`, and writes the
    proof whole, those files with it.
-5. **A path the proof of another task names** is answered here only as step 6 answers a test an
-   earlier task owns, read from that task's implementation record and this delivery's return —
-   «A test the proof of another task names is answered here only where this delivery's files
-   include one that task's implementation record names; otherwise the red is a stop»
-   (SPEC-004 R24). Otherwise it is the stop below, naming the test and the task whose proof names
-   it.
+5. **A path the proof of another task names** is answered as step 6 answers a test an earlier
+   task owns: run `deliver.py --test-owner` over it — with no record yet it lists a live owner's
+   files, for the return to name or not — and `re-deliver` is the stop below, naming the test and
+   the task whose proof names it.
 6. **Then the build runs again** under the next name. A red that now names source goes back to the
    implementer, one that names a test to the test-author, each re-entered. Green, the record is
    written over that run, and step 5 has run: go on to step 6 with the proof's return in hand.
