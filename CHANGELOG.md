@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.89.0 — 2026-11-11
+
+A suite or build red on an earlier task's test whose every owning plan is closed is adopted by the delivery: `deliver.py --test-owner` prints `adopt`, `rewrite` or `re-deliver`, and the test-author rewrites the test whole, keeping every condition its owning proofs state unless a node now says otherwise (SPEC-004 R24, R25). (`c3e636b`)
+
 ## 5.88.0 — 2026-11-10
 
 A run's retry number is `bin/run.py`'s: `--next` lands an attempt one past the greatest number its name holds, and `/implement-task` runs setup, build and suite with it (SPEC-004 R28). (`4dbd3cd`)
