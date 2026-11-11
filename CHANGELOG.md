@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.90.0 — 2026-11-11
+
+A read entry's `found` names its file from the repository's root: `spec.py --decide` rewrites a path spelling out where the repository, or the directory holding it, sits on the machine, and says so (SPEC-001 R9). (`98a245e`)
+
 ## 5.89.0 — 2026-11-11
 
 A suite or build red on an earlier task's test whose every owning plan is closed is adopted by the delivery: `deliver.py --test-owner` prints `adopt`, `rewrite` or `re-deliver`, and the test-author rewrites the test whole, keeping every condition its owning proofs state unless a node now says otherwise (SPEC-004 R24, R25). (`c3e636b`)
