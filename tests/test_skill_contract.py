@@ -656,21 +656,47 @@ def test_every_line_of_material_given_as_a_file_is_owed_a_ledger_entry():
     assert "--prepare --skill analyse --project <project-root> --ledger <ledger.md>" in text
 
 
-def test_the_ledger_is_committed_with_the_specification_it_accounts_for():
+def test_the_ledger_is_committed_while_in_use_and_removed_by_the_commit_that_closes_it():
     """SPEC-001 R16 and SPEC-008 R10: the open lines a later increment answers live only in the
-    ledger, and a goal's state reads an untracked ledger as a tree that is not clean — so the
-    commit that takes the specification takes the ledger, in the analysis and in the one route
-    that commits an analysis it invoked over an objective."""
+    ledger, and a goal's state reads an untracked ledger as a tree that is not clean — so while a
+    line is open, or an adoption still reads it, the commit that takes the specification takes the
+    ledger. Once nothing reads it again, the commit that closed it removes it, its message carrying
+    `--ledger`'s output; the handoff then names no ledger, because `--prepare` refuses a path that
+    is no file."""
     analyse = unwrapped(skill_text("analyse"))
-    assert ("The ledger is part of the increment it records: the commit that takes the "
-            "specification the analysis wrote takes the ledger with it, and no ledger is left "
+    assert ("While a line of it is open, or while an adoption still reads it, the commit that takes "
+            "the specification the analysis wrote takes the ledger with it, and no ledger is left "
             "untracked") in analyse
-    assert "Commit the specification root and the ledger by path" in analyse
+    assert ("Once no line is open and no adoption reads it — some of its material is neither survey "
+            "nor intent material — the commit of the increment that closed it removes it, and its "
+            "message carries what `bin/trace.py --ledger` printed over it") in analyse
+    step = analyse.split("### 6. Report, and stop", 1)[1]
+    assert ("the specification root and the ledger or its removal as `--ledger`'s last line says"
+            ) in step
+    assert ("`--ledger` names a ledger the commit kept, none where it removed one or the material "
+            "was not a file") in step
+    assert "The ledger is part of the increment it records" not in analyse
+    reference = reference_text("analyse", "ledger")
+    assert ("`ledger: remove` — nothing reads it again: the commit removes it, and its message "
+            "carries the run's output verbatim") in reference
+    assert ("delete the ledger, then name its path beside the specification root only where "
+            "`git ls-files` lists it") in reference
+    assert "Never leave the ledger untracked" in reference
     assert "references/goal.md" in skill_text("deliver-scope")
     deliver = unwrapped(skill_corpus("deliver-scope"))
-    assert ("That commit takes the ledger the analysis answered beside the objective with it"
-            ) in deliver
+    assert ("That commit takes the ledger the analysis answered beside the objective with it while a "
+            "line of it is open, and its removal once none is") in deliver
     assert "commit the specification root alone" not in deliver
+
+
+def test_the_adoption_that_reads_a_ledger_removes_it_in_its_commit():
+    """SPEC-005 R8: nothing reads a ledger after the adoption that read it, so the adoption's
+    commit takes its removal; a stopped adoption leaves it for the resumed staging."""
+    sentence = ("The adoption that reads a ledger removes it in the commit that takes its bindings, "
+                "and a stopped adoption leaves it")
+    assert ("delete the ledger and name its path in the commit of step 6; a stopped adoption "
+            "leaves it") in reference_text("reconcile", "adoption")
+    assert sentence in unwrapped(skill_text("adopt-scope"))
 
 
 def test_the_analysis_reports_how_many_fields_it_decided_per_node():

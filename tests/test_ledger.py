@@ -349,3 +349,52 @@ def test_a_survey_ledger_needs_no_digest_but_a_wrong_one_is_refused(surveyed):
 def test_open_lines_counts_each_open_line_once(agenda):
     assert trace.open_lines(agenda_ledger(agenda, agenda_entries())) == 2
     assert trace.open_lines(agenda / "nowhere.md") is None
+
+
+# ------------------------------------------- the ledger lives while its material is in use (R16)
+
+
+def test_a_ledger_with_a_line_open_is_kept(agenda):
+    """«The ledger lives while its material is in use» (SPEC-001 R16): an open line is a later
+    increment's to answer, so the commit takes the ledger."""
+    done = run("--ledger", agenda_ledger(agenda, agenda_entries()), agenda / "specs")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert done.stdout.rstrip().endswith(
+        "ledger: keep — 2 line(s) open; the commit takes the ledger, and a later increment "
+        "answers them")
+
+
+def test_a_closed_ledger_over_prose_is_removed(agenda):
+    """No line open and no adoption reads a ledger over prose: the increment's commit removes
+    it, its message carrying the output."""
+    entries = [e for e in agenda_entries() if "open" not in e]
+    entries.append({"at": f"agenda.md:{item_lines()['**A2.']}", "outside": "implementation knowledge"})
+    done = run("--ledger", agenda_ledger(agenda, entries), agenda / "specs")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert done.stdout.rstrip().endswith(
+        "ledger: remove — no line open and no adoption reads it; the commit of this increment "
+        "removes it, its message carrying this output")
+
+
+def test_a_closed_ledger_over_survey_material_is_kept_for_the_adoption(surveyed):
+    done = run("--ledger", ledger_at(surveyed, full_entries(surveyed)), surveyed / "specs")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert done.stdout.rstrip().endswith(
+        "ledger: keep — an adoption reads it; the commit takes the ledger, and the adoption's "
+        "commit removes it")
+
+
+def test_a_closed_ledger_over_survey_and_prose_is_removed(surveyed):
+    """An adoption refuses a ledger whose material is not all survey or intent material, so
+    nothing reads a closed one again."""
+    survey = surveyed / "siegard-survey" / "adopt-orders"
+    (survey / "agenda.md").write_text(AGENDA, encoding="utf-8")
+    entries = full_entries(surveyed) + [e for e in agenda_entries() if "open" not in e]
+    entries.append({"at": f"agenda.md:{item_lines()['**A2.']}", "outside": "implementation knowledge"})
+    path = ledger_at(surveyed, entries, material=("orders.md", "agenda.md"))
+    front = yaml.safe_load(path.read_text(encoding="utf-8").split("---")[1])
+    front["digests"] = {"agenda.md": trace.spec.digest_of(survey / "agenda.md")}
+    path.write_text("---\n" + yaml.safe_dump(front, sort_keys=False) + "---\n", encoding="utf-8")
+    done = run("--ledger", path, surveyed / "specs")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "ledger: remove — no line open and no adoption reads it" in done.stdout

@@ -190,9 +190,13 @@ enforces mechanically.
   as complete. The reasons lines were left out are reported grouped and counted, largest first,
   and none is refused for its count. Material given only in conversation has no lines and owes no
   ledger, and the report says the material was not a file. A file the material only cites is a
-  source the analysis consults, never material, and owes no ledger. The ledger is part of the
-  increment it records: the commit that takes the specification the analysis wrote takes the
-  ledger with it, and no ledger is left untracked.
+  source the analysis consults, never material, and owes no ledger. The ledger lives while its
+  material is in use. While a line of it is open, or while an adoption still reads it, the commit
+  that takes the specification the analysis wrote takes the ledger with it, and no ledger is left
+  untracked. Once no line is open and no adoption reads it — some of its material is neither
+  survey nor intent material — the commit of the increment that closed it removes it, and its
+  message carries what `bin/trace.py --ledger` printed over it. A ledger an adoption reads is
+  removed by the commit of that adoption (SPEC-005 R8).
 
 ### Language
 
@@ -278,10 +282,12 @@ enforces mechanically.
    bold-led line, list item at the line's start, table body row and first paragraph line as an
    item line and nothing under a fence, a heading or the frontmatter; refuses a line with no
    entry, a ledger with no digest of the file and a digest that no longer matches; accepts a line
-   both landed and open; and prints the open lines and the reasons grouped by count —
-   `tests/test_ledger.py` proves each. `bin/handoff.py --prepare` given a ledger with open lines
+   both landed and open; prints the open lines and the reasons grouped by count; and ends with
+   whether the increment's commit keeps or removes the ledger — `tests/test_ledger.py` proves
+   each, the three answers among them. `bin/handoff.py --prepare` given a ledger with open lines
    leads its state with their count and hands the analysis as a door, and `--render` refuses the
    record once the count changed — `tests/test_handoff.py` proves it. The analyse skill states the
    requirement, and `tests/test_skill_contract.py` holds its sentence; the same test holds the
    analyse skill and the deliver-scope skill stating that the ledger is committed with the
-   specification it accounts for.
+   specification it accounts for while it is in use and removed by the commit that closes it, and
+   the analyse skill naming the ledger to `--prepare` only where it was kept.

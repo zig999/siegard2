@@ -27,9 +27,10 @@ armed it, and the specification root is committed apart, by `/analyse` itself» 
 2. A report opening `stop: no-fact —` or `stop: no-change —` is nothing to specify: write the line
    to the log and plan. Any other stop of `/analyse` ends the run.
 3. Invoke it with the run's slug and the step `specify`: where it wrote, it commits the
-   specification root and the ledger it answered beside the objective as `analyse <slug>: specify`
-   — «That commit takes the ledger the analysis answered beside the objective with it»
-   (SPEC-008 R10). Run the gate again, `spec.py` over the specification root.
+   specification root, and the ledger it answered beside the objective, as `analyse <slug>: specify`
+   — «That commit takes the ledger the analysis answered beside the objective with it while a line
+   of it is open, and its removal once none is» (SPEC-008 R10). Run the gate again, `spec.py` over
+   the specification root.
 4. Plan with the same objective as the scope.
 
 The report carries what `/analyse`'s own report states for a reviewer: the decided fields per node,

@@ -129,7 +129,9 @@ The steps:
    the record and the bind are that skill's; a return it re-delegates once and refuses again is
    its stop and this skill's.
 6. **Commit the adoption**: `siegard-trace.json`, `siegard-reconcile` and
-   `siegard-survey/<slug>`, under `adopt-scope <slug>: adopt`.
+   `siegard-survey/<slug>`, under `adopt-scope <slug>: adopt` — the ledger's removal with it:
+   «The adoption that reads a ledger removes it in the commit that takes its bindings, and a
+   stopped adoption leaves it» (SPEC-005 R8).
 7. **Measure.** Run `telemetry.py --probe --since <the instant step 1 began>` over the project
    root; announce the read as that script requires; run it. Commit the telemetry root `project.py`
    answers under `adopt-scope <slug>: measure`. A probe that cannot read is a line in the report, never a stop.

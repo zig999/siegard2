@@ -1,6 +1,7 @@
 # The ledger, line by line
 
-Read during step 4b of `/analyse`, whenever the material was given as a file.
+Read during step 4b of `/analyse`, whenever the material was given as a file; its last section
+again at step 6, before the commit.
 
 ## Which lines are owed
 
@@ -60,4 +61,19 @@ it. On survey or intent material it also prints the file set the material read a
 candidates per file; all of it goes into the report and the handoff below. An adoption reads a
 ledger only where no line of it is open, so over survey or intent material an open line is one
 more increment of this analysis before `/reconcile` can take it.
+
+The last line says what the commit does with the ledger: «The ledger lives while its material is
+in use» (SPEC-001 R16).
+
+- `ledger: keep — <n> line(s) open` — the commit takes the ledger; a later increment answers them.
+- `ledger: keep — an adoption reads it` — the commit takes the ledger; the adoption's commit
+  removes it.
+- `ledger: remove` — nothing reads it again: the commit removes it, and its message carries the
+  run's output verbatim.
+
+To commit a removal, delete the ledger, then name its path beside the specification root only
+where `git ls-files` lists it: the commit then takes the removal, and a path git never tracked
+fails the pathspec. Never leave the ledger untracked — kept, it is the record of what is still
+open or still read; removed, its last answer lives in the commit message. Where the commit removed
+it, `handoff.py --prepare` takes no `--ledger`: a removed ledger has no line open.
 

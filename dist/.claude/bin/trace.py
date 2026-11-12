@@ -3557,6 +3557,7 @@ def ledger(path: Path, spec_root: Path) -> int:
             print(f"    {count} × {reason[:160]}")
     if len(prose) == len(surveys):
         print(f"  candidates, all: {' '.join(every_node)}")
+        print(ledger_fate(len(still_open), bool(prose)))
         return 0
     print(f"  file set: {len(per_file)} file(s) the material read; candidates per file:")
     for given in sorted(per_file):
@@ -3566,7 +3567,23 @@ def ledger(path: Path, spec_root: Path) -> int:
         print(f"  {len(empty)} file(s) no fact names; an adoption over this ledger hands them no "
               f"judge and leaves them unbound: {', '.join(empty)}")
     print(f"  candidates, all: {' '.join(every_node)}")
+    print(ledger_fate(len(still_open), bool(prose)))
     return 0
+
+
+def ledger_fate(still_open: int, any_prose: bool) -> str:
+    """What the commit of the increment does with a sound ledger: «The ledger lives while its
+    material is in use» (SPEC-001 R16). Kept while a line is open, or while an adoption still
+    reads it — every material is survey or intent material; removed otherwise, because nothing
+    reads it again."""
+    if still_open:
+        return (f"ledger: keep — {still_open} line(s) open; the commit takes the ledger, and a "
+                f"later increment answers them")
+    if not any_prose:
+        return ("ledger: keep — an adoption reads it; the commit takes the ledger, and the "
+                "adoption's commit removes it")
+    return ("ledger: remove — no line open and no adoption reads it; the commit of this "
+            "increment removes it, its message carrying this output")
 
 
 def tracked_under(target: Path, home: Path) -> tuple[list[str] | None, str | None]:

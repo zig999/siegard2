@@ -58,7 +58,7 @@ constraints spent 26 judges on files the notes never cited while the notes named
 - **Intent material** — material read from a target's declared tests: what the source should do,
   each fact beside the test it was read at and the file of the source it governs.
 - **Ledger** — the record beside survey or intent material saying, per fact line, the node that
-  holds the fact or why none does.
+  holds the fact or why none does, kept while its material is in use.
 - **Adoption** — a reconciliation whose record carries `adopted`: every candidate read on every
   file of its set.
 - **Test scope** — the files of a target the project declares as its tests, in `siegard.json`
@@ -210,7 +210,9 @@ constraints spent 26 judges on files the notes never cited while the notes named
   with neither is a fact the analysis dropped, and the ledger is refused. The ledger discloses
   where each fact went; it holds no fact, and no node carries it. An adoption reads a ledger only
   where all its material is survey or intent material and no line of it is left open, and refuses
-  any other ledger (SPEC-001 R16).
+  any other ledger (SPEC-001 R16). The adoption that reads a ledger removes it in the commit that
+  takes its bindings, and a stopped adoption leaves it; a file that adoption kept outside is
+  adopted later with its candidates named.
 - **R9** — Every fact line of intent material names a test the material read and a file of the
   source it governs, and a line that names no test or no governed file is refused. An adoption
   over its ledger hands each governed file the nodes its facts landed in; a test is never a file
@@ -271,7 +273,9 @@ constraints spent 26 judges on files the notes never cited while the notes named
    a ledger holding an open line, or material that is not survey or intent material, is refused —
    `tests/test_stage_fold.py` proves each
    (`test_an_adoption_refuses_a_ledger_with_an_open_line`,
-   `test_an_adoption_refuses_a_ledger_over_prose_material`).
+   `test_an_adoption_refuses_a_ledger_over_prose_material`). The reconcile skill's adoption and
+   the adopt-scope skill state that the adoption's commit removes the ledger it read —
+   `tests/test_skill_contract.py` holds the sentence.
 6. For R9: a fact line naming no test or no governed file is refused by line, a listed test the
    scope does not declare and a governed file that is a declared test are refused, a target
    declaring no tests refuses intent material, and an adoption over the ledger hands each

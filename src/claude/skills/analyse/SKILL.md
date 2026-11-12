@@ -26,7 +26,7 @@ read `${CLAUDE_PLUGIN_ROOT}/skills/analyse/SKILL.md` again before acting on it.
 - [ ] 4 Validate: spec.py clean; spec.py --project; spec.py --shape --of; read references/reading-shape.md
 - [ ] 4b Ledger (material given as a file): read references/ledger.md; trace.py --ledger sound
 - [ ] 5 Cross-check: the pairs --shape names; log a decided conflict; rerun spec.py
-- [ ] 6 Commit root and ledger; report: handoff.py --prepare, --save-report, --render; stop
+- [ ] 6 Commit root; ledger kept or removed per --ledger's last line; report: handoff.py --prepare, --save-report, --render; stop
 ```
 
 ## Required inputs
@@ -378,12 +378,12 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --ledger <ledger.md> <specificatio
 Never an entry naming a node that does not hold the fact. What the sound run prints goes into
 the report and the handoff below.
 
-A later invocation over the same material answers the same ledger: it reads the open lines first,
-answers them, and leaves every other entry as it stands unless the line's node changed. That is
-only possible where the ledger was kept: «The ledger is part of the increment it records: the
-commit that takes the specification the analysis wrote takes the ledger with it, and no ledger is
-left untracked» (SPEC-001 R16). The ledger is not working material to leave out of the review;
-it is the record of what this increment answered and what it left open.
+A later invocation over the same material reads its open lines first and answers them, leaving every
+other entry as it stands unless its node changed. «While a line of it is open, or while an adoption
+still reads it, the commit that takes the specification the analysis wrote takes the ledger with it,
+and no ledger is left untracked»; «Once no line is open and no adoption reads it — some of its
+material is neither survey nor intent material — the commit of the increment that closed it removes
+it, and its message carries what `bin/trace.py --ledger` printed over it» (SPEC-001 R16).
 
 ### 5. Cross-check: obligations that share a subject
 
@@ -424,15 +424,15 @@ Recording a decision moves frontmatter: rerun the validation of step 4 before re
 
 ### 6. Report, and stop
 
-Commit the specification root and the ledger by path, as the plugin's rules state, as
-`analyse <the invocation's slug, else the material's stem>: <specify under a goal, else analyse>`.
+Commit, by path as the plugin's rules state, the specification root and the ledger or its removal as
+`--ledger`'s last line says, as `analyse <the invocation's slug, else the material's stem>: <specify under a goal, else analyse>`.
 «The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Hand off
 in four steps:
 
 1. Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill analyse --project <project-root> --ledger <ledger.md> --language <en or pt-BR, the session's>`.
-   `--ledger` names the ledger step 4b answered; leave it off only where the material was not a
-   file. Pass no slug: the plan's slug is the person's to name. It writes a handoff record whose
-   state is already filled and whose other fields are empty, and prints the `report` path.
+   `--ledger` names a ledger the commit kept, none where it removed one or the material was not a
+   file. Pass no slug: the plan's slug is the person's to name. It writes a handoff record
+   whose state is already filled and whose other fields are empty, and prints the `report` path.
 2. Write the full report below to that path through `bin/handoff.py --save-report <path>`.
 3. Complete the record against `${CLAUDE_PLUGIN_ROOT}/schemas/handoff.json`, which fixes every
    field's shape and the limits `--render` enforces: fill what the skeleton left empty or absent —

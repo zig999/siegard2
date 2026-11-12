@@ -1,7 +1,7 @@
 # Adoption
 
 Read at step 2 where the person, or a record writer's `door:` line, named the mode. The same order
-runs, with four differences, each held by the scripts rather than by this prose.
+runs, with four differences.
 
 ## 1. Stage with `--adopt`, over the ledger
 
@@ -43,6 +43,9 @@ under `unheld` and claims no file.
 ## 3. Bind with `--bind-record --workspace`
 
 It writes the trace if this is the target's first.
+
+Once it lands, delete the ledger and name its path in the commit of step 6; a stopped adoption
+leaves it.
 
 ## 4. Report what an adoption adds
 

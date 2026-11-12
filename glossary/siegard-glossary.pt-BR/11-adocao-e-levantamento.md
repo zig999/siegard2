@@ -156,6 +156,13 @@ Uma entrada tem `node` **ou** `outside`, nunca os dois.
 **Para que a adoção o usa.** O `--stage --adopt --ledger` lê o ledger para entregar a cada juiz,
 no seu pacote, **só os candidatos em que os fatos daquele arquivo foram parar** — em vez de todos
 os candidatos do incremento. Isso reduz muito o que cada juiz precisa ler.
+**Por quanto tempo existe** (desde a 5.91.0). O ledger vive enquanto o material está em uso. Com
+alguma linha `open`, ou enquanto uma adoção ainda vai lê-lo, ele é commitado junto com a
+especificação. Sem linha aberta e sem adoção que o leia — algum material é prosa —, o commit do
+incremento que o fechou o remove, e a mensagem desse commit traz a saída do `trace.py --ledger`.
+Um ledger lido por uma adoção é removido pelo commit da adoção. A última linha do `--ledger` diz
+qual dos casos vale: `ledger: keep` ou `ledger: remove`. As versões anteriores ficam no histórico
+do git.
 
 ### `trace.py --area`, `trace.py --survey` e `trace.py --ledger`
 

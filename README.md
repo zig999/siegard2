@@ -268,7 +268,9 @@ time, after steps 1–6 above:
    `siegard-survey/<slug>/`, held to `schemas/survey.json`.
 3. **`/siegard:analyse`** over that material. Beside the nodes it writes a ledger saying where
    every fact line went — a node, or a stated reason none holds it — and `trace.py --ledger`
-   refuses a ledger short one fact. Its report hands the adoption invocation ready to fill.
+   refuses a ledger short one fact. Its report hands the adoption invocation ready to fill. The
+   ledger lives while its material is in use: the adoption's commit removes it, and an analysis
+   over other material removes it in the commit that leaves no line open.
 4. **`/siegard:reconcile` as an adoption** over the ledger, with the files to keep out of the
    judgment (configuration, wiring) named as outside. Each file's judge reads the candidates that
    file's own facts reached; each cleared node is bound to the files that hold its fact; the
