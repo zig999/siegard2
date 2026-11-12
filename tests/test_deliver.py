@@ -3191,6 +3191,69 @@ def test_a_record_that_stands_where_a_node_is_bound_to_none_of_its_files_is_refu
     assert not (delivery / "implementation/checkout/record-order.md").exists()
 
 
+def stand_at_only(standing: Path, files: list[str]) -> None:
+    mapping = yaml.safe_load(standing.read_text(encoding="utf-8"))
+    mapping["stands"] = files
+    standing.write_text(yaml.safe_dump(mapping, sort_keys=False), encoding="utf-8")
+
+
+def test_a_node_bound_to_a_current_file_the_list_omits_is_answered_by_naming_that_file(
+        planned, delivery, work, root, target, standing, write_plan):
+    """«A node the task implements that the trace binds to a file whose binding is current is
+    answered without a door: the refusal names that file, and the implementation stands where
+    `stands` names it.» (SPEC-004 R20) No door is printed, and the list that adds the file is
+    written."""
+    two_standing(work, root, target, standing, write_plan,
+                 ["domain/sales/order", "domain/sales/invoice"])
+    bind_file(target, root, "domain/sales/order", STANDING_FILE)
+    bind_file(target, root, "domain/sales/invoice", SECOND_STANDING_FILE)
+    stand_at_only(standing, [STANDING_FILE])
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 1
+    assert (f"it binds domain/sales/invoice to {SECOND_STANDING_FILE}, each current"
+            in done.stdout)
+    assert "door:" not in done.stdout
+    assert not (delivery / "implementation/checkout/record-order.md").exists()
+    stand_at_only(standing, [STANDING_FILE, SECOND_STANDING_FILE])
+    again = write_standing(delivery, planned, standing)
+    assert again.returncode == 0, again.stdout + again.stderr
+
+
+def test_a_node_bound_only_to_files_that_moved_has_the_ordinary_reconciliation_as_its_door(
+        planned, delivery, work, root, target, standing, write_plan):
+    """«A node bound only to files that moved has the ordinary reconciliation over those files as
+    its door, and an adoption is the door only for a node the trace binds to no file.» (SPEC-004
+    R20)"""
+    two_standing(work, root, target, standing, write_plan,
+                 ["domain/sales/order", "domain/sales/invoice"])
+    bind_file(target, root, "domain/sales/order", STANDING_FILE)
+    bind_file(target, root, "domain/sales/invoice", SECOND_STANDING_FILE)
+    (target / SECOND_STANDING_FILE).write_text("export const bill = () => 2\n", encoding="utf-8")
+    stand_at_only(standing, [STANDING_FILE])
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 1
+    assert f"it binds domain/sales/invoice only to {SECOND_STANDING_FILE}, each out of date" \
+        in done.stdout
+    assert f"door: /reconcile — files: {SECOND_STANDING_FILE}" in done.stdout
+    assert "an adoption" not in done.stdout
+
+
+def test_a_file_another_implemented_node_has_out_of_date_is_not_offered(
+        planned, delivery, work, root, target, standing, write_plan):
+    """The file named is one the same list can carry without a drift of its own."""
+    two_standing(work, root, target, standing, write_plan,
+                 ["domain/sales/order", "domain/sales/invoice"])
+    bind_file(target, root, "domain/sales/order", STANDING_FILE)
+    bind_file(target, root, "domain/sales/invoice", SECOND_STANDING_FILE)
+    bind_file(target, root, "domain/sales/order", SECOND_STANDING_FILE)
+    (target / SECOND_STANDING_FILE).write_text("export const bill = () => 2\n", encoding="utf-8")
+    bind_file(target, root, "domain/sales/invoice", SECOND_STANDING_FILE)
+    stand_at_only(standing, [STANDING_FILE])
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 1
+    assert "each current" not in done.stdout
+
+
 def test_a_record_that_stands_over_a_file_bound_to_none_of_its_nodes_is_refused(
         planned, delivery, work, root, target, standing, write_plan):
     """«a `stands` file bound to no node the task implements ... makes the implementation not

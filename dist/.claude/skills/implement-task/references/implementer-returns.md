@@ -14,8 +14,8 @@ the implementer's return, written through `--write-implementation --from`. The r
 
 The writer holds `stands` to the trace, as for a planned one, and may refuse the record:
 
-- **Only a file bound to no node the task implements**: re-enter the implementer once with the
-  refusal verbatim, to answer again without that file. The same refusal again is a stop.
+- **A refusal with no `door:` line**: re-enter the implementer once with the refusal verbatim, to
+  answer again as it says. The same refusal again is a stop.
 - **A refusal ending in a `door:` line**: the line names the reconciliation that writes the
   missing bindings, «and that reconciliation is the delivery's one door» (SPEC-004 R20). Stop, and
   hand `/reconcile` ready to paste from that line alone. Its file set and, for an adoption, its

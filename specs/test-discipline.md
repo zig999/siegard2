@@ -146,7 +146,7 @@ left out — so the file set the review that followed was handed never held them
   on 96 tasks across five consumers, 94 of which wrote source, so R18's second sentence is held by
   the decomposer's judgment and not by a validator.
 
-- **R20** — A delivery whose implementer finds every criterion of the task already met by source the tree holds writes no source: its implementation record carries `stands` over the files that hold the fact, and its proof follows as for any task. Where the trace does not hold the bindings R26 reads between those files and the task's nodes, the record writer refuses the record and names the reconciliation that would write them — an adoption over those files whose candidates are the task's nodes bound to none of them, or an ordinary one where every node is bound and a binding moved — and that reconciliation is the delivery's one door: an orchestrating run takes it, once per task, and delivers the task again. A node the adoption leaves bound to none of the files is a stop, and the person's: the implementer and the reconciliation's judges read the same files two ways.
+- **R20** — A delivery whose implementer finds every criterion of the task already met by source the tree holds writes no source: its implementation record carries `stands` over the files that hold the fact, and its proof follows as for any task. Where the trace does not hold the bindings R26 reads between those files and the task's nodes, the record writer refuses the record and names the reconciliation that would write them — an adoption over those files whose candidates are the task's nodes bound to none of them, or an ordinary one where every node is bound and a binding moved — and that reconciliation is the delivery's one door: an orchestrating run takes it, once per task, and delivers the task again. A node the task implements that the trace binds to a file whose binding is current is answered without a door: the refusal names that file, and the implementation stands where `stands` names it. A node bound only to files that moved has the ordinary reconciliation over those files as its door, and an adoption is the door only for a node the trace binds to no file. A node the adoption leaves bound to none of the files is a stop, and the person's: the implementer and the reconciliation's judges read the same files two ways.
 
   Grounds: on 2026-10-30, reading every `orchestration.md` under the delivery roots of the sales consumers
   for a line naming a task whose implementer found the criteria met and wrote no file, 20 tasks in 5
@@ -168,6 +168,13 @@ left out — so the file set the review that followed was handed never held them
   it read the two unbound nodes as candidates only and bound neither, so that door could not have
   closed. An adoption reads every candidate it is handed on every file and binds each where the
   judgment holds its fact (SPEC-005 R3, R4).
+
+  On 2026-11-12 a delivery over `domain/product-configuration/price-line`, a node 10 of a plan's 21
+  tasks implement, was refused three times for a task that wrote no source: each sibling delivery bound the node
+  to the files it wrote and left the bindings of other nodes on a file it changed out of date, so the
+  implementer's list, read from the criteria, named files the trace held for no node of the task or held
+  stale. The retry and the two reconciliations cost 3 invocations of about 130k, 165k and 145k fresh tokens, and the
+  goal ended in state B. The trace held the node bound to 7 files, 6 of them current, which the refusal did not say.
 
 - **R21** — A re-delivery of a task whose own earlier implementation record names every file that holds the fact writes no `stands`: the record is written again over those files, answering the task as it stands. A re-delivery names a file the tree did not change only where the record it replaces named it. A re-delivery that writes no source and finds the fact held in a file the earlier record does not name is R20's: its record replaces the earlier one carrying `stands`.
 
@@ -382,7 +389,9 @@ left out — so the file set the review that followed was handed never held them
     binding to a node the task implements, or where a binding between them has a file changed or
     a node moved since it was written; it writes the record where the files hold the nodes between
     them and no file binds every node, and where only a node the task does not implement has a
-    binding out of date on one; `/implement-task` states the requirement in the words above
+    binding out of date on one; where a node is bound to no `stands` file it names the files the
+    trace binds it to that are current, prints no door for it while it names one, the ordinary
+    reconciliation over them while all have moved, and the adoption only where it binds none; `/implement-task` states the requirement in the words above
     — `tests/test_deliver.py` and `tests/test_spec_citations.py` prove each.
 14. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
     criterion, covered share per review, and the count of nodes decided by a test. A covered share

@@ -2296,6 +2296,49 @@ def stands_binding_problems(nid: str, front: dict, task_file: Path, root: Path) 
     return stands_reading(nid, front, task_file, root)[0]
 
 
+def stands_offers(unbound: list[str], implements: list[str], bound: dict[str, set[str]],
+                  findings: list[tuple[str, str, str | None, str]], refusals: list[str],
+                  offset: PurePosixPath) -> tuple[dict[str, list[str]], dict[str, list[str]],
+                                                  list[str]]:
+    """What the trace already holds for each node a `stands` list leaves unbound, so that the
+    refusal answers it from the trace — «A node the task implements that the trace binds to a file
+    whose binding is current is answered without a door: the refusal names that file, and the
+    implementation stands where `stands` names it. A node bound only to files that moved has the
+    ordinary reconciliation over those files as its door, and an adoption is the door only for a
+    node the trace binds to no file.» (SPEC-004 R20)
+
+    Three answers: the files bound to the node that are current, and bound to no other node the
+    task implements out of date on them, which the implementer names; the files bound to it that
+    all moved, which `/reconcile` reads; and the nodes bound to no file, which are the adoption's
+    candidates. A specification that cannot be read says nothing of any binding, so every
+    unbound node is then an adoption's candidate, as it was before."""
+    stale_nodes = {node for cls, node, where, _ in findings if where is None and cls != "proof"}
+    stale_pairs = {(node, where) for cls, node, where, _ in findings
+                   if where is not None and cls != "proof"}
+    held: dict[str, list[str]] = {}
+    moved_only: dict[str, list[str]] = {}
+    nowhere: list[str] = []
+    for node in unbound:
+        files = sorted(bound.get(node, set())) if not refusals else []
+        spelled = []
+        for path in files:
+            try:
+                spelled.append((path, PurePosixPath(path).relative_to(offset).as_posix()))
+            except ValueError:
+                continue
+        if not spelled:
+            nowhere.append(node)
+            continue
+        current = [name for path, name in spelled
+                   if node not in stale_nodes
+                   and not any((other, path) in stale_pairs for other in implements)]
+        if current:
+            held[node] = current
+        else:
+            moved_only[node] = [name for _, name in spelled]
+    return held, moved_only, nowhere
+
+
 def stands_reading(nid: str, front: dict, task_file: Path,
                    root: Path) -> tuple[list[str], str | None]:
     """`stands_binding_problems`' problems, and the one door that answers them where one does —
@@ -2331,21 +2374,38 @@ def stands_reading(nid: str, front: dict, task_file: Path,
             if isinstance(held, dict) and isinstance(held.get("path"), str))
     named = ", ".join(anchored.values())
     unbound = [node for node in implements if not bound.get(node, set()) & anchored.keys()]
-    found = [f"the trace binds {node} to no file `stands` names ({named}); the implementation "
-             f"stands only where the trace binds each node the task implements to some `stands` "
-             f"file, and an adoption over those files naming it as a candidate is what writes "
-             f"that binding"
-             for node in unbound]
+    findings, refusals = trace.drift_of(declared, home) if declared is not None else ([], [])
+    held, moved_only, nowhere = stands_offers(unbound, implements, bound, findings, refusals,
+                                              offset)
+    found = []
+    for node in unbound:
+        if node in held:
+            found.append(f"the trace binds {node} to no file `stands` names ({named}); it binds "
+                         f"{node} to {', '.join(held[node])}, each current: name at least one of "
+                         f"them in `stands`, and the implementation stands at it")
+        elif node in moved_only:
+            found.append(f"the trace binds {node} to no file `stands` names ({named}); it binds "
+                         f"{node} only to {', '.join(moved_only[node])}, each out of date, and "
+                         f"/reconcile over them reads them again before one is named in `stands`")
+        else:
+            found.append(f"the trace binds {node} to no file `stands` names ({named}); the "
+                         f"implementation stands only where the trace binds each node the task "
+                         f"implements to some `stands` file, and an adoption over those files "
+                         f"naming it as a candidate is what writes that binding")
     found += [f"the trace binds {spelled} to no node the task implements; a `stands` file is one "
               f"the trace binds to some node the task implements, so name only those"
               for path, spelled in anchored.items()
               if not any(path in bound.get(node, set()) for node in implements)]
-    if unbound:
+    if nowhere:
         return found, (f"door: /reconcile, an adoption — files: {' '.join(stands)} — "
-                       f"candidates: {' '.join(unbound)}")
+                       f"candidates: {' '.join(nowhere)}")
+    if moved_only and not held:
+        files = list(dict.fromkeys(f for fs in moved_only.values() for f in fs))
+        return found, f"door: /reconcile — files: {' '.join(files)}"
+    if unbound:
+        return found, None
     if declared is None or found:
         return found, None
-    findings, refusals = trace.drift_of(declared, home)
     if refusals:
         return [f"whether the implementation stands cannot be read: {said}"
                 for said in refusals], None
