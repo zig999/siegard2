@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.92.0 — 2026-11-12
+
+A refused `stands` names the files the trace already binds: a node bound to a current file is answered by naming it with no door, a node bound only to moved files has the ordinary reconciliation, and an adoption is the door only for a node bound to no file (SPEC-004 R20). (`20a233e`)
+
 ## 5.91.0 — 2026-11-12
 
 The ledger lives while its material is in use: committed while a line is open or an adoption still reads it, removed by the commit of the increment that closes it — its message carrying `trace.py --ledger`'s output — or by the adoption's commit; `trace.py --ledger` ends with `ledger: keep` or `ledger: remove` (SPEC-001 R16, SPEC-005 R8, SPEC-008 R10). (`0105644`)
