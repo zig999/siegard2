@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.91.0 — 2026-11-12
+
+The ledger lives while its material is in use: committed while a line is open or an adoption still reads it, removed by the commit of the increment that closes it — its message carrying `trace.py --ledger`'s output — or by the adoption's commit; `trace.py --ledger` ends with `ledger: keep` or `ledger: remove` (SPEC-001 R16, SPEC-005 R8, SPEC-008 R10). (`0105644`)
+
 ## 5.90.0 — 2026-11-11
 
 A read entry's `found` names its file from the repository's root: `spec.py --decide` rewrites a path spelling out where the repository, or the directory holding it, sits on the machine, and says so (SPEC-001 R9). (`98a245e`)
