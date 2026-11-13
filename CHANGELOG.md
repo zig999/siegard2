@@ -8,6 +8,14 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.96.0 — 2026-11-13
+
+A red on a test the delivery's own test author wrote, which the diagnosis reads as `test`, is rewritten once by that test author with the diagnosis, instead of stopping the run; a second red on it, or a test left under `contested` because a node still states its condition, is the stop `producers` (SPEC-004 R30). (`f47a1b1`)
+
+## 5.95.0 — 2026-11-13
+
+A criterion an implementation record marks unmet is answered, and no longer fails a goal's `criteria` check, where a review committed since the goal began gives it `covered` by a test in a file the task's own proof names; the answer lists each criterion beside the test (SPEC-008 R12). (`decdbe8`)
+
 ## 5.94.0 — 2026-11-12
 
 A review relays every disagreement its proofs recorded: `deliver.py --findings` prints each proof's `contested` entry whole under its task, the review report carries it as the person's to settle, and `/deliver-scope` relays it whole (SPEC-004 R29). (`5abb016`)
