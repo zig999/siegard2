@@ -206,6 +206,34 @@ def test_the_command_renders_from_a_file_and_from_standard_input(tmp_path):
     assert from_file.stdout == from_stdin.stdout == rendered(data)[0]
 
 
+def test_a_rendered_record_is_kept_as_json_beside_the_report_it_names(tmp_path):
+    """«`bin/handoff.py --render` keeps the record it rendered, as JSON beside the report its
+    `report` names, so that the run that receives a stop can ask the grant over the doors it
+    handed.» (SPEC-011 R9)"""
+    data = record("record-en-two-decisions.json")
+    data["state"] = CONTRACT["x-labels"]["en"]["quiet"]
+    data["state_from"] = {"script": "progress.py", "project": str(tmp_path)}
+    report = tmp_path / "20261113T000000Z-implement-task.md"
+    report.write_text("# the report\n", encoding="utf-8")
+    data["report"] = str(report)
+    done = run("--render", "-", stdin=json.dumps(data), cwd=FIXTURES)
+    assert done.returncode == 0, done.stdout
+    kept = json.loads(report.with_suffix(".json").read_text(encoding="utf-8"))
+    assert kept == data
+
+
+def test_a_record_naming_no_report_is_kept_nowhere_and_a_refused_one_is_not_kept(tmp_path):
+    data = record("record-en-two-decisions.json")
+    data["state"] = CONTRACT["x-labels"]["en"]["quiet"]
+    data["state_from"] = {"script": "progress.py", "project": str(tmp_path)}
+    data.pop("report", None)
+    assert run("--render", "-", stdin=json.dumps(data), cwd=FIXTURES).returncode == 0
+    gone = tmp_path / "gone" / "x.md"
+    data["report"] = str(gone)
+    refused = run("--render", "-", stdin=json.dumps(data), cwd=FIXTURES)
+    assert refused.returncode == 1 and not gone.with_suffix(".json").exists()
+
+
 def refusal(mutate) -> list[str]:
     data = copy.deepcopy(record("record-en-two-decisions.json"))
     mutate(data)

@@ -237,6 +237,20 @@ def test_judged_doors_past_the_budget_are_state_b_and_within_it_are_not(project)
     assert "check budget" not in state(project).stdout, "a state command with no budget counts none"
 
 
+def test_a_judged_door_a_grant_took_is_counted_by_no_goal(project):
+    """«A `decided:` line a grant took ends `(grant sha256 <digest>)`; the grant's budget counts it
+    and the goal's budget does not.» (SPEC-011 R10)"""
+    deliver(project)
+    review(project)
+    log(project, f"- /review-change over {TASK}: recorded.",
+        "decided: /plan-work — keeps the route — the prescribed step (grant sha256 0123456789abcdef)")
+    measure(project)
+    assert first(state(project, "--budget", "0")).startswith("state A")
+    log(project, "decided: /reconcile — costs less — telemetry printed 1 run against 4")
+    commit(project["home"], f"deliver-scope {SLUG}: log", "deliveries")
+    assert failing(state(project, "--budget", "0")) == {"budget"}
+
+
 def test_the_composed_state_command_carries_the_budget(project):
     result = compose(project, "--scope", TASK, "--budget", "2")
     assert result.returncode == 0, result.stdout + result.stderr

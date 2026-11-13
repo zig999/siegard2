@@ -169,8 +169,10 @@ def test_the_one_door_left_after_a_refusal_is_taken_as_precondition_unmet(projec
                                      ["refused: the task waits on a dependency"]))
     out = decide(project, handoff(decision), tmp_path).stdout
     digest = record_of(project)["words"]["sha256"]
-    assert ("decision 1: take: a /review-change — precondition unmet — refused: the task waits "
-            f"on a dependency (grant sha256 {digest})") in out
+    lines = out.splitlines()
+    assert "decision 1: take: a /review-change" in lines
+    assert ("  decided: /review-change — precondition unmet — the other door was refused by its "
+            f"own check: refused: the task waits on a dependency (grant sha256 {digest})") in lines
 
 
 @pytest.mark.parametrize("entry,answer,why", [
@@ -206,8 +208,9 @@ def test_a_judged_choice_met_with_the_budget_spent_is_a_stop(project, tmp_path):
     assert arm(project, "--doors", "plan-work", "--budget", "1").returncode == 0
     log = project["home"] / "deliveries" / SLUG / "orchestration.md"
     log.parent.mkdir(parents=True, exist_ok=True)
-    log.write_text("decided: /plan-work — keeps the route — the step the framework prescribes\n",
-                   encoding="utf-8")
+    digest = record_of(project)["words"]["sha256"]
+    log.write_text(f"decided: /plan-work — keeps the route — the step the framework prescribes "
+                   f"(grant sha256 {digest})\n", encoding="utf-8")
     commit(project["home"], f"deliver-scope {SLUG}: log", "deliveries")
     decision = with_recommended("/plan-work", "accepts", door("b", "/reconcile", "accepts"))
     out = decide(project, handoff(decision), tmp_path).stdout
@@ -433,8 +436,9 @@ def test_a_grant_that_names_no_door_holds_all_six_and_none_holds_none(project):
 def test_analyse_is_a_door_by_default_and_not_where_the_doors_are_narrowed(project, tmp_path):
     decision = with_recommended("/analyse", "accepts", door("b", "/plan-work", "refuses"))
     assert arm(project, "--budget", "1", slug=None).returncode == 0
-    assert "take: a /analyse — precondition unmet" in decide(project, handoff(decision),
-                                                             tmp_path).stdout
+    taken = decide(project, handoff(decision), tmp_path).stdout
+    assert "decision 1: take: a /analyse" in taken
+    assert "  decided: /analyse — precondition unmet" in taken
     grant("--disarm", str(project["home"]))
     assert arm(project, "--doors", "plan-work,implement-task", slug=None).returncode == 0
     assert "is not in the grant's doors" in decide(project, handoff(decision), tmp_path).stdout
@@ -508,7 +512,9 @@ def test_the_budget_of_a_project_grant_counts_the_judged_doors_of_every_log(proj
     assert arm(project, "--doors", "plan-work", "--budget", "1", slug=None).returncode == 0
     log = project["home"] / "deliveries" / SLUG / "orchestration.md"
     log.parent.mkdir(parents=True, exist_ok=True)
-    log.write_text("decided: /plan-work — keeps the route — the prescribed step\n", encoding="utf-8")
+    digest = record_of(project)["words"]["sha256"]
+    log.write_text(f"decided: /plan-work — keeps the route — the prescribed step (grant sha256 "
+                   f"{digest})\n", encoding="utf-8")
     commit(project["home"], f"deliver-scope {SLUG}: log", "deliveries")
     decision = with_recommended("/plan-work", "accepts", door("b", "/reconcile", "accepts"))
     assert "the grant's budget of judged doors is spent" in decide(
@@ -539,3 +545,105 @@ def test_a_deliver_scope_handoff_record_is_read_by_decide_under_a_project_grant(
     assert prepared.returncode == 0, prepared.stdout + prepared.stderr
     out = decide(project, json.loads(prepared.stdout), tmp_path)
     assert out.returncode == 0 and out.stdout.splitlines()[0].startswith("grant: every live")
+
+
+# --------------------------------------------------- where a run meets it (R9, R10)
+
+
+def test_a_judged_line_the_goal_took_does_not_spend_the_grants_budget(project, tmp_path):
+    assert arm(project, "--doors", "plan-work", "--budget", "1").returncode == 0
+    log = project["home"] / "deliveries" / SLUG / "orchestration.md"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    log.write_text("decided: /plan-work — keeps the route — a goal's door, no grant's\n",
+                   encoding="utf-8")
+    commit(project["home"], f"deliver-scope {SLUG}: log", "deliveries")
+    decision = with_recommended("/plan-work", "accepts", door("b", "/reconcile", "accepts"))
+    assert "budget left 1" in decide(project, handoff(decision), tmp_path).stdout
+
+
+def test_a_judge_answer_names_the_suffix_its_decided_line_ends_with(project, tmp_path):
+    assert arm(project, "--doors", "plan-work", "--budget", "1").returncode == 0
+    digest = record_of(project)["words"]["sha256"]
+    decision = with_recommended("/plan-work", "accepts", door("b", "/reconcile", "accepts"))
+    out = decide(project, handoff(decision), tmp_path).stdout
+    assert f"end the deciding fact of the `decided:` line with `(grant sha256 {digest})`" in out
+
+
+def kept(project: dict, skill: str, stamp: str, record: dict, age: int = 0) -> Path:
+    base = project["home"] / ".git" / "siegard" / "handoff"
+    base.mkdir(parents=True, exist_ok=True)
+    path = base / f"{stamp}-{skill}.json"
+    path.write_text(json.dumps(record), encoding="utf-8")
+    if age:
+        import os
+        moved = path.stat().st_mtime - age
+        os.utime(path, (moved, moved))
+    return path
+
+
+def test_latest_answers_over_the_newest_record_kept_for_the_skill_after_the_commit(project):
+    assert arm(project, "--doors", "plan-work,reconcile", "--budget", "1").returncode == 0
+    marker = commit(project["home"], "the log before the invocation")
+    reserved = {"ask": "who is right?", "settles": "what a node says", "others": [
+        door("a", "/plan-work", "accepts")], "if_none": "stays"}
+    kept(project, "implement-task", "20261113T100000Z", handoff(reserved))
+    kept(project, "implement-task", "20261113T110000Z",
+         handoff(with_recommended("/reconcile", "accepts", door("b", "/plan-work", "refuses"))))
+    kept(project, "review-change", "20261113T120000Z", handoff(reserved))
+    out = grant("--decide", str(project["home"]), "--latest", "implement-task", "--after",
+                marker).stdout
+    assert "decision 1: take: a /reconcile" in out
+    other = grant("--decide", str(project["home"]), "--latest", "review-change", "--after",
+                  marker).stdout
+    assert "stop: the choice is the person's" in other
+
+
+def test_a_record_an_earlier_stop_left_is_never_answered_over(project):
+    """«so that a run never answers over the report of an earlier stop» (SPEC-011 R9)"""
+    assert arm(project, "--doors", "plan-work,reconcile", "--budget", "1").returncode == 0
+    kept(project, "implement-task", "20261113T090000Z",
+         handoff(with_recommended("/reconcile", "accepts", door("b", "/plan-work", "refuses"))),
+         age=3600)
+    import time
+    time.sleep(1.1)
+    marker = commit(project["home"], "the log before the invocation")
+    out = grant("--decide", str(project["home"]), "--latest", "implement-task", "--after", marker)
+    assert out.returncode == 2 and "was kept under" in out.stderr and "after" in out.stderr
+
+
+def test_latest_needs_a_skill_a_commit_and_a_commit_that_exists(project):
+    assert arm(project, "--doors", "plan-work").returncode == 0
+    bare = grant("--decide", str(project["home"]), "--latest", "implement-task")
+    assert bare.returncode == 2 and "with --after <commit>" in bare.stderr
+    both = grant("--decide", str(project["home"]), "--latest", "x", "--after", "y", "--record", "z")
+    assert both.returncode == 2 and "--record <file>, or --latest" in both.stderr
+    nowhere = grant("--decide", str(project["home"]), "--latest", "implement-task", "--after",
+                    "0000000")
+    assert nowhere.returncode == 2 and "--after names no commit" in nowhere.stderr
+
+
+def test_a_stop_a_grant_cannot_answer_stays_the_stop_it_was_under_a_goal_too(project, tmp_path):
+    """«a `stop` leaves the stop as it was» (SPEC-011 R10): a decision the person reserved, a door
+    outside the list and an unchecked door are each `stop`, so a run reading them ends as before."""
+    assert arm(project, "--doors", "plan-work").returncode == 0
+    reserved = {"ask": "who is right?", "settles": "what a node says",
+                "others": [door("a", "/plan-work", "accepts")], "if_none": "stays"}
+    outside = with_recommended("/review-change", "accepts", door("b", "/plan-work", "refuses"))
+    unchecked = with_recommended("/plan-work", "not checked", door("b", "/reconcile", "refuses"))
+    out = decide(project, handoff(reserved, outside, unchecked), tmp_path).stdout
+    assert out.count("stop:") == 3 and "take:" not in out and "judge:" not in out
+
+
+def test_deliver_scope_asks_the_grant_where_it_answers_a_stop_and_binds_the_same_task_rule():
+    """«The same door over the same task is taken once in a run.» (SPEC-011 R10)"""
+    doors = " ".join((REPO / "src/claude/skills/deliver-scope/references/doors.md").read_text(
+        encoding="utf-8").split())
+    goal_ref = " ".join((REPO / "src/claude/skills/deliver-scope/references/goal.md").read_text(
+        encoding="utf-8").split())
+    assert ("With a grant armed, run `bin/grant.py --decide <project-root> --latest <the "
+            "stopping skill> --after <the log commit before it ran>` first: `take:` prints a "
+            "derived door's `decided:` line, `judge:` a judged door, `stop:` or no answer leaves "
+            "the stop; the same-task rule binds them.") in doors
+    assert "no `decided:` line of this run took over the same task" in doors
+    assert "A grant's `judge:` brings its own budget; its line ends `(grant sha256 …)`, no goal's." \
+        in goal_ref

@@ -48,8 +48,10 @@ Usage:  grant.py --arm <project-root> [--slug <slug>] [--target <key>] [--doors 
                                     end the armed grant, which is what /siegard-grant --clear runs
         grant.py --read <project-root>
                                     print the armed grant, or say none is armed
-        grant.py --decide <project-root> --record <file>
-                                    answer each decision of a handoff record
+        grant.py --decide <project-root> (--record <file> | --latest <skill> --after <commit>)
+                                    answer each decision of a handoff record; --latest reads the
+                                    newest record `handoff.py --render` kept for that skill after
+                                    that commit, and refuses where none was
         grant.py --commit <project-root> --file <path>...
                                     answer whether the grant lets a session commit these paths,
                                     spelled from the project root
@@ -219,7 +221,8 @@ def budget_left(fields: dict, held: dict) -> int:
     taken = 0
     for slug in covered(fields, held):
         path = fields["delivery_root"] / slug / "orchestration.md"
-        taken += goal.judged_taken(fields, held["since"], path) if path.is_file() else 0
+        taken += (goal.judged_taken(fields, held["since"], path, held["words"]["sha256"])
+                  if path.is_file() else 0)
     return max(0, held["budget"] - taken)
 
 
@@ -251,8 +254,9 @@ def decide_one(number: int, decision: dict, held: dict, fields: dict) -> list[st
         facts = "; ".join(f"{item}" for item in
                           (fact for gone in excluded for fact in
                            (gone.get("check") or {}).get("refused", [])))[:300]
-        return [f"{head} take: {door['reply_word']} /{skill} — precondition unmet — "
-                f"{facts or 'every other door is excluded by its own check'} "
+        return [f"{head} take: {door['reply_word']} /{skill}",
+                f"  decided: /{skill} — precondition unmet — the other door was refused by its "
+                f"own check: {facts or 'every other door is excluded'} "
                 f"(grant sha256 {held['words']['sha256']})"]
     recommended = decision.get("recommended")
     if recommended is None or skill_of(recommended) not in held["doors"]:
@@ -262,7 +266,8 @@ def decide_one(number: int, decision: dict, held: dict, fields: dict) -> list[st
     left = budget_left(fields, held)
     if left <= 0:
         return [f"{head} stop: the grant's budget of judged doors is spent"]
-    lines = [f"{head} judge: spawn the door decider over these doors, budget left {left}"]
+    lines = [f"{head} judge: spawn the door decider over these doors, budget left {left}; end the "
+             f"deciding fact of the `decided:` line with `(grant sha256 {held['words']['sha256']})`"]
     for door in remaining:
         entry = door.get("entry") or "no entry point"
         what = door.get("what_it_does") or door.get("door") or ""
@@ -397,6 +402,22 @@ def close_gate(project_root: Path, slug: str | None) -> tuple[list[str], bool]:
     return lines, not any(line.startswith("refused:") for line in lines)
 
 
+def newest_record(project_root: Path, skill: str, after: str) -> str:
+    """The newest record `handoff.py --render` kept for a skill's report, in the git directory,
+    written after the commit named: a run asks over the report of the step it just invoked, never
+    over one an earlier stop left."""
+    home = Path(goal.command(["git", "-C", str(project_root), "rev-parse", "--show-toplevel"])[1])
+    code, out = goal.command(["git", "-C", str(home), "show", "-s", "--format=%ct", after])
+    if code != 0 or not out.strip().isdigit():
+        raise goal.Refused(f"--after names no commit: {out.strip()}")
+    base = goal.armed_path(home).parent / "handoff"
+    found = sorted(path for path in base.glob(f"*-{skill}.json")
+                   if path.stat().st_mtime > int(out.strip())) if base.is_dir() else []
+    if not found:
+        raise goal.Refused(f"no record of a {skill} report was kept under {base} after {after}")
+    return str(found[-1])
+
+
 def take(args: list[str], flag: str) -> str | None:
     if flag not in args:
         return None
@@ -487,8 +508,13 @@ def main(argv: list[str]) -> int:
                 print("\n".join(lines))
                 return 0 if ok else REFUSED
             source = take(args, "--record")
-            if source is None or args:
-                raise goal.Refused("--decide takes <project-root> --record <file>")
+            latest = take(args, "--latest")
+            after = take(args, "--after")
+            if (source is None) == (latest is None) or args or (latest is None) != (after is None):
+                raise goal.Refused("--decide takes <project-root> and --record <file>, or "
+                                   "--latest <skill> with --after <commit>")
+            if latest is not None:
+                source = newest_record(project_root, latest, after)
             try:
                 record = json.loads(Path(source).read_text(encoding="utf-8"))
             except (OSError, ValueError) as broken:

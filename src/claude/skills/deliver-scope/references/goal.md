@@ -12,7 +12,7 @@ the route, as the door decider returned it, blind to the condition and while the
 of judged doors is not spent» (SPEC-006 R7).
 
 A judged door taken is one `decided: <door> — <criterion> — <deciding fact>` line, which the
-plugin's `PreToolUse` hook refuses where no goal armed through the framework names this
+plugin's `PreToolUse` hook refuses where no goal or grant armed through the framework names this
 initiative. A door the three reserved questions hold — a contradiction, two readings of one piece
 of evidence, a finding's worth — is never taken. The taking is yours; the judgment never is.
 
@@ -33,10 +33,8 @@ armed it, and the specification root is committed apart, by `/analyse` itself» 
    the specification root.
 4. Plan with the same objective as the scope.
 
-The report carries what `/analyse`'s own report states for a reviewer: the decided fields per node,
-the nodes written, what the increment may have put delivered code in breach of, and the
-reconciliation candidates it named. The person reviews this specification after the goal, not
-before.
+The report carries `/analyse`'s own report for a reviewer. The person reviews this specification
+after the goal, not before.
 
 ## A judged choice
 
@@ -57,7 +55,8 @@ as `outside-task`.
    that ends the run — is the stop it was.
 4. The budget left is read, never remembered: the condition's state command prints `check budget`,
    the judged `decided:` lines the log gained since the goal began against the budget it pins. A
-   judged choice met with the budget spent is a stop of its own.
+   judged choice met with the budget spent is a stop of its own. A grant's `judge:` brings its own
+   budget; its line ends `(grant sha256 …)`, no goal's.
 
 ## A finding the condition's findings policy names
 

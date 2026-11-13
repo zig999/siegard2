@@ -14,8 +14,9 @@ asking, who can record it, what ends it, and the gates a script holds each act t
 for a project until the person clears it, over every live initiative or over the one it names. It binds
 `bin/grant.py`, the one script that records, reads and ends a grant and answers every act it is
 asked about, `/siegard-grant`, the one skill that arms it, the plugin's `PreToolUse` commit check
-where it reads an orchestration log's `decided:` lines, and the session rules' one line that
-sends a stop to the script.
+where it reads an orchestration log's `decided:` lines, the session rules' one line that
+sends a stop to the script, `bin/handoff.py --render` where it keeps the record it rendered, and
+the orchestrating entry point `/deliver-scope`, where it receives a stop.
 
 A grant is the person's own words, decided in advance, for the stops the framework would
 otherwise hand back: it arms the same two things a goal condition arms for a judged choice — the
@@ -106,6 +107,11 @@ bound a script on disk decides.
   rung of the ladder is taken where a goal or a grant names the initiative, and refused where
   neither does.
 
+### Where a run meets it
+
+- **R9** — `bin/handoff.py --render` keeps the record it rendered, as JSON beside the report its `report` names, so that the run that receives a stop can ask the grant over the doors it handed. `bin/grant.py --decide --latest <skill> --after <commit>` answers over the newest record kept for that skill after that commit, and refuses where none was, so that a run never answers over the report of an earlier stop.
+- **R10** — Where the project holds an armed grant, the orchestrating entry point asks `bin/grant.py --decide` over the report of a step that stopped, before it ends the run: a `take` or a `judge` it answers is a door the run takes and goes on with, under a goal as without one, and a `stop` leaves the stop as it was. The same door over the same task is taken once in a run. A `decided:` line a grant took ends `(grant sha256 <digest>)`; the grant's budget counts it and the goal's budget does not.
+
 ### The gates
 
 - **R7** — `bin/grant.py --commit`, over the paths a commit names, answers `accepts` only where the
@@ -144,8 +150,24 @@ bound a script on disk decides.
    of a covered initiative writes, and a grant without a slug accepting the paths of any live
    initiative and answering `--close` only over the initiative it is asked about.
 5. A test holds `/siegard-grant` closed to the model and the session rules' line to the script.
+6. For R9 and R10: a test holds `handoff.py --render` to keeping the record beside its report and
+   `grant.py --decide --latest` to reading the newest one of a skill; a test holds `goal.py --state`
+   to counting a judged line that ends `(grant sha256 …)` under no goal's budget and the grant's
+   budget to counting only those that carry its digest; and `/deliver-scope`'s file states the
+   requirement in the words above — `tests/test_grant.py`, `tests/test_handoff.py`,
+   `tests/test_goal.py` and `tests/test_skill_contract.py` prove each.
 
 ## Readings
+
+- 2026-11-13 (run) — the person armed a grant and a goal in two projects and found the grant
+  moved nothing in the goal: the goal ends at a stop before any session can ask the script, and
+  its own judged budget was zero. R9 and R10 put the ask where the stop is received. The record a
+  stop's report was rendered from was never kept — only the report in prose — so R9 keeps it. A
+  judged door a grant takes under a goal is the person's, armed as the grant was, and counts
+  against the grant's budget alone. The doors a run takes under a grant are held by tests over
+  the scripts; the orchestrating entry point's reading of its own file was read by an agent over
+  a fixture, not by a consumer's run. Reversal: a goal that continued past a stop the person
+  then reverts, or a loop over one task, narrows R10 to `take`.
 
 - 2026-11-13 (last) — the person asked that `doors` default to every entry point, `analyse`
   among them, and kept the budget at zero. A grant that names no door then takes the doors its

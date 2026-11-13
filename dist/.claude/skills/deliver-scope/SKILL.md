@@ -109,14 +109,12 @@ at the target's git toplevel. Output is a stop: a pending change you did not mak
 in progress.
 
 **The branch.** Commit where `HEAD` already points. This skill never creates a branch, never pushes,
-never stashes: a branch cut for the run is the person's act, offered in the report's opening line,
-which names where `HEAD` stood when the run began.
+never stashes: a branch cut for the run is the person's act, offered in the report's opening line.
 
 ## Read the contract
 
 Read `${CLAUDE_PLUGIN_ROOT}/schemas/plan.json`, and take every remaining answer from
-`bin/deliver.py`, whose `--outstanding` run below is the only reading of the plan you make. Do not
-re-derive either from memory.
+`bin/deliver.py`, whose `--outstanding` run below is the only reading of the plan you make.
 
 `${CLAUDE_PLUGIN_ROOT}` is set where this skill runs as an installed plugin. Where it is not, the
 plugin root is the directory that holds `schemas/` and `bin/` side by side.
@@ -178,7 +176,7 @@ under a goal, `references/goal.md` answers it. Read `references/stops.md`: relay
 doors whole, commit nothing further but the measure, and go to step 6. A delivery that stopped is
 never committed but for runs `references/doors.md` names: what it wrote is the person's to read,
 keep or discard. A task whose delivery gave up is not re-attempted in this run: the same invocation
-again is the person's decision about cost.
+again is the person's cost decision.
 
 ### 4. Review
 
@@ -212,11 +210,10 @@ review again. This step runs once per run. Where no certification was refused, g
 At the end of every run, the one a stop ended included: what a run cost is lost once the harness
 drops its transcripts. Run `telemetry.py --probe --since <the instant step 1 began>` over the
 project root; announce the read as that script requires; run it. Commit the telemetry root
-`project.py` answers under `deliver-scope <slug>: measure`. A probe that cannot read is a line in
-the report, never a stop.
+`project.py` answers under `deliver-scope <slug>: measure`. A probe that cannot read is a report
+line, never a stop.
 
-A stop ends the route, never the measure: step 6 runs after it, and its commit is the one that
-follows a stop.
+A stop ends the route, never the measure: step 6 runs after it, and commits.
 
 ## The orchestration log
 

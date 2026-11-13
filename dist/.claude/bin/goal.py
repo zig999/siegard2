@@ -357,9 +357,16 @@ def log_line(raw: str) -> str:
     return line.strip("`").strip()
 
 
-def judged_taken(fields: dict, since: str, log_file: Path) -> int:
+GRANT_MARK = "(grant sha256 "
+
+
+def judged_taken(fields: dict, since: str, log_file: Path, grant: str | None = None) -> int:
     """The judged doors the run took since the goal began: `decided:` lines whose criterion is a
-    rung of the ladder, in the log as committed at HEAD and not in it at `since`."""
+    rung of the ladder, in the log as committed at HEAD and not in it at `since`. A line that ends
+    `(grant sha256 <digest>)` was taken under a grant, which counts it and no goal does: «A
+    `decided:` line a grant took ends `(grant sha256 <digest>)`; the grant's budget counts it and
+    the goal's budget does not.» (SPEC-011 R10) Where `grant` names a digest, only the lines that
+    carry it are counted."""
     at = relative(fields, log_file)
     now = git(fields["home"], "show", f"HEAD:{at}") if log_file.is_file() else ""
     before = subprocess.run(["git", "-C", str(fields["home"]), "show", f"{since}:{at}"],
@@ -370,7 +377,11 @@ def judged_taken(fields: dict, since: str, log_file: Path) -> int:
         if line in earlier:
             earlier.remove(line)
         elif TAKEN_JUDGED.match(line):
-            taken += 1
+            granted = GRANT_MARK in line
+            if grant is None and not granted:
+                taken += 1
+            elif grant is not None and f"{GRANT_MARK}{grant})" in line:
+                taken += 1
     return taken
 
 

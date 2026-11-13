@@ -8,7 +8,10 @@ invokes and `bin/door.py --check` accepts it» (SPEC-006 R7). Take one the repor
 derived or a bullet below names, whose entry point is `/plan-work`, `/implement-task`,
 `/review-change` or `/reconcile`, that `door.py --check` accepts, and that no `decided:` line of
 this run took over the same task. A judged door is `references/goal.md`'s; the three reserved
-questions are never taken.
+questions are never taken. With a grant armed, run `bin/grant.py --decide <project-root>
+--latest <the stopping skill> --after <the log commit before it ran>` first: `take:` prints a
+derived door's `decided:` line, `judge:` a judged door, `stop:` or no answer leaves the stop; the
+same-task rule binds them.
 
 Write `decided: <door> — <criterion> — <deciding fact>` to the log, copied from the report, and
 commit the log. Invoke the door as handed — it commits what it wrote — and resume step 3:

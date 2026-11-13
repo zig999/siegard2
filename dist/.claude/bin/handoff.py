@@ -68,6 +68,8 @@ Usage:  handoff.py --prepare --skill <name> --project <root> [--slug <slug>] [--
                                              the path the skeleton's `report` names
         handoff.py --render <record.json>    render the record, or refuse it
         handoff.py --render -                render the record read from standard input
+                                             either way the record is kept as JSON beside the
+                                             report it names, for `grant.py --decide --latest`
         handoff.py --check <message-file>    hold a written handoff to what is decidable
         handoff.py --check -                 hold the handoff read from standard input
         handoff.py --help                    print this text and stop
@@ -626,6 +628,23 @@ def main_save_report(args: list[str]) -> int:
     return 0
 
 
+def keep_record(record: object) -> None:
+    """The record a handoff was rendered from, as JSON beside the report it names: «`bin/handoff.py
+    --render` keeps the record it rendered, as JSON beside the report its `report` names, so that
+    the run that receives a stop can ask the grant over the doors it handed.» (SPEC-011 R9) A record
+    naming no report, or one whose directory is gone, is kept nowhere and refused nothing."""
+    report = record.get("report") if isinstance(record, dict) else None
+    if not isinstance(report, str) or not report.endswith(".md"):
+        return
+    path = Path(report).with_suffix(".json")
+    try:
+        if path.parent.is_dir():
+            path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n",
+                            encoding="utf-8")
+    except OSError:
+        return
+
+
 def main() -> int:
     args = sys.argv[1:]
     if "--help" in args:
@@ -664,6 +683,7 @@ def main() -> int:
         print(problem)
     if problems:
         return 1
+    keep_record(record)
     print(message, end="")
     return 0
 
