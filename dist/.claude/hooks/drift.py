@@ -186,7 +186,7 @@ def receipt(root: Path) -> str:
         counted = trace.tally_of(target)
         if counted is None:
             continue
-        counts, held, drifted = counted
+        counts, held, drifted, bound = counted
         total = sum(counts.values())
         if not total and not held:
             continue
@@ -197,7 +197,8 @@ def receipt(root: Path) -> str:
             lines.append(f"  {len(drifted)} file(s) carry `code` drift, which /reconcile is what "
                          f"answers; /siegard-status lists them and hands the invocation ready")
         if counts[trace.MOVED]:
-            lines.append(f"  {counts[trace.MOVED]} binding(s) carry `moved` drift: `/reconcile` "
+            lines.append(f"  {counts[trace.MOVED]} `moved` finding(s) over {bound[trace.MOVED]} "
+                         f"binding(s): `/reconcile` "
                          f"over the bound files re-reads them against the node as it stands; a "
                          f"delivery of a task implementing the node restamps only the files its "
                          f"record names")

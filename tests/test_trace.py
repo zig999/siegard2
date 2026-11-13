@@ -375,7 +375,7 @@ def test_check_lists_the_code_class_per_file_not_per_binding(consumer):
     assert done.stdout.count("the file changed without a rebind") == 1
     assert (f"backend/{FILE}: the file changed without a rebind — 2 binding(s): "
             f"constraints/asynchronous-events, {NODE}") in done.stdout
-    assert "2 code over 1 file(s):" in done.stdout
+    assert "2 code over 1 file(s), 2 binding(s):" in done.stdout
 
 
 def test_check_reports_a_node_that_left_the_specification_without_breaking_it(consumer):
@@ -668,9 +668,9 @@ def test_check_tallies_drift_by_class(consumer):
 
     done = run("--check", consumer / "backend")
     assert done.returncode == 1
-    assert "1 orphaned:" in done.stdout
+    assert "1 orphaned over 1 binding(s):" in done.stdout
     assert "0 moved:" in done.stdout
-    assert "2 code over 1 file(s):" in done.stdout, done.stdout
+    assert "2 code over 1 file(s), 2 binding(s):" in done.stdout, done.stdout
     assert "`--prune` is the only thing that clears them" in done.stdout
 
 
@@ -1386,10 +1386,33 @@ def test_a_bind_restamps_only_the_files_its_record_names(consumer):
             f"restamped the node on other files and nobody read these against it — `--all` "
             f"lists them") in done.stdout
     assert f"{NODE}: backend/{FILE} was stamped against" not in done.stdout
-    assert "1 moved:" in done.stdout and "0 code" in done.stdout
+    assert "1 moved over 1 binding(s):" in done.stdout and "0 code" in done.stdout
     done = run("--check", consumer / "backend", "--all")
     assert f"{NODE}: backend/{FILE} was stamped against" in done.stdout
     assert "1 file(s) stamped against an earlier text" not in done.stdout
+
+
+def test_the_tally_names_the_bindings_its_findings_sit_on(consumer):
+    """Two files left stamped against an earlier text of one node are two `moved` findings on one
+    binding. The tally says one binding: a finding count over a binding count reads as a rate,
+    and it is the wrong one wherever a class counts pairs."""
+    others = ["src/orders/ship.ts", "src/orders/bill.ts"]
+    for other in others:
+        (consumer / "backend" / other).write_text("export function f() {}\n", encoding="utf-8")
+    for file in [FILE, *others]:
+        assert bind(consumer, file=file).returncode == 0
+    node_file = consumer / "specs" / f"{NODE}.md"
+    node_file.write_text(node_file.read_text(encoding="utf-8") + "\nMoved.\n", encoding="utf-8")
+    assert bind(consumer, file=others[0]).returncode == 0
+    trace_file = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
+    pairs = sum(len(e["files"]) for e in trace_file["bindings"])
+    count = len(trace_file["bindings"])
+    done = run("--check", consumer / "backend", "--all")
+    assert done.returncode == 1, done.stdout
+    assert (f"2 drift finding(s) on 1 of {count} binding(s), {pairs} node–file pair(s):"
+            in done.stdout), done.stdout
+    assert "  2 moved over 1 binding(s):" in done.stdout, done.stdout
+    assert "  0 code:" in done.stdout, "a class with nothing names no binding"
 
 
 def test_a_file_moved_on_its_own_stays_in_the_set_while_a_live_task_implements_the_node(consumer):

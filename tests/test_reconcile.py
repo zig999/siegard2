@@ -216,7 +216,7 @@ def test_a_rebind_carries_a_certification_whose_proof_changed_and_says_so(consum
 
     checked = run("--check", consumer / "backend")
     assert checked.returncode == 1
-    assert "1 proof:" in checked.stdout, checked.stdout
+    assert "1 proof over 1 binding(s):" in checked.stdout, checked.stdout
     assert "whose text changed since it was certified" in checked.stdout
 
 
@@ -299,7 +299,7 @@ def test_a_lapsed_certification_is_reported_as_lapsed_by_every_form(consumer, wr
                                              encoding="utf-8")
 
     drift = run("--check", consumer / "backend")
-    assert "1 proof:" in drift.stdout
+    assert "1 proof over 1 binding(s):" in drift.stdout
     assert "sit on a binding a certified test decides" not in drift.stdout, \
         "one report cannot say the certification lapsed and that its step answers for the pair"
 
@@ -347,7 +347,7 @@ def test_a_certification_lapses_when_the_registry_drops_its_step(consumer, write
     drift = run("--check", consumer / "backend")
     assert drift.returncode == 1, drift.stdout + drift.stderr
     assert "the project's registry no longer declares" in drift.stdout
-    assert "1 proof:" in drift.stdout
+    assert "1 proof over 1 binding(s):" in drift.stdout
     assert "decided by a certified test" not in run(consumer / "backend").stdout
     assert "a certified test decides it" not in run("--encodes", consumer / "backend",
                                                     FILE).stdout
@@ -393,7 +393,7 @@ def test_a_certification_is_held_to_the_registry_of_the_target_its_test_sits_und
         drift = run("--check", consumer / target)
         assert drift.returncode == 1, drift.stdout + drift.stderr
         assert "the project's registry no longer declares" in drift.stdout
-        assert "1 proof:" in drift.stdout
+        assert "1 proof over 1 binding(s):" in drift.stdout
 
 
 def test_check_reports_a_changed_proof_under_its_own_class(consumer, write_record):
@@ -408,7 +408,7 @@ def test_check_reports_a_changed_proof_under_its_own_class(consumer, write_recor
     done = run("--check", consumer / "backend")
     assert done.returncode == 1, done.stdout + done.stderr
     assert f"{NODE}: certified over backend/{PROOF}, whose text changed since" in done.stdout
-    assert "1 proof:" in done.stdout
+    assert "1 proof over 1 binding(s):" in done.stdout
     assert "0 code" in done.stdout
 
 

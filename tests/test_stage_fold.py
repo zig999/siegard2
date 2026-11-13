@@ -3473,7 +3473,7 @@ def test_a_rewritten_proof_keeps_its_certification_live(carried):
                                                 encoding="utf-8")
     (target / PROOF).write_text(PROOF_TEXT.replace("place';", "place.js';"), encoding="utf-8")
     git(carried, "commit", "-qam", "the proof's specifiers rewritten")
-    assert "1 proof: decided by a test whose text changed" in run("--check", target).stdout
+    assert "1 proof over 1 binding(s): decided by a test whose text changed" in run("--check", target).stdout
     done, workspace = staged_rewrite(carried)
     assert done.returncode == 0, done.stdout + done.stderr
     assert manifest_of(workspace)["rewritten_proofs"][0]["file"] == PROOF

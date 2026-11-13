@@ -1506,10 +1506,11 @@ def reconcile_set_report(declared: dict, home: Path, target: Path,
     return out
 
 
-def tally_of(target: Path) -> tuple[dict[str, int], int, list[str]] | None:
-    """The drift a target holds, counted by class, with the count held back and the files a
-    reconciliation would be invoked over — or nothing where there is no trace to read, nothing
-    the trace can be held to, or no git to resolve the tree.
+def tally_of(target: Path) -> tuple[dict[str, int], int, list[str], dict[str, int]] | None:
+    """The drift a target holds, counted by class, with the count held back, the files a
+    reconciliation would be invoked over and the bindings each class's findings sit on — or
+    nothing where there is no trace to read, nothing the trace can be held to, or no git to
+    resolve the tree.
 
     A tally and never a listing. What a reader acts on is the count per class and the door it
     opens; the lines themselves are `--check`'s to print, and printing them anywhere a caller did
@@ -1532,7 +1533,8 @@ def tally_of(target: Path) -> tuple[dict[str, int], int, list[str]] | None:
         # is named because `cannot_run` is how this script refuses, and it is not an `Exception`.
         return None
     counts = {cls: sum(1 for f in listed if f[0] == cls) for cls in (ORPHANED, MOVED, PROOF, CODE)}
-    return counts, len(held), sorted({f[2] for f in listed if f[0] == CODE and f[2]})
+    bound = {cls: len({f[1] for f in listed if f[0] == cls}) for cls in counts}
+    return counts, len(held), sorted({f[2] for f in listed if f[0] == CODE and f[2]}), bound
 
 
 def as_list(value: str | list[str]) -> list[str]:
@@ -7157,7 +7159,12 @@ def main() -> int:
         on_test = [f for f in code_listed if f[1] in by_test and f[1] not in decided]
         if on_test:
             print(step_decided(on_test, by_test, "a binding a certified test decides"))
-        print(f"\n{len(listed)} drift finding(s) over {count} binding(s):")
+        # A finding is one binding for some classes and one node–file pair for others, so the
+        # finding count has no denominator of its own: the line names the bindings the findings
+        # sit on and the pairs the trace holds, and each class line names its own bindings.
+        pairs = sum(len(entry.get("files") or []) for entry in declared.get("bindings") or [])
+        print(f"\n{len(listed)} drift finding(s) on {len({f[1] for f in listed})} of {count} "
+              f"binding(s), {pairs} node–file pair(s):")
         for cls in (ORPHANED, MOVED, PROOF, CODE):
             # The suppressed count rides its own class's line rather than sitting under the tally:
             # `0 code` printed above a receipt saying one was held back is a line a reader can
@@ -7166,8 +7173,10 @@ def main() -> int:
             tally = sum(1 for f in listed if f[0] == cls)
             # The file count rides the code tally because the listing above is keyed by file:
             # `16 code over 2 file(s)` is what says sixteen findings are two acts, not sixteen.
-            over = (f" over {len({f[2] for f in code_listed})} file(s)"
-                    if cls == CODE and code_listed else "")
+            bound = len({f[1] for f in listed if f[0] == cls})
+            over = (f" over {len({f[2] for f in code_listed})} file(s), {bound} binding(s)"
+                    if cls == CODE and code_listed else
+                    f" over {bound} binding(s)" if tally else "")
             print(f"  {tally} {cls}{over}{also}: {CLASSES[cls]}")
     else:
         print(f"no drift: {count} binding(s) match the specification and the code as both stand "
