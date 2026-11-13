@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.99.0 — 2026-11-13
+
+A grant's doors default to all six, `analyse` among them, and `--doors none` leaves them empty; the budget of judged doors stays at zero unless written. `/siegard-grant` and `grant.py` now agree: `--arm` prints what it recorded and refuses empty words, and `--disarm` with nothing armed says so (SPEC-011). (`727d2bb`)
+
 ## 5.98.0 — 2026-11-13
 
 A grant holds for the project until the person clears it with `/siegard-grant --clear`, over every live initiative unless `--slug` limits it; `analyse` is a door where the person writes it, and a commit, a closing and the budget read every covered initiative (SPEC-011). (`ee90105`)
