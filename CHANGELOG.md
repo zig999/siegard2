@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.94.0 — 2026-11-12
+
+A review relays every disagreement its proofs recorded: `deliver.py --findings` prints each proof's `contested` entry whole under its task, the review report carries it as the person's to settle, and `/deliver-scope` relays it whole (SPEC-004 R29). (`5abb016`)
+
 ## 5.93.0 — 2026-11-12
 
 The drift tally names the bindings its findings sit on: `trace.py --check` ends with `N drift finding(s) on K of M binding(s), P node–file pair(s)`, each class line names the bindings it covers, and the session-start receipt counts `moved` findings over the bindings they sit on. (`a9dfe09`)
