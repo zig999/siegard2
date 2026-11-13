@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.100.0 — 2026-11-13
+
+A run that receives a stop asks the grant before it ends: `handoff.py --render` keeps the record, `grant.py --decide --latest <skill> --after <commit>` answers over it and refuses a stale one, and a door a grant takes is counted by the grant's budget and by no goal's (SPEC-011 R9, R10). (`85bf02d`)
+
 ## 5.99.1 — 2026-11-13
 
 `/siegard-grant`'s report paragraph lists what an armed grant takes instead of running it into one long sentence. (`aca70e0`)
