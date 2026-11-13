@@ -14,7 +14,7 @@ Read at step 6 whenever the suite run is red, before anything is sent back or re
 **A red suite is a stop until a way out applies, and which way out applies is diagnosed, never
 guessed.** Nothing further is written: the implementation record stands, because its own run
 passed, and no proof record is written, so `deliver.py --outstanding` reports the task as
-implemented with no proof — the true state. Report the run by path and the tests that failed.
+implemented with no proof, the true state. Report the run by path and the tests that failed.
 
 ## The diagnosis
 
@@ -35,30 +35,27 @@ file set:              <every path the implementation record's `files` and the t
 Spawn it on every red of that step, never reading the log yourself in its place: probing a red
 with commands of your own composes commands the registry never declared.
 
-Where an earlier step of the run failed instead — a typecheck or a lint reaching the files just
-written — no diagnosis is owed: the log names the file, and the red goes back to the producer whose
-file it is, exactly as a red build does.
+Where an earlier step failed instead — a typecheck or a lint reaching the files just written — no
+diagnosis is owed: the log names the file, and the red goes back to the producer whose file it is,
+as a red build does.
 
 ## The five ways out
 
 The diagnosis returns one of the contract's four causes; `test` splits by who owns the failing
-test, which you know and it is not told. Every rerun is the same command, and `--next` names it —
-`<epic>-<slug>-suite-2`, then `-3`; every earlier run keeps its own.
+test, which you know and it is not told. Every rerun is the same command; `--next` names it,
+`<epic>-<slug>-suite-2`, then `-3`.
 
 | cause | owner of the failing test | what happens | waits on a person |
 |---|---|---|---|
 | `code` | — | the findings go to the `task-implementer`, re-entered; the suite runs again | no |
 | `build` | — | the suite's own compile failed; the red goes to the producer whose file the compiler named, re-entered; the suite runs again | no |
-| `test` | this delivery | stop: the two producers disagree | yes |
+| `test` | this delivery | the `test-author`, re-entered once, rewrites it whole; the suite runs again | on a second red |
 | `test` | an earlier task | the exit `deliver.py --test-owner` prints: see below | on `re-deliver` |
 | `setup` | — | nothing goes to a producer; the suite runs again once | on a second `setup` |
 
 - **`code`.** Where the implementer returns that the fix lies only in files no record of this task
   names, the red is the stop `references/red-build.md` names for a red no change to this task's own
   files can answer.
-- **`test`, on a test this delivery wrote.** The proof asserts what the criterion requires and the
-  implementation does not satisfy it; only a person settles that. The report quotes the diagnosis's
-  evidence and correction whole, never a summary — even where it looks mechanical.
 - **`test`, on a test an earlier task owns.** Its exit is printed, never read from the assertion,
   and only for this cause: a `code` red is the implementer's whoever owns the test. Name each
   failing test as `<file>::<name>`, as the run printed it:
@@ -80,14 +77,17 @@ test, which you know and it is not told. Every rerun is the same command, and `-
   proof's `tests`, a `--note` names each owner and its plan, and the suite runs again. Returned
   under `contested`, it keeps a condition a node still states: a contradiction only a person
   settles — stop, quote the entry whole, hand `/analyse` over the node.
+- **`test`, on a test this delivery wrote.** The specification settled it against the test: the
+  `test-author`, re-entered once with the diagnosis whole and its own entry, rewrites it whole as
+  above. A second red on it, or a test it leaves under `contested`, is the stop `producers`; the
+  report quotes both whole.
 - **`setup`.** The harness or its environment did not stand up, so neither code nor test was
-  reached. Run the suite again once, changing nothing. A second consecutive red the diagnosis reads
-  as `setup` is a stop: the report quotes both diagnoses and hands the rerun invocation.
+  reached. Run the suite again once, changing nothing. A second `setup` in a row is a stop: the
+  report quotes both diagnoses and hands the rerun invocation.
 
 ## The way out that is forbidden
 
 **A test is never weakened, deleted, narrowed or rewritten to make the suite green.** A test edited
-until it passes is one producer overruling the other where nobody would see it. Where a test an
-earlier task owns must change, the producer that owns proofs rewrites it whole — in the owning
-task's own proof-only re-delivery, or in this one where `--test-owner` prints `adopt` or
-`rewrite` — and the runs on disk show any test that changed between attempts.
+until it passes is one producer overruling the other where nobody would see it. The producer that
+owns proofs rewrites a test whole, in the owning task's proof-only re-delivery or in this one, and
+the runs on disk show any test that changed between attempts.

@@ -335,6 +335,31 @@ left out — so the file set the review that followed was handed never held them
   (productcatalog `dominio-inicial`, 24 entries). It lands on reviews and never on a task.
 
 
+### Who answers a red suite on the delivery's own test
+
+- **R30** — A suite red on a test the delivery's own test author wrote, which the diagnosis reads as `test`, is answered by that test author, re-entered once with the diagnosis: it rewrites the test whole, and the rewrite replaces the test in the proof. The rewrite keeps every condition the proof says the test fails when, except where a node as it stands states otherwise; a condition a node still states is never rewritten away, and the test then stays, the disagreement is recorded under `contested` quoting the node, and the red is the stop for a person. A red on a test the rewrite answered is that stop too. The diagnosis reads `test` only where the specification settles it against the test, so the rewrite overrules nothing a producer decided, and the runs on disk show the test between attempts.
+
+  Grounds: 16 failures-pass diagnoses read from five sales consumers' transcripts between
+  2026-11-11 and 2026-11-13 (Siegard 5.89.0–5.94.0), counted by the `failures_counted` field of
+  each return: 6 `code`, 6 `setup`, 4 `test`. Of the 4, three were on a test an earlier task owned
+  and took R25's rewrite or adoption, ending in a committed delivery with no stop; one was on a
+  test the delivery's own test author wrote, and ended the goal in the stop `producers`
+  (`configurator`, `provas-preco-desconto-catalogo`, 2026-11-13): the test expected a catalog price
+  of "-5.00" to give a price line of -5, `rules/product-configuration/reduced-amount-is-never-below-zero`
+  says neither amount of a price line is below zero, and the diagnosis read the code as right and
+  named three ways to prove the reading where the floor does not hide it. The stop came after a suite run of about 10 minutes, the person's answer 7 minutes after it,
+  and a rerun followed; the answer deleted the test, which dropped the proof of the node's reading of "-5.00" altogether. A replay of the
+  re-entry, three independent test-author runs over the sandbox copy of that tree with the test
+  as it was, produced the same rewrite each time — a negative tax amount of "-5.00" on a price of
+  100.00, expecting a tax-included amount of 95 — changed three lines of the file and left the
+  other 19 tests as they were; each run of the file passed 20 of 20, and two injected defects, a
+  reader that refuses every text starting with "-" and a reader that reads "-5.00" as 5, each
+  made the rewritten test, and only it, fail. Estimator: transcripts and subagent transcripts of
+  the five projects, 48 hours; the replay ran `vitest` on the one file, not the whole suite.
+  Reversal: a rewrite under R30 that a later review finds weaker than the proof's `fails_when` it
+  was to keep, or a rewrite that dropped a condition a node still stated, narrows R30 to the stop
+  alone.
+
 ## Validation required before acceptance
 
 1. The test author's judgment states R1 to R12 and cites each in the words above; the coverage
@@ -418,6 +443,11 @@ left out — so the file set the review that followed was handed never held them
 15. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
     criterion, covered share per review, and the count of nodes decided by a test. A covered share
     that falls below the two-tests-per-criterion figure recorded there is what reopens R5 to R8.
+16. For R30: `/implement-task`'s red-suite file sends a `test` diagnosis on a test the delivery
+    wrote to the test author, once, where the stop sat before, and keeps the stop for a second red
+    on that test and for a test the author returns under `contested`; `agents/test-author.md`
+    names the input that carries it, and `/deliver-scope`'s stop list holds `producers` to those
+    two — `tests/test_skill_contract.py` proves each.
 
 ## Readings
 

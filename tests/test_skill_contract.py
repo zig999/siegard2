@@ -938,8 +938,8 @@ def test_a_red_on_an_earlier_tasks_test_is_answered_by_the_exit_test_owner_print
     assert "a contradiction only a person settles" in suite
     author = " ".join((REPO / "src/claude/agents/test-author.md").read_text(
         encoding="utf-8").split())
-    assert "**an adopted test**" in author
-    assert "keeping every condition an owning proof says it fails when unless a node as it stands" \
+    assert "**an adopted test, or a red test of your own**" in author
+    assert "keeping every condition the entry says it fails when unless a node as it stands" \
         in author
     assert "is never rewritten away: leave the test, and return it under `contested`" in author
     redelivery = reference_text("implement-task", "redelivery").split(
@@ -948,6 +948,28 @@ def test_a_red_on_an_earlier_tasks_test_is_answered_by_the_exit_test_owner_print
     assert "trace.py --check --all <target-source-root>" in redelivery
     assert "read the findings that name a node the task implements" in redelivery
     assert "A finding that names any other node on those files is not this task's" in redelivery
+
+
+def test_a_red_on_the_deliverys_own_test_is_rewritten_once_by_the_test_author():
+    """«A suite red on a test the delivery's own test author wrote, which the diagnosis reads as
+    `test`, is answered by that test author, re-entered once with the diagnosis» (SPEC-004 R30):
+    the table sends the red to the test author where it sat as a stop, a second red on the test
+    and a test the author leaves under `contested` are the stop, and the stop list says so."""
+    suite = " ".join(reference_text("implement-task", "red-suite").split())
+    assert ("| `test` | this delivery | the `test-author`, re-entered once, rewrites it whole; the "
+            "suite runs again | on a second red |") in suite
+    assert "stop: the two producers disagree" not in suite
+    assert ("`test`, on a test this delivery wrote.** The specification settled it against the "
+            "test: the `test-author`, re-entered once with the diagnosis whole and its own entry, "
+            "rewrites it whole as above. A second red on it, or a test it leaves under "
+            "`contested`, is the stop `producers`; the report quotes both whole.") in suite
+    author = " ".join((REPO / "src/claude/agents/test-author.md").read_text(
+        encoding="utf-8").split())
+    assert "**an adopted test, or a red test of your own**" in author
+    assert "or a test of this proof the suite ran red and the diagnosis reads as `test`" in author
+    stops = " ".join(reference_text("deliver-scope", "stops").split())
+    assert ("a test of this delivery's own proof still red after the test-author's one rewrite, or "
+            "left under `contested` — `producers`") in stops
 
 
 def test_only_the_tasks_own_bindings_decide_whether_an_implementation_stands():

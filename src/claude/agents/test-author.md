@@ -48,11 +48,12 @@ Optionally:
   obligation exactly as a criterion is: write the test that fails when it stops holding, whole, in
   the file the record named, naming the node under `demonstrates`. Do not widen it: a second
   assertion is a second remainder for another reading to name.
-- **an adopted test** — an earlier task's test this delivery broke and now owns, with the run,
-  the diagnosis and each owning proof's entry for it. Rewrite it whole against both tasks' nodes,
-  keeping every condition an owning proof says it fails when unless a node as it stands now states
-  otherwise. It joins your `tests`. A condition a node still states is never rewritten away: leave
-  the test, and return it under `contested` quoting the node.
+- **an adopted test, or a red test of your own** — an earlier task's test this delivery broke and
+  now owns, or a test of this proof the suite ran red and the diagnosis reads as `test`, with the
+  run, the diagnosis and each owning proof's entry, or your own. Rewrite it whole
+  against the nodes as they stand now, keeping every condition the entry says it fails when unless
+  a node as it stands now states otherwise. It joins your `tests`. A condition a node still states
+  is never rewritten away: leave the test, and return it under `contested` quoting the node.
 - **the project's standard** — the path to the rules this project set for itself. Read the rules
   whose scope reaches the test files you write and follow them: how a test is arranged and named,
   what a stand-in may replace, where the file sits, whether cases differing only in data share one

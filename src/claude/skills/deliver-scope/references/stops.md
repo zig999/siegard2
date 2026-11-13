@@ -13,7 +13,8 @@ around, and none is retried. Each carries its class, in backticks after it:
 - a `BLOCKING, from the specification —` note standing on every task the set has left — `blocking`;
 - a silence over a task the decided-fact route already answered in this run — `silence`;
 - a task waiting on a re-bind a second time in this run — `rebind`;
-- a suite whose diagnosis names a disagreement between the two producers — `producers`;
+- a test of this delivery's own proof still red after the test-author's one rewrite, or left
+  under `contested` — `producers`;
 - a delivery that gave up, a red the task's own files could still answer and its producer did not —
   `gave-up`;
 - an infrastructure failure the diagnosis read twice — `infrastructure`;
