@@ -51,6 +51,8 @@ SKILLS = {
                          "delegates": []},
     "siegard-goal": {"contract": "schemas/plan.json", "validator": "bin/goal.py",
                      "delegates": []},
+    "siegard-grant": {"contract": "schemas/grant.json", "validator": "bin/grant.py",
+                      "delegates": []},
     "siegard-archive": {"contract": "schemas/plan.json", "validator": "bin/archive.py",
                         "delegates": []},
     "siegard-standard": {"contract": "schemas/standard.json", "validator": "bin/deliver.py",
@@ -117,6 +119,9 @@ MODEL_MAY_REACH = {
     # and what it writes is material a human reads before any node exists. The gate it has is the
     # committed tree.
     "survey": True,
+    # Closed: the words it records are the person's and nothing else's, and what they grant is the
+    # framework taking the person's own decisions at its stops.
+    "siegard-grant": False,
     "siegard-config": False,
     # Read-only and input-free beyond the project root: nothing here is the human's to assert,
     # so a session may reach for it when asked how the work stands — that reachability is the

@@ -64,6 +64,12 @@ def arm(home: Path, slug: str) -> None:
                                                           encoding="utf-8")
 
 
+def grant(home: Path, slug: str) -> None:
+    (home / ".git" / "siegard").mkdir(exist_ok=True)
+    (home / ".git" / "siegard" / "grant.json").write_text(json.dumps({"slug": slug}),
+                                                           encoding="utf-8")
+
+
 def hook(home: Path, command: str, **changed) -> subprocess.CompletedProcess:
     event = {"hook_event_name": "PreToolUse", "tool_name": "Bash", "cwd": str(home),
              "tool_input": {"command": command}, **changed}
@@ -113,16 +119,31 @@ def test_a_recommendation_out_of_form_is_refused(home):
     assert "recommended: rerun the suite" in refused(hook(home, "git commit -am x"))
 
 
-def test_a_judged_door_with_no_goal_armed_is_refused(home):
+def test_a_judged_door_with_no_goal_and_no_grant_armed_is_refused(home):
     append(home, JUDGED)
     reason = refused(hook(home, "git commit -am x"))
-    assert "a judged door, and no goal is armed" in reason and "/siegard-goal --arm" in reason
+    assert "a judged door, and neither a goal nor a grant is armed" in reason
+    assert "/siegard-goal --arm" in reason and "/siegard-grant" in reason
 
 
 def test_a_judged_door_under_a_goal_armed_for_another_initiative_is_refused(home):
     arm(home, "another-run")
     append(home, JUDGED)
-    assert "the goal armed names another-run, not run-one" in refused(hook(home, "git commit -am x"))
+    assert "what is armed names another-run, not run-one" in refused(hook(home, "git commit -am x"))
+
+
+def test_a_judged_door_under_a_grant_armed_for_its_initiative_goes_ahead(home):
+    """«a line over a rung of the ladder is taken where a goal or a grant names the initiative»
+    (SPEC-011 R6)"""
+    grant(home, SLUG)
+    append(home, JUDGED)
+    allowed(hook(home, "git commit -am x"))
+
+
+def test_a_judged_door_under_a_grant_armed_for_another_initiative_is_refused(home):
+    grant(home, "another-run")
+    append(home, JUDGED)
+    assert "what is armed names another-run, not run-one" in refused(hook(home, "git commit -am x"))
 
 
 def test_a_judged_door_under_the_goal_armed_for_its_initiative_goes_ahead(home):

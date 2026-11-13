@@ -13,7 +13,10 @@ act every run performs is the commit, so the line is read there:
 plugin's `PreToolUse` hook where a line it adds to an orchestration log opens with `decided:` or
 `recommended:` and is not of the form R5 and R7 state with a criterion R2 names, or opens with
 `decided:` over a judged criterion while no goal armed through the framework names that log's
-initiative.» (SPEC-006 R12)
+initiative.» (SPEC-006 R12) A grant the person armed names an initiative as a goal does:
+«The plugin's `PreToolUse` commit check reads an armed grant that names the log's initiative as
+it reads an armed goal, for a judged `decided:` line: a line over a rung of the ladder is taken
+where a goal or a grant names the initiative, and refused where neither does.» (SPEC-011 R6)
 
 - **Which commands.** A command holding `git … commit`; everything else is allowed before
   anything is read, so the hook costs nothing on the commands that are not commits.
@@ -26,7 +29,8 @@ initiative.» (SPEC-006 R12)
   neither word is no door line and is never read for form.
 - **What refuses.** A door line `goal.DOOR_LINE` does not match — the one form telemetry and the
   goal's budget read — and a `decided:` line whose criterion is one of `goal.JUDGED` while the
-  goal armed by `goal.py --arm` is absent or names another initiative. A derived `decided:` line
+  goal armed by `goal.py --arm` and the grant armed by `grant.py --arm` are absent or name another
+  initiative. A derived `decided:` line
   passes here: whether its door's entry point accepted it is `bin/door.py --check`'s to say.
 
 The refusal is the harness's `permissionDecision: deny`, its reason said to the session: each
@@ -152,8 +156,9 @@ def added_lines(home: Path, log: Path) -> list[str]:
 
 
 def problems_of(goal, log: Path, lines: list[str], delivery: Path,
-                armed: dict | None) -> list[str]:
+                armed: dict | None, granted: dict | None = None) -> list[str]:
     initiative = log.parent.name if log.parent != delivery else None
+    names = [held.get("slug") for held in (armed, granted) if held]
     found = []
     for raw in lines:
         line = goal.log_line(raw)
@@ -164,13 +169,14 @@ def problems_of(goal, log: Path, lines: list[str], delivery: Path,
             found.append(f"{log}: `{line}` — not `<verb>: <door> — <criterion> — <deciding "
                          f"fact>` with a criterion of: {', '.join(goal.CRITERIA)}")
         elif match.group("verb") == "decided" and match.group("criterion") in goal.JUDGED:
-            if armed is None:
-                found.append(f"{log}: `{line}` — a judged door, and no goal is armed; a judged "
-                             f"door is taken only under a goal the person armed with "
-                             f"/siegard-goal --arm")
-            elif initiative is not None and armed.get("slug") != initiative:
-                found.append(f"{log}: `{line}` — a judged door, and the goal armed names "
-                             f"{armed.get('slug')}, not {initiative}")
+            if not names:
+                found.append(f"{log}: `{line}` — a judged door, and neither a goal nor a grant "
+                             f"is armed; a judged door is taken only under a goal the person "
+                             f"armed with /siegard-goal --arm or a grant armed with "
+                             f"/siegard-grant")
+            elif initiative is not None and initiative not in names:
+                found.append(f"{log}: `{line}` — a judged door, and what is armed names "
+                             f"{', '.join(str(name) for name in names)}, not {initiative}")
     return found
 
 
@@ -206,9 +212,11 @@ def refusals(record: dict) -> list[str]:
         return []
     path = goal.armed_path(home)
     armed = goal.read_armed(path) if path.exists() else None
+    held_path = path.with_name("grant.json")
+    granted = goal.read_armed(held_path) if held_path.exists() else None
     found = []
     for log in reached:
-        found += problems_of(goal, log, added_lines(home, log), delivery, armed)
+        found += problems_of(goal, log, added_lines(home, log), delivery, armed, granted)
     return found
 
 
@@ -228,7 +236,7 @@ def main() -> int:
         return 0
     reason = ("Siegard refuses this commit: it adds door lines to an orchestration log that "
               "nothing can count or that no goal granted. Rewrite or remove each line, then "
-              "commit again. A judged door with no goal armed is not taken: hand it to the person "
+              "commit again. A judged door with neither a goal nor a grant armed is not taken: hand it to the person "
               "instead.\n" + "\n".join(f"- {line}" for line in found))
     print(json.dumps({"hookSpecificOutput": {"hookEventName": EVENT,
                                              "permissionDecision": "deny",
