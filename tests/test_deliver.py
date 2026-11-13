@@ -2917,6 +2917,65 @@ def test_findings_are_counted_by_the_fields_the_record_carries(tmp_path: Path):
     assert refused.returncode == 2 and "reads a review record" in refused.stderr
 
 
+def test_findings_relay_every_disagreement_the_proofs_recorded(tmp_path: Path):
+    """SPEC-004 R29: a disagreement the test author recorded under `contested` reaches the person
+    whole, under its task, from the script — never as a reader's summary. A task with no proof
+    relays nothing, and a proof that does not parse is named as not read."""
+    import subprocess
+    import sys
+    root = tmp_path
+    record = root / "review" / "first.md"
+    record.parent.mkdir()
+    tasks = ["task/checkout/record-order", "task/checkout/cancel-order",
+             "task/checkout/substrate", "task/checkout/broken"]
+    front = {"target": "app", "title": "t", "summary": "s", "reviewed": ["src/a.ts"],
+             "tasks": tasks, "passes": [{"pass": "conformance"}], "findings": []}
+    record.write_text("---\n" + yaml.safe_dump(front, sort_keys=False) + "---\nP.\n",
+                      encoding="utf-8")
+    contested = [{"what": "Events written earlier keep the deleted order's lines.",
+                  "why": "The rule says nothing of it is kept; the earlier events carry it.\n"
+                         "I believe this needs an explicit decision."},
+                 {"what": "A second point.", "why": "A second reason."}]
+    proofs = root / "proof" / "checkout"
+    proofs.mkdir(parents=True)
+    (proofs / "record-order.md").write_text(
+        "---\n" + yaml.safe_dump({"title": "p", "contested": contested}, sort_keys=False)
+        + "---\nP.\n", encoding="utf-8")
+    (proofs / "cancel-order.md").write_text("---\ntitle: p\n---\nP.\n", encoding="utf-8")
+    (proofs / "broken.md").write_text("---\ntitle: [unclosed\n---\nP.\n", encoding="utf-8")
+    done = subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/deliver.py"),
+                           "--findings", str(record)], capture_output=True, text=True)
+    assert done.returncode == 0, done.stdout + done.stderr
+    out = done.stdout
+    assert ("2 disagreement(s) the proofs recorded under `contested`, each the person's to "
+            "settle — the review neither settles nor ranks them:") in out, out
+    assert ("  task/checkout/record-order:\n"
+            "    what: Events written earlier keep the deleted order's lines.\n"
+            "    why: The rule says nothing of it is kept; the earlier events carry it.\n"
+            "I believe this needs an explicit decision.") in out, "whole, never shortened"
+    assert "    what: A second point.\n    why: A second reason." in out
+    assert "cancel-order" not in out and "substrate" not in out, \
+        "a proof with nothing contested, and a task with no proof, relay nothing"
+    assert "task/checkout/broken: proof/checkout/broken.md does not parse" in out, out
+
+
+def test_findings_print_nothing_more_where_no_proof_contests(tmp_path: Path):
+    import subprocess
+    import sys
+    record = tmp_path / "review" / "first.md"
+    record.parent.mkdir()
+    front = {"target": "app", "title": "t", "summary": "s", "reviewed": ["src/a.ts"],
+             "tasks": ["task/checkout/record-order"], "passes": [{"pass": "conformance"}],
+             "findings": []}
+    record.write_text("---\n" + yaml.safe_dump(front, sort_keys=False) + "---\nP.\n",
+                      encoding="utf-8")
+    done = subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/deliver.py"),
+                           "--findings", str(record)], capture_output=True, text=True)
+    assert done.returncode == 0
+    assert "disagreement" not in done.stdout
+    assert done.stdout.rstrip().endswith("whether it takes one"), done.stdout
+
+
 # ------------------------------------------------- the writers: records from a producer's return
 
 

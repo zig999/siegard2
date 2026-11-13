@@ -17,6 +17,12 @@ prints, as step 6 states. The report holds every item below, in this order.
    where before reading any, and decides over a group where the group is what they would decide
    over. A count is never a verdict, a group is never ranked, and a route named beside a count is
    where a repair would go, not a decision that it goes there.
+
+   Where it prints disagreements the proofs recorded under `contested`, carry every one as it
+   printed it — whole, under its task, said as the person's to settle — and never fold, shorten,
+   rank or answer one: «A review's report relays, whole and by task, every disagreement the proof
+   of a task it reviews recorded under `contested`, as the person's to settle; the review neither
+   settles nor ranks it.» (SPEC-004 R29)
 2. Every finding, grouped by pass, each with its evidence and what it costs.
 3. **Which passes did not run, and which input was missing.** This line is not optional: it
    separates a clean review from a narrow one.

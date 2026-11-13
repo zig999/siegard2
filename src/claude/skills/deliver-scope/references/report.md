@@ -14,7 +14,8 @@ Say, in this order, in the file:
 4. Every step invoked with its outcome, and the path of `orchestration.md`.
 5. Every line the last `deliver.py --outstanding` printed of records pinning no standard or another
    than their target declares, verbatim and as a fact.
-6. The review's findings, relayed whole, with that report's own account of which passes did not run.
+6. The review's findings and the proofs' disagreements it relayed, each whole, with that report's
+   own account of which passes did not run.
 7. Which nodes this run left decided by a test, which certifications were refused again and with
    what remainder, and — for any testable remainder over a node no task of this run implements —
    `trace.py --owed`'s closing invocation, relayed.

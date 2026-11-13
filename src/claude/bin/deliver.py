@@ -2689,7 +2689,38 @@ def print_findings(named: str) -> int:
     print(f"  by file: {tally([str(f.get('file', '(no file)')) for f in findings])}")
     print("  a count says how many findings share a field, never which route any takes or "
           "whether it takes one")
+    for line in contested_report(path, [t for t in listed(front, "tasks") if isinstance(t, str)]):
+        print(line)
     return 0
+
+
+def contested_report(review: Path, tasks: list[str]) -> list[str]:
+    """Every disagreement the proof of a reviewed task recorded under `contested`, whole and by
+    task, as the person's to settle. «A review's report relays, whole and by task, every
+    disagreement the proof of a task it reviews recorded under `contested`, as the person's to
+    settle; the review neither settles nor ranks it.» (SPEC-004 R29) The script transcribes them
+    so that whether one reaches the person never rests on a reader choosing to quote it. A task
+    with no proof — one delivered as the substrate alone owes none — has nothing to relay; a proof
+    that does not parse is named as not read."""
+    root = review.parent.parent
+    lines: list[str] = []
+    for task in tasks:
+        proof = root / "proof" / f"{task.removeprefix('task/')}.md"
+        if not proof.is_file():
+            continue
+        front, _, _ = spec.parse_node(proof)
+        if front is None:
+            lines.append(f"  {task}: {proof.relative_to(root).as_posix()} does not parse; its "
+                         f"disagreements, if any, were not read")
+            continue
+        for entry in listed(front, "contested"):
+            if isinstance(entry, dict):
+                lines.append(f"  {task}:\n    what: {entry.get('what')}\n    why: {entry.get('why')}")
+    if not lines:
+        return []
+    count = sum(1 for line in lines if "\n    what: " in line)
+    return [f"\n{count} disagreement(s) the proofs recorded under `contested`, each the person's "
+            f"to settle — the review neither settles nor ranks them:", *lines]
 
 
 def check_citation_problems(front: dict, target: Path, validator) -> list[str]:

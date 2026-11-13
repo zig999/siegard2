@@ -318,6 +318,23 @@ left out — so the file set the review that followed was handed never held them
   after the session had listed `run/` and seen `-2` free. Nothing refused any of them:
   `bin/run.py` refused only a name already held, so the choice of number was a prompt's.
 
+- **R29** — A review's report relays, whole and by task, every disagreement the proof of a task it reviews recorded under `contested`, as the person's to settle; the review neither settles nor ranks it. `bin/deliver.py --findings` prints them beside the counts it opens the report with, and the report carries what it printed.
+
+  Grounds: on 2026-11-12, partymgmt's proofs held 21 `contested` entries over 19 proofs, and none
+  of its 25 review records names one. Of its 59 person-facing reports, one deliver-scope report
+  (20261105T084345Z) folded six of them into a single "disclosures" bullet, without the test
+  author's ask that "the rule and the transactional-outbox constraint need an explicit decision".
+  The retention it named, personal data left in `outbox_events` after a delete, still stood seven
+  days later. Across the five sales consumers, 258 entries sat over 1,113 proofs, and 5 of 205
+  review records mention the word. `/review-change` situated on the field and relayed nothing,
+  and `/deliver-scope` relayed the review's findings, which held none of them, so whether a
+  disagreement reached the person rested on an orchestrator choosing to compress it. The
+  estimator was the YAML front matter of every `proof/**/*.md`, with each entry's distinctive
+  terms searched in review records and in `.git/siegard/handoff/`. The relay costs about 750
+  characters per review on average and 14.5k once at the worst delivery measured
+  (productcatalog `dominio-inicial`, 24 entries). It lands on reviews and never on a task.
+
+
 ## Validation required before acceptance
 
 1. The test author's judgment states R1 to R12 and cites each in the words above; the coverage
@@ -393,7 +410,12 @@ left out — so the file set the review that followed was handed never held them
     trace binds it to that are current, prints no door for it while it names one, the ordinary
     reconciliation over them while all have moved, and the adoption only where it binds none; `/implement-task` states the requirement in the words above
     — `tests/test_deliver.py` and `tests/test_spec_citations.py` prove each.
-14. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
+14. For R29: `bin/deliver.py --findings` prints, after its counts, every `contested` entry of the
+    proof of each task the review record names, whole and under the task's id, and names a proof
+    it could not read; `/review-change`'s report states the requirement in the words above, and
+    `/deliver-scope`'s report relays the disagreements the review relayed, each whole — `tests/test_deliver.py` and `tests/test_spec_citations.py`
+    prove each.
+15. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
     criterion, covered share per review, and the count of nodes decided by a test. A covered share
     that falls below the two-tests-per-criterion figure recorded there is what reopens R5 to R8.
 
@@ -436,7 +458,8 @@ left out — so the file set the review that followed was handed never held them
   author reads the implementation record (R4 names its inferences), the task implementer and
   test author read the task file's `## Notes`, `/review-change` situates on the records'
   inferences, departures, `untested` and `contested`, `/implement-task`'s report lists each, and
-  `git diff` over every one is the person's review. R12's cut was of entries quoted into no
+  `git diff` over every one is the person's review. A field situated on is not a field relayed: on 2026-11-12 the
+  `contested` entries met this paragraph's own reopening criterion, and R29 is their relay. R12's cut was of entries quoted into no
   record; by that criterion the share here is 0%, and a cut would be a cut from the records. What
   reopens this: a field a record carries that no step is handed and no person reads in a review.
   The measured lever is elsewhere: over the four consumers whose work roots were read, the binder
