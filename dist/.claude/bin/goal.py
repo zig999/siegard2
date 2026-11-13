@@ -15,7 +15,8 @@ follows with its output verbatim.» (SPEC-008 R1)
 - `state A` — every task of the scope is delivered, proven — or delivered as the substrate alone,
   which owes no proof — and reviewed, and the run is measured
   and committed: the records (`deliver.py --outstanding`, restricted to the
-  scope where one is named), no implementation record of the scope recording a criterion unmet,
+  scope where one is named), no implementation record of the scope recording a criterion unmet
+  that R12 does not answer,
   a review record naming each task whose records changed since the
   goal began and committed after them, `deliver.py --check`, `plan.py --check`, `spec.py`, a
   commit under the telemetry root after the last record and review, a tree holding only the
@@ -39,7 +40,9 @@ follows with its output verbatim.» (SPEC-008 R1)
   scope that holds every condition of R2 but one — an implementation record of it records a
   criterion unmet — is state B, each such criterion named beside its task: the record says the
   source does not satisfy the criterion, and state A would say the scope is delivered.»
-  (SPEC-008 R12)
+  (SPEC-008 R12) — a criterion recorded unmet is answered where a review since the goal began
+  gives it `covered` by a test in a file the task's own proof names: «The answer names each
+  criterion so answered beside the test that answers it.» (SPEC-008 R12)
 - `not yet` — neither; the checks that failed say what is left.
 
 Whatever the state, the `criteria` check also names what the reviews left unproven: «The answer
@@ -285,19 +288,55 @@ def review_tasks(record: Path) -> list[str]:
     return [t for t in spec.listed(front_of(record), "tasks") if isinstance(t, str)]
 
 
+def answering_tests(fields: dict, since: str, delivery: Path, tid: str, criterion: str,
+                    named: dict[Path, list[str]]) -> list[str]:
+    """The tests, in files the task's own proof names, that a review committed since the goal
+    began, naming the task, gives the criterion `covered` by: «A criterion recorded `met: false` is
+    answered, and no longer one recorded unmet, where a review committed since the goal began names
+    the criterion's task and gives the criterion `covered` by a test in a file the task's own proof
+    record names» (SPEC-008 R12). A review and a proof quote one test by different names where it
+    is parametrized, so the file is what they share."""
+    proof = front_of(delivery / "proof" / f"{tid[len('task/'):]}.md")
+    held = {t.get("file") for t in (proof.get("tests") or []) if isinstance(t, dict)}
+    found: list[str] = []
+    for path in sorted(named):
+        if tid not in named[path] or last_commit(fields, since, path) is None:
+            continue
+        for entry in entries(front_of(path), "coverage"):
+            if entry.get("criterion") != criterion or entry.get("state") != "covered":
+                continue
+            for test in entry.get("tests") or []:
+                if isinstance(test, dict) and test.get("file") in held:
+                    label = f"{test['file']}::{test.get('name')}"
+                    if label not in found:
+                        found.append(label)
+    return found
+
+
 def criteria_answer(fields: dict, since: str, delivery: Path, tasks: list[str],
                     named: dict[Path, list[str]]) -> tuple[bool, str]:
-    """The criteria the scope's implementation records say are unmet, which fail the check, and
-    the criteria this goal's reviews of the scope left other than covered, which it names and
-    never fails on."""
-    unmet = []
+    """The criteria the scope's implementation records say are unmet and no review answers by a
+    test of the task's own proof, which fail the check, those it names as answered, and the
+    criteria this goal's reviews of the scope left other than covered, which it names and never
+    fails on."""
+    unmet, answered = [], []
     for tid in tasks:
         record = delivery / "implementation" / f"{tid[len('task/'):]}.md"
         if record.is_file():
-            unmet += [f"  {tid}: {e['criterion']}" for e in entries(front_of(record), "criteria")
-                      if e.get("met") is False]
+            for e in entries(front_of(record), "criteria"):
+                if e.get("met") is not False:
+                    continue
+                by = answering_tests(fields, since, delivery, tid, e["criterion"], named)
+                if by:
+                    answered += [f"  {tid}: {e['criterion']}", *[f"    answered by {b}" for b in by]]
+                else:
+                    unmet.append(f"  {tid}: {e['criterion']}")
     lines = ([f"{len(unmet)} criterion(s) recorded unmet:", *unmet] if unmet else
              ["no implementation record of the scope records a criterion unmet"])
+    if answered:
+        lines += [f"{len([a for a in answered if not a.startswith('    ')])} criterion(s) recorded "
+                  f"unmet and answered by a test file of the task's own proof that a review "
+                  f"gives covered:", *answered]
     scope = set(tasks)
     for path in sorted(named):
         if not scope & set(named[path]) or last_commit(fields, since, path) is None:

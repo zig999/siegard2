@@ -66,10 +66,10 @@ session that stopped while its subagents were still running. The harness refuses
 ### What a goal ends on
 
 - **R1** — A goal's state is a script's answer, read from disk and git alone: its first line is `state A`, `state B` or `not yet`, and every check it ran follows with its output verbatim.
-- **R2** — State A holds when every task of the scope holds an implementation record and a proof record, or an implementation record of the substrate alone, which owes no proof; no implementation record of the scope records a criterion unmet; every task of the scope whose records changed since the goal began is named by a review record committed after them; the delivery and the plan check against their sources; the specification is sound; a measure is committed after the last record and the last review; the tree holds no change but those the condition declared untouched; every commit since the goal began names a skill and the slug, or is a reconciliation that touches only the trace and its own record; none of those commits is on a remote; and the plugin runs the version the goal began under.
+- **R2** — State A holds when every task of the scope holds an implementation record and a proof record, or an implementation record of the substrate alone, which owes no proof; no implementation record of the scope records a criterion unmet that R12 does not answer; every task of the scope whose records changed since the goal began is named by a review record committed after them; the delivery and the plan check against their sources; the specification is sound; a measure is committed after the last record and the last review; the tree holds no change but those the condition declared untouched; every commit since the goal began names a skill and the slug, or is a reconciliation that touches only the trace and its own record; none of those commits is on a remote; and the plugin runs the version the goal began under.
 - **R3** — State B holds when the initiative's orchestration log, changed since the goal began, ends with a stop line whose class is one of `blocking`, `silence`, `rebind`, `producers`, `gave-up`, `infrastructure`, `project-file`, `pending-change`, `specification`, `contradiction`, `budget`, `stands`, `analyse`, `outside-task`, `already-met`, `unclassified`, and the measure, commit and remote conditions of R2 hold; what the tree still holds is reported as left for the person, because a delivery that stopped leaves its files for a person to read. A plugin whose version changed since the goal began is state B on its own, and so is a commit since the goal began that touches the project file or a standard it declares: the rules the goal ran under are no longer the ones that answer, or what only the person authors changed under a goal. A run that took more judged doors since the goal began than the condition's budget is state B on its own: the state command carries the budget the condition was composed with, and counts the `decided:` lines whose criterion is a rung of SPEC-006 R2's ladder that the orchestration log gained since the goal began; a state command carrying no budget counts none.
 - **R11** — A commit since the goal began that names no skill and the slug, and is no reconciliation R2 admits, is state B on its own: the route never rewrites history, so that commit stands until a person reads it, and a goal waiting for it to disappear never ends.
-- **R12** — A scope that holds every condition of R2 but one — an implementation record of it records a criterion unmet — is state B, each such criterion named beside its task: the record says the source does not satisfy the criterion, and state A would say the scope is delivered.
+- **R12** — A scope that holds every condition of R2 but one — an implementation record of it records a criterion unmet — is state B, each such criterion named beside its task: the record says the source does not satisfy the criterion, and state A would say the scope is delivered. A criterion recorded `met: false` is answered, and no longer one recorded unmet, where a review committed since the goal began names the criterion's task and gives the criterion `covered` by a test in a file the task's own proof record names: the implementer writes no test, so a criterion that asks for one is recorded before the test exists, and the test the proof names, in a suite the proof's run passed, is the answer. The answer names each criterion so answered beside the test that answers it.
 - **R13** — The answer names every criterion that a review committed since the goal began, naming a task of the scope, left other than covered, beside that review; the list fails no check, because a criterion no suite reaches is a reading for a person, not a state.
 
 ### What a stopped run writes
@@ -126,8 +126,10 @@ session that stopped while its subagents were still running. The harness refuses
 
 1. Tests hold `goal.py --state` to R2, R3, R11, R12 and R13 over fixture repositories: one
    answering each state, one per condition of R2 failing alone, a foreign commit answering state
-   B, a criterion recorded unmet answering state B with the criterion named, a criterion a
-   review left uncovered named under state A, a commit naming the skill and the slug with
+   B, a criterion recorded unmet answering state B with the criterion named, a criterion recorded
+   unmet that a review gives `covered` by a test in a file the task's own proof names answering state A
+   with the test named, one a review gives `covered` by a test in no file the proof names staying
+   state B, a criterion a review left uncovered named under state A, a commit naming the skill and the slug with
    nothing after them and a reconciliation naming its slug alone both on the route, a
    reconciliation touching another reconciliation's record off it, and a run resumed after a
    stop line answering from the line it ends on.
@@ -178,6 +180,25 @@ session that stopped while its subagents were still running. The harness refuses
    `tests/test_deliver_scope.py` proves each.
 
 ## Readings
+
+- 2026-11-13 — grounds for R12's second sentence, read from the git history of `configurator`,
+  `productorder`, `salese2e`, `partymgmt` and `productcatalog`: 146 distinct criteria were
+  recorded `met: false` across their implementation records. The first review naming the task
+  after the record gave 54 of them `covered`, and 48 of those by a test in a file the task's own
+  proof names; the other 6 were covered by tests of no such file, among them three criteria of the
+  form "in a pnpm e2e run … the journey passes", which no suite the proof ran decides. Read by
+  their text, 45 of the 48 are criteria about a test or a suite ("a unit test fails when X is
+  removed", "the route sweep passes") and 3 are two migration outcomes and one refusal that a test
+  of the same task holds; none of them was a source that failed the criterion. In `salese2e`,
+  `configurator-no-e2e-etapas` ended state B over 5 such criteria in 3 tasks while its review
+  gave all 5 `covered`; the person's re-delivery of the 3 tasks wrote the same records again with
+  `met: true`, each `how` citing the test, at the cost of 3 full deliveries. The estimator reads
+  each record's front matter at the first commit holding the entry and the review's `coverage` at
+  the first review commit after it; the proof is read at the repository's `HEAD`, which may
+  postdate the review. A review and a proof quote a parametrized test under different names, so
+  the answer matches on the file: matching on the name as well cleared 38 of the 48. Reversal: a
+  criterion answered here that a later review, run or person finds the source did not satisfy
+  returns R12 to the record alone.
 
 - 2026-11-01 — grounds for R6's arming by invocation, read from every consumer transcript on
   that date: `/siegard-goal` ran 129 times, 109 typed by the person and 20 invoked by the model,

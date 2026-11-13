@@ -99,11 +99,12 @@ def deliver(project: dict) -> None:
     commit(home, f"deliver-scope {SLUG}: deliver record-order", "deliveries")
 
 
-def review(project: dict) -> None:
+def review(project: dict, coverage: list | None = None) -> None:
     home = project["home"]
     path = home / "deliveries" / SLUG / "review" / "first.md"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("---\n" + yaml.safe_dump(REVIEW, sort_keys=False) + "---\n## What it is\nProse for a reader.\n\n## Notes\nNone.\n",
+    held = REVIEW if coverage is None else {**REVIEW, "coverage": coverage}
+    path.write_text("---\n" + yaml.safe_dump(held, sort_keys=False) + "---\n## What it is\nProse for a reader.\n\n## Notes\nNone.\n",
                     encoding="utf-8")
     derive_delivery(home)
     commit(home, f"deliver-scope {SLUG}: review", "deliveries")
@@ -279,10 +280,14 @@ def unmet(project: dict) -> None:
     proof.write_text(proof.read_text(encoding="utf-8").replace(before, after), encoding="utf-8")
 
 
+UNANSWERED = [{"criterion": "Submitting a valid order returns its order_number.",
+               "state": "partial", "why": "no test submits an order the store refuses"}]
+
+
 def test_a_criterion_recorded_unmet_is_state_b_with_the_criterion_named(project):
     unmet(project)
     deliver(project)
-    review(project)
+    review(project, UNANSWERED)
     measure(project)
     result = state(project)
     assert failing(result) == {"criteria"}, result.stdout
@@ -291,6 +296,58 @@ def test_a_criterion_recorded_unmet_is_state_b_with_the_criterion_named(project)
     assert result.returncode == 0
     assert (f"    {TASK}: Submitting a valid order returns its order_number."
             in result.stdout.splitlines())
+
+
+def test_a_criterion_recorded_unmet_that_a_review_gives_covered_by_a_test_of_the_proof_is_state_a(project):
+    """«A criterion recorded `met: false` is answered, and no longer one recorded unmet, where a
+    review committed since the goal began names the criterion's task and gives the criterion
+    `covered` by a test in a file the task's own proof record names» (SPEC-008 R12)."""
+    unmet(project)
+    deliver(project)
+    review(project)
+    measure(project)
+    result = state(project)
+    assert first(result).startswith("state A"), result.stdout
+    assert failing(result) == set()
+    lines = result.stdout.splitlines()
+    assert "  no implementation record of the scope records a criterion unmet" in lines
+    assert ("  1 criterion(s) recorded unmet and answered by a test file of the task's own proof "
+            "that a review gives covered:") in lines
+    assert f"    {TASK}: Submitting a valid order returns its order_number." in lines
+    assert ("      answered by tests/place.spec.ts::returns the order_number for a valid submission"
+            in lines)
+
+
+def test_a_covered_criterion_answers_by_the_file_where_the_two_records_name_a_test_apart(project):
+    unmet(project)
+    deliver(project)
+    review(project, [{**REVIEW["coverage"][0],
+                      "tests": [{"file": "tests/place.spec.ts", "name": "returns the order_number for %s"}]}])
+    measure(project)
+    result = state(project)
+    assert first(result).startswith("state A"), result.stdout
+
+
+def test_a_criterion_covered_only_by_a_file_the_proof_does_not_name_stays_unmet(project):
+    unmet(project)
+    deliver(project)
+    review(project, [{**REVIEW["coverage"][0],
+                      "tests": [{"file": "tests/journeys/order.journey.ts", "name": "places an order"}]}])
+    measure(project)
+    result = state(project)
+    assert failing(result) == {"criteria"}, result.stdout
+    assert first(result).startswith(f"state B — {SLUG}: the scope is delivered, reviewed")
+    assert f"    {TASK}: Submitting a valid order returns its order_number." in result.stdout.splitlines()
+    assert "answered by" not in result.stdout
+
+
+def test_a_criterion_recorded_unmet_with_no_review_since_the_goal_began_is_answered_by_nothing(project):
+    """«a review committed since the goal began» (SPEC-008 R12)."""
+    unmet(project)
+    deliver(project)
+    result = state(project)
+    assert "criteria" in failing(result)
+    assert "answered by" not in result.stdout
 
 
 def test_a_criterion_recorded_unmet_with_work_left_is_not_yet(project):
