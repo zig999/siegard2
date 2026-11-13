@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.97.0 — 2026-11-13
+
+A grant the person records with `/siegard-grant` lets a stop take a door its own check leaves alone, have the decider choose a door of cost within a budget, commit what the route wrote, and close the initiative once everything is delivered, proven and reviewed; `grant.py` gates each act, and a choice the person reserves stays theirs (SPEC-011). (`ffe8d27`)
+
 ## 5.96.0 — 2026-11-13
 
 A red on a test the delivery's own test author wrote, which the diagnosis reads as `test`, is rewritten once by that test author with the diagnosis, instead of stopping the run; a second red on it, or a test left under `contested` because a node still states its condition, is the stop `producers` (SPEC-004 R30). (`f47a1b1`)
