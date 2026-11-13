@@ -4,39 +4,131 @@
   "description": "The record `bin/grant.py --arm` writes inside the repository's git directory, beside the armed goal's: what the person's own words let a session do at a stop, for one live initiative. «A grant is armed only by the person's own invocation of `/siegard-grant`, a skill closed to the model, whose arguments are the person's words.» (SPEC-011 R1)",
   "type": "object",
   "additionalProperties": false,
-  "required": ["contract", "project_root", "slug", "target", "doors", "budget", "commits", "close", "words", "version", "since", "armed_at"],
+  "required": [
+    "contract",
+    "project_root",
+    "slug",
+    "target",
+    "doors",
+    "budget",
+    "commits",
+    "close",
+    "words",
+    "version",
+    "since",
+    "armed_at"
+  ],
   "properties": {
-    "contract": {"const": "grant-armed/1"},
-    "project_root": {"type": "string", "minLength": 1, "description": "The project the grant names, as the invocation spelled it."},
-    "slug": {"type": "string", "minLength": 1, "description": "The one live initiative the grant covers."},
-    "target": {"type": "string", "minLength": 1, "description": "The target whose records name the paths a commit may carry."},
+    "contract": {
+      "const": "grant-armed/1"
+    },
+    "project_root": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The project the grant names, as the invocation spelled it."
+    },
+    "slug": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "description": "The one live initiative the grant covers, where the person names one; null where it covers every live initiative of the project."
+    },
+    "target": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The target whose records name the paths a commit may carry."
+    },
     "doors": {
       "type": "array",
       "uniqueItems": true,
-      "items": {"enum": ["plan-work", "implement-task", "review-change", "reconcile", "deliver-scope"]},
-      "description": "The entry points a stop may take. «Every other entry point — `/analyse` among them — is outside `doors` whatever the person writes.» (SPEC-011 R2)"
+      "items": {
+        "enum": [
+          "plan-work",
+          "implement-task",
+          "review-change",
+          "reconcile",
+          "deliver-scope",
+          "analyse"
+        ]
+      },
+      "description": "The entry points a stop may take. «`analyse` is in `doors` only where the person writes it: no other entry point is, whatever the person writes.» (SPEC-011 R2)"
     },
-    "budget": {"type": "integer", "minimum": 0, "description": "How many judged doors the grant lets the door decider choose, counted from the initiative's orchestration log."},
-    "commits": {"type": "boolean", "description": "Whether a session may commit what the route wrote."},
-    "close": {"type": "boolean", "description": "Whether a session may close the initiative where the state computation reads every task delivered, proven and reviewed; the person's words are the reason."},
+    "budget": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How many judged doors the grant lets the door decider choose, counted from the initiative's orchestration log."
+    },
+    "commits": {
+      "type": "boolean",
+      "description": "Whether a session may commit what the route wrote."
+    },
+    "close": {
+      "type": "boolean",
+      "description": "Whether a session may close an initiative where the state computation reads every task delivered, proven and reviewed; the person's words are the reason."
+    },
     "words": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "sha256"],
+      "required": [
+        "path",
+        "sha256"
+      ],
       "properties": {
-        "path": {"type": "string", "minLength": 1, "description": "The file the words were copied to, whole and unedited, by `bin/ask.py --record`."},
-        "sha256": {"type": "string", "pattern": "^[0-9a-f]{16}$", "description": "The first 16 hex characters of the words' sha256, the form an ask is named by."}
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The file the words were copied to, whole and unedited, by `bin/ask.py --record`."
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$",
+          "description": "The first 16 hex characters of the words' sha256, the form an ask is named by."
+        }
       }
     },
-    "version": {"type": "string", "minLength": 1, "description": "The plugin's version at arming: the rules a grant took are those of its version."},
-    "since": {"type": "string", "pattern": "^[0-9a-f]{7,64}$", "description": "Where `HEAD` stood at arming, from which the judged doors taken are counted."},
-    "armed_at": {"type": "string", "minLength": 1}
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The plugin's version at arming: the rules a grant took are those of its version."
+    },
+    "since": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,64}$",
+      "description": "Where `HEAD` stood at arming, from which the judged doors taken are counted."
+    },
+    "armed_at": {
+      "type": "string",
+      "minLength": 1
+    }
   },
   "allOf": [
-    {"anyOf": [
-      {"properties": {"doors": {"minItems": 1}}},
-      {"properties": {"commits": {"const": true}}},
-      {"properties": {"close": {"const": true}}}
-    ], "$comment": "A grant holds at least one clause."}
+    {
+      "anyOf": [
+        {
+          "properties": {
+            "doors": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "commits": {
+              "const": true
+            }
+          }
+        },
+        {
+          "properties": {
+            "close": {
+              "const": true
+            }
+          }
+        }
+      ],
+      "$comment": "A grant holds at least one clause."
+    }
   ]
 }

@@ -10,7 +10,8 @@ contract_version: spec/1
 ## Scope
 
 This specification fixes what the person's recorded grant lets a session do at a stop without
-asking, who can record it, what ends it, and the gates a script holds each act to. It binds
+asking, who can record it, what ends it, and the gates a script holds each act to. A grant holds
+for a project until the person clears it, over every live initiative or over the one it names. It binds
 `bin/grant.py`, the one script that records, reads and ends a grant and answers every act it is
 asked about, `/siegard-grant`, the one skill that arms it, the plugin's `PreToolUse` commit check
 where it reads an orchestration log's `decided:` lines, and the session rules' one line that
@@ -47,8 +48,8 @@ bound a script on disk decides.
 ## Definitions
 
 - **Grant** — the record `bin/grant.py --arm` writes inside the repository's git directory,
-  beside the armed goal's: the clauses, the initiative's slug, the person's words under a digest,
-  the plugin's version, and `HEAD` at arming.
+  beside the armed goal's: the clauses, the initiative's slug where the person names one, the
+  person's words under a digest, the plugin's version, and `HEAD` at arming.
 - **Clause** — one of `doors`, `commits`, `close`, each naming what the grant lets the session do.
 - **Taking** — doing the act without asking the person: invoking a door, making a commit, closing
   a plan.
@@ -59,20 +60,24 @@ bound a script on disk decides.
 
 - **R1** — A grant is armed only by the person's own invocation of `/siegard-grant`, a skill closed
   to the model, whose arguments are the person's words. `bin/grant.py --arm` records the words
-  verbatim under their digest and refuses to arm where the project holds an armed grant, where the
-  slug names no live initiative, or where no clause is named. No other component runs it.
+  verbatim under their digest and refuses to arm where the project holds an armed grant, where a
+  slug the person names is no live initiative, or where no clause is named. No other component runs
+  it. The person ends it with `/siegard-grant --clear`, which runs `bin/grant.py --disarm`, and the
+  project then behaves as it did before the grant.
 - **R2** — A grant holds at least one clause: `doors`, a list from `plan-work`, `implement-task`,
-  `review-change`, `reconcile` and `deliver-scope`, with a budget of judged doors, a whole number;
-  `commits`, which lets a session commit what the route wrote; `close`, the person's reason for
-  closing the initiative, in their words, which lets a session close it where R7 holds. Every
-  other entry point — `/analyse` among them — is outside `doors` whatever the person writes.
+  `review-change`, `reconcile`, `deliver-scope` and `analyse`, with a budget of judged doors, a whole
+  number; `commits`, which lets a session commit what the route wrote; `close`, the person's reason
+  for closing an initiative, in their words, which lets a session close one where R7 holds. `analyse`
+  is in `doors` only where the person writes it: no other entry point is, whatever the person writes.
+  A grant names no initiative unless the person gives a slug, and without one it covers every live
+  initiative of the project.
 
 ### What ends it
 
-- **R3** — A grant ends when the person disarms it, when the plugin's version is not the one it was
-  armed under — the rules a grant took are those of its version — and when the initiative it
-  names holds a `closure.md`. An ended grant is appended, with its reason, to the ended log beside
-  it, and takes nothing.
+- **R3** — A grant ends when the person clears it, when the plugin's version is not the one it was
+  armed under — the rules a grant took are those of its version — and, where it names an initiative,
+  when that initiative holds a `closure.md`. An ended grant is appended, with its reason, to the
+  ended log beside it, and takes nothing.
 
 ### What it lets a stop do
 
@@ -87,27 +92,29 @@ bound a script on disk decides.
 - **R5** — `judge` is answered by the door decider, blind to the grant and within its budget, as a
   goal condition's judged choice is answered; the door it names is taken, one `decided:` line
   carrying the rung it named and the grant's digest among its deciding facts. The budget left is
-  the grant's budget less the judged `decided:` lines the initiative's log gained since the grant
+  the grant's budget less the judged `decided:` lines the logs it covers gained since the grant
   armed, and a judged choice met with it spent is `stop`. «Each door taken is one line of the
   run's orchestration log, `decided: <door> — <criterion> — <deciding fact>`, and a door R3
   reserves is never taken.» (SPEC-006 R7)
 - **R6** — The plugin's `PreToolUse` commit check reads an armed grant that names the log's
-  initiative as it reads an armed goal, for a judged `decided:` line: a line over a rung of the
-  ladder is taken where a goal or a grant names the initiative, and refused where neither does.
+  initiative, or names none, as it reads an armed goal, for a judged `decided:` line: a line over a
+  rung of the ladder is taken where a goal or a grant names the initiative, and refused where
+  neither does.
 
 ### The gates
 
 - **R7** — `bin/grant.py --commit`, over the paths a commit names, answers `accepts` only where the
-  grant holds `commits` and every path is one the route writes — under the initiative's delivery
-  root, its work root, the telemetry root, `siegard-reconcile/`, the trace, or named by a record
-  of the initiative — and none is outside the project, a path of `siegard.json`, a declared
-  standard, `CLAUDE.md`, a file that holds credentials, a `closure.md` while the close clause does
-  not hold, or a specification file the commit modifies where `HEAD` already holds it, beyond its
-  decision log. A path that holds a change no record of the initiative accounts for is `refuses`.
-  `bin/grant.py --close` answers `accepts` only where the grant holds `close` and the goal
-  computation over the initiative, read from the grant's `HEAD`, finds every task delivered,
-  proven and reviewed, no criterion unmet that no covered review answers, and a sound
-  specification; the closure's reason is the grant's words, never the session's.
+  grant holds `commits` and every path is one the route writes — under the delivery root or the work
+  root of an initiative the grant covers, the telemetry root, `siegard-reconcile/`, the trace, or
+  named by a record of such an initiative — and none is outside the project, a path of `siegard.json`,
+  a declared standard, `CLAUDE.md`, a file that holds credentials, a `closure.md` while the close
+  clause does not hold, or a specification file the commit modifies where `HEAD` already holds it,
+  beyond its decision log. A path that holds a change no record of a covered initiative accounts for
+  is `refuses`. `bin/grant.py --close`, over one initiative the grant covers, answers `accepts` only
+  where the grant holds `close` and the goal computation over the initiative, read from the grant's
+  `HEAD`, finds every task delivered, proven and reviewed, no criterion unmet that no covered review
+  answers, and a sound specification; the closure's reason is the grant's words, never the
+  session's.
 - **R8** — Whatever the clauses say, a grant takes no push, no branch and no history rewrite; no
   edit of a file by the session outside a skill; no action in another project's tree and no command
   the project's registry does not declare; nothing a door's own check refuses; and no choice R3 of
@@ -117,7 +124,9 @@ bound a script on disk decides.
 
 1. Tests hold `grant.py --arm` to R1, R2: a recorded grant carries the words verbatim under a
    digest, a second arming, an unknown slug, no clause and an entry point outside the list are
-   each refused, and a plugin version change ends the grant under R3.
+   each refused, a grant without a slug covers every live initiative, `analyse` is a door only
+   where written, `--disarm` returns the project to no grant, and a plugin version change, or a
+   closure of the initiative a grant names, ends it under R3.
 2. Tests hold `grant.py --decide` to R4 and R5 over handoff records: a `settles` decision is
    `stop`; one door left after a refusal is `take`; a recommended door that is accepted beside an
    open door is `judge` with the budget left; a spent budget, a door outside the list and an
@@ -125,11 +134,23 @@ bound a script on disk decides.
 3. A test holds the commit check to R6 over a fixture log: a judged line with a grant armed is
    taken, and with neither a goal nor a grant it is refused.
 4. Tests hold `grant.py --commit` and `--close` to R7 and R8 over fixture repositories, one refusal
-   per bound the requirement names, and one acceptance of a commit that names only paths a record
-   of the initiative writes.
+   per bound the requirement names, one acceptance of a commit that names only paths a record
+   of a covered initiative writes, and a grant without a slug accepting the paths of any live
+   initiative and answering `--close` only over the initiative it is asked about.
 5. A test holds `/siegard-grant` closed to the model and the session rules' line to the script.
 
 ## Readings
+
+- 2026-11-13 (later) — the person asked that a grant hold for the project until cleared, that
+  every entry point benefit, and that `/siegard-grant` clear it. R1–R3 and R7 follow: the slug is
+  optional and the grant ends on a clearing. `analyse` is a door only where the person writes it:
+  it is outside the policy that was measured, whose audit found the changes it may make to an
+  existing node, which no script decides, in 3 of 156 acts, and the specification it writes is
+  disclosed and read afterwards, as under a goal that asks to specify. A grant held by a running
+  `/deliver-scope` under a goal, which ends at a stop before a session can ask the script, is not
+  decided here: the run reaches the grant where its handoff is relayed, and a run a goal ends is
+  resumed from the next invocation. Reversal: a door taken over `analyse` that the person reverts
+  narrows `doors` to the entry points the measured policy held.
 
 - 2026-11-13 — grounds for R2, R4 and R7, read from five sales consumers' transcripts, 391 stop
   replies labelled by sonnet agents, 101 of them again against SPEC-006's ladder, and 156 acts

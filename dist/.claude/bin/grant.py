@@ -13,9 +13,9 @@ tree.
 to a file under the telemetry root and named by their digest; the grant record sits inside the
 repository's git directory beside the armed goal's, never in the tree. A project holds one armed
 grant. «A grant holds at least one clause: `doors`, a list from `plan-work`, `implement-task`,
-`review-change`, `reconcile` and `deliver-scope`, with a budget of judged doors, a whole number;
-`commits`, which lets a session commit what the route wrote; `close`, the person's reason for
-closing the initiative, in their words, which lets a session close it where R7 holds.» (SPEC-011 R2) The words a person types after the flags are the closing reason: they are recorded verbatim and
+`review-change`, `reconcile`, `deliver-scope` and `analyse`, with a budget of judged doors, a whole
+number; `commits`, which lets a session commit what the route wrote; `close`, the person's reason
+for closing an initiative, in their words, which lets a session close one where R7 holds.» (SPEC-011 R2) The words a person types after the flags are the closing reason: they are recorded verbatim and
 no other text is.
 
 **`--decide` answers a stop's handoff record, one line per decision.** `stop: <why>`, `take: <door>
@@ -24,8 +24,8 @@ record's report, which the door decider reads. «A decision that carries `settle
 choice is the person's.» (SPEC-011 R4) A door whose check answered `refuses` is excluded, and where
 exactly one door remains, its entry point is in the grant's `doors` and its check accepted, it is
 taken; where the recommended door's check accepted beside an open door, the decider chooses, within
-the budget: «The budget left is the grant's budget less the judged `decided:` lines the
-initiative's log gained since the grant armed, and a judged choice met with it spent is `stop`.»
+the budget: «The budget left is the grant's budget less the judged `decided:` lines the logs it
+covers gained since the grant armed, and a judged choice met with it spent is `stop`.»
 (SPEC-011 R5)
 
 **`--commit` and `--close` are the gates.** «`bin/grant.py --commit`, over the paths a commit
@@ -36,11 +36,12 @@ follows for every refusal and a `checked:` line for every check that passed.
 Declared dependencies: PyYAML and jsonschema (through goal.py and spec.py, its siblings, which this
 script imports; it runs ask.py and project.py as commands).
 
-Usage:  grant.py --arm <project-root> --slug <slug> [--target <key>] [--doors <skill>[,<skill>...]] [--budget <n>] [--commits] [--close] --words-file <file|->
-                                    record the person's words and arm the grant; --words-file is
-                                    the text the person typed after the flags, copied verbatim
+Usage:  grant.py --arm <project-root> [--slug <slug>] [--target <key>] [--doors <skill>[,<skill>...]] [--budget <n>] [--commits] [--close] --words-file <file|->
+                                    record the person's words and arm the grant for the project, or
+                                    for one initiative where --slug names it; --words-file is the
+                                    text the person typed after the flags, copied verbatim
         grant.py --disarm <project-root>
-                                    end the armed grant
+                                    end the armed grant, which is what /siegard-grant --clear runs
         grant.py --read <project-root>
                                     print the armed grant, or say none is armed
         grant.py --decide <project-root> --record <file>
@@ -48,8 +49,9 @@ Usage:  grant.py --arm <project-root> --slug <slug> [--target <key>] [--doors <s
         grant.py --commit <project-root> --file <path>...
                                     answer whether the grant lets a session commit these paths,
                                     spelled from the project root
-        grant.py --close <project-root>
-                                    answer whether the grant lets a session close the initiative
+        grant.py --close <project-root> [--slug <slug>]
+                                    answer whether the grant lets a session close one initiative;
+                                    --slug names it where the grant names none
         grant.py --help             print this text and stop
 Exit:   0 answered, armed, disarmed or read
         1 refused: an arming the checks refuse, with every reason, or a gate that answers `refuses`
@@ -74,7 +76,7 @@ import goal  # noqa: E402
 
 CANNOT_RUN = 2
 REFUSED = 1
-ALLOWED = ("plan-work", "implement-task", "review-change", "reconcile", "deliver-scope")
+ALLOWED = ("plan-work", "implement-task", "review-change", "reconcile", "deliver-scope", "analyse")
 CONTRACT = "grant-armed/1"
 ARMED_FILE = "grant.json"
 ENDED_FILE = "grants-ended.jsonl"
@@ -102,6 +104,10 @@ def end_grant(path: Path, record: dict, ended: str, reason: str) -> None:
 
 
 def fields_of(project_root: Path, target: str | None) -> dict:
+    if target is None:
+        code, out = goal.script("project.py", str(project_root))
+        keys = sorted(re.findall(r"^target (\S+):", out, re.M)) if code == 0 else []
+        target = keys[0] if keys else None
     return goal.resolve(project_root, target)
 
 
@@ -115,6 +121,15 @@ def live_initiative(fields: dict, slug: str) -> list[str]:
     return found
 
 
+def covered(fields: dict, held: dict) -> list[str]:
+    """The initiatives a grant covers: the one it names, or every live one of the project."""
+    if held.get("slug"):
+        return [held["slug"]]
+    base = fields["work_root"]
+    return sorted(path.parent.name for path in base.glob("*/plan.json")
+                  if not (path.parent / "closure.md").is_file()) if base.is_dir() else []
+
+
 def record_words(project_root: Path, text: str) -> tuple[Path, str]:
     done = subprocess.run([sys.executable, "-B", str(BIN / "ask.py"), "--record",
                            str(project_root), "--text-file", "-"],
@@ -126,7 +141,7 @@ def record_words(project_root: Path, text: str) -> tuple[Path, str]:
     return Path(found.group(1)), found.group(2)
 
 
-def arm(project_root: Path, slug: str, target: str | None, doors: list[str], budget: int,
+def arm(project_root: Path, slug: str | None, target: str | None, doors: list[str], budget: int,
         commits: bool, close: bool, words: str) -> tuple[list[str], dict | None]:
     refused = []
     unknown = [door for door in doors if door not in ALLOWED]
@@ -140,7 +155,7 @@ def arm(project_root: Path, slug: str, target: str | None, doors: list[str], bud
     if close and not words.strip():
         refused.append("`close` is the person's reason in their words, and the words are empty")
     fields = fields_of(project_root, target)
-    refused += live_initiative(fields, slug)
+    refused += live_initiative(fields, slug) if slug else []
     path = grant_path(fields["home"])
     if path.exists():
         held = read_grant(path) or {}
@@ -177,18 +192,16 @@ def standing(project_root: Path) -> tuple[dict, dict, Path, str | None]:
     if held["version"] != goal.plugin_version():
         ended = (f"the plugin runs {goal.plugin_version()}; the grant was armed under "
                  f"{held['version']}")
-    elif (fields["work_root"] / held["slug"] / "closure.md").is_file():
+    elif held.get("slug") and (fields["work_root"] / held["slug"] / "closure.md").is_file():
         ended = f"{held['slug']} holds a closure.md"
     return held, fields, path, ended
 
 
-def log_file(fields: dict, held: dict) -> Path:
-    return fields["delivery_root"] / held["slug"] / "orchestration.md"
-
-
 def budget_left(fields: dict, held: dict) -> int:
-    path = log_file(fields, held)
-    taken = goal.judged_taken(fields, held["since"], path) if path.is_file() else 0
+    taken = 0
+    for slug in covered(fields, held):
+        path = fields["delivery_root"] / slug / "orchestration.md"
+        taken += goal.judged_taken(fields, held["since"], path) if path.is_file() else 0
     return max(0, held["budget"] - taken)
 
 
@@ -245,7 +258,7 @@ def decide(project_root: Path, record: dict) -> tuple[list[str], int]:
         end_grant(path, held, "ended", ended)
         return [f"stop: the grant ended — {ended}"], REFUSED
     decisions = record.get("decisions") or []
-    lines = [f"grant: {held['slug']} (sha256 {held['words']['sha256']})"]
+    lines = [f"grant: {held.get('slug') or 'every live initiative'} (sha256 {held['words']['sha256']})"]
     for number, decision in enumerate(decisions, 1):
         lines += decide_one(number, decision, held, fields)
     if record.get("report"):
@@ -256,29 +269,31 @@ def decide(project_root: Path, record: dict) -> tuple[list[str], int]:
 def owned_paths(fields: dict, held: dict) -> set[str]:
     owned: set[str] = set()
     home = fields["home"].resolve()
-    for root in ("implementation", "proof"):
-        base = fields["delivery_root"] / held["slug"] / root
-        for record in sorted(base.rglob("*.md")) if base.is_dir() else []:
-            front = goal.front_of(record)
-            target = fields["targets"].get(front.get("target") or held["target"])
-            if target is None:
-                continue
-            named = [entry.get("path") for entry in front.get("files") or []
-                     if isinstance(entry, dict)]
-            named += [entry.get("file") for entry in front.get("tests") or []
-                      if isinstance(entry, dict)]
-            for name in named:
-                if isinstance(name, str):
-                    full = (target / name).resolve()
-                    if full.is_relative_to(home):
-                        owned.add(full.relative_to(home).as_posix())
+    for slug in covered(fields, held):
+        for root in ("implementation", "proof"):
+            base = fields["delivery_root"] / slug / root
+            for record in sorted(base.rglob("*.md")) if base.is_dir() else []:
+                front = goal.front_of(record)
+                target = fields["targets"].get(front.get("target") or held["target"])
+                if target is None:
+                    continue
+                named = [entry.get("path") for entry in front.get("files") or []
+                         if isinstance(entry, dict)]
+                named += [entry.get("file") for entry in front.get("tests") or []
+                          if isinstance(entry, dict)]
+                for name in named:
+                    if isinstance(name, str):
+                        full = (target / name).resolve()
+                        if full.is_relative_to(home):
+                            owned.add(full.relative_to(home).as_posix())
     return owned
 
 
 def route_roots(fields: dict, held: dict) -> list[str]:
     home = fields["home"].resolve()
-    chosen = [fields["delivery_root"] / held["slug"], fields["work_root"] / held["slug"],
-              fields["telemetry_root"], home / "siegard-reconcile", home / "siegard-trace.json"]
+    chosen = [fields["telemetry_root"], home / "siegard-reconcile", home / "siegard-trace.json"]
+    for slug in covered(fields, held):
+        chosen += [fields["delivery_root"] / slug, fields["work_root"] / slug]
     return [goal.relative(fields, item).rstrip("/") for item in chosen]
 
 
@@ -328,24 +343,29 @@ def commit_gate(project_root: Path, files: list[str]) -> tuple[list[str], bool]:
                 found.append(f"refused: {name} is no path the route writes")
         elif not (name in owned or any(name == root or name.startswith(root + "/")
                                        for root in roots_)):
-            found.append(f"refused: {name} is no path the route writes: no record of "
-                         f"{held['slug']} names it, and it is under none of its roots")
+            found.append(f"refused: {name} is no path the route writes: no record of a covered "
+                         f"initiative names it, and it is under none of their roots")
     if not found:
-        found = [f"checked: the grant holds `commits` for {held['slug']}",
+        found = [f"checked: the grant holds `commits` for {held.get('slug') or 'every live initiative'}",
                  f"checked: {len(files)} path(s), each one the route writes, none a standard, "
                  f"CLAUDE.md, a credential, a closure or a modified specification file"]
     return found, not any(line.startswith("refused:") for line in found)
 
 
-def close_gate(project_root: Path) -> tuple[list[str], bool]:
+def close_gate(project_root: Path, slug: str | None) -> tuple[list[str], bool]:
     held, fields, path, ended = standing(project_root)
     if ended:
         end_grant(path, held, "ended", ended)
         return [f"refused: the grant ended — {ended}"], False
     if not held["close"]:
         return ["refused: the grant holds no `close` clause"], False
+    slug = slug or held.get("slug")
+    if slug is None:
+        return ["refused: the grant names no initiative, so --close takes --slug <slug>"], False
+    if slug not in covered(fields, held):
+        return [f"refused: {slug} is no live initiative the grant covers"], False
     try:
-        found, _ = goal.checks(fields, held["slug"], held["since"], held["version"], [], [], None)
+        found, _ = goal.checks(fields, slug, held["since"], held["version"], [], [], None)
     except goal.Refused as refusal:
         return [f"refused: the initiative's state could not be read: {refusal}"], False
     lines = []
@@ -396,9 +416,9 @@ def main(argv: list[str]) -> int:
             for word in ("--commits", "--close"):
                 if word in args:
                     args.remove(word)
-            if args or slug is None or source is None:
-                raise goal.Refused("--arm takes <project-root> --slug <slug> --words-file <file|-> "
-                                   "and the clauses; nothing else")
+            if args or source is None:
+                raise goal.Refused("--arm takes <project-root> --words-file <file|-> and the "
+                                   "clauses, and --slug <slug> to name one initiative; nothing else")
             doors = [door for door in (doors_text or "").split(",") if door]
             if budget_text is not None and not budget_text.isdigit():
                 raise goal.Refused("--budget is a whole number")
@@ -413,7 +433,7 @@ def main(argv: list[str]) -> int:
             if flag == "--disarm":
                 held, _, path, _ = standing(project_root)
                 end_grant(path, held, "disarmed", "the person disarmed it")
-                print(f"disarmed: {held['slug']}, armed at {held['armed_at']}")
+                print(f"disarmed: {held.get('slug') or 'every live initiative'}, armed at {held['armed_at']}")
                 return 0
             if flag == "--read":
                 try:
@@ -426,7 +446,10 @@ def main(argv: list[str]) -> int:
                     print(f"ended: {ended}")
                 return 0
             if flag == "--close":
-                lines, ok = close_gate(project_root)
+                slug = take(args, "--slug")
+                if args:
+                    raise goal.Refused("--close takes <project-root> and --slug <slug>")
+                lines, ok = close_gate(project_root, slug)
                 print("accepts" if ok else "refuses")
                 print("\n".join(lines))
                 return 0 if ok else REFUSED

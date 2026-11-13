@@ -223,3 +223,12 @@ def test_a_project_file_that_does_not_resolve_is_allowed(home):
     (home / "siegard.json").write_text("{not json", encoding="utf-8")
     append(home, MALFORMED)
     allowed(hook(home, "git commit -am x"))
+
+
+def test_a_judged_door_under_a_grant_that_names_no_initiative_goes_ahead(home):
+    """«names the log's initiative, or names none» (SPEC-011 R6)"""
+    (home / ".git" / "siegard").mkdir(exist_ok=True)
+    (home / ".git" / "siegard" / "grant.json").write_text(json.dumps({"slug": None}),
+                                                           encoding="utf-8")
+    append(home, JUDGED)
+    allowed(hook(home, "git commit -am x"))

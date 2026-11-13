@@ -30,9 +30,9 @@ def grant(*args: str, stdin: str | None = None) -> subprocess.CompletedProcess:
                           input=stdin, capture_output=True, text=True)
 
 
-def arm(project: dict, *flags: str, words: str = WORDS, slug: str = SLUG):
-    return grant("--arm", str(project["home"]), "--slug", slug, *flags, "--words-file", "-",
-                 stdin=words)
+def arm(project: dict, *flags: str, words: str = WORDS, slug: str | None = SLUG):
+    named = ["--slug", slug] if slug else []
+    return grant("--arm", str(project["home"]), *named, *flags, "--words-file", "-", stdin=words)
 
 
 def armed(project: dict) -> Path:
@@ -92,8 +92,8 @@ def test_a_second_arming_is_refused_while_one_stands(project):
 
 
 @pytest.mark.parametrize("flags,expected", [
-    (("--doors", "analyse"), "analyse is outside `doors`"),
-    (("--doors", "plan-work,analyse"), "analyse is outside `doors`"),
+    (("--doors", "close-plan"), "close-plan is outside `doors`"),
+    (("--doors", "plan-work,reconcile,commit"), "commit is outside `doors`"),
     ((), "no clause is named"),
     (("--budget", "2", "--commits"), "a budget of judged doors needs `doors`"),
 ])
@@ -406,3 +406,95 @@ def test_a_record_handoff_prepare_wrote_is_read_by_decide_without_a_crash(projec
     assert out.returncode == 0, out.stdout + out.stderr
     assert out.stdout.splitlines()[0].startswith("grant: ")
     assert "decision 1:" in out.stdout
+
+
+# ------------------------------------------------- the project, until cleared (R1, R2, R3, R7)
+
+
+def test_a_grant_without_a_slug_covers_every_live_initiative(project):
+    result = arm(project, "--commits", slug=None)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert record_of(project)["slug"] is None
+
+
+def test_analyse_is_a_door_only_where_the_person_writes_it(project, tmp_path):
+    assert arm(project, "--doors", "plan-work", slug=None).returncode == 0
+    decision = with_recommended("/analyse", "accepts", door("b", "/plan-work", "refuses"))
+    assert "is not in the grant's doors" in decide(project, handoff(decision), tmp_path).stdout
+    grant("--disarm", str(project["home"]))
+    assert arm(project, "--doors", "plan-work,analyse", slug=None).returncode == 0
+    taken = decide(project, handoff(decision), tmp_path).stdout
+    assert "take: a /analyse — precondition unmet" in taken
+
+
+def test_disarming_a_project_grant_returns_the_project_to_no_grant(project, tmp_path):
+    assert arm(project, "--doors", "plan-work", slug=None).returncode == 0
+    assert "disarmed: every live initiative" in grant("--disarm", str(project["home"])).stdout
+    assert not armed(project).exists()
+    out = decide(project, handoff(with_recommended("/plan-work", "accepts")), tmp_path)
+    assert out.returncode == 2 and "no grant is armed" in out.stderr
+
+
+def test_a_closure_ends_a_grant_that_names_the_initiative_and_not_one_that_names_none(project):
+    assert arm(project, "--commits", slug=None).returncode == 0
+    (project["home"] / "plans" / SLUG / "closure.md").write_text("closed\n", encoding="utf-8")
+    assert grant("--read", str(project["home"])).stdout.startswith("{")
+    assert armed(project).exists()
+
+
+def test_a_project_grant_commits_the_paths_of_any_live_initiative(project):
+    deliver(project)
+    assert arm(project, "--commits", slug=None).returncode == 0
+    result = commit_check(project, f"deliveries/{SLUG}/implementation/checkout/record-order.md",
+                          "target/src/orders/place.ts")
+    assert result.stdout.splitlines()[0] == "accepts", result.stdout
+    assert "every live initiative" in result.stdout
+    refused = commit_check(project, "siegard.json")
+    assert refused.stdout.splitlines()[0] == "refuses"
+
+
+def test_a_project_grant_closes_only_the_initiative_it_is_asked_about(project):
+    one_task_plan(project)
+    assert arm(project, "--close", slug=None).returncode == 0
+    deliver(project)
+    review(project)
+    measure(project)
+    bare = grant("--close", str(project["home"]))
+    assert bare.stdout.splitlines()[0] == "refuses" and "takes --slug" in bare.stdout
+    other = grant("--close", str(project["home"]), "--slug", "elsewhere")
+    assert "no live initiative the grant covers" in other.stdout
+    done = grant("--close", str(project["home"]), "--slug", SLUG)
+    assert done.stdout.splitlines()[0] == "accepts", done.stdout
+
+
+def test_the_budget_of_a_project_grant_counts_the_judged_doors_of_every_log(project, tmp_path):
+    assert arm(project, "--doors", "plan-work", "--budget", "1", slug=None).returncode == 0
+    log = project["home"] / "deliveries" / SLUG / "orchestration.md"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    log.write_text("decided: /plan-work — keeps the route — the prescribed step\n", encoding="utf-8")
+    commit(project["home"], f"deliver-scope {SLUG}: log", "deliveries")
+    decision = with_recommended("/plan-work", "accepts", door("b", "/reconcile", "accepts"))
+    assert "the grant's budget of judged doors is spent" in decide(
+        project, handoff(decision), tmp_path).stdout
+
+
+def test_the_skill_clears_a_grant_through_the_script_and_arms_nothing_then():
+    text = " ".join((REPO / "src/claude/skills/siegard-grant/SKILL.md").read_text(
+        encoding="utf-8").split())
+    assert "Where the arguments hold `--clear`, nothing is armed" in text
+    assert "grant.py --disarm <project-root>" in text
+    assert "none: the grant covers every live initiative of the project" in text
+    assert "`analyse` only where the person writes it" in text
+
+
+def test_a_deliver_scope_handoff_record_is_read_by_decide_under_a_project_grant(project, tmp_path):
+    deliver(project)
+    assert arm(project, "--doors", "deliver-scope,plan-work,implement-task,review-change",
+               "--budget", "2", slug=None).returncode == 0
+    prepared = subprocess.run(
+        [sys.executable, "-B", str(BIN / "handoff.py"), "--prepare", "--skill", "deliver-scope",
+         "--project", str(project["home"]), "--slug", SLUG, "--target", "app", "--language", "en"],
+        capture_output=True, text=True)
+    assert prepared.returncode == 0, prepared.stdout + prepared.stderr
+    out = decide(project, json.loads(prepared.stdout), tmp_path)
+    assert out.returncode == 0 and out.stdout.splitlines()[0].startswith("grant: every live")
