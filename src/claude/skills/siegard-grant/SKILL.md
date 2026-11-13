@@ -81,14 +81,18 @@ not this framework: what the grant lets a session take at a stop, what it never 
 person ends it. It carries no flag, script name or slug. Then, in its own fenced block, the line that
 ends the grant: `/siegard:siegard-grant <project-root> --clear`.
 
-**Armed.** What the grant takes, from the lines the script printed: a door whose every other door
-its own check excluded; a door the door decider chooses, within the budget — none where the budget
-is zero, which the report says; the commits of what the route wrote; the closing of an initiative,
-once everything in it is delivered, proven and reviewed. Where `analyse` is among the doors, the
-specification it writes is disclosed and the person reads it afterwards. What it never takes,
-whatever the words say: a choice only the person makes, a push, a branch, an edit by a session
-outside a skill, a file of the project file, a standard or `CLAUDE.md`, and anything outside this
-project.
+**Armed.** The report says, from the lines the script printed, what the grant takes:
+
+- a door whose every other door its own check excluded;
+- a door the door decider chooses, within the budget — none where the budget is zero, which the
+  report says;
+- the commits of what the route wrote;
+- the closing of an initiative, once everything in it is delivered, proven and reviewed.
+
+Where `analyse` is among the doors, the specification it writes is disclosed and the person reads it
+afterwards. The report also says what the grant never takes, whatever the words say: a choice only
+the person makes, a push, a branch, an edit by a session outside a skill, a file of the project file,
+a standard or `CLAUDE.md`, and anything outside this project.
 
 **Refused.** `body`: nothing was armed, how many reasons the script gave, and that each is below.
 Then the script's reasons, verbatim, in one fenced block.
