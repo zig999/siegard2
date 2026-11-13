@@ -53,7 +53,7 @@
           "analyse"
         ]
       },
-      "description": "The entry points a stop may take. «`analyse` is in `doors` only where the person writes it: no other entry point is, whatever the person writes.» (SPEC-011 R2)"
+      "description": "The entry points a stop may take, all six where the person names none and none where the person writes `none`. «The person narrows `doors` by naming them, and `none` leaves it empty for a grant of commits or of a closing alone; no other entry point is ever in it.» (SPEC-011 R2)"
     },
     "budget": {
       "type": "integer",

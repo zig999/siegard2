@@ -60,17 +60,22 @@ bound a script on disk decides.
 
 - **R1** — A grant is armed only by the person's own invocation of `/siegard-grant`, a skill closed
   to the model, whose arguments are the person's words. `bin/grant.py --arm` records the words
-  verbatim under their digest and refuses to arm where the project holds an armed grant, where a
-  slug the person names is no live initiative, or where no clause is named. No other component runs
-  it. The person ends it with `/siegard-grant --clear`, which runs `bin/grant.py --disarm`, and the
-  project then behaves as it did before the grant.
+  verbatim under their digest and refuses to arm where the project holds an armed grant, where the
+  words are empty, where a slug the person names is no live initiative, or where no clause is named.
+  No other component runs it. The person ends it with `/siegard-grant --clear`, which runs
+  `bin/grant.py --disarm`, and the project then behaves as it did before the grant; where none is
+  armed it says so and refuses nothing.
+
 - **R2** — A grant holds at least one clause: `doors`, a list from `plan-work`, `implement-task`,
-  `review-change`, `reconcile`, `deliver-scope` and `analyse`, with a budget of judged doors, a whole
-  number; `commits`, which lets a session commit what the route wrote; `close`, the person's reason
-  for closing an initiative, in their words, which lets a session close one where R7 holds. `analyse`
-  is in `doors` only where the person writes it: no other entry point is, whatever the person writes.
-  A grant names no initiative unless the person gives a slug, and without one it covers every live
-  initiative of the project.
+  `review-change`, `reconcile`, `deliver-scope` and `analyse`, which is all six where the person
+  names none, with a budget of judged doors, a whole number, which is zero where the person names
+  none; `commits`, which lets a session commit what the route wrote; `close`, the person's reason
+  for closing an initiative, in their words, which lets a session close one where R7 holds. The
+  person narrows `doors` by naming them, and `none` leaves it empty for a grant of commits or of a
+  closing alone; no other entry point is ever in it. A grant names no initiative unless the person
+  gives a slug, and without one it covers every live initiative of the project. What `--arm`
+  recorded is printed: the initiative or the project, the doors, the budget, the clauses, the words'
+  digest and the plugin's version.
 
 ### What ends it
 
@@ -123,10 +128,11 @@ bound a script on disk decides.
 ## Validation required before acceptance
 
 1. Tests hold `grant.py --arm` to R1, R2: a recorded grant carries the words verbatim under a
-   digest, a second arming, an unknown slug, no clause and an entry point outside the list are
-   each refused, a grant without a slug covers every live initiative, `analyse` is a door only
-   where written, `--disarm` returns the project to no grant, and a plugin version change, or a
-   closure of the initiative a grant names, ends it under R3.
+   digest, a second arming, empty words, an unknown slug, no clause and an entry point outside the
+   list are each refused, a grant without a slug covers every live initiative, a grant that names
+   no door holds all six, `none` holds none, `--disarm` returns the project to no grant and with
+   none armed says so, and a plugin version change, or a closure of the initiative a grant names,
+   ends it under R3.
 2. Tests hold `grant.py --decide` to R4 and R5 over handoff records: a `settles` decision is
    `stop`; one door left after a refusal is `take`; a recommended door that is accepted beside an
    open door is `judge` with the budget left; a spent budget, a door outside the list and an
@@ -140,6 +146,16 @@ bound a script on disk decides.
 5. A test holds `/siegard-grant` closed to the model and the session rules' line to the script.
 
 ## Readings
+
+- 2026-11-13 (last) — the person asked that `doors` default to every entry point, `analyse`
+  among them, and kept the budget at zero. A grant that names no door then takes the doors its
+  checks leave alone and the commits it holds, and a choice between open doors stops until the
+  person writes `--budget n`. Three runs of the skill, each followed by an agent against a clone
+  of a consumer, found its text and the script disagreeing — a target picked in silence where
+  the skill said a project with several stops, an `--arm` that printed two lines where the report
+  quotes the clauses, a `--disarm` that answered `cannot run` where no grant was armed — and the
+  requirements above state what each does. Reversal: a default `analyse` whose specification the
+  person reverts more than once in ten narrows the default to the five the policy measured.
 
 - 2026-11-13 (later) — the person asked that a grant hold for the project until cleared, that
   every entry point benefit, and that `/siegard-grant` clear it. R1–R3 and R7 follow: the slug is

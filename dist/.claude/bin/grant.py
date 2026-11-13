@@ -13,9 +13,10 @@ tree.
 to a file under the telemetry root and named by their digest; the grant record sits inside the
 repository's git directory beside the armed goal's, never in the tree. A project holds one armed
 grant. «A grant holds at least one clause: `doors`, a list from `plan-work`, `implement-task`,
-`review-change`, `reconcile`, `deliver-scope` and `analyse`, with a budget of judged doors, a whole
-number; `commits`, which lets a session commit what the route wrote; `close`, the person's reason
-for closing an initiative, in their words, which lets a session close one where R7 holds.» (SPEC-011 R2) The words a person types after the flags are the closing reason: they are recorded verbatim and
+`review-change`, `reconcile`, `deliver-scope` and `analyse`, which is all six where the person names
+none, with a budget of judged doors, a whole number, which is zero where the person names none;
+`commits`, which lets a session commit what the route wrote; `close`, the person's reason for
+closing an initiative, in their words, which lets a session close one where R7 holds.» (SPEC-011 R2) The words a person types after the flags are the closing reason: they are recorded verbatim and
 no other text is.
 
 **`--decide` answers a stop's handoff record, one line per decision.** `stop: <why>`, `take: <door>
@@ -36,10 +37,13 @@ follows for every refusal and a `checked:` line for every check that passed.
 Declared dependencies: PyYAML and jsonschema (through goal.py and spec.py, its siblings, which this
 script imports; it runs ask.py and project.py as commands).
 
-Usage:  grant.py --arm <project-root> [--slug <slug>] [--target <key>] [--doors <skill>[,<skill>...]] [--budget <n>] [--commits] [--close] --words-file <file|->
+Usage:  grant.py --arm <project-root> [--slug <slug>] [--target <key>] [--doors <skill>[,<skill>...]|none] [--budget <n>] [--commits] [--close] --words-file <file|->
                                     record the person's words and arm the grant for the project, or
                                     for one initiative where --slug names it; --words-file is the
-                                    text the person typed after the flags, copied verbatim
+                                    text the person typed after the flags, copied verbatim; --doors
+                                    names the entry points a stop may take, all six where it is
+                                    absent, and `none` where the grant is for commits or a closing
+                                    alone
         grant.py --disarm <project-root>
                                     end the armed grant, which is what /siegard-grant --clear runs
         grant.py --read <project-root>
@@ -103,12 +107,19 @@ def end_grant(path: Path, record: dict, ended: str, reason: str) -> None:
     path.unlink(missing_ok=True)
 
 
-def fields_of(project_root: Path, target: str | None) -> dict:
+def fields_of(project_root: Path, target: str | None) -> tuple[dict, str | None]:
+    """The project's roots, and a line saying which target was taken where the person named none
+    and the project declares several: the target only names where a record's own target is
+    missing, and a grant takes nothing from it that a record does not carry."""
+    said = None
     if target is None:
         code, out = goal.script("project.py", str(project_root))
         keys = sorted(re.findall(r"^target (\S+):", out, re.M)) if code == 0 else []
+        if len(keys) > 1:
+            said = (f"target: {keys[0]} — decided: the first of {', '.join(keys)}; a record's own "
+                    f"target is read where it names one")
         target = keys[0] if keys else None
-    return goal.resolve(project_root, target)
+    return goal.resolve(project_root, target), said
 
 
 def live_initiative(fields: dict, slug: str) -> list[str]:
@@ -141,25 +152,27 @@ def record_words(project_root: Path, text: str) -> tuple[Path, str]:
     return Path(found.group(1)), found.group(2)
 
 
-def arm(project_root: Path, slug: str | None, target: str | None, doors: list[str], budget: int,
-        commits: bool, close: bool, words: str) -> tuple[list[str], dict | None]:
+def arm(project_root: Path, slug: str | None, target: str | None, doors: list[str] | None,
+        budget: int, commits: bool, close: bool, words: str) -> tuple[list[str], dict | None]:
+    doors = list(ALLOWED) if doors is None else doors
     refused = []
     unknown = [door for door in doors if door not in ALLOWED]
     if unknown:
         refused.append(f"{', '.join(unknown)} is outside `doors`, which names only "
                        f"{', '.join(ALLOWED)}")
     if not doors and not commits and not close:
-        refused.append("no clause is named: `doors`, `commits` or `close`")
+        refused.append("no clause is named: `doors` is none, and neither `commits` nor `close` "
+                       "is named")
     if budget and not doors:
         refused.append("a budget of judged doors needs `doors`")
-    if close and not words.strip():
-        refused.append("`close` is the person's reason in their words, and the words are empty")
-    fields = fields_of(project_root, target)
+    if not words.strip():
+        refused.append("the words are empty: a grant is the person's own words")
+    fields, said = fields_of(project_root, target)
     refused += live_initiative(fields, slug) if slug else []
     path = grant_path(fields["home"])
     if path.exists():
         held = read_grant(path) or {}
-        refused.append(f"a grant is armed already in this project — {held.get('slug', 'unreadable')}"
+        refused.append(f"a grant is armed already in this project — {held.get('slug') or 'every live initiative'}"
                        f", armed at {held.get('armed_at', 'unknown')}; `grant.py --disarm "
                        f"{project_root}` ends it")
     if refused:
@@ -177,7 +190,12 @@ def arm(project_root: Path, slug: str | None, target: str | None, doors: list[st
     if broken:
         return [f"the record does not satisfy schemas/grant.json: {reason}" for reason in broken], None
     goal.write_armed(path, record)
-    return [f"armed: {path}", f"words: {record['words']['path']} (sha256 {digest})"], record
+    summary = [f"armed: {path}", f"words: {record['words']['path']} (sha256 {digest})",
+               f"covers: {slug or 'every live initiative of the project'}",
+               f"doors: {', '.join(doors) or 'none'}", f"budget of judged doors: {budget}",
+               f"commits: {'yes' if commits else 'no'}", f"close: {'yes' if close else 'no'}",
+               f"plugin: {record['version']}"]
+    return ([said] if said else []) + summary, record
 
 
 def standing(project_root: Path) -> tuple[dict, dict, Path, str | None]:
@@ -419,7 +437,8 @@ def main(argv: list[str]) -> int:
             if args or source is None:
                 raise goal.Refused("--arm takes <project-root> --words-file <file|-> and the "
                                    "clauses, and --slug <slug> to name one initiative; nothing else")
-            doors = [door for door in (doors_text or "").split(",") if door]
+            doors = None if doors_text is None else (
+                [] if doors_text == "none" else [door for door in doors_text.split(",") if door])
             if budget_text is not None and not budget_text.isdigit():
                 raise goal.Refused("--budget is a whole number")
             lines, record = arm(project_root, slug, target, doors, int(budget_text or 0),
@@ -431,7 +450,11 @@ def main(argv: list[str]) -> int:
                 raise goal.Refused(f"{flag} takes the project root first")
             project_root = Path(args.pop(0)).resolve()
             if flag == "--disarm":
-                held, _, path, _ = standing(project_root)
+                try:
+                    held, _, path, _ = standing(project_root)
+                except goal.Refused:
+                    print("no grant is armed in this project")
+                    return 0
                 end_grant(path, held, "disarmed", "the person disarmed it")
                 print(f"disarmed: {held.get('slug') or 'every live initiative'}, armed at {held['armed_at']}")
                 return 0

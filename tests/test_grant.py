@@ -94,8 +94,8 @@ def test_a_second_arming_is_refused_while_one_stands(project):
 @pytest.mark.parametrize("flags,expected", [
     (("--doors", "close-plan"), "close-plan is outside `doors`"),
     (("--doors", "plan-work,reconcile,commit"), "commit is outside `doors`"),
-    ((), "no clause is named"),
-    (("--budget", "2", "--commits"), "a budget of judged doors needs `doors`"),
+    (("--doors", "none"), "no clause is named"),
+    (("--doors", "none", "--budget", "2", "--commits"), "a budget of judged doors needs `doors`"),
 ])
 def test_arming_refuses_what_the_requirements_leave_out(project, flags, expected):
     result = arm(project, *flags)
@@ -113,9 +113,11 @@ def test_arming_over_an_initiative_that_is_not_live_is_refused(project):
     assert result.returncode == 1 and f"{SLUG} is closed" in result.stdout
 
 
-def test_close_is_the_persons_reason_and_empty_words_are_refused(project):
-    result = arm(project, "--close", words="   \n")
+@pytest.mark.parametrize("flags", [("--close",), ("--commits",), ("--doors", "plan-work")])
+def test_a_grant_without_words_is_refused_whatever_it_grants(project, flags):
+    result = arm(project, *flags, words="   \n")
     assert result.returncode == 1 and "the words are empty" in result.stdout
+    assert not armed(project).exists()
 
 
 # ------------------------------------------------------------------------ what ends it (R3)
@@ -417,14 +419,49 @@ def test_a_grant_without_a_slug_covers_every_live_initiative(project):
     assert record_of(project)["slug"] is None
 
 
-def test_analyse_is_a_door_only_where_the_person_writes_it(project, tmp_path):
-    assert arm(project, "--doors", "plan-work", slug=None).returncode == 0
-    decision = with_recommended("/analyse", "accepts", door("b", "/plan-work", "refuses"))
-    assert "is not in the grant's doors" in decide(project, handoff(decision), tmp_path).stdout
+def test_a_grant_that_names_no_door_holds_all_six_and_none_holds_none(project):
+    """«which is all six where the person names none» (SPEC-011 R2)"""
+    assert arm(project, "--commits", slug=None).returncode == 0
+    assert record_of(project)["doors"] == ["plan-work", "implement-task", "review-change",
+                                           "reconcile", "deliver-scope", "analyse"]
+    assert record_of(project)["budget"] == 0
     grant("--disarm", str(project["home"]))
-    assert arm(project, "--doors", "plan-work,analyse", slug=None).returncode == 0
-    taken = decide(project, handoff(decision), tmp_path).stdout
-    assert "take: a /analyse — precondition unmet" in taken
+    assert arm(project, "--commits", "--doors", "none", slug=None).returncode == 0
+    assert record_of(project)["doors"] == []
+
+
+def test_analyse_is_a_door_by_default_and_not_where_the_doors_are_narrowed(project, tmp_path):
+    decision = with_recommended("/analyse", "accepts", door("b", "/plan-work", "refuses"))
+    assert arm(project, "--budget", "1", slug=None).returncode == 0
+    assert "take: a /analyse — precondition unmet" in decide(project, handoff(decision),
+                                                             tmp_path).stdout
+    grant("--disarm", str(project["home"]))
+    assert arm(project, "--doors", "plan-work,implement-task", slug=None).returncode == 0
+    assert "is not in the grant's doors" in decide(project, handoff(decision), tmp_path).stdout
+
+
+def test_arming_prints_what_it_recorded_for_the_report_to_quote(project):
+    out = arm(project, "--budget", "2", "--commits").stdout.splitlines()
+    assert out[0].startswith("armed: ") and out[1].startswith("words: ")
+    assert f"covers: {SLUG}" in out
+    assert "doors: plan-work, implement-task, review-change, reconcile, deliver-scope, analyse" in out
+    assert "budget of judged doors: 2" in out and "commits: yes" in out and "close: no" in out
+    assert any(line.startswith("plugin: ") for line in out)
+
+
+def test_a_target_taken_where_the_project_declares_several_is_said(project):
+    declared = json.loads((project["home"] / "siegard.json").read_text(encoding="utf-8"))
+    declared["targets"] = {"app": "target", "other": "target"}
+    (project["home"] / "siegard.json").write_text(json.dumps(declared), encoding="utf-8")
+    commit(project["home"], "a second target")
+    out = arm(project, "--commits").stdout.splitlines()
+    assert out[0] == ("target: app — decided: the first of app, other; a record's own target is "
+                      "read where it names one")
+
+
+def test_clearing_where_no_grant_is_armed_says_so_and_refuses_nothing(project):
+    out = grant("--disarm", str(project["home"]))
+    assert out.returncode == 0 and out.stdout.strip() == "no grant is armed in this project"
 
 
 def test_disarming_a_project_grant_returns_the_project_to_no_grant(project, tmp_path):
@@ -478,13 +515,17 @@ def test_the_budget_of_a_project_grant_counts_the_judged_doors_of_every_log(proj
         project, handoff(decision), tmp_path).stdout
 
 
-def test_the_skill_clears_a_grant_through_the_script_and_arms_nothing_then():
+def test_the_skill_states_the_defaults_the_script_applies_and_clears_through_the_script():
     text = " ".join((REPO / "src/claude/skills/siegard-grant/SKILL.md").read_text(
         encoding="utf-8").split())
-    assert "Where the arguments hold `--clear`, nothing is armed" in text
-    assert "grant.py --disarm <project-root>" in text
-    assert "none: the grant covers every live initiative of the project" in text
-    assert "`analyse` only where the person writes it" in text
+    assert "all six, `analyse` among them" in text
+    assert "zero: a choice between open doors stops until the person writes one" in text
+    assert "Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/grant.py --disarm <project-root>`" in text
+    assert "With no grant armed it says so, and that is the report" in text
+    assert "the grant covers every live initiative of the project" in text
+    assert "The grant without words is no grant: ask for them and run nothing" in text
+    assert "pick another where `WORDS` is one of their lines" in text
+    assert "the script takes the first key `siegard.json` declares and says so" in text
 
 
 def test_a_deliver_scope_handoff_record_is_read_by_decide_under_a_project_grant(project, tmp_path):
