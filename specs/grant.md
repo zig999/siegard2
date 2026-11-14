@@ -50,7 +50,11 @@ bound a script on disk decides.
 
 - **Grant** — the record `bin/grant.py --arm` writes inside the repository's git directory,
   beside the armed goal's: the clauses, the initiative's slug where the person names one, the
-  person's words under a digest, the plugin's version, and `HEAD` at arming.
+  person's words under a digest, its mark, the plugin's version, and `HEAD` at arming.
+- **Words** — the person's invocation of `/siegard-grant` as typed: its flags and their values,
+  and any sentence the person adds after them.
+- **Mark** — what one grant is told apart by: the digest of its words' digest and the instant it
+  was armed, so that two grants armed with the same invocation never share one.
 - **Clause** — one of `doors`, `commits`, `close`, each naming what the grant lets the session do.
 - **Taking** — doing the act without asking the person: invoking a door, making a commit, closing
   a plan.
@@ -60,9 +64,10 @@ bound a script on disk decides.
 ### Who arms it
 
 - **R1** — A grant is armed only by the person's own invocation of `/siegard-grant`, a skill closed
-  to the model, whose arguments are the person's words. `bin/grant.py --arm` records the words
-  verbatim under their digest and refuses to arm where the project holds an armed grant that still stands, where the
-  words are empty, where a slug the person names is no live initiative, or where no clause is named.
+  to the model, whose arguments are the person's words. `bin/grant.py --arm` records the words — the
+  invocation as typed, with no sentence needed beside its flags — verbatim under their digest,
+  and refuses to arm where the project holds an armed grant that still stands, where the
+  invocation names nothing, where a slug the person names is no live initiative, or where no clause is named.
   No other component runs it. The person ends it with `/siegard-grant --clear`, which runs
   `bin/grant.py --disarm`, and the project then behaves as it did before the grant; where none is
   armed it says so and refuses nothing.
@@ -70,13 +75,13 @@ bound a script on disk decides.
 - **R2** — A grant holds at least one clause: `doors`, a list from `plan-work`, `implement-task`,
   `review-change`, `reconcile`, `deliver-scope` and `analyse`, which is all six where the person
   names none, with a budget of judged doors, a whole number, which is zero where the person names
-  none; `commits`, which lets a session commit what the route wrote; `close`, the person's reason
-  for closing an initiative, in their words, which lets a session close one where R7 holds. The
+  none; `commits`, which lets a session commit what the route wrote; `close`, which lets a session
+  close an initiative where R7 holds, the grant's words being the reason it is closed under. The
   person narrows `doors` by naming them, and `none` leaves it empty for a grant of commits or of a
   closing alone; no other entry point is ever in it. A grant names no initiative unless the person
   gives a slug, and without one it covers every live initiative of the project. What `--arm`
   recorded is printed: the initiative or the project, the doors, the budget, the clauses, the words'
-  digest and the plugin's version.
+  digest, the mark and the plugin's version.
 
 ### What ends it
 
@@ -99,7 +104,7 @@ bound a script on disk decides.
   qualifies it is `stop`. A door whose check was not run is never taken.
 - **R5** — `judge` is answered by the door decider, blind to the grant and within its budget, as a
   goal condition's judged choice is answered; the door it names is taken, one `decided:` line
-  carrying the rung it named and the grant's digest among its deciding facts. The budget left is
+  carrying the rung it named and the grant's mark among its deciding facts. The budget left is
   the grant's budget less the judged `decided:` lines the logs it covers gained since the grant
   armed, and a judged choice met with it spent is `stop`. «Each door taken is one line of the
   run's orchestration log, `decided: <door> — <criterion> — <deciding fact>`, and a door R3
@@ -112,7 +117,7 @@ bound a script on disk decides.
 ### Where a run meets it
 
 - **R9** — `bin/handoff.py --render` keeps the record it rendered, as JSON beside the report its `report` names, so that the run that receives a stop can ask the grant over the doors it handed. `bin/grant.py --decide --latest <skill> --after <commit>` answers over the newest record kept for that skill after that commit, and refuses where none was, so that a run never answers over the report of an earlier stop.
-- **R10** — Where the project holds an armed grant, the orchestrating entry point asks `bin/grant.py --decide` over the report of a step that stopped, before it ends the run: a `take` or a `judge` it answers is a door the run takes and goes on with, under a goal as without one, and a `stop` leaves the stop as it was. The same door over the same task is taken once in a run. A `decided:` line a grant took ends `(grant sha256 <digest>)`; the grant's budget counts it and the goal's budget does not.
+- **R10** — Where the project holds an armed grant, the orchestrating entry point asks `bin/grant.py --decide` over the report of a step that stopped, before it ends the run: a `take` or a `judge` it answers is a door the run takes and goes on with, under a goal as without one, and a `stop` leaves the stop as it was. The same door over the same task is taken once in a run. A `decided:` line a grant took ends `(grant sha256 <digest>)`; the grant's budget counts it and the goal's budget does not. The digest is the grant's mark, and the budget counts only the lines that carry its own.
 
 ### The gates
 
@@ -136,7 +141,8 @@ bound a script on disk decides.
 ## Validation required before acceptance
 
 1. Tests hold `grant.py --arm` to R1, R2: a recorded grant carries the words verbatim under a
-   digest, a second arming, empty words, an unknown slug, no clause and an entry point outside the
+   digest and a mark that two armings of the same words never share, an invocation recorded with
+   its flags alone arms, and a second arming, an invocation that names nothing, an unknown slug, no clause and an entry point outside the
    list are each refused, a grant without a slug covers every live initiative, a grant that names
    no door holds all six, `none` holds none, `--disarm` returns the project to no grant and with
    none armed says so, and a plugin version change, or a closure of the initiative a grant names,
@@ -161,6 +167,17 @@ bound a script on disk decides.
    `tests/test_goal.py` and `tests/test_skill_contract.py` prove each.
 
 ## Readings
+
+- 2026-11-14 — grounds for the invocation as the words and for the mark: the five grants armed
+  in `configurator`, `productorder` and `salese2e` on 2026-11-13 (Siegard 5.97.0–5.100.0) carry
+  the same pasted paragraph and the same clauses — `--budget 5 --commits --close`, all six doors.
+  The paragraph restated the flags in Portuguese, its last sentence restated R3 and SPEC-006 R3,
+  and its closing reason, "because the work will be done", named no initiative. The flags were
+  already the person's words, typed into a skill closed to the model, and are now what is
+  recorded. Five identical invocations recorded under one digest could not say which grant took
+  which door, which the reversal R5 reads needs, so each grant is marked with the instant it was
+  armed. An invocation with no argument would have armed all six doors with no budget, and is
+  refused.
 
 - 2026-11-14 — grounds for arming over a grant R3 has ended: in `configurator` and `salese2e`
   (Siegard 5.100.0), the person armed a grant right after updating from 5.99.1; both were refused

@@ -16,7 +16,8 @@
     "words",
     "version",
     "since",
-    "armed_at"
+    "armed_at",
+    "mark"
   ],
   "properties": {
     "contract": {
@@ -79,14 +80,15 @@
         "path": {
           "type": "string",
           "minLength": 1,
-          "description": "The file the words were copied to, whole and unedited, by `bin/ask.py --record`."
+          "description": "The file the invocation was copied to, whole and unedited, by `bin/ask.py --record`."
         },
         "sha256": {
           "type": "string",
           "pattern": "^[0-9a-f]{16}$",
           "description": "The first 16 hex characters of the words' sha256, the form an ask is named by."
         }
-      }
+      },
+      "description": "The person's invocation of `/siegard-grant` as typed — its flags, and any sentence after them — recorded verbatim. It is the authorization the grant's acts are read against, and the reason an initiative is closed under."
     },
     "version": {
       "type": "string",
@@ -101,6 +103,11 @@
     "armed_at": {
       "type": "string",
       "minLength": 1
+    },
+    "mark": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{16}$",
+      "description": "What the grant is told apart by: the first 16 hex characters of the sha256 of the words' digest, a space, and `armed_at`. Two grants armed with the same invocation record the same words and digest but never the same mark. A `decided:` line the grant took ends `(grant sha256 <mark>)`, and the grant's budget counts the lines that carry it."
     }
   },
   "allOf": [

@@ -157,10 +157,100 @@ def test_arming_over_an_initiative_that_is_not_live_is_refused(project):
 
 
 @pytest.mark.parametrize("flags", [("--close",), ("--commits",), ("--doors", "plan-work")])
-def test_a_grant_without_words_is_refused_whatever_it_grants(project, flags):
+def test_an_invocation_recorded_empty_is_refused_whatever_flags_reach_the_script(project, flags):
     result = arm(project, *flags, words="   \n")
-    assert result.returncode == 1 and "the words are empty" in result.stdout
+    assert result.returncode == 1 and "the invocation names nothing" in result.stdout
     assert not armed(project).exists()
+
+
+# --------------------------------------- the invocation as the words, and the mark (R1, R10)
+
+INVOCATION = "--budget 5 --commits --close\n"
+
+
+def ask_files(project: dict) -> list[Path]:
+    return sorted((project["home"] / "telemetry").glob("ask-*.md"))
+
+
+def test_an_invocation_of_flags_alone_arms_and_is_recorded_as_typed(project):
+    """«A grant is armed only by the person's own invocation of `/siegard-grant`, a skill closed
+    to the model, whose arguments are the person's words.» (SPEC-011 R1)"""
+    result = arm(project, "--budget", "5", "--commits", "--close", words=INVOCATION)
+    assert result.returncode == 0, result.stdout + result.stderr
+    held = record_of(project)
+    assert (project["home"] / held["words"]["path"]).read_text(encoding="utf-8") == INVOCATION
+    assert held["words"]["sha256"] == hashlib.sha256(INVOCATION.encode()).hexdigest()[:16]
+    assert held["budget"] == 5 and held["commits"] is True and held["close"] is True
+
+
+def test_an_invocation_that_names_nothing_arms_nothing_and_records_nothing(project):
+    before = ask_files(project)
+    result = arm(project, words="")
+    assert result.returncode == 1
+    assert "the invocation names nothing" in result.stdout
+    assert "at least one of --doors, --budget, --commits or --close" in result.stdout
+    assert not armed(project).exists() and ask_files(project) == before
+
+
+def test_the_mark_is_the_words_digest_taken_with_the_instant_armed(project):
+    assert arm(project, "--commits", words=INVOCATION).returncode == 0
+    held = record_of(project)
+    expected = hashlib.sha256(f"{held['words']['sha256']} {held['armed_at']}".encode()).hexdigest()
+    assert held["mark"] == expected[:16] and held["mark"] != held["words"]["sha256"]
+    printed = arm(project, "--commits", words=INVOCATION)
+    assert "a grant is armed already" in printed.stdout
+
+
+def test_two_grants_armed_with_the_same_invocation_never_share_a_mark(project):
+    first = arm(project, "--commits", words=INVOCATION)
+    assert first.returncode == 0 and f"mark: (grant sha256 {record_of(project)['mark']})" in first.stdout
+    one = record_of(project)
+    assert "disarmed" in grant("--disarm", str(project["home"])).stdout
+    import time
+    time.sleep(1.1)
+    assert arm(project, "--commits", words=INVOCATION).returncode == 0
+    two = record_of(project)
+    assert one["words"]["sha256"] == two["words"]["sha256"]
+    assert one["mark"] != two["mark"]
+
+
+def test_the_budget_counts_only_the_lines_its_own_mark_ends(project, tmp_path):
+    """A judged line an earlier grant of the same invocation took, ending with that grant's mark
+    or with the words' digest alone, is no line this grant took."""
+    assert arm(project, "--doors", "plan-work", "--budget", "1", words=INVOCATION).returncode == 0
+    held = record_of(project)
+    log = project["home"] / "deliveries" / SLUG / "orchestration.md"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    log.write_text(f"decided: /plan-work — keeps the route — the prescribed step (grant sha256 "
+                   f"{held['words']['sha256']})\n", encoding="utf-8")
+    commit(project["home"], f"deliver-scope {SLUG}: log", "deliveries")
+    decision = with_recommended("/plan-work", "accepts", door("b", "/reconcile", "accepts"))
+    assert "budget left 1" in decide(project, handoff(decision), tmp_path).stdout
+    log.write_text(log.read_text(encoding="utf-8") + f"decided: /plan-work — keeps the route — "
+                   f"the prescribed step (grant sha256 {held['mark']})\n", encoding="utf-8")
+    commit(project["home"], f"deliver-scope {SLUG}: log", "deliveries")
+    assert "budget of judged doors is spent" in decide(project, handoff(decision), tmp_path).stdout
+
+
+def test_a_grant_recorded_before_the_mark_is_told_apart_by_its_words(project, tmp_path):
+    assert arm(project, "--doors", "plan-work", "--budget", "1").returncode == 0
+    held = record_of(project)
+    held.pop("mark")
+    armed(project).write_text(json.dumps(held), encoding="utf-8")
+    decision = with_recommended("/plan-work", "accepts", door("b", "/reconcile", "accepts"))
+    out = decide(project, handoff(decision), tmp_path).stdout
+    assert f"(grant sha256 {held['words']['sha256']})" in out
+
+
+def test_the_skill_records_the_invocation_as_typed_and_reads_on_no_argument():
+    text = " ".join((REPO / "src/claude/skills/siegard-grant/SKILL.md").read_text("utf-8").split())
+    assert "**The words the script records are the invocation's arguments as typed**" in text
+    assert "never rebuilt from the flags the table read" in text
+    assert "| **No argument** | the invocation holds nothing at all |" in text
+    assert "bin/grant.py --read <project-root>` over the root `--here` resolves" in text
+    assert "Never run `--arm` for it" in text
+    assert "- Arm anything over an invocation with no argument." in text
+    assert "<the person's words>" not in text
 
 
 # ------------------------------------------------------------------------ what ends it (R3)
@@ -211,7 +301,7 @@ def test_the_one_door_left_after_a_refusal_is_taken_as_precondition_unmet(projec
                                 door("b", "/implement-task", "refuses",
                                      ["refused: the task waits on a dependency"]))
     out = decide(project, handoff(decision), tmp_path).stdout
-    digest = record_of(project)["words"]["sha256"]
+    digest = record_of(project)["mark"]
     lines = out.splitlines()
     assert "decision 1: take: a /review-change" in lines
     assert ("  decided: /review-change — precondition unmet — the other door was refused by its "
@@ -251,7 +341,7 @@ def test_a_judged_choice_met_with_the_budget_spent_is_a_stop(project, tmp_path):
     assert arm(project, "--doors", "plan-work", "--budget", "1").returncode == 0
     log = project["home"] / "deliveries" / SLUG / "orchestration.md"
     log.parent.mkdir(parents=True, exist_ok=True)
-    digest = record_of(project)["words"]["sha256"]
+    digest = record_of(project)["mark"]
     log.write_text(f"decided: /plan-work — keeps the route — the step the framework prescribes "
                    f"(grant sha256 {digest})\n", encoding="utf-8")
     commit(project["home"], f"deliver-scope {SLUG}: log", "deliveries")
@@ -555,7 +645,7 @@ def test_the_budget_of_a_project_grant_counts_the_judged_doors_of_every_log(proj
     assert arm(project, "--doors", "plan-work", "--budget", "1", slug=None).returncode == 0
     log = project["home"] / "deliveries" / SLUG / "orchestration.md"
     log.parent.mkdir(parents=True, exist_ok=True)
-    digest = record_of(project)["words"]["sha256"]
+    digest = record_of(project)["mark"]
     log.write_text(f"decided: /plan-work — keeps the route — the prescribed step (grant sha256 "
                    f"{digest})\n", encoding="utf-8")
     commit(project["home"], f"deliver-scope {SLUG}: log", "deliveries")
@@ -572,7 +662,8 @@ def test_the_skill_states_the_defaults_the_script_applies_and_clears_through_the
     assert "Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/grant.py --disarm <project-root>`" in text
     assert "With no grant armed it says so, and that is the report" in text
     assert "the grant covers every live initiative of the project" in text
-    assert "The grant without words is no grant: ask for them and run nothing" in text
+    assert "**An invocation with no argument arms nothing.**" in text
+    assert "A sentence is optional; the flags alone are a grant." in text
     assert "pick another where `WORDS` is one of their lines" in text
     assert "the script takes the first key `siegard.json` declares and says so" in text
 
@@ -606,7 +697,7 @@ def test_a_judged_line_the_goal_took_does_not_spend_the_grants_budget(project, t
 
 def test_a_judge_answer_names_the_suffix_its_decided_line_ends_with(project, tmp_path):
     assert arm(project, "--doors", "plan-work", "--budget", "1").returncode == 0
-    digest = record_of(project)["words"]["sha256"]
+    digest = record_of(project)["mark"]
     decision = with_recommended("/plan-work", "accepts", door("b", "/reconcile", "accepts"))
     out = decide(project, handoff(decision), tmp_path).stdout
     assert f"end the deciding fact of the `decided:` line with `(grant sha256 {digest})`" in out

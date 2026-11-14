@@ -9,15 +9,20 @@ script decides from disk and git alone. A run that asked itself whether an act w
 the person granted would answer from its own reading; this script answers from the record and the
 tree.
 
-**`--arm` records the words, then the grant.** The words are copied whole, by `ask.py --record`,
-to a file under the telemetry root and named by their digest; the grant record sits inside the
+**`--arm` records the words, then the grant.** The words are the person's invocation of
+`/siegard-grant` as typed — its flags, and any sentence after them — and are copied whole, by
+`ask.py --record`, to a file under the telemetry root and named by their digest; an invocation
+that names nothing is refused and arms nothing. The grant is told apart by its mark, the words'
+digest taken with the instant it was armed, so two grants armed with the same invocation never
+share one. The grant record sits inside the
 repository's git directory beside the armed goal's, never in the tree. A project holds one armed
 grant. «A grant holds at least one clause: `doors`, a list from `plan-work`, `implement-task`,
 `review-change`, `reconcile`, `deliver-scope` and `analyse`, which is all six where the person names
 none, with a budget of judged doors, a whole number, which is zero where the person names none;
-`commits`, which lets a session commit what the route wrote; `close`, the person's reason for
-closing an initiative, in their words, which lets a session close one where R7 holds.» (SPEC-011 R2) The words a person types after the flags are the closing reason: they are recorded verbatim and
-no other text is.
+`commits`, which lets a session commit what the route wrote; `close`, which lets a session
+close an initiative where R7 holds, the grant's words being the reason it is closed under.»
+(SPEC-011 R2) The recorded invocation is the closing reason: it is recorded verbatim and no
+other text is.
 
 **`--decide` answers a stop's handoff record, one line per decision.** `stop: <why>`, `take: <door>
 — precondition unmet — <fact>`, or `judge:` followed by the doors, the budget left and the
@@ -66,6 +71,7 @@ Exit:   0 answered, armed, disarmed or read
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import subprocess
@@ -107,6 +113,14 @@ def end_grant(path: Path, record: dict, ended: str, reason: str) -> None:
     with (path.parent / ENDED_FILE).open("a", encoding="utf-8") as log:
         log.write(json.dumps(done) + "\n")
     path.unlink(missing_ok=True)
+
+
+def mark_of(held: dict) -> str:
+    """The digest a grant is told apart by: its words' digest taken with the instant it was
+    armed, so two grants armed with the same invocation never share one. «A `decided:` line a
+    grant took ends `(grant sha256 <digest>)`; the grant's budget counts it and the goal's budget
+    does not.» (SPEC-011 R10) A record from before the mark existed is told apart by its words."""
+    return held.get("mark") or held["words"]["sha256"]
 
 
 def fields_of(project_root: Path, target: str | None) -> tuple[dict, str | None]:
@@ -168,7 +182,9 @@ def arm(project_root: Path, slug: str | None, target: str | None, doors: list[st
     if budget and not doors:
         refused.append("a budget of judged doors needs `doors`")
     if not words.strip():
-        refused.append("the words are empty: a grant is the person's own words")
+        refused.append("the invocation names nothing: a grant is armed by the person's own "
+                       "arguments — at least one of --doors, --budget, --commits or --close — "
+                       "recorded as typed, and an invocation with none arms nothing")
     fields, said = fields_of(project_root, target)
     refused += live_initiative(fields, slug) if slug else []
     path = grant_path(fields["home"])
@@ -186,19 +202,22 @@ def arm(project_root: Path, slug: str | None, target: str | None, doors: list[st
         said = "\n".join(line for line in (said, f"ended: the grant armed at "
                                             f"{held.get('armed_at', 'unknown')} — {over}") if line)
     words_path, digest = record_words(project_root, words)
+    armed_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     record = {"contract": CONTRACT, "project_root": str(project_root), "slug": slug,
               "target": fields["target"], "doors": doors, "budget": budget, "commits": commits,
               "close": close, "words": {"path": goal.relative(fields, words_path),
                                         "sha256": digest},
               "version": goal.plugin_version(),
               "since": goal.git(fields["home"], "rev-parse", "HEAD"),
-              "armed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+              "armed_at": armed_at,
+              "mark": hashlib.sha256(f"{digest} {armed_at}".encode("utf-8")).hexdigest()[:16]}
     held_contract = json.loads((BIN.parent / "schemas" / "grant.json").read_text(encoding="utf-8"))
     broken = sorted(error.message for error in Draft202012Validator(held_contract).iter_errors(record))
     if broken:
         return [f"the record does not satisfy schemas/grant.json: {reason}" for reason in broken], None
     goal.write_armed(path, record)
     summary = [f"armed: {path}", f"words: {record['words']['path']} (sha256 {digest})",
+               f"mark: (grant sha256 {record['mark']}) — the words with the instant armed",
                f"covers: {slug or 'every live initiative of the project'}",
                f"doors: {', '.join(doors) or 'none'}", f"budget of judged doors: {budget}",
                f"commits: {'yes' if commits else 'no'}", f"close: {'yes' if close else 'no'}",
@@ -234,7 +253,7 @@ def budget_left(fields: dict, held: dict) -> int:
     taken = 0
     for slug in covered(fields, held):
         path = fields["delivery_root"] / slug / "orchestration.md"
-        taken += (goal.judged_taken(fields, held["since"], path, held["words"]["sha256"])
+        taken += (goal.judged_taken(fields, held["since"], path, mark_of(held))
                   if path.is_file() else 0)
     return max(0, held["budget"] - taken)
 
@@ -270,7 +289,7 @@ def decide_one(number: int, decision: dict, held: dict, fields: dict) -> list[st
         return [f"{head} take: {door['reply_word']} /{skill}",
                 f"  decided: /{skill} — precondition unmet — the other door was refused by its "
                 f"own check: {facts or 'every other door is excluded'} "
-                f"(grant sha256 {held['words']['sha256']})"]
+                f"(grant sha256 {mark_of(held)})"]
     recommended = decision.get("recommended")
     if recommended is None or skill_of(recommended) not in held["doors"]:
         return [f"{head} stop: no recommended door is in the grant's doors"]
@@ -280,7 +299,7 @@ def decide_one(number: int, decision: dict, held: dict, fields: dict) -> list[st
     if left <= 0:
         return [f"{head} stop: the grant's budget of judged doors is spent"]
     lines = [f"{head} judge: spawn the door decider over these doors, budget left {left}; end the "
-             f"deciding fact of the `decided:` line with `(grant sha256 {held['words']['sha256']})`"]
+             f"deciding fact of the `decided:` line with `(grant sha256 {mark_of(held)})`"]
     for door in remaining:
         entry = door.get("entry") or "no entry point"
         what = door.get("what_it_does") or door.get("door") or ""
@@ -294,7 +313,7 @@ def decide(project_root: Path, record: dict) -> tuple[list[str], int]:
         end_grant(path, held, "ended", ended)
         return [f"stop: the grant ended — {ended}"], REFUSED
     decisions = record.get("decisions") or []
-    lines = [f"grant: {held.get('slug') or 'every live initiative'} (sha256 {held['words']['sha256']})"]
+    lines = [f"grant: {held.get('slug') or 'every live initiative'} (sha256 {mark_of(held)})"]
     for number, decision in enumerate(decisions, 1):
         lines += decide_one(number, decision, held, fields)
     if record.get("report"):
