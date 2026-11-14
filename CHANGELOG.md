@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.103.0 — 2026-11-14
+
+A goal over an objective in prose runs `/analyse` before the plan unless the invocation says `--no-specify`; composing a goal hands only the line that arms it through the framework; and arming a grant over one a plugin update or a closed initiative already ended replaces it instead of refusing (SPEC-008 R6, SPEC-011 R1, R3). (`f463aca`)
+
 ## 5.102.0 — 2026-11-14
 
 The message a session stops on when its goal ends — state A, state B or paused — is held to the handoff check like any stop no goal answers: recorded, and under `enforce` sent back once (SPEC-008 R15). (`e3e0c9b`)
