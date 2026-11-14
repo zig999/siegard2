@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.105.0 — 2026-11-14
+
+A closing under a grant holding `close` asks `grant.py --close --slug` before its marker and `grant.py --commit` before its commit, and persists the ask copied whole — the grant's words or the person's — never a summary; `/deliver-scope`'s step 5 states its proof-only re-deliveries are inside the ask (SPEC-011 R11, R7). (`399dc7f`)
+
 ## 5.104.0 — 2026-11-14
 
 `/siegard-grant` is armed by its flags alone and records the invocation as typed; an invocation with no argument arms nothing and shows the grant armed; each grant carries a mark taken with the instant it was armed, which its `decided:` lines and its budget use (SPEC-011 R1, R2, R5, R10). (`1e37afa`)
