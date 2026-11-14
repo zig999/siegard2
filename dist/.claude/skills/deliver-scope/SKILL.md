@@ -202,8 +202,9 @@ Repairing anything a finding names is a new ask.
 ### 5. Close what the review left testable, once
 
 Where the review refused a certification over a node one of this run's own tasks implements, with
-`remainder: testable`, read `references/prove.md`: a proof-only re-delivery per task, then one
-review again. This step runs once per run. Where no certification was refused, go to step 6.
+`remainder: testable`, read `references/prove.md`: a proof-only re-delivery per task, inside the
+ask, then one review again. This step runs once per run. Where no certification was refused, go
+to step 6.
 
 ### 6. Measure
 

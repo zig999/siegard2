@@ -118,6 +118,7 @@ bound a script on disk decides.
 
 - **R9** — `bin/handoff.py --render` keeps the record it rendered, as JSON beside the report its `report` names, so that the run that receives a stop can ask the grant over the doors it handed. `bin/grant.py --decide --latest <skill> --after <commit>` answers over the newest record kept for that skill after that commit, and refuses where none was, so that a run never answers over the report of an earlier stop.
 - **R10** — Where the project holds an armed grant, the orchestrating entry point asks `bin/grant.py --decide` over the report of a step that stopped, before it ends the run: a `take` or a `judge` it answers is a door the run takes and goes on with, under a goal as without one, and a `stop` leaves the stop as it was. The same door over the same task is taken once in a run. A `decided:` line a grant took ends `(grant sha256 <digest>)`; the grant's budget counts it and the goal's budget does not. The digest is the grant's mark, and the budget counts only the lines that carry its own.
+- **R11** — Where the project holds an armed grant holding `close`, a closing asks `bin/grant.py --close` over the initiative, named by `--slug`, before its marker is written, and a first line `refuses` stops it unless the person's own words in the session name that initiative's closing. The ask a closing persists is words copied whole — the grant's, read from the file the grant names, where the closing is taken under it, or else the person's own — and never a summary the session writes.
 
 ### The gates
 
@@ -165,8 +166,26 @@ bound a script on disk decides.
    budget to counting only those that carry its digest; and `/deliver-scope`'s file states the
    requirement in the words above — `tests/test_grant.py`, `tests/test_handoff.py`,
    `tests/test_goal.py` and `tests/test_skill_contract.py` prove each.
+7. For R11: a test holds `/plan-work`'s closing reference to asking `grant.py --close` with
+   `--slug` before the marker, to `grant.py --commit` before the closing's commit, and to
+   persisting the ask copied whole, stated in the words above, and the session rules' invocation
+   of `--close` to naming `--slug` — `tests/test_skill_contract.py`.
 
 ## Readings
+
+- 2026-11-14 — grounds for R11, read from the `salese2e` session `8ba20ddc` (Siegard 5.104.0),
+  which ran under a grant holding `close` with no slug, armed at 13:49Z, and under a harness goal
+  the person typed: it closed `intervalo-de-reconciliacao-do-configurator` (`5c2a20b`) and
+  `corrigir-limites-do-combo-no-dataset-base` (`50fca30`) and committed a review (`0a22325`)
+  without running `grant.py --close` or `--commit` once. Each `closure.md` gave as its reason a
+  sentence the session wrote — "the user asked in the goal armed on 2026-11-14 for every open
+  initiative to be closed once in that state" — read from an `intake/` file the session wrote the
+  same way. The rule lived in the session rules alone, and the reference the closing reads at the
+  moment it closes did not name the grant. The session rules' own line named `--close
+  <project-root>` with no `--slug`, which a grant naming no initiative refuses. Both closings
+  would have been accepted: every task was delivered, proven and reviewed. Reversal: closings
+  taken under a grant refused by `--close` and closed anyway by a person's later word, read as
+  outnumbering those that held, narrows R11's stop to a report.
 
 - 2026-11-14 — grounds for the invocation as the words and for the mark: the five grants armed
   in `configurator`, `productorder` and `salese2e` on 2026-11-13 (Siegard 5.97.0–5.100.0) carry

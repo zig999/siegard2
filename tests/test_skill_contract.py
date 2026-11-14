@@ -608,6 +608,33 @@ def test_a_closure_reads_what_it_leaves_standing_before_the_marker_is_written():
     assert "None of the three is a stop" in closing
 
 
+def test_a_closure_under_a_grant_asks_the_gate_and_persists_the_words_whole():
+    """SPEC-011 R11: the reference the closing reads at the moment it closes is where the gate is
+    asked, before the marker and before the commit, and the ask it persists is words copied whole
+    — the grant's, read by `ask.py`, or the person's — never a sentence the session wrote. The
+    session rules' invocation names `--slug`, which a grant naming no initiative requires."""
+    closing = unwrapped(reference_text("plan-work", "closing"))
+    gate = closing.index("grant.py --close <project-root> --slug <slug>")
+    assert gate < closing.index("**Write `closure.md`**"), "the gate is asked after the marker"
+    assert "grant.py --read <project-root>" in closing
+    assert "grant.py --commit <project-root> --file <path>..." in closing
+    assert "ask.py --read <project-root> --path <the grant's words path> --sha256" in closing
+    assert "(SPEC-011 R11)" in closing and "(SPEC-011 R7)" in closing
+    assert "never a summary the session writes" in closing
+    rules = unwrapped((REPO / "src/claude/hooks/rules.md").read_text(encoding="utf-8"))
+    assert "grant.py --close <project-root> --slug <slug>` before a closing" in rules
+
+
+def test_the_testable_remainder_step_states_its_re_deliveries_are_inside_the_ask():
+    """A route that stopped at step 5 because its re-deliveries would write tests "beyond the
+    changes the person authorized" read the step without its reference: the step's own line says
+    the re-deliveries are inside the ask, where the decision to take them is made."""
+    skill = unwrapped(skill_text("deliver-scope"))
+    step = skill[skill.index("### 5. Close what the review left testable"):
+                 skill.index("### 6. Measure")]
+    assert "a proof-only re-delivery per task, inside the ask," in unwrapped(step)
+
+
 def unwrapped(text: str) -> str:
     """Prose may wrap anywhere; a sentence anchor is judged on the words, not on the line break."""
     return re.sub(r"\s+", " ", text)

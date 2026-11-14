@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.104.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.105.0. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -144,8 +144,8 @@ not. Three things hold that route:
   `take:` line is taken, its `decided:` line written; a `judge:` line goes to `siegard:door-decider`
   over the doors it printed and nothing else; a `stop:` line is handed to the person. Run
   `grant.py --commit <project-root> --file <path>...` before a commit and `grant.py --close
-  <project-root>` before a closing the grant covers: a first line `refuses` stops it. Never run
-  `grant.py --arm` outside `/siegard-grant`.
+  <project-root> --slug <slug>` before a closing the grant covers: a first line `refuses` stops it.
+  Never run `grant.py --arm` outside `/siegard-grant`.
 - **Under a goal armed by `goal.py --arm`, a `not yet` from the Stop hook is answered with the
   route's next step.** «A goal the person arms through the framework ends on the state script's
   answer at the session's stop, never on a model's reading» (SPEC-008 R14): never another stop

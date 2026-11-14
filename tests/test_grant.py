@@ -521,7 +521,7 @@ def test_the_session_rules_send_a_stop_to_the_script_and_never_arm():
     assert "a stop's doors go to the script first" in rules
     for line in ("`bin/grant.py --decide <project-root> --record <record>`",
                  "`grant.py --commit <project-root> --file <path>...`",
-                 "`grant.py --close <project-root>`",
+                 "`grant.py --close <project-root> --slug <slug>`",
                  "Never run `grant.py --arm` outside `/siegard-grant`"):
         assert line in rules
     others = [path for path in (REPO / "src/claude/skills").rglob("*.md")

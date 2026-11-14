@@ -5,8 +5,8 @@ Read at step 5, where the review refused a certification with `remainder: testab
 A certification the review refused over a node one of this run's own tasks implements, with
 `remainder: testable`, is the handoff that review's report names: the proof-only re-delivery of
 `/implement-task` over that task, handed the node, the assertion and the proof file, all read from
-the review's record. Taking it is inside the ask: «A finite test is preferred to a reading, and to a
-registry step's decision, wherever one exists» (SPEC-004 R10).
+the review's record, since «A finite test is preferred to a reading, and to a registry step's
+decision, wherever one exists» (SPEC-004 R10).
 
 1. Fill those slots from the record, one re-delivery per task, and commit each as
    `deliver-scope <slug>: prove <task>`, one after the other: each is its own `/implement-task`
