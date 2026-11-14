@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.102.0 — 2026-11-14
+
+The message a session stops on when its goal ends — state A, state B or paused — is held to the handoff check like any stop no goal answers: recorded, and under `enforce` sent back once (SPEC-008 R15). (`e3e0c9b`)
+
 ## 5.101.0 — 2026-11-14
 
 A decision that hands two doors or more says how they relate — pick one, a path in order, or each on its own — on a line above the doors; only a door is a bullet, a lone decision is not numbered, and a decision's block may run to 700 characters (SPEC-006 R1, R8). (`6b6d729`)
