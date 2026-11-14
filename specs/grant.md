@@ -61,7 +61,7 @@ bound a script on disk decides.
 
 - **R1** — A grant is armed only by the person's own invocation of `/siegard-grant`, a skill closed
   to the model, whose arguments are the person's words. `bin/grant.py --arm` records the words
-  verbatim under their digest and refuses to arm where the project holds an armed grant, where the
+  verbatim under their digest and refuses to arm where the project holds an armed grant that still stands, where the
   words are empty, where a slug the person names is no live initiative, or where no clause is named.
   No other component runs it. The person ends it with `/siegard-grant --clear`, which runs
   `bin/grant.py --disarm`, and the project then behaves as it did before the grant; where none is
@@ -83,7 +83,9 @@ bound a script on disk decides.
 - **R3** — A grant ends when the person clears it, when the plugin's version is not the one it was
   armed under — the rules a grant took are those of its version — and, where it names an initiative,
   when that initiative holds a `closure.md`. An ended grant is appended, with its reason, to the
-  ended log beside it, and takes nothing.
+  ended log beside it, and takes nothing. An arming over a grant whose record is still in place but
+  that has ended so appends it to that log, says that it ended and why, and arms; nothing is
+  appended where the arming is refused on another ground.
 
 ### What it lets a stop do
 
@@ -138,7 +140,8 @@ bound a script on disk decides.
    list are each refused, a grant without a slug covers every live initiative, a grant that names
    no door holds all six, `none` holds none, `--disarm` returns the project to no grant and with
    none armed says so, and a plugin version change, or a closure of the initiative a grant names,
-   ends it under R3.
+   ends it under R3; an arming over a grant so ended ends it in the log, says so and arms, and an
+   arming refused on another ground leaves it in place.
 2. Tests hold `grant.py --decide` to R4 and R5 over handoff records: a `settles` decision is
    `stop`; one door left after a refusal is `take`; a recommended door that is accepted beside an
    open door is `judge` with the budget left; a spent budget, a door outside the list and an
@@ -158,6 +161,13 @@ bound a script on disk decides.
    `tests/test_goal.py` and `tests/test_skill_contract.py` prove each.
 
 ## Readings
+
+- 2026-11-14 — grounds for arming over a grant R3 has ended: in `configurator` and `salese2e`
+  (Siegard 5.100.0), the person armed a grant right after updating from 5.99.1; both were refused
+  as "armed already" over a 5.99.1 grant R3 had already ended, with the same doors, budget and
+  clauses, and each project took a `--clear` and a second arming, three invocations where one
+  sufficed. The record stayed in place because only `--decide`, `--commit`, `--close` and `--read`
+  ended it, and none had run since the update.
 
 - 2026-11-13 (run) — the person armed a grant and a goal in two projects and found the grant
   moved nothing in the goal: the goal ends at a stop before any session can ask the script, and

@@ -648,12 +648,43 @@ def test_a_cited_objective_is_copied_whole_from_stdin(project):
     assert b"stdin is empty" in empty.stderr
 
 
-def test_to_specify_is_the_persons_and_only_over_an_objective(project):
-    result = compose(project, "--objective", "An order is billed once.", "--specify")
+SPECIFY = "Specify: run /analyse once over the objective, before the plan"
+
+
+def test_an_objective_in_prose_is_specified_unless_the_person_says_otherwise(project):
+    """SPEC-008 R6: «A condition over an objective in prose asks to specify it, under R10, unless
+    the person's invocation says `--no-specify`; one over epics or tasks never does.»"""
+    plain = compose(project, "--objective", "An order is billed once.")
+    assert plain.returncode == 0, plain.stdout + plain.stderr
+    assert SPECIFY in plain.stdout, "no flag is needed to specify a prose objective"
+    for written in (project["home"] / "telemetry").glob(f"goal-*-{SLUG}.md"):
+        written.unlink()
+    said = compose(project, "--objective", "An order is billed once.", "--specify")
+    assert said.returncode == 0 and SPECIFY in said.stdout, "--specify says the default aloud"
+    for written in (project["home"] / "telemetry").glob(f"goal-*-{SLUG}.md"):
+        written.unlink()
+    off = compose(project, "--objective", "An order is billed once.", "--no-specify")
+    assert off.returncode == 0, off.stdout + off.stderr
+    assert "Specify:" not in off.stdout
+
+
+def test_a_scope_of_epics_or_tasks_is_never_specified_and_refuses_either_flag(project):
+    assert "Specify:" not in compose(project, "--scope", TASK).stdout
+    for flag in ("--specify", "--no-specify"):
+        refused = compose(project, "--scope", TASK, flag)
+        assert refused.returncode == 2 and flag in refused.stderr, refused.stderr
+
+
+def test_specify_and_no_specify_together_are_refused(project):
+    both = compose(project, "--objective", "An order is billed once.", "--specify", "--no-specify")
+    assert both.returncode == 2 and "say opposite things" in both.stderr
+    assert list((project["home"] / "telemetry").glob(f"goal-*-{SLUG}.md")) == []
+
+
+def test_an_armed_goal_over_a_prose_objective_carries_the_specify_sentence(project):
+    result = arm(project, "--objective", "An order is billed once.")
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "Specify: run /analyse once over the objective, before the plan" in result.stdout
-    assert "Specify:" not in compose(project, "--objective", "An order is billed once.").stdout
-    assert compose(project, "--scope", TASK, "--specify").returncode == 2
+    assert SPECIFY in json.loads(armed(project).read_text())["condition"]
 
 
 def test_composing_over_a_pending_change_under_the_roots_is_refused(project):
@@ -692,7 +723,8 @@ def test_a_specification_root_not_yet_created_is_refused_naming_both_ways_to_cre
     result = compose(project, "--objective", "Orders are billed once.")
     assert result.returncode == 1
     assert "the specification root not-yet does not exist yet" in result.stdout
-    assert "/analyse over that material" in result.stdout and "--specify" in result.stdout
+    assert "/analyse over that material" in result.stdout
+    assert "composing again over the objective runs /analyse over it" in result.stdout
     assert "not sound" not in result.stdout
 
 
@@ -1001,6 +1033,29 @@ def test_the_goal_skill_hands_an_objective_on_stdin_and_one_scope_form_only():
     assert "--objective-file - <<'OBJECTIVE'" in GOAL_SKILL
     assert '--objective "' not in GOAL_SKILL, "a quoted argument is a shell that can alter it"
     assert "**The scope is exactly one** of: scope ids; an objective file; an objective." in flat
+
+
+def test_the_goal_skill_composes_with_one_line_to_paste_and_the_condition_in_the_report():
+    """SPEC-008 R6: «The report that composes a condition without arming it hands the one line
+    that arms it through the framework, and the condition itself, whole, sits in the full report
+    on disk for a person who arms through the harness.»"""
+    flat = " ".join(GOAL_SKILL.split())
+    composed = flat[flat.index("**Composed.**"):flat.index("**Refused.**")]
+    assert "the line that arms it through the framework" in composed
+    assert "The condition the script printed is in the full report, whole" in composed
+    assert "the report hands no line for that" in composed
+    assert "each way in its own fenced block" not in flat and "two ready lines" not in flat
+    assert "the condition, whole and unedited" in flat, "the full report keeps the condition"
+
+
+def test_the_goal_skill_specifies_an_objective_unless_told_not_to():
+    flat = " ".join(GOAL_SKILL.split())
+    assert "**An objective is specified unless the person says otherwise.**" in flat
+    assert "`--no-specify` is the person's way to turn it off, and it is never added for them" \
+        in flat
+    assert "| **To specify** |" not in GOAL_SKILL
+    front = yaml.safe_load(GOAL_SKILL.split("---", 2)[1])
+    assert "[--no-specify]" in front["argument-hint"] and "[--specify]" not in front["argument-hint"]
 
 
 def test_the_goal_skill_states_the_handoff_of_every_outcome():

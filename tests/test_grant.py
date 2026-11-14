@@ -91,6 +91,49 @@ def test_a_second_arming_is_refused_while_one_stands(project):
     assert "a grant is armed already in this project" in again.stdout
 
 
+def ended_grants(project: dict) -> list[dict]:
+    log = armed(project).parent / "grants-ended.jsonl"
+    if not log.is_file():
+        return []
+    return [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines()]
+
+
+def test_arming_over_a_grant_armed_under_another_version_ends_it_and_arms(project):
+    """«A grant ends when ... the plugin's version is not the one it was armed under» (SPEC-011
+    R3): its record still in place is no grant that stands, so arming does not refuse over it."""
+    assert arm(project, "--commits").returncode == 0
+    old = record_of(project)
+    armed(project).write_text(json.dumps({**old, "version": "0.0.1"}), encoding="utf-8")
+    again = arm(project, "--doors", "plan-work")
+    assert again.returncode == 0, again.stdout + again.stderr
+    assert f"ended: the grant armed at {old['armed_at']} — the plugin runs {VERSION}; the " \
+           f"grant was armed under 0.0.1" in again.stdout
+    assert record_of(project)["doors"] == ["plan-work"]
+    [gone] = ended_grants(project)
+    assert gone["ended"] == "ended" and gone["version"] == "0.0.1"
+    assert "armed under 0.0.1" in gone["reason"]
+
+
+def test_arming_over_a_grant_whose_initiative_closed_ends_it_and_arms(project):
+    assert arm(project, "--commits").returncode == 0
+    (project["home"] / "plans" / SLUG / "closure.md").write_text("closed\n", encoding="utf-8")
+    words_only = grant("--arm", str(project["home"]), "--commits", "--words-file", "-",
+                       stdin=WORDS)
+    assert words_only.returncode == 0, words_only.stdout + words_only.stderr
+    assert "holds a closure.md" in words_only.stdout
+    assert [g["ended"] for g in ended_grants(project)] == ["ended"]
+
+
+def test_a_refused_arming_leaves_an_ended_grant_in_place(project):
+    """Nothing is written on a refusal: the old record is moved only where the new one is armed."""
+    assert arm(project, "--commits").returncode == 0
+    old = {**record_of(project), "version": "0.0.1"}
+    armed(project).write_text(json.dumps(old), encoding="utf-8")
+    refused = arm(project, "--doors", "close-plan")
+    assert refused.returncode == 1 and "close-plan is outside" in refused.stdout
+    assert record_of(project) == old and ended_grants(project) == []
+
+
 @pytest.mark.parametrize("flags,expected", [
     (("--doors", "close-plan"), "close-plan is outside `doors`"),
     (("--doors", "plan-work,reconcile,commit"), "commit is outside `doors`"),

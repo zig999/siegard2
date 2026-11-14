@@ -86,7 +86,7 @@ spec.py, its siblings, and runs them and project.py as commands).
 
 Usage:  goal.py --state <project-root> --slug <slug> --since <commit> --version <version> [--target <key>] [--scope <id>]... [--untouched <path>]... [--budget <n>]
                                     answer state A, state B or not yet, then every check
-        goal.py --compose <project-root> --slug <slug> (--scope <id>... | --objective <text> | --objective-file <file|->) [--target <key>] [--budget <n>] [--correct contradicts] [--specify]
+        goal.py --compose <project-root> --slug <slug> (--scope <id>... | --objective <text> | --objective-file <file|->) [--target <key>] [--budget <n>] [--correct contradicts] [--no-specify]
                                     check what the route would refuse first, then print the goal
                                     condition to paste after /goal
         goal.py --arm <project-root> (the arguments --compose takes)
@@ -103,8 +103,10 @@ Usage:  goal.py --state <project-root> --slug <slug> --since <commit> --version 
         out); --compose pins it into the state command, and --state then counts the judged
         `decided:` lines the log gained since the goal began against it — a state command with
         no --budget counts nothing; --correct names the conformance findings the run answers by a corrective increment,
-        and `contradicts` is the one kind a route corrects. --specify, over an objective alone,
-        asks /deliver-scope to run /analyse once over it before the plan — «Under a goal whose
+        and `contradicts` is the one kind a route corrects. An objective in prose
+        asks /deliver-scope to run /analyse once over it before the plan unless --no-specify
+        says otherwise; --specify says the default aloud, and either over a scope of epics or
+        tasks is refused — «Under a goal whose
         condition asks to specify a prose objective, the orchestrating entry point invokes
         `/analyse` once, before the plan, over the objective as the person armed it»
         (SPEC-008 R10)
@@ -534,8 +536,8 @@ def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
             "/deliver-scope's gate reads it before its first step. Where material states the "
             "domain, /analyse over that material writes it, and the root is committed before the "
             "goal; where the objective is all the material there is, the root created holding "
-            "only a .gitkeep and committed passes the gate, and composing again with --specify "
-            "runs /analyse over the objective before the plan")
+            "only a .gitkeep and committed passes the gate, and composing again over the objective "
+            "runs /analyse over it before the plan, which a prose objective asks by default")
     else:
         code, out = script("spec.py", str(specification))
         if code == 0 and "specification sound" in out:
@@ -792,9 +794,11 @@ def main() -> int:
         objective_file = take(args, "--objective-file")
         budget_raw = take(args, "--budget")
         correct = take(args, "--correct", many=True)
-        specify = "--specify" in args
-        if specify:
-            args.remove("--specify")
+        specify_said = "--specify" in args
+        no_specify = "--no-specify" in args
+        for flag in ("--specify", "--no-specify"):
+            if flag in args:
+                args.remove(flag)
     except Refused as refusal:
         print(f"cannot run: {refusal}", file=sys.stderr)
         return CANNOT_RUN
@@ -812,7 +816,8 @@ def main() -> int:
         return CANNOT_RUN
 
     if mode == "--state":
-        if not since or not version or objective or objective_file or correct or specify \
+        if not since or not version or objective or objective_file or correct or specify_said \
+                or no_specify \
                 or (budget_raw and not budget_raw.isdigit()):
             print("cannot run: --state takes --since and --version, a whole --budget where the "
                   "condition pinned one, and none of --objective or --correct, which are the "
@@ -853,10 +858,15 @@ def main() -> int:
               f"only {', '.join(CORRECTABLE)}, which the corrective increment answers",
               file=sys.stderr)
         return CANNOT_RUN
-    if specify and not objective:
-        print("cannot run: --specify asks /analyse over a prose objective, and a scope of epics "
-              "or tasks is already planned", file=sys.stderr)
+    if specify_said and no_specify:
+        print("cannot run: --specify and --no-specify say opposite things", file=sys.stderr)
         return CANNOT_RUN
+    if (specify_said or no_specify) and not objective:
+        print(f"cannot run: {'--specify' if specify_said else '--no-specify'} speaks of /analyse "
+              "over a prose objective, and a scope of epics or tasks is already planned",
+              file=sys.stderr)
+        return CANNOT_RUN
+    specify = bool(objective) and not no_specify
     if since or version or untouched or bool(scope) == bool(objective):
         print("cannot run: --compose takes --scope or --objective, one of them, and pins "
               "--since, --version and --untouched itself", file=sys.stderr)

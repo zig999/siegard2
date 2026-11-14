@@ -1,7 +1,7 @@
 ---
 name: siegard-goal
-description: Use when a person wants one scope — an objective in prose, an epic, or a set of tasks of a live plan — carried end to end with nobody asked anything along the way. Checks everything /deliver-scope would refuse before its first step, then either arms the goal through the framework (the invocation opens with --arm) or composes its condition and hands two ready lines to paste — one that arms it through the framework, one after /goal. The goal ends when a script reads state A (delivered, proven, reviewed, measured) or state B (stopped where only a person moves it) from disk, so it always ends. Writes only the objective, verbatim, and the armed record. Closed to the model, so every argument is the person's own words. Not for delivering anything now (that is /deliver-scope), and not for watching a run (that is /siegard-progress).
-argument-hint: "[--arm] [<project-root>] (epic/<name> | task/<epic>/<name> ... | <objective in prose> | --objective-file <path>) [--slug <slug>] [--target <key>] [--budget <n>] [--correct contradicts] [--specify]"
+description: Use when a person wants one scope — an objective in prose, an epic, or a set of tasks of a live plan — carried end to end with nobody asked anything along the way. Checks everything /deliver-scope would refuse before its first step, then either arms the goal through the framework (the invocation opens with --arm) or composes its condition and hands the line to paste that arms it through the framework. An objective in prose is specified before the plan unless the invocation says --no-specify. The goal ends when a script reads state A (delivered, proven, reviewed, measured) or state B (stopped where only a person moves it) from disk, so it always ends. Writes only the objective, verbatim, and the armed record. Closed to the model, so every argument is the person's own words. Not for delivering anything now (that is /deliver-scope), and not for watching a run (that is /siegard-progress).
+argument-hint: "[--arm] [<project-root>] (epic/<name> | task/<epic>/<name> ... | <objective in prose> | --objective-file <path>) [--slug <slug>] [--target <key>] [--budget <n>] [--correct contradicts] [--no-specify]"
 disable-model-invocation: true
 effort: low
 ---
@@ -35,7 +35,7 @@ Read the arguments once, in this order, and decide nothing they do not say:
 | **Target** | `--target <key>` | the one key `targets` declares, disclosed; more than one is a stop |
 | **Budget** | `--budget <n>`, a whole number | none: a choice no fact decides ends the run |
 | **Findings policy** | `--correct contradicts` — the one kind a route corrects | none: every finding is reported, none corrected |
-| **To specify** | `--specify`, over an objective only | none |
+| **Not to specify** | `--no-specify`, over an objective only | an objective is specified: `/analyse` runs once over it before the plan |
 
 **To arm** is the invocation's first argument, `--arm`, and nothing else: the word in any other
 place — inside an objective, after the scope, in a later message — arms nothing. A later message
@@ -74,10 +74,14 @@ kebab-case slug of at most five words from the objective's own terms, naming no 
 `work_root`; an objective cannot reuse a live initiative's slug, and the stop says to name its
 epics instead.
 
-**Where an objective changes a fact of the business** — a status, a refusal, what the system tells
-someone, who may see what — and `--specify` is absent, the report says the goal will stop at the
-first fact the specification does not hold, and that `--specify` is the person's to add. It is
-never added for them.
+**An objective is specified unless the person says otherwise.** A goal over an objective in prose
+runs `/analyse` once over it before the plan, so a fact the objective states and the specification
+does not, or states otherwise, is written into the specification rather than stopping the run;
+the person reviews that specification after the goal. `--no-specify` is the person's way to turn
+it off, and it is never added for them. Where it is given and the objective changes a fact of the
+business — a status, a refusal, what the system tells someone, who may see what — the report says
+the goal will stop at the first fact the specification does not hold. `--specify` is accepted and
+says the default aloud.
 
 Then run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once. Every root answers
 from there; a field the file does not declare is a stop, and the report carries the
@@ -90,9 +94,9 @@ Run from the project root. An objective or a citation always travels on stdin, u
 delimiter its text does not contain, so no quote, newline or character in it is altered by a shell:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/goal.py <--arm|--compose> <project-root> --slug <slug> [--target <key>] [--budget <n>] [--correct contradicts] [--specify] --scope <id> [--scope <id>]...
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/goal.py <--arm|--compose> <project-root> --slug <slug> [--target <key>] [--budget <n>] [--correct contradicts] [--specify] --objective-file <path>
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/goal.py <--arm|--compose> <project-root> --slug <slug> [--target <key>] [--budget <n>] [--correct contradicts] [--specify] --objective-file - <<'OBJECTIVE'
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/goal.py <--arm|--compose> <project-root> --slug <slug> [--target <key>] [--budget <n>] [--correct contradicts] --scope <id> [--scope <id>]...
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/goal.py <--arm|--compose> <project-root> --slug <slug> [--target <key>] [--budget <n>] [--correct contradicts] [--no-specify] --objective-file <path>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/goal.py <--arm|--compose> <project-root> --slug <slug> [--target <key>] [--budget <n>] [--correct contradicts] [--no-specify] --objective-file - <<'OBJECTIVE'
 … the objective or the citation, verbatim …
 OBJECTIVE
 ```
@@ -139,18 +143,14 @@ the person can move it. Then, each in its own fenced block: the line that follow
 `! python3 -B <the resolved plugin root>/bin/goal.py --disarm <project-root>`.
 
 **Composed.** `body`: the goal is composed and not armed yet, and nothing was written but the
-objective's file. Then one line saying why neither way is recommended — both hold the same route,
-both can be ended, and no command printed a cost — and what each assumes, followed by each way in
-its own fenced block, whole, so that copying the block arms it:
-
-- through the framework — the end is the state command's answer at every stop, and it assumes
-  this session runs with this plugin's hooks: `/siegard:siegard-goal --arm <project-root> --slug
-  <slug> --target <target>`, then the scope exactly as composing took it — `--scope <id>` for each
-  id, or `--objective-file` naming the file the `objective:` line names, joined to the project
-  root — and every `--budget`, `--correct` and `--specify` composing took;
-- through the harness — it assumes nothing beyond the paste: `/goal ` and the condition the script
-  printed, whole, because `/goal` with anything else, the objective alone among them, names no
-  route and `/deliver-scope` refuses it.
+objective's file. Then, in its own fenced block, whole, so that copying the block arms it, the line
+that arms it through the framework — the end is the state command's answer at every stop:
+`/siegard:siegard-goal --arm <project-root> --slug <slug> --target <target>`, then the scope exactly
+as composing took it — `--scope <id>` for each id, or `--objective-file` naming the file the
+`objective:` line names, joined to the project root — and every `--budget`, `--correct` and
+`--no-specify` composing took. The condition the script printed is in the full report, whole: a
+person who arms through the harness instead pastes it after `/goal`, and the report hands no line
+for that, because the framework's line is the one that ends on the state command.
 
 Where the scope was a citation, the line before the blocks says the person reads the objective's
 file first, by its path: what they arm is that text.

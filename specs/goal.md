@@ -89,7 +89,7 @@ session that stopped while its subagents were still running. The harness refuses
 ### What a goal carries
 
 - **R5** — A scope restricted to an epic or a set of tasks carries with it every task of the same plan it depends on that holds no record, transitively, and the deliverable set within a scope is a script's answer.
-- **R6** — A goal condition names the route, the authorization, the scope and the invocation that answers its state, and states no rule: the rules are those of the plugin version the invocation pins. The condition is composed by a script that checks, before any goal is armed, what the first step of the route would refuse, and it is armed by the person: through the harness by pasting it after `/goal`, which no skill does for them, or through the framework by `goal.py --arm`, which only `/siegard-goal` runs, and only where the person's invocation of it opens with `--arm`: the skill is closed to the model's invocation, so its arguments are the person's own words, and no other component runs `goal.py --arm`. An invocation that opens with `--arm` over a citation composes and does not arm, because the text the person would arm is the one the script wrote, read before an invocation naming that file arms it. An objective in prose is written to a file under the telemetry root and named in the condition by path and digest, so the condition is one line whatever the objective's length; an objective the person cites — text already in the conversation they point at and adopt — is copied whole into that file, never cut to fit the route, and the evaluator reads the state command rather than the objective. Where the person gives them, the condition states the budget of judged doors the run may take and the findings policy, and a policy names only findings a route corrects: conformance findings of kind `contradicts`, which the corrective increment answers.
+- **R6** — A goal condition names the route, the authorization, the scope and the invocation that answers its state, and states no rule: the rules are those of the plugin version the invocation pins. The condition is composed by a script that checks, before any goal is armed, what the first step of the route would refuse, and it is armed by the person: through the harness by pasting it after `/goal`, which no skill does for them, or through the framework by `goal.py --arm`, which only `/siegard-goal` runs, and only where the person's invocation of it opens with `--arm`: the skill is closed to the model's invocation, so its arguments are the person's own words, and no other component runs `goal.py --arm`. An invocation that opens with `--arm` over a citation composes and does not arm, because the text the person would arm is the one the script wrote, read before an invocation naming that file arms it. An objective in prose is written to a file under the telemetry root and named in the condition by path and digest, so the condition is one line whatever the objective's length; an objective the person cites — text already in the conversation they point at and adopt — is copied whole into that file, never cut to fit the route, and the evaluator reads the state command rather than the objective. A condition over an objective in prose asks to specify it, under R10, unless the person's invocation says `--no-specify`; one over epics or tasks never does. The report that composes a condition without arming it hands the one line that arms it through the framework, and the condition itself, whole, sits in the full report on disk for a person who arms through the harness. Where the person gives them, the condition states the budget of judged doors the run may take and the findings policy, and a policy names only findings a route corrects: conformance findings of kind `contradicts`, which the corrective increment answers.
 
 ### How an armed goal ends
 
@@ -175,14 +175,28 @@ session that stopped while its subagents were still running. The harness refuses
    where the invocation opens with `--arm` and never over a citation, a root the invocation does
    not name read as the git toplevel of the session's working directory, and an objective handed
    to the script on stdin; no other shipped skill and not the session rules running
-   `goal.py --arm`; and the handoff it renders, followed by the two lines it hands to paste,
-   passing `handoff.py --check`.
+   `goal.py --arm`; and the handoff it renders, followed by the line it hands to paste,
+   passing `handoff.py --check`. Tests hold `goal.py --compose` to specifying an objective in
+   prose by default: its condition carries the sentence that asks to specify without any flag,
+   `--no-specify` leaves it out, `--specify` changes nothing, the two together are refused, and
+   either over a scope of epics or tasks is refused.
 12. Tests hold `/deliver-scope` to R8 over its text: the re-bind, the decided-fact route and the
    reconciliation a record writer names each taken in a run with or without a goal, each under
    its commit message, once per task, a second time over one task a stop —
    `tests/test_deliver_scope.py` proves each.
 
 ## Readings
+
+- 2026-11-14 — grounds for specifying a prose objective by default, read from
+  `goals-ended.jsonl` of every sales consumer (Siegard 5.43.0 to 5.100.0): of 27 goals armed over
+  an objective in prose, 19 asked to specify. Of the 8 that did not, 2 ended within about two
+  minutes on a contradiction between the objective and the specification — `configurator`
+  2026-11-13 19:10 and 23:01 — and were armed again with `--specify` over the same objective; the
+  other 6 would now run `/analyse` they did not ask for, which the person accepted when asked.
+  Grounds for handing one line where a goal is composed: the line after `/goal` a composing
+  report handed was last pasted on 2026-11-01, and every goal armed since went through
+  `/siegard-goal --arm`. Reversal: a goal stopped by an `/analyse` that wrote a fact the person
+  then reverts, more often than a contradiction stop, narrows the default back to the flag.
 
 - 2026-11-13 — grounds for R12's second sentence, read from the git history of `configurator`,
   `productorder`, `salese2e`, `partymgmt` and `productcatalog`: 146 distinct criteria were

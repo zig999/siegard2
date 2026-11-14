@@ -172,13 +172,19 @@ def arm(project_root: Path, slug: str | None, target: str | None, doors: list[st
     fields, said = fields_of(project_root, target)
     refused += live_initiative(fields, slug) if slug else []
     path = grant_path(fields["home"])
-    if path.exists():
-        held = read_grant(path) or {}
+    held = read_grant(path) if path.exists() else None
+    over = no_longer_stands(fields, held) if held is not None else None
+    if path.exists() and over is None:
+        held = held or {}
         refused.append(f"a grant is armed already in this project — {held.get('slug') or 'every live initiative'}"
                        f", armed at {held.get('armed_at', 'unknown')}; `grant.py --disarm "
                        f"{project_root}` ends it")
     if refused:
         return refused, None
+    if over is not None:
+        end_grant(path, held, "ended", over)
+        said = "\n".join(line for line in (said, f"ended: the grant armed at "
+                                            f"{held.get('armed_at', 'unknown')} — {over}") if line)
     words_path, digest = record_words(project_root, words)
     record = {"contract": CONTRACT, "project_root": str(project_root), "slug": slug,
               "target": fields["target"], "doors": doors, "budget": budget, "commits": commits,
@@ -208,13 +214,20 @@ def standing(project_root: Path) -> tuple[dict, dict, Path, str | None]:
     if held is None:
         raise goal.Refused("no grant is armed in this project")
     fields = goal.resolve(project_root, held["target"])
-    ended = None
-    if held["version"] != goal.plugin_version():
-        ended = (f"the plugin runs {goal.plugin_version()}; the grant was armed under "
-                 f"{held['version']}")
-    elif held.get("slug") and (fields["work_root"] / held["slug"] / "closure.md").is_file():
-        ended = f"{held['slug']} holds a closure.md"
-    return held, fields, path, ended
+    return held, fields, path, no_longer_stands(fields, held)
+
+
+def no_longer_stands(fields: dict, held: dict) -> str | None:
+    """Why an armed grant has ended though its record is still in place, or None where it
+    stands: «A grant ends when the person clears it, when the plugin's version is not the one it
+    was armed under — the rules a grant took are those of its version — and, where it names an
+    initiative, when that initiative holds a `closure.md`.» (SPEC-011 R3)"""
+    if held.get("version") != goal.plugin_version():
+        return (f"the plugin runs {goal.plugin_version()}; the grant was armed under "
+                f"{held.get('version')}")
+    if held.get("slug") and (fields["work_root"] / held["slug"] / "closure.md").is_file():
+        return f"{held['slug']} holds a closure.md"
+    return None
 
 
 def budget_left(fields: dict, held: dict) -> int:
