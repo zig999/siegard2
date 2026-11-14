@@ -97,7 +97,7 @@ session that stopped while its subagents were still running. The harness refuses
 
 ### What a stop no armed goal answers holds
 
-- **R15** — Where no armed goal answers the stop in a project that declares `siegard.json`, the plugin's `Stop` hook reads the event's `last_assistant_message` and, where `bin/handoff.py`'s own reading says it hands a decision, appends one line to `siegard/handoff-checks.jsonl` under the repository's git directory — never in the tree the state reads — holding `at`, `session_id`, `characters`, `hands_decision`, `mode`, `violations` as `handoff.py --check` prints them, `kinds`, `blocked` and `released`. The mode is the environment variable `SIEGARD_HANDOFF_STOP`, which a project declares in the harness's own settings: `measure` is the default and the reading of every value but `enforce`, and under it the hook never blocks; under `enforce` a stop whose message violates is blocked once, `{"decision": "block", "reason": …}` with the violations as the reason, and the next stop of the same session is allowed whatever its message holds and recorded `released`. A stop while the session holds background work in flight is not read, a stop R14 answers is R14's alone — a stop of another session, where the armed goal is bound to one, is read here — and every failure allows the stop and prints nothing.
+- **R15** — Where no armed goal answers the stop in a project that declares `siegard.json`, the plugin's `Stop` hook reads the event's `last_assistant_message` and, where `bin/handoff.py`'s own reading says it hands a decision, appends one line to `siegard/handoff-checks.jsonl` under the repository's git directory — never in the tree the state reads — holding `at`, `session_id`, `characters`, `hands_decision`, `mode`, `violations` as `handoff.py --check` prints them, `kinds`, `blocked` and `released`. The mode is the environment variable `SIEGARD_HANDOFF_STOP`, which a project declares in the harness's own settings: `measure` is the default and the reading of every value but `enforce`, and under it the hook never blocks; under `enforce` a stop whose message violates is blocked once, `{"decision": "block", "reason": …}` with the violations as the reason, and the next stop of the same session is allowed whatever its message holds and recorded `released`. A stop while the session holds background work in flight is not read, a stop R14 answers `not yet` is R14's alone, while a stop on which R14 ends the goal — `state A`, `state B` or paused — is read here once the goal has ended, the line R14 says kept beside whatever this hook answers, and a stop of another session, where the armed goal is bound to one, is read here too — and every failure allows the stop and prints nothing.
 
 ### What a session starts on
 
@@ -155,8 +155,11 @@ session that stopped while its subagents were still running. The harness refuses
    `measure`; one that hands no decision appends nothing; under `enforce` the first violating
    stop is blocked with the violations as the reason and the next stop of the same session is
    allowed and recorded `released`; a stop with background work in flight appends nothing; a
-   project holding an armed goal appends nothing; a log that cannot be written allows the stop
-   with nothing printed.
+   stop an armed goal answers `not yet` appends nothing; a stop on which the armed goal ends in
+   `state A`, `state B` or paused is read like one no goal answers — its line appended, under
+   `enforce` a violating message blocked once with the goal's ending line still said and the
+   next stop released, a clean one allowed — and the goal stays ended either way; a log that
+   cannot be written allows the stop with nothing printed.
 8. Tests hold the `SessionStart` hook to R16: one line on both channels where the armed goal's
    `version` differs from the plugin's; nothing where they agree, where no goal is armed, or
    where the record does not parse.
@@ -214,6 +217,15 @@ session that stopped while its subagents were still running. The harness refuses
   to compose a goal and the session handing back the invocation to paste, measured as friction
   the person names, reopens model invocation for composing alone, with `--arm` still the
   person's argument.
+- 2026-11-14 — grounds for reading the stop on which a goal ends, under R15: the one goal of
+  the 12 hours to 2026-11-14T10:41Z that ended in `state A`, in `configurator` (Siegard 5.100.0),
+  closed on a 3,670-character message the session wrote in English to a person writing in
+  Portuguese, without `bin/handoff.py`, saying so itself. Run over it afterwards, `handoff.py
+  --check` names three violations — a term of the closed list in the opening, the length, and the
+  first decision word at character 2,484 — and none was recorded, because R15 left every stop R14
+  answered to R14, the one that ends the goal among them. That stop answers nothing R14 still
+  needs: the goal is over and control returns to the person on it.
+
 - 2026-10-31 — grounds for R15–R17, read before any of them had run in a consumer. SPEC-006's
   baseline of the same date read 251 handoffs over four consumers: 62% over 1500 characters, 33%
   carrying a framework term in their first 450, 42% with no word of recommendation or decision;

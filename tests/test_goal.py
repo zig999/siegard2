@@ -8,6 +8,7 @@ alone, so a check that stopped being run would leave its test red rather than ev
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -811,11 +812,15 @@ def ended(project: dict) -> list[dict]:
     return [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines()]
 
 
-def stop(project: dict, session: str = "one", **more) -> subprocess.CompletedProcess:
+def stop(project: dict, session: str = "one", mode: str | None = None,
+         **more) -> subprocess.CompletedProcess:
     event = {"hook_event_name": "Stop", "cwd": str(project["home"]), "session_id": session,
              "stop_hook_active": False, "transcript_path": "/nowhere.jsonl", **more}
+    env = {k: v for k, v in os.environ.items() if k != "SIEGARD_HANDOFF_STOP"}
+    if mode is not None:
+        env["SIEGARD_HANDOFF_STOP"] = mode
     done = subprocess.run([sys.executable, "-B", str(HOOK)], input=json.dumps(event),
-                          capture_output=True, text=True)
+                          capture_output=True, text=True, env=env)
     assert done.returncode == 0, done.stderr
     return done
 
@@ -1015,3 +1020,104 @@ def test_no_other_shipped_skill_nor_the_session_rules_runs_goal_arm():
     rules = " ".join((REPO / "src/claude/hooks/rules.md").read_text("utf-8").split())
     assert "never run `goal.py --arm` outside `/siegard-goal --arm`" in rules
 
+
+
+# ------------------------- the stop on which a goal ends is held to the handoff check (R15)
+#
+# The message a session stops on when its goal ends is the report that closes the goal, and
+# control returns to the person on it. It is read as a stop no goal answers is read, so a closing
+# report written as free text that breaks what `handoff.py --check` decides is measured, and
+# under `enforce` sent back once, instead of escaping every check because a goal was armed.
+
+CLOSING = (REPO / "tests/fixtures/handoff/pt-long-jargon-late-decision.md").read_text(
+    encoding="utf-8")
+CLEAN_CLOSING = (REPO / "tests/fixtures/handoff/en-clean-decision.md").read_text(encoding="utf-8")
+
+
+def checks(project: dict) -> list[dict]:
+    log = project["home"] / ".git" / "siegard" / "handoff-checks.jsonl"
+    if not log.is_file():
+        return []
+    return [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines()]
+
+
+def to_state_a(project: dict) -> None:
+    assert arm(project).returncode == 0
+    deliver(project)
+    review(project)
+    measure(project)
+
+
+def to_state_b(project: dict) -> None:
+    assert arm(project).returncode == 0
+    log(project, "stop: gave-up — the build stayed red after three attempts")
+    commit(project["home"], f"deliver-scope {SLUG}: log the stop", "deliveries")
+    measure(project)
+
+
+def test_the_report_closing_a_goal_in_state_a_is_measured_and_the_goal_still_ends(project):
+    to_state_a(project)
+    said = json.loads(stop(project, last_assistant_message=CLOSING).stdout)
+    assert "decision" not in said, "measure never blocks"
+    assert said["systemMessage"].startswith(f"Siegard ended the armed goal {SLUG}: state A — ")
+    [entry] = checks(project)
+    assert entry["session_id"] == "one" and entry["hands_decision"] is True
+    assert entry["kinds"] == ["decision", "length", "opening"] and entry["blocked"] is False
+    assert not armed(project).exists() and [e["ended"] for e in ended(project)] == ["state A"]
+
+
+@pytest.mark.parametrize("reach", [to_state_a, to_state_b])
+def test_enforce_sends_a_violating_closing_report_back_once_and_keeps_the_ending_said(project,
+                                                                                      reach):
+    reach(project)
+    first = json.loads(stop(project, mode="enforce", last_assistant_message=CLOSING).stdout)
+    assert first["decision"] == "block" and "length: " in first["reason"]
+    assert first["systemMessage"].startswith(f"Siegard ended the armed goal {SLUG}: state ")
+    assert not armed(project).exists(), "the goal ended; the block asks for the report alone"
+    second = stop(project, mode="enforce", last_assistant_message=CLOSING)
+    assert second.stdout == "", "the next stop of the session is released"
+    assert [(e["blocked"], e["released"]) for e in checks(project)] == [(True, False),
+                                                                       (False, True)]
+    assert len(ended(project)) == 1, "the goal ends once"
+
+
+def test_a_clean_closing_report_is_recorded_and_allowed_under_enforce(project):
+    to_state_a(project)
+    said = json.loads(stop(project, mode="enforce", last_assistant_message=CLEAN_CLOSING).stdout)
+    assert "decision" not in said and said["systemMessage"].startswith("Siegard ended")
+    [entry] = checks(project)
+    assert entry["violations"] == [] and entry["blocked"] is False
+
+
+def test_the_report_closing_a_paused_goal_is_read_too(project):
+    assert arm(project).returncode == 0
+    for _ in range(3):
+        assert json.loads(stop(project, mode="enforce",
+                               last_assistant_message=CLOSING).stdout)["decision"] == "block"
+    assert checks(project) == [], "a not yet is the goal's alone"
+    said = json.loads(stop(project, mode="enforce", last_assistant_message=CLOSING).stdout)
+    assert said["systemMessage"].startswith(f"Siegard paused the armed goal {SLUG}")
+    assert said["decision"] == "block" and len(checks(project)) == 1
+
+
+def test_a_not_yet_never_reaches_the_handoff_check(project):
+    assert arm(project).returncode == 0
+    said = json.loads(stop(project, mode="enforce", last_assistant_message=CLOSING).stdout)
+    assert said["reason"].startswith("not yet"), "the goal's own block, not the check's"
+    assert checks(project) == []
+
+
+def test_a_closing_report_that_hands_no_decision_is_not_recorded(project):
+    to_state_a(project)
+    said = json.loads(stop(project, mode="enforce",
+                           last_assistant_message="Delivered and measured.").stdout)
+    assert "decision" not in said and checks(project) == []
+
+
+def test_a_check_that_cannot_run_still_lets_the_goal_end_and_says_it(project):
+    to_state_a(project)
+    held = project["home"] / ".git" / "siegard" / "handoff-checks.jsonl"
+    held.mkdir(parents=True)
+    said = json.loads(stop(project, mode="enforce", last_assistant_message=CLOSING).stdout)
+    assert "decision" not in said and said["systemMessage"].startswith("Siegard ended")
+    assert [e["ended"] for e in ended(project)] == ["state A"]

@@ -1,10 +1,11 @@
 """Holds the message a session stops on to what `bin/handoff.py --check` decides, where no armed
 goal answers the stop.
 
-`hooks/goal_stop.py` is the one `Stop` hook, and it hands a stop here only where no armed goal
-answers it — none is armed, or the armed goal is bound to another session: an armed goal answers
-its own session's stops, and one script answering each stop is what keeps two answers from ever
-meeting on the same stop. «Where no armed goal answers the stop in a project that declares
+`hooks/goal_stop.py` is the one `Stop` hook, and it hands a stop here where no armed goal
+answers it — none is armed, or the armed goal is bound to another session — and where the armed
+goal has just ended on it, in state A, state B or paused: control returns to the person on that
+stop, and its message is the report that closes the goal. A `not yet` is the armed goal's alone,
+and one script answering each stop is what keeps two answers from ever meeting on the same stop. «Where no armed goal answers the stop in a project that declares
 `siegard.json`, the plugin's `Stop` hook reads the event's `last_assistant_message` and, where `bin/handoff.py`'s own reading says it hands a decision, appends one line to
 `siegard/handoff-checks.jsonl` under the repository's git directory — never in the tree the state
 reads — holding `at`, `session_id`, `characters`, `hands_decision`, `mode`, `violations` as

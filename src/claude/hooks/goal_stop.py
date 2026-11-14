@@ -10,7 +10,9 @@ the stop with the checks that failed, and a fourth consecutive `not yet` whose w
 repeats the last ends the goal paused.» (SPEC-008 R14)
 
 - `state A` or `state B` — the record is ended, the stop is allowed, and one line,
-  `systemMessage`, tells the person the state and, under state B, the stop line it was read from.
+  `systemMessage`, tells the person the state and, under state B, the stop line it was read from;
+  the message the session stopped on is then held to the handoff check below, which under
+  `enforce` may block it once.
 - `not yet` — the stop is blocked, `{"decision": "block", "reason": ...}`: the state's first line,
   then every failing check with its output verbatim, then the condition the person armed,
   repeated as the harness repeats its own goal's.
@@ -19,9 +21,11 @@ repeats the last ends the goal paused.» (SPEC-008 R14)
   says so.
 
 Where the project holds no armed goal, the stop is handed to `hooks/handoff_stop.py`, which holds
-the message the session stopped on to what `bin/handoff.py --check` decides. This is the one
-`Stop` hook so that an armed goal and that check never both answer the same stop: the armed goal
-answers its stops, and the check reads only the stops of a project where none is armed.
+the message the session stopped on to what `bin/handoff.py --check` decides. A stop on which the
+goal ends — state A, state B or paused — is handed there too, after the goal has ended: control
+returns to the person on it, and its message is the report that closes the goal. This is the one
+`Stop` hook so that an armed goal and that check never both answer the same stop: a `not yet` is
+the armed goal's alone, and the check reads every stop on which control returns to the person.
 
 The goal binds to the first session whose stop reaches it; another session's stop is left alone.
 A stop while the session still has background work in flight is left alone too, uncounted: the
@@ -117,7 +121,24 @@ def main() -> int:
     if answer == "block":
         print(json.dumps({"decision": "block", "reason": text}))
         return 0
-    return said(text)
+    return ended_with(text, record, path.parent)
+
+
+def ended_with(text: str, record: dict, siegard_dir: Path) -> int:
+    """A stop on which the goal ended — state A, state B or paused — is the session handing
+    control back to the person, so its message is held to the handoff check as any other stop
+    no armed goal answers; the line saying how the goal ended is said either way."""
+    reply: dict = {"systemMessage": text}
+    try:
+        sys.path.insert(0, str(HOOKS))
+        import handoff_stop
+        held = handoff_stop.answer(record, siegard_dir)
+    except (Exception, SystemExit):
+        held = None
+    if held is not None:
+        reply.update(held)
+    print(json.dumps(reply))
+    return 0
 
 
 if __name__ == "__main__":
