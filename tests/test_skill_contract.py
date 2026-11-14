@@ -825,10 +825,9 @@ def test_a_red_the_tasks_own_files_cannot_answer_ends_the_run_without_a_retry():
            "never a retry.**" in skill
     assert "`git status --porcelain -- <target-source-root>` printing nothing" in skill
     assert "logs it as `outside-task`" in skill and "logs this stop as `already-met`" in skill
-    assert "references/goal.md" in skill_text("deliver-scope")
-    orchestrator = reference_text("deliver-scope", "goal")
-    judged = orchestrator.split("## A judged choice", 1)[1].split("## A finding", 1)[0]
-    assert "ends the run as `outside-task`" in judged
+    stops = reference_text("deliver-scope", "stops")
+    outside = stops.split("— `already-met`", 1)[0].rsplit("- a red no change", 1)[1]
+    assert "never trying the same delivery again" in outside and "`outside-task`" in outside
     agent = " ".join((REPO / "src/claude/agents/task-implementer.md")
                      .read_text(encoding="utf-8").split())
     assert "the fix a red run asks for lies only in files this task's records do not name" in agent

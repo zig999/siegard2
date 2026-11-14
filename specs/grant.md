@@ -19,9 +19,9 @@ sends a stop to the script, `bin/handoff.py --render` where it keeps the record 
 the orchestrating entry point `/deliver-scope`, where it receives a stop.
 
 A grant is the person's own words, decided in advance, for the stops the framework would
-otherwise hand back: it arms the same two things a goal condition arms for a judged choice — the
-taking, and its budget — over a handoff's doors, a run's commits and the closing of a plan,
-outside any goal. It widens no bound of SPEC-006 R3 or of the session rules: a choice the person
+otherwise hand back: it arms the taking of a judged choice, and its budget, over a handoff's doors,
+and the taking of a run's commits and of the closing of a plan, under a goal or outside one; it
+is the one place a judged door is armed. It widens no bound of SPEC-006 R3 or of the session rules: a choice the person
 reserves stays theirs under any grant, and a grant that names an act the gates refuse takes
 nothing.
 
@@ -74,8 +74,8 @@ bound a script on disk decides.
 
 - **R2** — A grant holds at least one clause: `doors`, a list from `plan-work`, `implement-task`,
   `review-change`, `reconcile`, `deliver-scope` and `analyse`, which is all six where the person
-  names none, with a budget of judged doors, a whole number, which is zero where the person names
-  none; `commits`, which lets a session commit what the route wrote; `close`, which lets a session
+  names none, with a budget of judged doors for each initiative it covers, a whole number, which is
+  zero where the person names none; `commits`, which lets a session commit what the route wrote; `close`, which lets a session
   close an initiative where R7 holds, the grant's words being the reason it is closed under. The
   person narrows `doors` by naming them, and `none` leaves it empty for a grant of commits or of a
   closing alone; no other entry point is ever in it. A grant names no initiative unless the person
@@ -102,22 +102,21 @@ bound a script on disk decides.
   recommended door's check accepted and its entry point is in the grant's `doors` the answer is
   `judge`, with the doors, the budget left and the facts the decider reads, and where no door
   qualifies it is `stop`. A door whose check was not run is never taken.
-- **R5** — `judge` is answered by the door decider, blind to the grant and within its budget, as a
-  goal condition's judged choice is answered; the door it names is taken, one `decided:` line
-  carrying the rung it named and the grant's mark among its deciding facts. The budget left is
-  the grant's budget less the judged `decided:` lines the logs it covers gained since the grant
-  armed, and a judged choice met with it spent is `stop`. «Each door taken is one line of the
+- **R5** — `judge` is answered by the door decider, blind to the grant and to any goal condition,
+  and within the budget; the door it names is taken, one `decided:` line carrying the rung it named
+  and the grant's mark among its deciding facts. The budget left is the grant's budget less the
+  judged `decided:` lines the stopped initiative's log gained since the grant armed, each covered
+  initiative counted apart, and a judged choice met with it spent is `stop`. «Each door taken is one line of the
   run's orchestration log, `decided: <door> — <criterion> — <deciding fact>`, and a door R3
   reserves is never taken.» (SPEC-006 R7)
-- **R6** — The plugin's `PreToolUse` commit check reads an armed grant that names the log's
-  initiative, or names none, as it reads an armed goal, for a judged `decided:` line: a line over a
-  rung of the ladder is taken where a goal or a grant names the initiative, and refused where
-  neither does.
+- **R6** — The plugin's `PreToolUse` commit check reads an armed grant for a judged `decided:`
+  line: a line over a rung of the ladder is taken where a grant names the log's initiative or
+  names none, and refused where none is armed, an armed goal notwithstanding.
 
 ### Where a run meets it
 
 - **R9** — `bin/handoff.py --render` keeps the record it rendered, as JSON beside the report its `report` names, so that the run that receives a stop can ask the grant over the doors it handed. `bin/grant.py --decide --latest <skill> --after <commit>` answers over the newest record kept for that skill after that commit, and refuses where none was, so that a run never answers over the report of an earlier stop.
-- **R10** — Where the project holds an armed grant, the orchestrating entry point asks `bin/grant.py --decide` over the report of a step that stopped, before it ends the run: a `take` or a `judge` it answers is a door the run takes and goes on with, under a goal as without one, and a `stop` leaves the stop as it was. The same door over the same task is taken once in a run. A `decided:` line a grant took ends `(grant sha256 <digest>)`; the grant's budget counts it and the goal's budget does not. The digest is the grant's mark, and the budget counts only the lines that carry its own.
+- **R10** — Where the project holds an armed grant, the orchestrating entry point asks `bin/grant.py --decide` over the report of a step that stopped, before it ends the run: a `take` or a `judge` it answers is a door the run takes and goes on with, under a goal as without one, and a `stop` leaves the stop as it was. The same door over the same task is taken once in a run. A `decided:` line a grant took ends `(grant sha256 <digest>)`, and the grant's budget counts it. The digest is the grant's mark, and the budget counts only the lines that carry its own.
 - **R11** — Where the project holds an armed grant holding `close`, a closing asks `bin/grant.py --close` over the initiative, named by `--slug`, before its marker is written, and a first line `refuses` stops it unless the person's own words in the session name that initiative's closing. The ask a closing persists is words copied whole — the grant's, read from the file the grant names, where the closing is taken under it, or else the person's own — and never a summary the session writes.
 
 ### The gates
@@ -151,19 +150,19 @@ bound a script on disk decides.
    arming refused on another ground leaves it in place.
 2. Tests hold `grant.py --decide` to R4 and R5 over handoff records: a `settles` decision is
    `stop`; one door left after a refusal is `take`; a recommended door that is accepted beside an
-   open door is `judge` with the budget left; a spent budget, a door outside the list and an
-   unchecked door are `stop`.
+   open door is `judge` with the budget left, counted over the stopped initiative's log alone; a
+   spent budget, a door outside the list and an unchecked door are `stop`; and a report whose
+   recommended door is a proof-only re-delivery after a certification refused again is `judge`.
 3. A test holds the commit check to R6 over a fixture log: a judged line with a grant armed is
-   taken, and with neither a goal nor a grant it is refused.
+   taken, and with a goal armed and no grant, or with neither, it is refused.
 4. Tests hold `grant.py --commit` and `--close` to R7 and R8 over fixture repositories, one refusal
    per bound the requirement names, one acceptance of a commit that names only paths a record
    of a covered initiative writes, and a grant without a slug accepting the paths of any live
    initiative and answering `--close` only over the initiative it is asked about.
 5. A test holds `/siegard-grant` closed to the model and the session rules' line to the script.
 6. For R9 and R10: a test holds `handoff.py --render` to keeping the record beside its report and
-   `grant.py --decide --latest` to reading the newest one of a skill; a test holds `goal.py --state`
-   to counting a judged line that ends `(grant sha256 …)` under no goal's budget and the grant's
-   budget to counting only those that carry its digest; and `/deliver-scope`'s file states the
+   `grant.py --decide --latest` to reading the newest one of a skill; a test holds the grant's
+   budget to counting only the lines that carry its digest; and `/deliver-scope`'s file states the
    requirement in the words above — `tests/test_grant.py`, `tests/test_handoff.py`,
    `tests/test_goal.py` and `tests/test_skill_contract.py` prove each.
 7. For R11: a test holds `/plan-work`'s closing reference to asking `grant.py --close` with
@@ -173,6 +172,20 @@ bound a script on disk decides.
 
 ## Readings
 
+- 2026-11-14 — grounds for the grant as the one home of a judged door, and for its budget per
+  initiative (R2, R5, R6, R10; SPEC-006 R7, R12; SPEC-008 R3, R6, R14), read from every
+  orchestration log of the five sales consumers on that date: no judged `decided:` line in the
+  form `goal.py` counts was ever taken, by a goal's budget or by a grant's. The five goals ended
+  last in `salese2e` were armed with a budget of zero, and the five grants of 2026-11-13 with a
+  budget of five. Of the three judged choices a goal condition answered, a delivery that gave up
+  and an infrastructure failure read twice handed a retry no door reaches — the delivery's files
+  stay in the tree, which `/implement-task`'s tree check and `door.py --check` refuse, and a rerun
+  of a capture is no entry point — and a certification refused again hands a proof-only
+  re-delivery, which `--decide` answers as `judge` where the report recommends it. Two judges of
+  one choice, each with its own budget, left unstated which answered when both were armed. The
+  person asked, the same day, that the budget hold for each initiative. Reversal: a person naming
+  as friction arming a grant beside a goal for its judged doors returns a budget to the goal's
+  invocation, as a grant it arms over the goal's initiative.
 - 2026-11-14 — grounds for R11, read from the `salese2e` session `8ba20ddc` (Siegard 5.104.0),
   which ran under a grant holding `close` with no slug, armed at 13:49Z, and under a harness goal
   the person typed: it closed `intervalo-de-reconciliacao-do-configurator` (`5c2a20b`) and

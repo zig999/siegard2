@@ -5,16 +5,11 @@ later where a step stopped under a goal.
 
 ## What a goal changes
 
-A goal changes three things, and the derived doors stay this run's either way
-(`references/doors.md`): an objective it asks to specify, a finding its findings policy names, and a
-judged choice, which a run «takes the door a judged choice leaves only under a goal condition naming
-the route, as the door decider returned it, blind to the condition and while the condition's budget
-of judged doors is not spent» (SPEC-006 R7).
-
-A judged door taken is one `decided: <door> — <criterion> — <deciding fact>` line, which the
-plugin's `PreToolUse` hook refuses where no goal or grant armed through the framework names this
-initiative. A door the three reserved questions hold — a contradiction, two readings of one piece
-of evidence, a finding's worth — is never taken. The taking is yours; the judgment never is.
+A goal changes two things, and the derived doors stay this run's either way
+(`references/doors.md`): an objective it asks to specify, and a finding its findings policy names.
+A goal arms no judged door; a grant the person armed does, under a goal or outside one
+(`references/doors.md`). A door the three reserved questions hold — a contradiction, two readings
+of one piece of evidence, a finding's worth — is never taken.
 
 ## An objective the condition asks to specify
 
@@ -35,28 +30,6 @@ armed it, and the specification root is committed apart, by `/analyse` itself» 
 
 The report carries `/analyse`'s own report for a reviewer. The person reviews this specification
 after the goal, not before.
-
-## A judged choice
-
-A delivery that gave up, an infrastructure failure the diagnosis read twice, a certification refused
-again — while the condition's budget of judged doors is not spent. A red no change to the task's own
-files can answer is never one: trying the same delivery again cannot reward it, and it ends the run
-as `outside-task`.
-
-1. Spawn a `siegard:door-decider` subagent, its judgment at
-   `${CLAUDE_PLUGIN_ROOT}/agents/door-decider.md`, handing it four things: the doors — the
-   invocation the stopping report handed to try again, and ending the run on this stop — each with
-   what it does and what it leaves; the facts each rests on, by path, the runs and the diagnoses
-   among them; the condition's scope line quoted, and nothing else of the condition; and the budget
-   left. Never the conversation, never the attempts' story, never what ends the goal.
-2. Save its return as the subagent's own reply.
-3. `chosen` or `excluded` naming the door to try again: take it, write the `decided:` line with the
-   rung it named, and count one door of the budget. Anything else — `reserved`, `none`, or the door
-   that ends the run — is the stop it was.
-4. The budget left is read, never remembered: the condition's state command prints `check budget`,
-   the judged `decided:` lines the log gained since the goal began against the budget it pins. A
-   judged choice met with the budget spent is a stop of its own. A grant's `judge:` brings its own
-   budget; its line ends `(grant sha256 …)`, no goal's.
 
 ## A finding the condition's findings policy names
 

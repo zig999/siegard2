@@ -59,7 +59,7 @@
     "budget": {
       "type": "integer",
       "minimum": 0,
-      "description": "How many judged doors the grant lets the door decider choose, counted from the initiative's orchestration log."
+      "description": "How many judged doors the grant lets the door decider choose for each initiative it covers, counted from that initiative's orchestration log alone."
     },
     "commits": {
       "type": "boolean",

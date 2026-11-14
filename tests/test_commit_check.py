@@ -122,19 +122,19 @@ def test_a_recommendation_out_of_form_is_refused(home):
 def test_a_judged_door_with_no_goal_and_no_grant_armed_is_refused(home):
     append(home, JUDGED)
     reason = refused(hook(home, "git commit -am x"))
-    assert "a judged door, and neither a goal nor a grant is armed" in reason
-    assert "/siegard-goal --arm" in reason and "/siegard-grant" in reason
+    assert "a judged door, and no grant is armed" in reason
+    assert "/siegard-grant" in reason and "/siegard-goal --arm" not in reason
 
 
 def test_a_judged_door_under_a_goal_armed_for_another_initiative_is_refused(home):
     arm(home, "another-run")
     append(home, JUDGED)
-    assert "what is armed names another-run, not run-one" in refused(hook(home, "git commit -am x"))
+    assert "a judged door, and no grant is armed" in refused(hook(home, "git commit -am x"))
 
 
 def test_a_judged_door_under_a_grant_armed_for_its_initiative_goes_ahead(home):
-    """«a line over a rung of the ladder is taken where a goal or a grant names the initiative»
-    (SPEC-011 R6)"""
+    """«a line over a rung of the ladder is taken where a grant names the log's initiative or
+    names none» (SPEC-011 R6)"""
     grant(home, SLUG)
     append(home, JUDGED)
     allowed(hook(home, "git commit -am x"))
@@ -143,11 +143,21 @@ def test_a_judged_door_under_a_grant_armed_for_its_initiative_goes_ahead(home):
 def test_a_judged_door_under_a_grant_armed_for_another_initiative_is_refused(home):
     grant(home, "another-run")
     append(home, JUDGED)
-    assert "what is armed names another-run, not run-one" in refused(hook(home, "git commit -am x"))
+    assert "the armed grant names another-run, not run-one" in refused(
+        hook(home, "git commit -am x"))
 
 
-def test_a_judged_door_under_the_goal_armed_for_its_initiative_goes_ahead(home):
+def test_a_judged_door_under_the_goal_armed_for_its_initiative_and_no_grant_is_refused(home):
+    """«refused where none is armed, an armed goal notwithstanding» (SPEC-011 R6): a goal arms no
+    judged door."""
     arm(home, SLUG)
+    append(home, JUDGED)
+    assert "an armed goal notwithstanding" in refused(hook(home, "git commit -am x"))
+
+
+def test_a_judged_door_under_a_goal_and_a_grant_for_its_initiative_goes_ahead(home):
+    arm(home, SLUG)
+    grant(home, SLUG)
     append(home, JUDGED)
     allowed(hook(home, "git commit -am x"))
 

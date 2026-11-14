@@ -23,7 +23,8 @@ stop. You need:
    of them.
 3. **the ask's scope** — the objective or the scope ids the person stated, quoted verbatim. Not
    the rest of the goal's condition: what ends the goal is not an input to which door is right.
-4. **the budget left** — how many judged doors the run may still take, this one included.
+4. **the budget left** — how many judged doors the grant still lets this initiative take, this one
+   included.
 
 ## The judgment
 

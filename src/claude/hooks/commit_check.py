@@ -3,21 +3,19 @@
 
 The harness runs this on `PreToolUse` for the Bash tool, as `hooks/hooks.json` declares. Every
 door an orchestrating run takes or recommends is one line of its orchestration log, and that line
-is what the goal's budget, telemetry and the person reading the run count by: «Each door taken is
+is what the grant's budget, telemetry and the person reading the run count by: «Each door taken is
 one line of the run's orchestration log, `decided: <door> — <criterion> — <deciding fact>`, and a
 door R3 reserves is never taken.» (SPEC-006 R7) A line out of that form is counted by nothing, and
-a judged door taken where no goal granted one is a choice the person never handed over. The one
+a judged door taken where no grant armed one is a choice the person never handed over. The one
 act every run performs is the commit, so the line is read there:
 
 «A `git commit` a session runs in a project that declares `siegard.json` is refused by the
 plugin's `PreToolUse` hook where a line it adds to an orchestration log opens with `decided:` or
 `recommended:` and is not of the form R5 and R7 state with a criterion R2 names, or opens with
-`decided:` over a judged criterion while no goal armed through the framework names that log's
-initiative.» (SPEC-006 R12) A grant the person armed names an initiative as a goal does:
-«The plugin's `PreToolUse` commit check reads an armed grant that names the log's initiative, or
-names none, as it reads an armed goal, for a judged `decided:` line: a line over a rung of the
-ladder is taken where a goal or a grant names the initiative, and refused where neither does.»
-(SPEC-011 R6)
+`decided:` over a judged criterion while no grant armed through the framework names that log's
+initiative or names none.» (SPEC-006 R12) An armed goal arms no judged door: «a line over a rung
+of the ladder is taken where a grant names the log's initiative or names none, and refused where
+none is armed, an armed goal notwithstanding» (SPEC-011 R6)
 
 - **Which commands.** A command holding `git … commit`; everything else is allowed before
   anything is read, so the hook costs nothing on the commands that are not commits.
@@ -29,9 +27,8 @@ ladder is taken where a goal or a grant names the initiative, and refused where 
   opening `- ` and its backticks; a log `HEAD` does not hold is read whole. A line opening with
   neither word is no door line and is never read for form.
 - **What refuses.** A door line `goal.DOOR_LINE` does not match — the one form telemetry and the
-  goal's budget read — and a `decided:` line whose criterion is one of `goal.JUDGED` while the
-  goal armed by `goal.py --arm` and the grant armed by `grant.py --arm` are absent or name another
-  initiative. A derived `decided:` line
+  grant's budget read — and a `decided:` line whose criterion is one of `goal.JUDGED` while the
+  grant armed by `grant.py --arm` is absent or names another initiative. A derived `decided:` line
   passes here: whether its door's entry point accepted it is `bin/door.py --check`'s to say.
 
 The refusal is the harness's `permissionDecision: deny`, its reason said to the session: each
@@ -157,9 +154,8 @@ def added_lines(home: Path, log: Path) -> list[str]:
 
 
 def problems_of(goal, log: Path, lines: list[str], delivery: Path,
-                armed: dict | None, granted: dict | None = None) -> list[str]:
+                granted: dict | None) -> list[str]:
     initiative = log.parent.name if log.parent != delivery else None
-    named = [held for held in (armed, granted) if held]
     found = []
     for raw in lines:
         line = goal.log_line(raw)
@@ -170,17 +166,13 @@ def problems_of(goal, log: Path, lines: list[str], delivery: Path,
             found.append(f"{log}: `{line}` — not `<verb>: <door> — <criterion> — <deciding "
                          f"fact>` with a criterion of: {', '.join(goal.CRITERIA)}")
         elif match.group("verb") == "decided" and match.group("criterion") in goal.JUDGED:
-            if not named:
-                found.append(f"{log}: `{line}` — a judged door, and neither a goal nor a grant "
-                             f"is armed; a judged door is taken only under a goal the person "
-                             f"armed with /siegard-goal --arm or a grant armed with "
-                             f"/siegard-grant")
-            elif initiative is not None and not any(
-                    held.get("slug") in (initiative, None) and (held is granted or held.get("slug"))
-                    for held in named):
-                found.append(f"{log}: `{line}` — a judged door, and what is armed names "
-                             f"{', '.join(str(held.get('slug')) for held in named)}, not "
-                             f"{initiative}")
+            if not granted:
+                found.append(f"{log}: `{line}` — a judged door, and no grant is armed; a judged "
+                             f"door is taken only under a grant the person armed with "
+                             f"/siegard-grant, an armed goal notwithstanding")
+            elif initiative is not None and granted.get("slug") not in (initiative, None):
+                found.append(f"{log}: `{line}` — a judged door, and the armed grant names "
+                             f"{granted.get('slug')}, not {initiative}")
     return found
 
 
@@ -214,13 +206,11 @@ def refusals(record: dict) -> list[str]:
             reached.append(log)
     if not reached:
         return []
-    path = goal.armed_path(home)
-    armed = goal.read_armed(path) if path.exists() else None
-    held_path = path.with_name("grant.json")
+    held_path = goal.armed_path(home).with_name("grant.json")
     granted = goal.read_armed(held_path) if held_path.exists() else None
     found = []
     for log in reached:
-        found += problems_of(goal, log, added_lines(home, log), delivery, armed, granted)
+        found += problems_of(goal, log, added_lines(home, log), delivery, granted)
     return found
 
 
@@ -239,8 +229,8 @@ def main() -> int:
     if not found:
         return 0
     reason = ("Siegard refuses this commit: it adds door lines to an orchestration log that "
-              "nothing can count or that no goal granted. Rewrite or remove each line, then "
-              "commit again. A judged door with neither a goal nor a grant armed is not taken: hand it to the person "
+              "nothing can count or that no grant armed. Rewrite or remove each line, then "
+              "commit again. A judged door with no grant armed is not taken: hand it to the person "
               "instead.\n" + "\n".join(f"- {line}" for line in found))
     print(json.dumps({"hookSpecificOutput": {"hookEventName": EVENT,
                                              "permissionDecision": "deny",

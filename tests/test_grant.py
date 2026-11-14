@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -55,10 +56,12 @@ def door(word: str, entry: str, answer: str, refused: list[str] | None = None) -
     return {"reply_word": word, "what_it_does": f"runs {entry}", "entry": entry, "check": check}
 
 
-def decide(project: dict, record: dict, tmp_path: Path) -> subprocess.CompletedProcess:
+def decide(project: dict, record: dict, tmp_path: Path,
+           slug: str | None = None) -> subprocess.CompletedProcess:
     path = tmp_path / "record.json"
     path.write_text(json.dumps(record), encoding="utf-8")
-    return grant("--decide", str(project["home"]), "--record", str(path))
+    named = ["--slug", slug] if slug else []
+    return grant("--decide", str(project["home"]), "--record", str(path), *named)
 
 
 def with_recommended(entry: str, answer: str, *others: dict) -> dict:
@@ -229,7 +232,8 @@ def test_the_budget_counts_only_the_lines_its_own_mark_ends(project, tmp_path):
     log.write_text(log.read_text(encoding="utf-8") + f"decided: /plan-work — keeps the route — "
                    f"the prescribed step (grant sha256 {held['mark']})\n", encoding="utf-8")
     commit(project["home"], f"deliver-scope {SLUG}: log", "deliveries")
-    assert "budget of judged doors is spent" in decide(project, handoff(decision), tmp_path).stdout
+    assert f"budget of judged doors for {SLUG} is spent" in decide(
+        project, handoff(decision), tmp_path).stdout
 
 
 def test_a_grant_recorded_before_the_mark_is_told_apart_by_its_words(project, tmp_path):
@@ -337,6 +341,18 @@ def test_an_accepted_recommended_door_beside_an_open_one_is_judged_within_the_bu
     assert "report: /tmp/report.md" in out
 
 
+def test_a_certification_refused_again_is_judged_by_the_grant(project, tmp_path):
+    """The one judged choice a goal answered whose retry a door reaches — a proof-only re-delivery
+    after a certification refused again — is the grant's to judge: the recommended
+    `/implement-task` the review's report hands, accepted by its check, beside ending the run."""
+    assert arm(project, "--doors", "implement-task", "--budget", "1").returncode == 0
+    end_the_run = {"reply_word": "b", "what_it_does": "ends the run on this stop", "check": {}}
+    decision = with_recommended("/implement-task", "accepts", end_the_run)
+    out = decide(project, handoff(decision), tmp_path).stdout
+    assert "decision 1: judge: spawn the door decider over these doors, budget left 1" in out
+    assert "door a: /implement-task" in out and "door b: no entry point" in out
+
+
 def test_a_judged_choice_met_with_the_budget_spent_is_a_stop(project, tmp_path):
     assert arm(project, "--doors", "plan-work", "--budget", "1").returncode == 0
     log = project["home"] / "deliveries" / SLUG / "orchestration.md"
@@ -347,7 +363,7 @@ def test_a_judged_choice_met_with_the_budget_spent_is_a_stop(project, tmp_path):
     commit(project["home"], f"deliver-scope {SLUG}: log", "deliveries")
     decision = with_recommended("/plan-work", "accepts", door("b", "/reconcile", "accepts"))
     out = decide(project, handoff(decision), tmp_path).stdout
-    assert "stop: the grant's budget of judged doors is spent" in out
+    assert f"stop: the grant's budget of judged doors for {SLUG} is spent" in out
 
 
 def test_a_recommended_door_outside_the_list_is_a_stop(project, tmp_path):
@@ -519,7 +535,7 @@ def test_the_skill_is_closed_to_the_model_and_arms_only_through_the_script():
 def test_the_session_rules_send_a_stop_to_the_script_and_never_arm():
     rules = " ".join((REPO / "src/claude/hooks/rules.md").read_text(encoding="utf-8").split())
     assert "a stop's doors go to the script first" in rules
-    for line in ("`bin/grant.py --decide <project-root> --record <record>`",
+    for line in ("`bin/grant.py --decide <project-root> --record <record> --slug <slug>`",
                  "`grant.py --commit <project-root> --file <path>...`",
                  "`grant.py --close <project-root> --slug <slug>`",
                  "Never run `grant.py --arm` outside `/siegard-grant`"):
@@ -582,7 +598,8 @@ def test_arming_prints_what_it_recorded_for_the_report_to_quote(project):
     assert out[0].startswith("armed: ") and out[1].startswith("words: ")
     assert f"covers: {SLUG}" in out
     assert "doors: plan-work, implement-task, review-change, reconcile, deliver-scope, analyse" in out
-    assert "budget of judged doors: 2" in out and "commits: yes" in out and "close: no" in out
+    assert "budget of judged doors for each initiative: 2" in out
+    assert "commits: yes" in out and "close: no" in out
     assert any(line.startswith("plugin: ") for line in out)
 
 
@@ -641,7 +658,14 @@ def test_a_project_grant_closes_only_the_initiative_it_is_asked_about(project):
     assert done.stdout.splitlines()[0] == "accepts", done.stdout
 
 
-def test_the_budget_of_a_project_grant_counts_the_judged_doors_of_every_log(project, tmp_path):
+def test_the_budget_of_a_project_grant_counts_each_initiative_apart(project, tmp_path):
+    """«The budget left is the grant's budget less the judged `decided:` lines the stopped
+    initiative's log gained since the grant armed, each covered initiative counted apart»
+    (SPEC-011 R5): a door taken in one initiative leaves another's budget whole, and a stop no
+    `--slug` names draws on none."""
+    other = "other-run"
+    shutil.copytree(project["home"] / "plans" / SLUG, project["home"] / "plans" / other)
+    commit(project["home"], "a second live initiative", "plans")
     assert arm(project, "--doors", "plan-work", "--budget", "1", slug=None).returncode == 0
     log = project["home"] / "deliveries" / SLUG / "orchestration.md"
     log.parent.mkdir(parents=True, exist_ok=True)
@@ -649,10 +673,11 @@ def test_the_budget_of_a_project_grant_counts_the_judged_doors_of_every_log(proj
     log.write_text(f"decided: /plan-work — keeps the route — the prescribed step (grant sha256 "
                    f"{digest})\n", encoding="utf-8")
     commit(project["home"], f"deliver-scope {SLUG}: log", "deliveries")
-    decision = with_recommended("/plan-work", "accepts", door("b", "/reconcile", "accepts"))
-    assert "the grant's budget of judged doors is spent" in decide(
-        project, handoff(decision), tmp_path).stdout
-
+    decision = handoff(with_recommended("/plan-work", "accepts", door("b", "/reconcile", "accepts")))
+    assert f"budget of judged doors for {SLUG} is spent" in decide(
+        project, decision, tmp_path, SLUG).stdout
+    assert "budget left 1" in decide(project, decision, tmp_path, other).stdout
+    assert "for an initiative no --slug names is spent" in decide(project, decision, tmp_path).stdout
 
 def test_the_skill_states_the_defaults_the_script_applies_and_clears_through_the_script():
     text = " ".join((REPO / "src/claude/skills/siegard-grant/SKILL.md").read_text(
@@ -684,7 +709,7 @@ def test_a_deliver_scope_handoff_record_is_read_by_decide_under_a_project_grant(
 # --------------------------------------------------- where a run meets it (R9, R10)
 
 
-def test_a_judged_line_the_goal_took_does_not_spend_the_grants_budget(project, tmp_path):
+def test_a_judged_line_without_the_grants_mark_does_not_spend_its_budget(project, tmp_path):
     assert arm(project, "--doors", "plan-work", "--budget", "1").returncode == 0
     log = project["home"] / "deliveries" / SLUG / "orchestration.md"
     log.parent.mkdir(parents=True, exist_ok=True)
@@ -769,15 +794,16 @@ def test_a_stop_a_grant_cannot_answer_stays_the_stop_it_was_under_a_goal_too(pro
 
 
 def test_deliver_scope_asks_the_grant_where_it_answers_a_stop_and_binds_the_same_task_rule():
-    """«The same door over the same task is taken once in a run.» (SPEC-011 R10)"""
+    """«The same door over the same task is taken once in a run.» (SPEC-011 R10) The judged door
+    is the grant's alone, and the goal's reference arms none."""
     doors = " ".join((REPO / "src/claude/skills/deliver-scope/references/doors.md").read_text(
         encoding="utf-8").split())
     goal_ref = " ".join((REPO / "src/claude/skills/deliver-scope/references/goal.md").read_text(
         encoding="utf-8").split())
     assert ("With a grant armed, run `bin/grant.py --decide <project-root> --latest <the "
-            "stopping skill> --after <the log commit before it ran>` first: `take:` prints a "
-            "derived door's `decided:` line, `judge:` a judged door, `stop:` or no answer leaves "
-            "the stop; the same-task rule binds them.") in doors
+            "stopping skill> --after <the log commit before it ran> --slug <slug>` first: `take:` "
+            "prints a derived door's `decided:` line, `judge:` a judged door (below), `stop:` or no "
+            "answer leaves the stop; the same-task rule binds them.") in doors
     assert "no `decided:` line of this run took over the same task" in doors
-    assert "A grant's `judge:` brings its own budget; its line ends `(grant sha256 …)`, no goal's." \
-        in goal_ref
+    assert "## A judged door, under a grant" in doors and "ending `(grant sha256 <mark>)`" in doors
+    assert "A goal arms no judged door" in goal_ref and "## A judged choice" not in goal_ref

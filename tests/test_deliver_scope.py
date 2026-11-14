@@ -88,19 +88,19 @@ def test_the_orchestration_log_the_skill_names_is_the_one_the_validator_keeps():
     assert "the validator keeps it" in SKILL
 
 
-def test_under_a_goal_the_judgment_is_the_blind_deciders_and_the_reserved_questions_stay():
-    """SPEC-006 R7: a goal takes a derived door itself and a judged one only as the door decider
-    returned it; the decider never sees the condition, and the three questions R3 reserves are
-    never taken. A rewording that dropped any of the three would hand the judgment back to the
-    context the goal pushes toward ending. The goal's branches live in references/goal.md, which
-    the skill names at the gate and at step 3."""
+def test_a_judged_door_is_the_grants_and_the_blind_deciders_and_the_reserved_questions_stay():
+    """SPEC-006 R7: a judged door is taken only under a grant, as the door decider returned it; the
+    decider never sees a goal's condition or the grant, and the three questions R3 reserves are
+    never taken. A goal arms no judged door: its reference says so, and the judgment lives with
+    the grant in references/doors.md."""
     assert "references/goal.md" in SKILL
-    section = flat("src/claude/skills/deliver-scope/references/goal.md")
-    assert "`decided: <door> — <criterion> — <deciding fact>`" in section
-    assert "`siegard:door-decider`" in section
-    assert "Never the conversation, never the attempts' story, never what ends the goal" in section
+    goal_ref = flat("src/claude/skills/deliver-scope/references/goal.md")
+    assert "A goal arms no judged door" in goal_ref
     assert ("a contradiction, two readings of one piece of evidence, a finding's worth — is never "
-            "taken") in section
+            "taken") in goal_ref
+    assert "`decided: <door> — <criterion> — <deciding fact>`" in DOORS
+    assert "`siegard:door-decider`" in DOORS
+    assert "Never the conversation, the attempts' story, the grant, or what ends a goal" in DOORS
 
 
 def test_the_one_analyse_a_goal_may_ask_for_is_bounded():
@@ -132,7 +132,7 @@ def test_a_derived_door_is_taken_under_the_ask_that_invoked_the_run():
     assert "SPEC-006 R7" in DOORS
     assert "`door.py --check` accepts" in DOORS
     assert "no `decided:` line of this run took over the same task" in DOORS
-    assert "A judged door is `references/goal.md`'s" in DOORS
+    assert "A judged door is taken only under a grant" in DOORS
     assert "the three reserved questions are never taken" in DOORS
     assert "`decided: <door> — <criterion> — <deciding fact>`" in DOORS
     assert "take its derived door (`references/doors.md`)" in SKILL

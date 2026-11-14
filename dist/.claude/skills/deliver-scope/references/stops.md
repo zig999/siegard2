@@ -23,7 +23,6 @@ around, and none is retried. Each carries its class, in backticks after it:
   `pending-change`;
 - a specification the gate does not pass — `specification`;
 - a fact the decided-fact route returns as one the specification contradicts — `contradiction`;
-- under a goal, a judged choice once the condition's budget of judged doors is spent — `budget`;
 - a planned `stands` the record writer refuses again after its reconciliation — `stands`;
 - under a goal that asks to specify, a stop of `/analyse` other than one over material that states
   no fact or names nodes and changes none — `analyse`;

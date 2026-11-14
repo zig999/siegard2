@@ -218,45 +218,40 @@ def test_a_change_left_in_the_tree_is_not_yet_unless_the_condition_declared_it(p
     assert first(state(project, "--untouched", "notes.txt")).startswith("state A")
 
 
-def test_judged_doors_past_the_budget_are_state_b_and_within_it_are_not(project):
-    """«A run that took more judged doors since the goal began than the condition's budget is
-    state B on its own» (SPEC-008 R3): counted from the `decided:` lines the log gained, a
-    derived one and a door.py `not decided:` quote never among them."""
+def test_judged_doors_never_turn_a_goal_to_state_b_and_a_state_command_takes_no_budget(project):
+    """A goal carries no budget: «A condition carries no budget of judged doors: a judged door is
+    taken only under a grant the person armed» (SPEC-008 R6). Judged lines in the log leave the
+    state as the records leave it, and `--state` refuses `--budget`."""
     deliver(project)
     review(project)
     log(project, f"- /review-change over {TASK}: recorded.",
         "decided: /plan-work over checkout — costs less — telemetry printed 2 runs against 5",
-        "decided: /implement-task — precondition unmet — the plan holds the task",
-        "- door.py said: not decided: the slug")
+        "decided: /implement-task — precondition unmet — the plan holds the task")
     measure(project)
-    assert first(state(project, "--budget", "1")).startswith("state A")
-    assert "check budget: pass" in state(project, "--budget", "1").stdout
-    over = state(project, "--budget", "0")
-    assert failing(over) == {"budget"}
-    assert first(over) == ("state B — 1 judged door(s) taken since the goal began; the "
-                           "condition's budget is 0, which the person did not grant")
-    assert "check budget" not in state(project).stdout, "a state command with no budget counts none"
+    answer = state(project)
+    assert first(answer).startswith("state A")
+    assert "check budget" not in answer.stdout
+    refused = state(project, "--budget", "1")
+    assert refused.returncode == 2 and "a goal carries no budget" in refused.stderr
 
-
-def test_a_judged_door_a_grant_took_is_counted_by_no_goal(project):
-    """«A `decided:` line a grant took ends `(grant sha256 <digest>)`; the grant's budget counts it
-    and the goal's budget does not.» (SPEC-011 R10)"""
+def test_a_judged_door_a_grant_took_leaves_the_goal_state_alone(project):
+    """«A `decided:` line a grant took ends `(grant sha256 <digest>)`, and the grant's budget counts
+    it.» (SPEC-011 R10) No goal counts a judged line, marked or not."""
     deliver(project)
     review(project)
     log(project, f"- /review-change over {TASK}: recorded.",
-        "decided: /plan-work — keeps the route — the prescribed step (grant sha256 0123456789abcdef)")
+        "decided: /plan-work — keeps the route — the prescribed step (grant sha256 0123456789abcdef)",
+        "decided: /reconcile — costs less — telemetry printed 1 run against 4")
     measure(project)
-    assert first(state(project, "--budget", "0")).startswith("state A")
-    log(project, "decided: /reconcile — costs less — telemetry printed 1 run against 4")
-    commit(project["home"], f"deliver-scope {SLUG}: log", "deliveries")
-    assert failing(state(project, "--budget", "0")) == {"budget"}
+    assert first(state(project)).startswith("state A")
 
-
-def test_the_composed_state_command_carries_the_budget(project):
-    result = compose(project, "--scope", TASK, "--budget", "2")
-    assert result.returncode == 0, result.stdout + result.stderr
-    assert "--budget 2" in result.stdout.split("paste after /goal:\n\n", 1)[1]
-
+def test_composing_or_arming_with_a_budget_is_refused_and_points_at_the_grant(project):
+    for mode in (compose, arm):
+        result = mode(project, "--scope", TASK, "--budget", "2")
+        assert result.returncode == 2, result.stdout + result.stderr
+        assert "a goal carries no budget" in result.stderr and "/siegard-grant" in result.stderr
+    plain = compose(project, "--scope", TASK)
+    assert "--budget" not in plain.stdout.split("paste after /goal:\n\n", 1)[1]
 
 def test_a_commit_naming_no_skill_and_the_slug_is_state_b_on_its_own(project):
     deliver(project)
@@ -604,16 +599,13 @@ def test_a_composed_condition_names_the_route_the_scope_and_the_state_command(pr
     assert len(condition) <= 4000
 
 
-def test_a_budget_and_a_findings_policy_are_stated_in_the_condition(project):
-    result = compose(project, "--scope", TASK, "--budget", "2", "--correct", "contradicts")
+def test_a_findings_policy_is_stated_in_the_condition_and_no_budget_is(project):
+    result = compose(project, "--scope", TASK, "--correct", "contradicts")
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "Budget: 2 judged door(s), each taken only as the door decider returns it." \
-        in result.stdout
     assert "Findings: correct contradicts by a corrective increment, once" in result.stdout
     plain = compose(project, "--scope", TASK).stdout
-    assert "Budget: no judged door; a choice a fact does not decide ends the run." in plain
     assert "Findings: report them all; correct none." in plain
-
+    assert "Budget:" not in plain
 
 def test_a_findings_policy_naming_a_kind_no_route_corrects_is_refused(project):
     result = compose(project, "--scope", TASK, "--correct", "restates")

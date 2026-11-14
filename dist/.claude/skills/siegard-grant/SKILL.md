@@ -33,7 +33,7 @@ Read the arguments once, and decide nothing they do not say:
 | **Slug** | `--slug <slug>`, a live initiative | the grant covers every live initiative of the project |
 | **Target** | `--target <key>` | the script takes the first key `siegard.json` declares and says so |
 | **Doors** | `--doors`, a comma list from `plan-work`, `implement-task`, `review-change`, `reconcile`, `deliver-scope`, `analyse`; or `none` | all six, `analyse` among them |
-| **Budget** | `--budget <n>`, a whole number of judged doors | zero: a choice between open doors stops until the person writes one |
+| **Budget** | `--budget <n>`, a whole number of judged doors for each initiative covered | zero: a choice between open doors stops until the person writes one |
 | **Commits** | `--commits` | none |
 | **Close** | `--close` | none |
 | **A sentence** | every word that is no flag nor a flag's value, whole and in order | none: the flags are the person's words |
@@ -94,8 +94,9 @@ ends the grant: `/siegard:siegard-grant <project-root> --clear`.
 **Armed.** The report says, from the lines the script printed, what the grant takes:
 
 - a door whose every other door its own check excluded;
-- a door the door decider chooses, within the budget — none where the budget is zero, which the
-  report says;
+- a door the door decider chooses, within the budget, counted for each initiative apart — none
+  where the budget is zero, which the report says; this is the one place a judged door is armed,
+  under a goal or outside one;
 - the commits of what the route wrote;
 - the closing of an initiative, once everything in it is delivered, proven and reviewed.
 

@@ -278,12 +278,13 @@ Three bounds hold it, and giving up any of them is a proposal, never a change:
   the handoff says what decides each side, and the reviewing agents stay evidence-only.
 - **A recommendation is taken only where the person armed it.** A derived one is taken wherever
   the person's own message names the route or says to proceed, once `bin/door.py --check`
-  accepts the door and every other door is excluded; a judged one is taken only under a goal the
+  accepts the door and every other door is excluded; a judged one is taken only under a grant the
   person armed. Outside both, the door stays the person's, and `/deliver-scope` relays doors
   whole with the recommendation and its kind beside them. Under a goal condition naming the route — the person's own words, which the
-  harness repeats after every compaction — a derived recommendation is taken, and a judged one
-  only as the door decider returned it, blind to the condition and within the budget the
-  condition states; each taken door is one `decided:` line in the run's orchestration log.
+  harness repeats after every compaction — a derived recommendation is taken; a judged one only
+  under a grant the person armed with `/siegard-grant`, as the door decider returned it, blind to
+  the condition and to the grant, within the grant's budget for that initiative; each taken door
+  is one `decided:` line in the run's orchestration log.
   Whether a taken door held is a person's reading of the commit that followed: taken judged
   doors read as reverted outnumbering those that held is the criterion that narrows the grant
   back to derived ones, and a reverted derived one is a defect in the fact that decided it.
