@@ -1,0 +1,25 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "pedidos · task 1/2 delivered · phase delivery",
+  "state_from": {"script": "progress.py", "project": "/fixture/shop", "slug": "pedidos"},
+  "decisions": [
+    {
+      "ask": "Levar a regra nova do frete até a entrega?",
+      "recommended": {
+        "door": "Conferir o código atual contra a regra nova",
+        "why": "O plano ainda não existe e a conferência é o que o plano lê primeiro",
+        "reverses_if": "o plano já tiver sido derivado",
+        "reply_word": "conferir"
+      },
+      "relation": "in-order",
+      "others": [
+        {"reply_word": "planejar", "what_it_does": "Planeja o trabalho depois da conferência"},
+        {"reply_word": "entregar", "what_it_does": "Entrega a tarefa planejada, depois do plano"}
+      ],
+      "if_none": "A regra fica commitada e nada é planejado"
+    }
+  ],
+  "report": "full-report.txt"
+}

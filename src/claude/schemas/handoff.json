@@ -202,6 +202,14 @@
           "$ref": "#/$defs/line",
           "description": "Where the choice is the person's own: what each door assumes is true and what on disk or in the person's own answer would settle it."
         },
+        "relation": {
+          "enum": [
+            "one-of",
+            "in-order",
+            "independent"
+          ],
+          "description": "How the doors of this decision relate, required where it hands two or more: `one-of` — the doors exclude one another, the person takes one; `in-order` — the doors are the steps of one path, all of them are taken and in the order the doors are listed, the recommended one first; `independent` — each door is taken on its own, none waits on another, and any or all may be taken. The rendering opens the doors with the words `x-labels` holds for the value, so the person never reads a list of doors without knowing which of the three it is. Each door's `what_it_does` says whether the doors it leaves stay open afterwards."
+        },
         "others": {
           "type": "array",
           "items": {
@@ -227,7 +235,7 @@
               }
             }
           },
-          "description": "Every other door, in the order a command printed it — never ranked."
+          "description": "Every other door, in the order a command printed it — never ranked; under `relation` `in-order`, the order the doors run in."
         },
         "if_none": {
           "$ref": "#/$defs/line",
@@ -237,6 +245,30 @@
           "$ref": "#/$defs/line",
           "description": "The line ready to paste — the one place a skill's name or a command appears, rendered apart and left out of the ceilings and the term list."
         }
+      },
+      "if": {
+        "anyOf": [
+          {
+            "required": [
+              "settles"
+            ]
+          },
+          {
+            "required": [
+              "recommended"
+            ],
+            "properties": {
+              "others": {
+                "minItems": 1
+              }
+            }
+          }
+        ]
+      },
+      "then": {
+        "required": [
+          "relation"
+        ]
       },
       "oneOf": [
         {
@@ -304,7 +336,7 @@
   },
   "x-ceilings": {
     "state": 200,
-    "block": 600,
+    "block": 700,
     "message": 1500,
     "opening": 450,
     "description": "Characters. `state`: the state line. `block`: one decision's block as rendered, its line ready to paste aside. `message`: the whole message that hands a decision, rendered or free text. `opening`: the span at the start of any handoff that carries no term of `x-jargon`, and where a handoff that hands a decision carries a word of `x-decision-words`."
@@ -424,7 +456,12 @@
       "if_none": "If none is taken",
       "report": "Full report",
       "quiet": "No initiative is in progress in this project.",
-    "open_lines": "{n} line(s) of the material still open"
+    "open_lines": "{n} line(s) of the material still open",
+      "one_of": "Pick one",
+      "in_order": "All of these, in this order",
+      "independent": "Each on its own",
+      "step": "Step {n} of {m}",
+      "questions": "{n} questions, each answered on its own"
     },
     "pt-BR": {
       "recommended": "Recomendado",
@@ -433,9 +470,14 @@
       "if_none": "Se nenhuma for tomada",
       "report": "Relatório completo",
       "quiet": "Nenhuma iniciativa em andamento neste projeto.",
-    "open_lines": "{n} linha(s) do material ainda em aberto"
+    "open_lines": "{n} linha(s) do material ainda em aberto",
+      "one_of": "Escolha uma",
+      "in_order": "Todas, nesta ordem",
+      "independent": "Cada uma vale sozinha",
+      "step": "Passo {n} de {m}",
+      "questions": "{n} perguntas, cada uma respondida à parte"
     },
-    "description": "The fixed words `--render` adds, per language: the mark of the recommended door, the words that open the fact reversing it, the mark of a choice that is the person's own, of what stays if none is taken, and of the report's path; and `quiet`, the state `--prepare` writes where `progress.py` prints nothing. Every other word is the record's. `open_lines` is the count that leads the state where `state_from` names a material ledger leaving lines open, `{n}` the count `trace.py` reads from it."
+    "description": "The fixed words `--render` adds, per language: the mark of the recommended door, the words that open the fact reversing it, the mark of a choice that is the person's own, of what stays if none is taken, and of the report's path; the three words that open a decision's doors, one per `relation` — `one_of`, `in_order`, `independent` — and `step`, which numbers the doors of an `in-order` decision, and `questions`, which says how many decisions a handoff hands and that each is answered on its own, written where it hands more than one; and `quiet`, the state `--prepare` writes where `progress.py` prints nothing. Every other word is the record's. `open_lines` is the count that leads the state where `state_from` names a material ledger leaving lines open, `{n}` the count `trace.py` reads from it."
   },
   "examples": [
     {
@@ -457,7 +499,8 @@
             "reverses_if": "a product owner says an empty order is a valid draft",
             "reply_word": "a"
           },
-          "others": [
+          "relation": "one-of",
+        "others": [
             {
               "reply_word": "b",
               "what_it_does": "Accept it, and leave the rule to be changed first",

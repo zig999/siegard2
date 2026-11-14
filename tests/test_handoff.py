@@ -164,7 +164,9 @@ def test_check_reads_standard_input():
 
 
 @pytest.mark.parametrize("name", ["record-pt-own-decision.json", "record-en-two-decisions.json",
-                                  "record-pt-status.json"])
+                                  "record-pt-status.json", "record-pt-route-steps.json",
+                                  "record-pt-path-in-order.json",
+                                  "record-en-independent-doors.json"])
 def test_a_record_renders_and_what_it_renders_holds(name):
     message, problems = rendered(record(name))
     assert problems == [] and message
@@ -258,7 +260,7 @@ def test_a_state_over_its_ceiling_is_refused():
 
 
 def test_a_block_over_its_ceiling_is_refused_and_the_paste_is_not_counted():
-    long = "word " * 90
+    long = "word " * (CONTRACT["x-ceilings"]["block"] // 5)
     problems = refusal(lambda d: d["decisions"][0]["others"][0].update(what_it_does=long.strip()))
     assert any(p.startswith("decisions/0: its block renders to") for p in problems)
     data = record("record-en-two-decisions.json")
@@ -489,6 +491,171 @@ def test_a_record_in_english_may_say_stands_and_one_in_portuguese_may_not():
     assert any("carries stands" in p for p in rendered(data)[1])
 
 
+# ------------------------------------------- how the doors of a decision relate (SPEC-006 R1, R8)
+#
+# A handoff that hands two doors or more used to print them as bare bullets, and the person could
+# not tell a choice between them from a path through them, or from doors each worth taking. The
+# record now says which, a decision's block opens its doors with that, and nothing but a door is
+# a bullet. These tests hold each half so the bare list cannot come back.
+
+RELATIONS = CONTRACT["$defs"]["decision"]["properties"]["relation"]["enum"]
+LABELS = {k: v for k, v in CONTRACT["x-labels"].items() if k != "description"}
+DOOR_BULLET = re.compile(r"^   - (?:(?:Step|Passo) \d+ (?:of|de) \d+ · )?(?:\*\*\S+\*\* )?`[\w-]+`: ")
+RECORD_FIXTURES = sorted(p.name for p in FIXTURES.glob("record-*.json"))
+
+
+def label_of(relation: str, language: str) -> str:
+    return LABELS[language][relation.replace("-", "_")]
+
+
+def block_lines(message: str, ask: str) -> list[str]:
+    """The lines of the block that opens with `ask`, up to the blank line that ends it."""
+    lines = message.split("\n")
+    start = next(at for at, line in enumerate(lines) if line.endswith(ask))
+    end = next((at for at in range(start, len(lines)) if lines[at] == ""), len(lines))
+    return lines[start:end]
+
+
+def with_two_doors(language: str, relation: str, own: bool) -> dict:
+    data = record("record-pt-own-decision.json" if language == "pt-BR"
+                  else "record-en-two-decisions.json")
+    data["decisions"][0]["relation"] = relation
+    if own and language == "en":
+        decision = data["decisions"][0]
+        decision.pop("recommended")
+        decision["settles"] = "The first assumes the rule holds, the second that it does not."
+        decision["others"].insert(0, {"reply_word": "a", "what_it_does": "Refuse it"})
+    return data
+
+
+@pytest.mark.parametrize("own", [False, True])
+@pytest.mark.parametrize("language", ["en", "pt-BR"])
+@pytest.mark.parametrize("relation", RELATIONS)
+def test_a_decision_of_two_doors_opens_them_with_how_they_relate(relation, language, own):
+    data = with_two_doors(language, relation, own)
+    message, problems = rendered(data)
+    assert problems == [], problems
+    block = block_lines(message, data["decisions"][0]["ask"])
+    header = f"   {label_of(relation, language)}:"
+    assert block.count(header) == 1, block
+    first_door = next(at for at, line in enumerate(block) if DOOR_BULLET.match(line))
+    assert block.index(header) == first_door - 1, "the words open the doors, directly above them"
+    assert not any(label_of(other, language) in "\n".join(block)
+                   for other in RELATIONS if other != relation), "one relation per decision"
+
+
+def test_the_three_relations_say_three_different_things_in_every_language():
+    assert RELATIONS == ["one-of", "in-order", "independent"]
+    for language, words in LABELS.items():
+        said = [label_of(relation, language) for relation in RELATIONS]
+        assert len(set(said)) == 3, (language, said)
+        assert all(handoff.jargon_in(word, CONTRACT, language) == [] for word in said)
+    assert "one" in label_of("one-of", "en").lower() and "order" in label_of("in-order", "en")
+    assert "uma" in label_of("one-of", "pt-BR") and "ordem" in label_of("in-order", "pt-BR")
+
+
+def test_a_path_numbers_its_steps_and_a_choice_or_a_set_of_doors_numbers_none():
+    message, problems = rendered(record("record-pt-path-in-order.json"))
+    assert problems == [], problems
+    block = block_lines(message, "Levar a regra nova do frete até a entrega?")
+    doors = [line for line in block if DOOR_BULLET.match(line)]
+    assert [line.split(" · ")[0] for line in doors] == [
+        "   - Passo 1 de 3", "   - Passo 2 de 3", "   - Passo 3 de 3"]
+    assert "**Recomendado** `conferir`" in doors[0], "the recommended door is the first step"
+    assert "`planejar`" in doors[1] and "`entregar`" in doors[2]
+    for name in ("record-pt-route-steps.json", "record-en-independent-doors.json"):
+        text, _ = rendered(record(name))
+        assert not re.search(r"\b(?:Passo|Step) \d", text), name
+
+
+def test_a_decision_of_two_doors_or_more_with_no_relation_is_refused_saying_what_each_means():
+    for own in (False, True):
+        data = with_two_doors("en", "one-of", own)
+        data["decisions"][0].pop("relation")
+        message, problems = rendered(data)
+        assert message is None
+        said = [p for p in problems if "relation" in p]
+        assert len(said) == 1 and said[0].startswith("decisions/0/relation:"), problems
+        assert all(value in said[0] for value in RELATIONS)
+        assert "the person takes one" in said[0] and "all are taken in the order" in said[0]
+
+
+@pytest.mark.parametrize("value", ["", "either", "One-Of", None, 1])
+def test_a_relation_that_is_none_of_the_three_is_refused_once_and_names_the_values(value):
+    data = with_two_doors("en", "one-of", False)
+    data["decisions"][0]["relation"] = value
+    message, problems = rendered(data)
+    assert message is None
+    said = [p for p in problems if "relation" in p]
+    assert len(said) == 1 and all(v in said[0] for v in RELATIONS), problems
+
+
+def test_a_decision_handing_one_door_needs_no_relation_and_prints_no_opening_words():
+    data = record("record-en-two-decisions.json")
+    assert "relation" not in data["decisions"][1]
+    message, problems = rendered(data)
+    assert problems == []
+    block = block_lines(message, "Record the delivery before the next one starts?")
+    assert not any(label_of(relation, "en") in "\n".join(block) for relation in RELATIONS)
+    schema_refusal = copy.deepcopy(data)
+    schema_refusal["decisions"][1]["others"] = [{"reply_word": "d", "what_it_does": "Wait"}]
+    assert rendered(schema_refusal)[0] is None, "a second door brings the requirement with it"
+
+
+def test_only_a_door_is_a_bullet_and_the_person_s_own_choice_and_what_stays_are_not():
+    for name in RECORD_FIXTURES:
+        message, problems = rendered(record(name))
+        assert problems == [], (name, problems)
+        language = record(name)["language"]
+        for line in message.split("\n"):
+            if line.startswith("   - "):
+                assert DOOR_BULLET.match(line), (name, line)
+            for fixed in ("own", "if_none"):
+                if LABELS[language][fixed] in line:
+                    assert not line.lstrip().startswith("-"), (name, line)
+                    assert line.startswith("   "), (name, line)
+
+
+def test_a_lone_decision_is_not_numbered_and_several_are_counted_before_the_first():
+    one, _ = rendered(record("record-pt-own-decision.json"))
+    assert "1. " not in one and "perguntas" not in one
+    assert "\nOs resultados da busca devem ignorar acentos ao ordenar?\n" in one
+    two, _ = rendered(record("record-en-two-decisions.json"))
+    count = "2 questions, each answered on its own:"
+    assert count in two and two.index(count) < two.index("1. Should an empty order")
+    assert "2. Record the delivery" in two
+    assert two.count("questions, each answered") == 1
+
+
+def test_every_record_fixture_with_two_doors_or_more_opens_them_with_a_relation():
+    """The sweep the next fixture is held to without anyone remembering to add it here."""
+    seen: set[tuple[str, str]] = set()
+    for name in RECORD_FIXTURES:
+        data = record(name)
+        message, problems = rendered(data)
+        assert problems == [], (name, problems)
+        for decision in data.get("decisions", []):
+            doors = ([decision["recommended"]] if "recommended" in decision else []) + decision["others"]
+            block = block_lines(message, decision["ask"])
+            headers = [line for line in block
+                       if any(line == f"   {label_of(r, data['language'])}:" for r in RELATIONS)]
+            assert len(headers) == (1 if len(doors) >= 2 else 0), (name, block)
+            if headers:
+                seen.add((decision["relation"], data["language"]))
+    assert {relation for relation, _ in seen} == set(RELATIONS)
+    assert {language for _, language in seen} == set(LABELS), "the fixtures hold both languages"
+
+
+def test_the_specification_states_the_relation_and_the_rendering_it_requires():
+    text = (REPO / "specs/handoff.md").read_text(encoding="utf-8")
+    r1 = re.search(r"^- \*\*R1\*\* — (.*)$", text, re.M).group(1)
+    r8 = re.search(r"^- \*\*R8\*\* — (.*)$", text, re.M).group(1)
+    for value in RELATIONS:
+        assert f"`{value}`" in r8, value
+    assert "how the doors relate" in r1 and "a lone decision is not numbered" in r1.lower()
+    assert "`relation`" in r8 and "only a door is a bullet" in r1.lower()
+
+
 # ------------------------------------------------------- --prepare over fixture repositories
 
 
@@ -626,7 +793,8 @@ def test_the_skeleton_fails_the_schema_only_on_what_the_model_fills(project):
     assert report.name.endswith("-implement-task.md")
     paths = {"/".join(map(str, e.absolute_path))
              for e in Draft202012Validator(CONTRACT).iter_errors(prepared)}
-    fillable = {"decisions/0", "decisions/0/ask", "decisions/0/if_none"} | {
+    fillable = {"decisions/0", "decisions/0/ask", "decisions/0/if_none",
+                "decisions/0/relation"} | {
         f"decisions/0/others/{i}/{key}" for i in range(2) for key in ("reply_word", "what_it_does")}
     assert paths and paths <= fillable, paths
 
@@ -636,6 +804,7 @@ def test_a_filled_skeleton_renders_and_a_moved_state_refuses_it(project):
     decision = prepared["decisions"][0]
     review, reconcile = sorted(decision["others"], key=lambda d: d["entry"] != "/review-change")
     decision.update(ask="Review the task just delivered?", if_none="The delivery waits unreviewed.",
+                    relation="one-of",
                     recommended={"entry": review["entry"], "check": review["check"],
                                  "reply_word": "a", "door": "Review it now",
                                  "why": "The check over the review accepts the tree as it stands",
@@ -757,3 +926,26 @@ def test_a_recommendation_written_as_convem_is_read_as_one():
     "Convém rodar…" — a recommendation in plain Portuguese the stems did not hold."""
     text = "Convém rodar o /reconcile sobre os três arquivos antes de entregar a tarefa de novo."
     assert handoff.decision_word_at(text, CONTRACT, ("recommendation",)) == 0
+
+
+def test_the_skeleton_carries_an_empty_relation_where_it_hands_two_doors_and_none_for_one(project):
+    two = prepare(project, "implement-task", "--slug", SLUG)
+    assert len(two["decisions"][0]["others"]) == 2 and two["decisions"][0]["relation"] == ""
+    one = prepare(project, "plan-work", "--slug", SLUG)
+    assert len(one["decisions"][0]["others"]) == 1 and "relation" not in one["decisions"][0]
+
+
+def test_a_skeleton_filled_but_for_its_relation_is_refused_on_that_field_alone(project):
+    prepared = prepare(project, "implement-task", "--slug", SLUG)
+    decision = prepared["decisions"][0]
+    review, reconcile = decision["others"]
+    decision.update(ask="Review the task just delivered?", if_none="The delivery waits.",
+                    recommended={"entry": review["entry"], "check": review["check"],
+                                 "reply_word": "a", "door": "Review it now",
+                                 "why": "The check accepts the tree as it stands",
+                                 "reverses_if": "a file under the delivery changes first"},
+                    others=[{**reconcile, "reply_word": "b", "what_it_does": "Re-check the files"}])
+    Path(prepared["report"]).write_text("full\n", encoding="utf-8")
+    message, problems = handoff.render(prepared, CONTRACT, Path("."))
+    assert message is None
+    assert [p.split(":")[0] for p in problems] == ["decisions/0/relation"], problems

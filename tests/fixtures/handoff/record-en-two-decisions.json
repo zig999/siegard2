@@ -14,6 +14,7 @@
         "reverses_if": "a product owner says an empty order is a valid draft",
         "reply_word": "a"
       },
+      "relation": "one-of",
       "others": [
         {"reply_word": "b", "what_it_does": "Accept it, and change the rule first"}
       ],

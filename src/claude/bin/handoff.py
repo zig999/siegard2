@@ -395,7 +395,8 @@ def prepare(skill: str, project: Path, slug: str | None, target: str | None, fil
                     "kind": "decision" if doors else "report", "language": language,
                     "state": state_now(source, language, contract), "state_from": source}
     if doors:
-        record["decisions"] = [{"ask": "", "others": doors, "if_none": ""}]
+        record["decisions"] = [{"ask": "", "others": doors, "if_none": ""}
+                               | ({"relation": ""} if len(doors) > 1 else {})]
     path = report_path(project, skill)
     if path is not None:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -411,19 +412,35 @@ def sentence(text: str) -> str:
     return text if text.endswith(CLOSING) else text + "."
 
 
-def block_of(number: int, decision: dict, labels: dict) -> tuple[str, str | None]:
-    """One decision's block as the person reads it, and its line ready to paste apart."""
-    lines = [f"{number}. {decision['ask']}"]
+def doors_of(decision: dict) -> list[dict]:
+    """The doors a decision hands, in the order they print: the one recommended, then the rest."""
     chosen = decision.get("recommended")
-    if chosen:
-        lines.append(f"   - **{labels['recommended']}** `{chosen['reply_word']}`: "
-                     f"{sentence(chosen['door'])} {sentence(chosen['why'])} "
-                     f"{labels['reverses_if']} {sentence(chosen['reverses_if'])}")
-    else:
-        lines.append(f"   - **{labels['own']}**: {sentence(decision['settles'])}")
-    for door in decision["others"]:
-        lines.append(f"   - `{door['reply_word']}`: {sentence(door['what_it_does'])}")
-    lines.append(f"   - {labels['if_none']}: {sentence(decision['if_none'])}")
+    return ([chosen] if chosen else []) + list(decision["others"])
+
+
+def block_of(number: int | None, decision: dict, labels: dict) -> tuple[str, str | None]:
+    """One decision's block as the person reads it, and its line ready to paste apart. The
+    person's own choice and what stays if no door is taken are lines of their own, never bullets,
+    so a bullet is always a door; where the decision hands two doors or more, one line opens
+    them with how they relate — pick one, a path in order, or each on its own. A handoff with a
+    single decision numbers nothing: a lone "1." reads as the first step of a sequence."""
+    lines = [f"{number}. {decision['ask']}" if number else decision["ask"]]
+    chosen = decision.get("recommended")
+    if not chosen:
+        lines.append(f"   **{labels['own']}**: {sentence(decision['settles'])}")
+    doors = doors_of(decision)
+    relation = decision.get("relation") if len(doors) >= 2 else None
+    if relation:
+        lines.append(f"   {labels[relation.replace('-', '_')]}:")
+    for at, door in enumerate(doors, 1):
+        step = labels["step"].format(n=at, m=len(doors)) + " · " if relation == "in-order" else ""
+        if door is chosen:
+            lines.append(f"   - {step}**{labels['recommended']}** `{door['reply_word']}`: "
+                         f"{sentence(door['door'])} {sentence(door['why'])} "
+                         f"{labels['reverses_if']} {sentence(door['reverses_if'])}")
+        else:
+            lines.append(f"   - {step}`{door['reply_word']}`: {sentence(door['what_it_does'])}")
+    lines.append(f"   {labels['if_none']}: {sentence(decision['if_none'])}")
     return "\n".join(lines), decision.get("invocation")
 
 
@@ -470,13 +487,39 @@ def unfilled_recommendations(record: object) -> list[str]:
     return problems
 
 
+def unrelated_doors(record: object, contract: dict) -> list[str]:
+    """A decision handing two doors or more whose `relation` is missing or is none of the three,
+    named before the schema speaks, so the refusal says what each value means and not only that
+    one is expected."""
+    problems = []
+    values = contract["$defs"]["decision"]["properties"]["relation"]["enum"]
+    decisions = record.get("decisions") if isinstance(record, dict) else None
+    for at, decision in enumerate(decisions if isinstance(decisions, list) else []):
+        if not isinstance(decision, dict) or not isinstance(decision.get("others"), list):
+            continue
+        chosen = decision.get("recommended")
+        if len(decision["others"]) + (1 if isinstance(chosen, dict) else 0) < 2 \
+                and "settles" not in decision:
+            continue
+        if decision.get("relation") not in values:
+            problems.append(f"decisions/{at}/relation: {decision.get('relation')!r} — a decision "
+                            f"that hands two doors or more says how they relate, one of "
+                            + ", ".join(values) + ": one-of, the person takes one; in-order, "
+                            "the doors are the steps of one path and all are taken in the order "
+                            "listed; independent, each is taken on its own and any or all may be taken")
+    return problems
+
+
 def render(record: object, contract: dict, base: Path, state_of=state_now
            ) -> tuple[str | None, list[str]]:
     """The message the record renders to, or None and the problems that refuse it. `state_of`
     reads a `state_from` as its script prints it now."""
-    problems = unfilled_recommendations(record)
+    problems = unfilled_recommendations(record) + unrelated_doors(record, contract)
+    said = {line.split(":", 1)[0] for line in problems}
     for error in sorted(Draft202012Validator(contract).iter_errors(record), key=str):
         where = "/".join(str(part) for part in error.absolute_path) or "(record)"
+        if where in said or (f"{where}/relation" in said and "'relation'" in error.message):
+            continue
         problems.append(f"{where}: {error.message}")
     if problems:
         return None, problems
@@ -524,8 +567,11 @@ def render(record: object, contract: dict, base: Path, state_of=state_now
     parts = [f"```\n{record['state']}\n```" if "state_from" in record else record["state"]]
     if "withdraws" in record:
         parts.append(record["withdraws"])
-    for number, decision in enumerate(record.get("decisions", []), 1):
-        block, invocation = block_of(number, decision, labels)
+    handed = record.get("decisions", [])
+    if len(handed) > 1:
+        parts.append(f"{labels['questions'].format(n=len(handed))}:")
+    for number, decision in enumerate(handed, 1):
+        block, invocation = block_of(number if len(handed) > 1 else None, decision, labels)
         if len(block) > ceilings["block"]:
             problems.append(f"decisions/{number - 1}: its block renders to {len(block)} "
                             f"characters, over the ceiling of {ceilings['block']}")

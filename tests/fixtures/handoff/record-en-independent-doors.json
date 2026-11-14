@@ -1,0 +1,21 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "en",
+  "state": "checkout · task 2/2 delivered · phase reviewed",
+  "state_from": {"script": "progress.py", "project": "/fixture/shop", "slug": "checkout"},
+  "decisions": [
+    {
+      "ask": "Which of the three findings should be acted on?",
+      "settles": "Each finding sits on its own file; reading them settles which matter.",
+      "relation": "independent",
+      "others": [
+        {"reply_word": "a", "what_it_does": "Correct the rounding in the total; the others stay open"},
+        {"reply_word": "b", "what_it_does": "Specify the discount order; the others stay open"},
+        {"reply_word": "c", "what_it_does": "Leave the third finding recorded; the others stay open"}
+      ],
+      "if_none": "The findings stay recorded and nothing changes"
+    }
+  ],
+  "report": "full-report.txt"
+}

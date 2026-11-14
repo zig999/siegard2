@@ -1,0 +1,25 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "pedidos · task 0/2 delivered · phase delivery",
+  "state_from": {"script": "progress.py", "project": "/fixture/shop", "slug": "pedidos"},
+  "decisions": [
+    {
+      "ask": "Planejar a entrega das regras novas sobre o carrinho?",
+      "recommended": {
+        "door": "Planejar o trabalho com um nome novo de iniciativa",
+        "why": "A especificação está commitada e o código ainda não a cumpre",
+        "reverses_if": "o dono do carrinho recusa a regra nova",
+        "reply_word": "planejar"
+      },
+      "relation": "one-of",
+      "others": [
+        {"reply_word": "conciliar", "what_it_does": "Confere as regras novas contra o código já entregue, sem planejar; planejar segue aberto depois"}
+      ],
+      "if_none": "A especificação fica commitada e o código continua como está",
+      "invocation": "/plan-work /fixture/shop --slug pedidos"
+    }
+  ],
+  "report": "full-report.txt"
+}
