@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.104.0 — 2026-11-14
+
+`/siegard-grant` is armed by its flags alone and records the invocation as typed; an invocation with no argument arms nothing and shows the grant armed; each grant carries a mark taken with the instant it was armed, which its `decided:` lines and its budget use (SPEC-011 R1, R2, R5, R10). (`1e37afa`)
+
 ## 5.103.0 — 2026-11-14
 
 A goal over an objective in prose runs `/analyse` before the plan unless the invocation says `--no-specify`; composing a goal hands only the line that arms it through the framework; and arming a grant over one a plugin update or a closed initiative already ended replaces it instead of refusing (SPEC-008 R6, SPEC-011 R1, R3). (`f463aca`)
