@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.109.0 — 2026-11-15
+
+`handoff.py --check` refuses, as composed, free text that hands a decision without a line `--render` writes, and names `--render`; `handoff.py --prepare` prints on standard error the ceilings, what a decision carries and the closed list of words `--render` holds a record to (SPEC-006 R8, R10). (`406a0bb`)
+
 ## 5.108.0 — 2026-11-15
 
 Under a grant, a first line `refuses` from `grant.py --commit` stops a commit unless the person's own words in the session name that commit, as R11 already held for a closing; the session rules and `/plan-work`'s closing reference say so (SPEC-011 R7). (`f8d7cad`)
