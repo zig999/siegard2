@@ -62,6 +62,7 @@ Optionally:
   Disclosure settles nothing — a review holds the same files to the same rules without being shown
   it — but silence is not available: an undisclosed departure reads as a file that followed the
   rule.
+- **recurring** — the standard's rules this target's reviews cite most; check them first.
 - **the reproduction** — how the failure is observed, wherever the criteria name a failure that
   must stop happening. Without it the tests prove the fix rather than the defect.
 

@@ -65,6 +65,7 @@ never a requirement that one does; nothing said which step such a rule may name.
 - **R3** — A record owes a run of the steps the registry it pins declared, and nothing of a registry that moved since: a step declared after a record was written is owed by the records written after it, and a record pinning an earlier version of the registry its target declares is reported beside the outstanding tasks. A pin is a citation of what the record read, and it is never compared with the registry as it stands to refuse the record.
 - **R4** — A rule decided by a step other than the one whose role is `suite` holds over a tree that holds no test of the task being delivered; a rule that requires a test file to exist names the `suite` step.
 - **R5** — A step whose role is `fix` rewrites the tree into the form the registry's checks hold: a delivery runs every such step after the install and before every check, in its build and its suite alike, and owes it as it owes a check; it runs neither at setup nor in a review's or a reconciliation's run, it decides no rule, and a file it changes is held to the delivery's records like any other the delivery wrote.
+- **R6** — A delivery's producers read first the rules of their target's standard that the target's past reviews cite. `bin/deliver.py --recurring <delivery-root> <target> <standard>` counts, over every review record of every initiative beside the delivery root whose `target` is the one named, the reviews whose standard findings cite each rule the standard holds, and prints each rule cited at least once, most cited first, with its count, the number of reviews read and the rule's statement. The count orders what a producer reads first and decides nothing else: it makes no rule binding that the standard does not, leaves no rule out of what a producer is given, and prints nothing where no review cites a rule the standard holds.
 
 ## Validation required before acceptance
 
@@ -93,8 +94,28 @@ never a requirement that one does; nothing said which step such a rule may name.
    refused and a review's run is not held to it; a rule naming it as its tool is refused; and a
    run whose fix rewrote a file no record names is refused by `--unrecorded` —
    `tests/test_fix_step.py` and `tests/test_deliver.py` prove each.
+6. For R6: `bin/deliver.py --recurring` counts each rule once per review that cites it, reads only
+   the reviews of the target named, prints a rule the standard no longer holds nowhere, orders by
+   count then identifier, and prints nothing where no review cites a rule — `tests/test_recurring.py`
+   proves each; `/implement-task` runs it where a standard is named and hands its lines to both
+   producers. The criterion that reverses R6: the same reading as its grounds, taken over a
+   consumer's reviews written after its delivery ran the release, finding the rules R6 printed
+   first cited by as large a share of reviews as before.
 
 ## Readings
+
+- 2026-11-15 — grounds for R6, read from the 283 review records of six sales consumers. The
+  standard pass found the same few rules review after review in each project: in `productcatalog`
+  MNT-03 in 34 of 76 reviews, TST-01 in 28, TYP-04 in 21; in `partymgmt` TYP-04 in 17 of 26; in
+  `salese2e` TST-01 in 21 of 64. Standard findings per review fell between the earlier and the later
+  half of each project's reviews (`productcatalog` 10.5 to 2.9), and the three rules each project's
+  reviews cited most still appeared in 12 of 17, 11 of 13, 21 of 38, 12 of 21 and 13 of 32 of the
+  later half. The findings were not corrected where they were found: of 770 whose quoted source
+  could be read at the review's commit and at `HEAD`, 537 (70%) stood unchanged, 169 changed — every
+  one in a later `/implement-task` or `/deliver-scope` commit, a median 43 hours after the review —
+  and 64 were in files since removed. The producers were given the whole standard, 8 to 62 rules,
+  to read and write to; nothing told them which of those this project's reviews keep finding. The
+  same reading found no recurring signal in the failures pass: 15 findings in 283 reviews.
 
 - 2026-11-09 — grounds for R5, read from the orchestration logs and transcripts of the sales
   consumers between 2026-11-03 and 2026-11-09: a delivery's producers hold no shell, so a

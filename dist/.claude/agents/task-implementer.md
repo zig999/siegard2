@@ -41,6 +41,7 @@ Optionally:
 - **the project's standard** — the path to the rules this project set for itself. Named, you write
   to it; not named, the only convention you follow is what the inventory evidenced, and you say
   nothing about rules you were not given.
+- **recurring** — the standard's rules this target's reviews cite most; check them first.
 - **the authorized packages** — the package names the standard's registry admits, the whole of
   what you may add to the manifest. A package outside the list is a refusal: name it, say what
   needed it, and stop. A package is approved by the registry gaining the entry — written by the

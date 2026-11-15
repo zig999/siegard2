@@ -19,6 +19,8 @@ inventory:             <absolute path of each inventory node whose area reaches 
                         task lands, one per line>
 implementation slice:  <the --contract implementation output above, pasted whole>
 standard:              <absolute path — omit this line where none was named>
+recurring:             <what `deliver.py --recurring <delivery-root> <target> <registry>` prints —
+                        omit where empty>
 authorized packages:   <each package the registry authorizes, by name — omit where it
                         authorizes none, or where no standard was named>
 produces:              <each path the task's `produces` declares — omit where it declares none>
@@ -30,8 +32,7 @@ earlier record:        <absolute path of the implementation record this re-deliv
 You write no file under the delivery root: return the record's content as text.
 ```
 
-Every path is absolute, because a path resolves only where the subagent's read scope reaches it.
-The slice is pasted, not cited. Two lines carry a rule of their own:
+Two lines carry a rule of their own:
 
 - **Pass no reference the task did not name.** A subagent sent looking through `intake/` reads the
   scope, which this route keeps out of the writing. A `reference` path that resolves to nothing is
@@ -57,6 +58,7 @@ proof slice:           <the --contract proof output above, pasted whole>
 nodes:                 <the identity of each specification node the task implements, with the
                         absolute path of the specification root — omit where the task implements none>
 standard:              <absolute path — omit this line where none was named>
+recurring:             <as step 3 — omit where empty>
 underdetermined:       <every `UNDERDETERMINED, from the specification —` entry of the task's
                         `## Notes`, quoted whole — omit where the task carries none>
 remainder:             <the node's identity, the assertion an auditor named as what would close
@@ -91,6 +93,3 @@ same, which is what holds them.
   part that changed**: each record is written whole from one return.
 - **Where you cannot reach a subagent that returned**, spawn it again and hand it the same filled
   block as the first time, plus what the run printed and what remains.
-
-Either way every run keeps its name on disk and each record is judged against the tree at the end,
-so which of these happened changes only what the delivery cost.

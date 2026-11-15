@@ -275,6 +275,16 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         record and nothing else, decides nothing:
                                                         which route a group deserves, or whether
                                                         it deserves one, stays the person's
+        deliver.py --recurring <delivery-root> <target> <standard>
+                                                        print each rule of the standard that the
+                                                        target's past reviews cite — every review
+                                                        of every initiative beside the delivery
+                                                        root whose `target` is the one named —
+                                                        as `<rule> — cited in <n> of <m> reviews
+                                                        of target <key> — <statement>`, most cited
+                                                        first; nothing where no review cites one.
+                                                        Orders what a delivery's producers read
+                                                        first and decides nothing else
         deliver.py --unrecorded <target-source-root> <record> [<record> ...]
                                                         print every path the working tree
                                                         changed under the target source root —
@@ -2694,6 +2704,42 @@ def print_findings(named: str) -> int:
     return 0
 
 
+def recurring(delivery_root: str, target: str, standard: str) -> int:
+    """The rules of a target's standard its past reviews cite, most cited first — «A delivery's
+    producers read first the rules of their target's standard that the target's past reviews
+    cite» (SPEC-007 R6). Every review record of every initiative beside the delivery root whose
+    `target` is the one named is read; a rule counts once per review whose standard findings
+    cite it. A rule the standard no longer holds is not printed, and nothing is printed where no
+    review cites a rule it holds: the count orders what a producer reads first and decides
+    nothing else."""
+    root = Path(delivery_root)
+    if not root.is_dir():
+        print(f"cannot run: {root} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    data, problems = load_standard(Path(standard), standard_contract())
+    if data is None or problems:
+        print(f"cannot run: {standard} does not hold together: "
+              + "; ".join(problems or ["unreadable"]), file=sys.stderr)
+        return CANNOT_RUN
+    statements = {r["id"]: r.get("statement", "") for r in listed(data, "rules")
+                  if isinstance(r, dict) and "id" in r}
+    reviews = 0
+    cited: dict[str, int] = {}
+    for path in sorted(root.resolve().parent.glob("*/review/*.md")):
+        front, _, _ = spec.parse_node(path)
+        if not isinstance(front, dict) or "reviewed" not in front or front.get("target") != target:
+            continue
+        reviews += 1
+        for rule in {f.get("cites") for f in listed(front, "findings")
+                     if isinstance(f, dict) and f.get("pass") == "standard"}:
+            if rule in statements:
+                cited[rule] = cited.get(rule, 0) + 1
+    for rule, count in sorted(cited.items(), key=lambda item: (-item[1], item[0])):
+        print(f"{rule} — cited in {count} of {reviews} reviews of target {target} — "
+              f"{' '.join(statements[rule].split())}")
+    return 0
+
+
 def contested_report(review: Path, tasks: list[str]) -> list[str]:
     """Every disagreement the proof of a reviewed task recorded under `contested`, whole and by
     task, as the person's to settle. «A review's report relays, whole and by task, every
@@ -3776,6 +3822,17 @@ def main() -> int:
                   file=sys.stderr)
             return CANNOT_RUN
         return print_findings(named)
+    if "--recurring" in args:
+        at = args.index("--recurring")
+        rest = args[at + 1:]
+        del args[at:]
+        if verify or report or single is not None or against is not None \
+                or specification is not None or args or len(rest) != 3 \
+                or any(a.startswith("--") for a in rest):
+            print("cannot run: expected --recurring <delivery-root> <target> <standard>",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        return recurring(*rest)
     if "--unrecorded" in args:
         at = args.index("--unrecorded")
         rest = args[at + 1:]
