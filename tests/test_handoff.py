@@ -112,12 +112,35 @@ def test_a_written_handoff_is_held_to_what_its_text_decides(name):
     assert kinds(problems) == MESSAGES[name], problems
 
 
+COMPOSED = {name for name in MESSAGES if name != "pt-long-status-answer.md"}
+
+
 @pytest.mark.parametrize("name", sorted(MESSAGES))
-def test_the_command_exits_on_what_the_functions_return(name):
+def test_the_command_exits_on_what_the_functions_return_and_refuses_a_composed_decision(name):
+    """The functions the Stop hooks read are unchanged; the command adds one refusal: «Where text
+    given to `--check` hands a decision and carries no line `--render` writes for one — the line
+    that opens with the words the schema holds for what stays if no door is taken — `--check`
+    refuses it as composed and names `--render`» (SPEC-006 R8). Every decision fixture is free
+    text a session wrote, so each is refused as composed; the status answer hands none."""
     done = run("--check", str(FIXTURES / name))
-    assert done.returncode == (1 if MESSAGES[name] else 0), done.stdout + done.stderr
-    assert kinds(done.stdout.splitlines()) == MESSAGES[name]
+    expected = MESSAGES[name] | ({"composed"} if name in COMPOSED else set())
+    assert done.returncode == (1 if expected else 0), done.stdout + done.stderr
+    assert kinds(done.stdout.splitlines()) == expected
     assert done.stderr == ""
+    if name in COMPOSED:
+        assert "--render" in done.stdout.splitlines()[-1]
+
+
+@pytest.mark.parametrize("name", ["record-en-independent-doors.json", "record-en-two-decisions.json",
+                                  "record-pt-own-decision.json", "record-pt-path-in-order.json",
+                                  "record-pt-route-steps.json"])
+def test_a_decision_render_printed_is_not_refused_as_composed(name):
+    data = record(name)
+    message, problems = rendered(data)
+    assert problems == [], problems
+    assert handoff.rendered(message, CONTRACT)
+    done = run("--check", "-", stdin=message)
+    assert "composed" not in kinds(done.stdout.splitlines()), done.stdout
 
 
 def test_a_hit_names_the_list_s_entry_and_the_reading_keeps_no_words():
@@ -945,3 +968,23 @@ def test_a_skeleton_filled_but_for_its_relation_is_refused_on_that_field_alone(p
     message, problems = handoff.render(prepared, CONTRACT, Path("."))
     assert message is None
     assert [p.split(":")[0] for p in problems] == ["decisions/0/relation"], problems
+
+
+
+def test_prepare_prints_the_limits_beside_the_skeleton_on_standard_error(project):
+    """«Beside the skeleton, on standard error, it prints the limits `--render` holds a record to
+    — the ceilings of the state, of each decision's block and of the message, what a decision
+    carries, and the closed list's terms, phrases and pattern names» (SPEC-006 R10)."""
+    done = run("--prepare", "--skill", "implement-task", "--project", str(project), "--slug", SLUG)
+    assert done.returncode == 0, done.stdout + done.stderr
+    json.loads(done.stdout)
+    lines = done.stderr.splitlines()
+    assert lines and all(line.startswith("limits: ") for line in lines)
+    ceilings, jargon = CONTRACT["x-ceilings"], CONTRACT["x-jargon"]
+    for key in ("state", "block", "message"):
+        assert str(ceilings[key]) in done.stderr
+    for field in ("recommended", "settles", "relation", "reverses_if"):
+        assert field in done.stderr
+    for word in (*jargon["terms"], *jargon["english_terms"], *jargon["phrases"],
+                 *jargon["patterns"]):
+        assert word in done.stderr, word

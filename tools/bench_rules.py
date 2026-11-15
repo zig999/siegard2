@@ -248,6 +248,19 @@ def recommended_entries(record: Path) -> list[str]:
     return found
 
 
+def text_holds(report: Path) -> tuple[bool, str]:
+    """Whether the report holds to what its text alone decides — `handoff.py`'s `reading` and
+    `violations`, the functions the Stop hooks read. The command's refusal of a composed decision
+    is not this check's: `handoff_rendered` already reads whether a record was rendered, and a
+    run recorded before that refusal existed keeps the grade it was given."""
+    sys.path.insert(0, str(PLUGIN / "bin"))
+    import handoff
+    contract = handoff.load_contract()
+    problems = handoff.violations(handoff.reading(report.read_text(encoding="utf-8"), contract),
+                                  contract)
+    return not problems, "; ".join(problems)[-300:]
+
+
 def checks(name: str, record: Path) -> list[dict]:
     """Every expectation of the case, recomputed from the record alone."""
     c = case(name)
@@ -284,9 +297,7 @@ def checks(name: str, record: Path) -> list[dict]:
             kept = sorted((record / "handoff").glob("*.json"))
             passed, seen = bool(kept), f"{len(kept)} record(s) handoff.py --render kept"
         elif kind == "report_passes_check":
-            done = subprocess.run([sys.executable, "-B", str(PLUGIN / "bin/handoff.py"), "--check",
-                                   str(record / "report.md")], capture_output=True, text=True)
-            passed, seen = done.returncode == 0, (done.stdout + done.stderr).strip()[-300:]
+            passed, seen = text_holds(record / "report.md")
         elif kind == "recommends":
             entries = recommended_entries(record)
             passed, seen = any(e.startswith(arg) for e in entries), f"recommended: {entries}"

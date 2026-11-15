@@ -37,7 +37,9 @@ holds to `git status`, so writing the report there makes no root pending. `--sav
 it there from standard input, because the harness asks the person before its own file tools write
 under a git directory; it refuses a path outside `siegard/handoff/` and a report already written.
 Every field only the model can fill is left empty, and the skeleton fails the schema on exactly
-those.
+those. Beside it, on standard error, `limits:` lines print what `--render` will hold the
+record to: «the ceilings of the state, of each decision's block and of the message, what a
+decision carries, and the closed list's terms, phrases and pattern names» (SPEC-006 R10).
 
 `--render` reads `state_from` again and refuses a record whose `state` differs from what the
 script prints now; it is required of kind `decision`. A state read from a script is quoted as the
@@ -50,11 +52,18 @@ decides only what the text alone decides: no term of `x-jargon` in its first `x-
 characters; and, where it hands a decision — `x-hands-a-decision` — a length within
 `x-ceilings.message` and a word of `x-decision-words` within those first characters. Text inside a
 code fence is a paste and is read for its length only. A term `x-jargon` holds as plain English
-counts in English text only backticked or inside one of its phrases, and as a whole word in text
-of another language; a record names its language, and free text is read as English where the
-English markers of `x-jargon` outnumber the others. Whether the prose is in the person's language
-is not decidable from the text and is not checked. `telemetry.py` imports `reading` and
-`violations` from here, so a handoff is measured by the same definition it is held to.
+counts in English text only backticked or inside one of its phrases, and as a whole word in text of
+another language; a record names its language, and free text is read as English where the English
+markers of `x-jargon` outnumber the others. Whether the prose is in the person's language is not
+decidable from the text and is not checked. Free text that hands a decision and carries no line
+`--render` writes for one — the line opening with the words `x-labels` holds for what stays if no
+door is taken — is refused as composed, naming `--render`: «Where text given to `--check` hands a
+decision and carries no line `--render` writes for one — the line that opens with the words the
+schema holds for what stays if no door is taken — `--check` refuses it as composed and names
+`--render`» (SPEC-006 R8). The Stop hooks read `reading` and `violations`, which hold no such
+refusal, so a message a session stops on is held to what they decide alone. `telemetry.py` imports
+`reading` and `violations` from here, so a handoff is measured by the same definition it is held
+to.
 
 Declared dependencies: jsonschema; PyYAML for `--prepare` and for a `state_from` naming `goal.py`
 (this script imports goal.py, progress.py and door.py, its siblings, only there).
@@ -611,6 +620,29 @@ def take(args: list[str], flag: str, many: bool = False):
     return values if many else (values[0] if values else None)
 
 
+def limits(contract: dict) -> str:
+    """What `--render` holds a record to, in the words a session fills the record by: the ceilings,
+    what a decision carries, and every term, phrase and pattern name of the closed list."""
+    ceilings = contract["x-ceilings"]
+    jargon = contract["x-jargon"]
+    words = [*jargon["terms"], *jargon["english_terms"], *jargon["phrases"], *jargon["patterns"]]
+    return (f"limits: state <= {ceilings['state']} characters; each decision's block <= "
+            f"{ceilings['block']}, its line ready to paste aside; the message <= "
+            f"{ceilings['message']}\n"
+            f"limits: a decision carries `recommended` (door, why, reverses_if, reply_word) or "
+            f"`settles`; two doors or more carry `relation`: one-of, in-order or independent\n"
+            f"limits: no prose field carries " + ", ".join(words) + "\n")
+
+
+def rendered(text: str, contract: dict) -> bool:
+    """Whether the text carries a line `--render` writes for every decision: the one that opens
+    with the words `x-labels` holds, in some language, for what stays if no door is taken."""
+    openings = {labels["if_none"] for language, labels in contract["x-labels"].items()
+                if isinstance(labels, dict) and "if_none" in labels}
+    return any(line.strip().startswith(f"{opening}:") for line in text.splitlines()
+               for opening in openings)
+
+
 def main_prepare(args: list[str], contract: dict) -> int:
     try:
         skill = take(args, "--skill")
@@ -644,6 +676,7 @@ def main_prepare(args: list[str], contract: dict) -> int:
         return CANNOT_RUN
     record = prepare(skill, root, slug, target, files, language, contract, ledger)
     print(json.dumps(record, indent=2, ensure_ascii=False))
+    print(limits(contract), end="", file=sys.stderr)
     return 0
 
 
@@ -715,7 +748,13 @@ def main() -> int:
         print(f"cannot run: {broken}", file=sys.stderr)
         return CANNOT_RUN
     if args[0] == "--check":
-        problems = violations(reading(text, contract), contract)
+        read = reading(text, contract)
+        problems = violations(read, contract)
+        if read["hands_decision"] and not rendered(text, contract):
+            problems.append("composed: hands a decision as free text — «A handoff that hands a "
+                            "person a decision is rendered by `bin/handoff.py --render` from a "
+                            "record, never composed as free text» (SPEC-006 R8): run --prepare, "
+                            "fill the record, and hand the person what --render prints")
         for problem in problems:
             print(problem)
         return 1 if problems else 0
