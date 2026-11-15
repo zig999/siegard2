@@ -117,9 +117,14 @@ def test_arming_over_a_grant_armed_under_another_version_ends_it_and_arms(projec
     assert "armed under 0.0.1" in gone["reason"]
 
 
+def close_committed(project: dict) -> None:
+    (project["home"] / "plans" / SLUG / "closure.md").write_text("closed\n", encoding="utf-8")
+    commit(project["home"], "the closure", f"plans/{SLUG}/closure.md")
+
+
 def test_arming_over_a_grant_whose_initiative_closed_ends_it_and_arms(project):
     assert arm(project, "--commits").returncode == 0
-    (project["home"] / "plans" / SLUG / "closure.md").write_text("closed\n", encoding="utf-8")
+    close_committed(project)
     words_only = grant("--arm", str(project["home"]), "--commits", "--words-file", "-",
                        stdin=WORDS)
     assert words_only.returncode == 0, words_only.stdout + words_only.stderr
@@ -274,7 +279,7 @@ def test_a_plugin_version_change_ends_the_grant_and_it_takes_nothing(project):
 
 def test_a_closure_ends_the_grant(project, tmp_path):
     assert arm(project, "--doors", "plan-work").returncode == 0
-    (project["home"] / "plans" / SLUG / "closure.md").write_text("closed\n", encoding="utf-8")
+    close_committed(project)
     result = decide(project, handoff(with_recommended("/plan-work", "accepts")), tmp_path)
     assert result.returncode == 1 and "holds a closure.md" in result.stdout
     assert not armed(project).exists()
@@ -482,6 +487,32 @@ def test_closing_is_accepted_where_everything_is_delivered_proven_and_reviewed(p
     assert out.returncode == 0
     for name in ("records", "review", "criteria", "delivery", "plan", "specification"):
         assert f"checked: {name}" in out.stdout
+
+
+@pytest.mark.parametrize("slug", [SLUG, None])
+def test_the_closings_own_commit_is_accepted_and_the_closure_lands_with_it(project, slug):
+    """R3: an initiative holds its closure once HEAD holds it, so the closing's commit, asked of
+    the gate after the marker is written, is still a commit of a covered initiative's paths."""
+    one_task_plan(project)
+    assert arm(project, "--commits", "--close", slug=slug).returncode == 0
+    deliver(project)
+    review(project)
+    measure(project)
+    close = grant("--close", str(project["home"]), "--slug", SLUG)
+    assert close.stdout.splitlines()[0] == "accepts", close.stdout
+    work = project["home"] / "plans" / SLUG
+    (work / "closure.md").write_text("closed\n", encoding="utf-8")
+    (work / "intake").mkdir(exist_ok=True)
+    (work / "intake" / "close-ask.md").write_text(WORDS + "\n", encoding="utf-8")
+    paths = [f"plans/{SLUG}/closure.md", f"plans/{SLUG}/intake/close-ask.md",
+             f"plans/{SLUG}/plan.json"]
+    result = commit_check(project, *paths)
+    assert result.stdout.splitlines()[0] == "accepts", result.stdout
+    assert armed(project).exists()
+    commit(project["home"], "the closing", *paths[:2])
+    after = commit_check(project, f"plans/{SLUG}/closure.md")
+    assert after.stdout.splitlines()[0] == "refuses", after.stdout
+    assert armed(project).exists() is (slug is None)
 
 
 # ------------------------------------------------------------- adversarial paths (R7, R8)

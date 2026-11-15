@@ -151,13 +151,22 @@ def live_initiative(fields: dict, slug: str) -> list[str]:
     return found
 
 
+def closed(fields: dict, slug: str) -> bool:
+    """Whether an initiative's closure has landed: «An initiative holds its `closure.md` once
+    `HEAD` holds it» (SPEC-011 R3). A closure written and not yet committed is the commit the
+    closing still owes, and the gate that answers it reads the initiative as covered until then."""
+    marker = goal.relative(fields, fields["work_root"] / slug / "closure.md")
+    return goal.command(["git", "-C", str(fields["home"]), "cat-file", "-e",
+                         f"HEAD:{marker}"])[0] == 0
+
+
 def covered(fields: dict, held: dict) -> list[str]:
     """The initiatives a grant covers: the one it names, or every live one of the project."""
     if held.get("slug"):
         return [held["slug"]]
     base = fields["work_root"]
     return sorted(path.parent.name for path in base.glob("*/plan.json")
-                  if not (path.parent / "closure.md").is_file()) if base.is_dir() else []
+                  if not closed(fields, path.parent.name)) if base.is_dir() else []
 
 
 def record_words(project_root: Path, text: str) -> tuple[Path, str]:
@@ -247,7 +256,7 @@ def no_longer_stands(fields: dict, held: dict) -> str | None:
     if held.get("version") != goal.plugin_version():
         return (f"the plugin runs {goal.plugin_version()}; the grant was armed under "
                 f"{held.get('version')}")
-    if held.get("slug") and (fields["work_root"] / held["slug"] / "closure.md").is_file():
+    if held.get("slug") and closed(fields, held["slug"]):
         return f"{held['slug']} holds a closure.md"
     return None
 

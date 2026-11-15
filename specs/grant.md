@@ -87,7 +87,10 @@ bound a script on disk decides.
 
 - **R3** — A grant ends when the person clears it, when the plugin's version is not the one it was
   armed under — the rules a grant took are those of its version — and, where it names an initiative,
-  when that initiative holds a `closure.md`. An ended grant is appended, with its reason, to the
+  when that initiative holds a `closure.md`. An initiative holds its `closure.md` once `HEAD`
+  holds it: a closure written and not yet committed is the commit its closing still owes, and
+  until that commit lands the initiative is one the grant covers and a grant naming it stands.
+  An ended grant is appended, with its reason, to the
   ended log beside it, and takes nothing. An arming over a grant whose record is still in place but
   that has ended so appends it to that log, says that it ended and why, and arms; nothing is
   appended where the arming is refused on another ground.
@@ -159,7 +162,10 @@ bound a script on disk decides.
 4. Tests hold `grant.py --commit` and `--close` to R7 and R8 over fixture repositories, one refusal
    per bound the requirement names, one acceptance of a commit that names only paths a record
    of a covered initiative writes, and a grant without a slug accepting the paths of any live
-   initiative and answering `--close` only over the initiative it is asked about.
+   initiative and answering `--close` only over the initiative it is asked about; under a grant
+   holding `commits` and `close`, with or without a slug, `--commit` accepts the closing's own
+   paths — `closure.md`, its `intake/` ask and the derived `plan.json` — written and not yet
+   committed, and once that commit lands the initiative is no longer covered.
 5. A test holds `/siegard-grant` closed to the model and the session rules' line to the script,
    the person's own words in the session exempting from a refusal the commit or the closing they
    name.
@@ -174,6 +180,17 @@ bound a script on disk decides.
    of `--close` to naming `--slug` — `tests/test_skill_contract.py`.
 
 ## Readings
+
+- 2026-11-15 — grounds for R3's closure at `HEAD`: no closing taken under a grant could pass the
+  commit gate. `/plan-work`'s closing writes `closure.md`, then asks `grant.py --commit` before
+  its commit, as R11 and R7 order; the gate read the marker from the tree, so a grant naming the
+  initiative had ended (`refused: the grant ended — <slug> holds a closure.md`) and a grant naming
+  none no longer covered it (`is no path the route writes`), for all three paths of the closing.
+  Read in `partymgmt` session `35073eba` (Siegard 5.106.0): `grant.py --commit` refused the
+  closing of `n17-autorizacao-por-direito` and the session committed it in the same command
+  (`80c87c3`); reproduced over `tests/test_grant.py`'s fixture for both grant shapes. R7 already
+  named a `closure.md` as a path the close clause admits. Reversal: a closure left written and
+  uncommitted under which a grant took a door over the closed initiative.
 
 - 2026-11-15 — grounds for R7's exemption of a commit the person's words name. The session rules
   stopped every commit `grant.py --commit` refused, a commit the person named in the session among
