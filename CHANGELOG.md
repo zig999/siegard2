@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.111.0 — 2026-11-15
+
+`deliver.py --standing` reports the standard findings of a target's past reviews whose quoted source still stands, grouped by file and narrowed by `--rule` and `--file`, with those changed, gone or not decidable counted apart (SPEC-007 R7). (`e2533ec`)
+
 ## 5.110.0 — 2026-11-15
 
 `deliver.py --recurring` prints the rules of a target's standard its past reviews cite, most cited first, and `/implement-task` hands those lines to the task-implementer and the test-author to check first (SPEC-007 R6). (`2587fe2`)
