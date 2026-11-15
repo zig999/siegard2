@@ -618,6 +618,8 @@ def test_a_closure_under_a_grant_asks_the_gate_and_persists_the_words_whole():
     assert gate < closing.index("**Write `closure.md`**"), "the gate is asked after the marker"
     assert "grant.py --read <project-root>" in closing
     assert "grant.py --commit <project-root> --file <path>..." in closing
+    assert ("«A first line `refuses` stops the commit unless the person's own words in the session "
+            "name that commit» (SPEC-011 R7)") in " ".join(closing.split())
     assert "ask.py --read <project-root> --path <the grant's words path> --sha256" in closing
     assert "(SPEC-011 R11)" in closing and "(SPEC-011 R7)" in closing
     assert "never a summary the session writes" in closing

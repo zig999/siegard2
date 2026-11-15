@@ -538,7 +538,9 @@ def test_the_session_rules_send_a_stop_to_the_script_and_never_arm():
     for line in ("`bin/grant.py --decide <project-root> --record <record> --slug <slug>`",
                  "`grant.py --commit <project-root> --file <path>...`",
                  "`grant.py --close <project-root> --slug <slug>`",
-                 "Never run `grant.py --arm` outside `/siegard-grant`"):
+                 "Never run `grant.py --arm` outside `/siegard-grant`",
+                 "a first line `refuses` stops it unless the person's own words in this session "
+                 "name that commit or that closing"):
         assert line in rules
     others = [path for path in (REPO / "src/claude/skills").rglob("*.md")
               if path.parent.name != "siegard-grant" and "grant.py --arm" in path.read_text(

@@ -128,7 +128,8 @@ bound a script on disk decides.
   a declared standard, `CLAUDE.md`, a file that holds credentials, a `closure.md` while the close
   clause does not hold, or a specification file the commit modifies where `HEAD` already holds it,
   beyond its decision log. A path that holds a change no record of a covered initiative accounts for
-  is `refuses`. `bin/grant.py --close`, over one initiative the grant covers, answers `accepts` only
+  is `refuses`. A first line `refuses` stops the commit unless the person's own words in the
+  session name that commit: a commit they name is not a taking. `bin/grant.py --close`, over one initiative the grant covers, answers `accepts` only
   where the grant holds `close` and the goal computation over the initiative, read from the grant's
   `HEAD`, finds every task delivered, proven and reviewed, no criterion unmet that no covered review
   answers, and a sound specification; the closure's reason is the grant's words, never the
@@ -159,7 +160,9 @@ bound a script on disk decides.
    per bound the requirement names, one acceptance of a commit that names only paths a record
    of a covered initiative writes, and a grant without a slug accepting the paths of any live
    initiative and answering `--close` only over the initiative it is asked about.
-5. A test holds `/siegard-grant` closed to the model and the session rules' line to the script.
+5. A test holds `/siegard-grant` closed to the model and the session rules' line to the script,
+   the person's own words in the session exempting from a refusal the commit or the closing they
+   name.
 6. For R9 and R10: a test holds `handoff.py --render` to keeping the record beside its report and
    `grant.py --decide --latest` to reading the newest one of a skill; a test holds the grant's
    budget to counting only the lines that carry its digest; and `/deliver-scope`'s file states the
@@ -171,6 +174,20 @@ bound a script on disk decides.
    of `--close` to naming `--slug` — `tests/test_skill_contract.py`.
 
 ## Readings
+
+- 2026-11-15 — grounds for R7's exemption of a commit the person's words name. The session rules
+  stopped every commit `grant.py --commit` refused, a commit the person named in the session among
+  them, while R11 already exempted a closing the person names, and a taking is defined as an act
+  done without asking. A benchmark run of the session rules
+  (`tests/fixtures/benchmarks/rules/`, iteration 1) held it: under a grant armed with `--commits
+  --doors none`, all four runs asked to "comita o fees.py e o teste e dá push" stopped on the
+  gate's refusal — two files the session wrote outside a skill — and committed nothing, where with
+  no grant armed the same words were committed. Read the same day from every consumer transcript:
+  `grant.py --commit` and `--close` never ran; of the commits made while a grant was armed, at
+  most 89 (the windows ignore R3's end at a version change), one followed a commit word of the
+  person. The exemption leaves the gate on every commit taken without asking. Reversal: a commit a
+  person named under a grant that the person then reverts, read as recurring, narrows the
+  exemption to the paths the words spell.
 
 - 2026-11-14 — grounds for the grant as the one home of a judged door, and for its budget per
   initiative (R2, R5, R6, R10; SPEC-006 R7, R12; SPEC-008 R3, R6, R14), read from every

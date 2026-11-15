@@ -12,7 +12,8 @@ Closing spawns no subagent and touches neither the specification root nor the ta
 3. **Ask the grant.** Where `grant.py --read <project-root>` prints a grant holding `close`, run
    `grant.py --close <project-root> --slug <slug>` now: «a first line `refuses` stops it unless
    the person's own words in the session name that initiative's closing» (SPEC-011 R11). Before
-   the commit, `grant.py --commit <project-root> --file <path>...`; `refuses` stops it.
+   the commit, `grant.py --commit <project-root> --file <path>...`: «A first line `refuses` stops
+   the commit unless the person's own words in the session name that commit» (SPEC-011 R7).
 4. **Persist the ask under `intake/`**, copied whole, «never a summary the session writes»
    (SPEC-011 R11). Under the grant it is what `ask.py --read <project-root> --path <the grant's
    words path> --sha256 <its digest>` prints: «the closure's reason is the grant's words»
