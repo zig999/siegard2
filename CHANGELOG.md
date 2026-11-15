@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.112.0 — 2026-11-15
+
+An initiative holds its `closure.md` once `HEAD` holds it, so `grant.py --commit` accepts the closing's own commit under a grant holding `close`, with or without a slug, and a grant naming the initiative ends when that commit lands (SPEC-011 R3, R7). (`2fc70b4`)
+
 ## 5.111.0 — 2026-11-15
 
 `deliver.py --standing` reports the standard findings of a target's past reviews whose quoted source still stands, grouped by file and narrowed by `--rule` and `--file`, with those changed, gone or not decidable counted apart (SPEC-007 R7). (`e2533ec`)
