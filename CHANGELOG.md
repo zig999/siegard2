@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.110.0 — 2026-11-15
+
+`deliver.py --recurring` prints the rules of a target's standard its past reviews cite, most cited first, and `/implement-task` hands those lines to the task-implementer and the test-author to check first (SPEC-007 R6). (`2587fe2`)
+
 ## 5.109.0 — 2026-11-15
 
 `handoff.py --check` refuses, as composed, free text that hands a decision without a line `--render` writes, and names `--render`; `handoff.py --prepare` prints on standard error the ceilings, what a decision carries and the closed list of words `--render` holds a record to (SPEC-006 R8, R10). (`406a0bb`)
