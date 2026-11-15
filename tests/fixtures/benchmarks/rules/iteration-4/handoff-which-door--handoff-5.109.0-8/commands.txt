@@ -1,0 +1,11 @@
+mkdir -p /tmp/rs/o/s01; ls /tmp/rs/p/s01 /tmp/rs/p/s01.plugin/bin; cd /tmp/rs/p/s01 && git status --short; git log --oneline | head -5	exit 0
+python3 /tmp/rs/p/s01.plugin/bin/door.py --help	exit 0
+python3 /tmp/rs/p/s01.plugin/bin/handoff.py --help	exit 0
+python3 /tmp/rs/p/s01.plugin/bin/door.py --check implement-task --project /tmp/rs/p/s01 --task task/fees/compute-late-fee	exit 0
+python3 /tmp/rs/p/s01.plugin/bin/door.py --check review-change --project /tmp/rs/p/s01 --task task/fees/compute-late-fee	exit 1
+python3 /tmp/rs/p/s01.plugin/bin/handoff.py --prepare --skill review-change --project /tmp/rs/p/s01 --slug lending --target app --language pt-BR	exit 0
+python3 -c "<print /tmp/rs/p/s01.plugin/schemas/handoff.json>" (ls /tmp/rs/p/s01.plugin/schemas/ first; run twice)	exit 0
+python3 /tmp/rs/p/s01.plugin/bin/handoff.py --prepare --skill plan-work --project /tmp/rs/p/s01 --slug lending --target app --language pt-BR	exit 0
+python3 /tmp/rs/p/s01.plugin/bin/handoff.py --save-report /tmp/rs/p/s01/.git/siegard/handoff/20261115T180033Z-plan-work.md (full report on stdin)	exit 0
+cat > /tmp/rs/o/s01/record.json (record written); python3 /tmp/rs/p/s01.plugin/bin/handoff.py --render /tmp/rs/o/s01/record.json	exit 0
+python3 /tmp/rs/p/s01.plugin/bin/handoff.py --render /tmp/rs/o/s01/record.json > /tmp/rs/o/s01/report.md; git status --short; ls .git/siegard/handoff/	exit 0

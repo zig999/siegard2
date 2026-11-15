@@ -144,3 +144,22 @@ cases and found a tie over the foreign change; whether this case's difference is
 draft's 193 characters in every session is the maintainer's to weigh. Both misses passed through
 `--check`, which accepts free text that hands a decision once it fits its ceilings: a script that
 answered such text with the rule that it is rendered would reach this failure under either text.
+
+## Iteration 4 — `handoff-which-door` under 5.109.0 (2026-11-15)
+
+Arm `handoff-5.109.0`: the 5.109.0 rules, whose report and handoff bullets are the 5.108.0 ones,
+run over the 5.109.0 plugin — `handoff.py --check` refusing a composed decision and `--prepare`
+printing the limits `--render` holds a record to (SPEC-006 R8, R10). Eight runs, compared with the
+eight runs of the 5.108.0 text over the 5.108.0 script in iterations 2 and 3.
+
+| plugin | runs failing an expectation | `--render` refused | runs calling `--check` |
+|---|---|---|---|
+| 5.108.0 (iterations 2–3) | 2 of 8 | 4 | 2 |
+| 5.109.0 (iteration 4) | 0 of 8 | 2 | 0 |
+
+No run composed its answer; every run rendered a record and recommended `/implement-task`. The
+refusal of a composed decision never fired: no run called `--check`, so what kept the runs on
+`--render` is not that refusal, and with two misses in sixteen 5.108.0-text runs, none in eight
+is within chance. Both refusals that remained were a decision's block over 700 characters (701
+and 865) after `--prepare` had printed that ceiling. Held as no regression and as a reading of the
+limits, not as proof of either change.

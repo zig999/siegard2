@@ -976,3 +976,16 @@ def test_the_door_choice_misses_fall_on_the_5_108_0_text_over_eight_runs_a_side(
         assert len(held) == 8
         assert sum(any(not e["passed"] for e in g["expectations"]) for g in held) == failing
         assert sum(g["measured"]["render_refused"] for g in held) == refused
+
+
+def test_under_5_109_0_no_door_choice_run_composes_and_two_renders_are_refused():
+    """Iteration 4: eight runs of `handoff-which-door` over the 5.109.0 plugin, none failing an
+    expectation, two `--render` refusals, and no run calling `--check`."""
+    gradings = [json.loads((r / "grading.json").read_text(encoding="utf-8"))
+                for r in rules_runs("iteration-4")]
+    assert len(gradings) == 8 and {g["arm"] for g in gradings} == {"handoff-5.109.0"}
+    assert all(e["passed"] for g in gradings for e in g["expectations"])
+    assert sum(g["measured"]["render_refused"] for g in gradings) == 2
+    facts = [json.loads((r / "facts.json").read_text(encoding="utf-8"))
+             for r in rules_runs("iteration-4")]
+    assert not any(c["flag"] == "--check" for f in facts for c in f["handoff_calls"])

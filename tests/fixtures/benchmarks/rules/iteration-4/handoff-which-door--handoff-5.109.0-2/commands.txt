@@ -1,0 +1,13 @@
+mkdir -p /tmp/rs/o/s06; ls /tmp/rs/p/s06 /tmp/rs/p/s06.plugin/bin; cd /tmp/rs/p/s06 && git status --short && git log --oneline | head  # exit 0
+python3 /tmp/rs/p/s06.plugin/bin/door.py --help  # exit 0
+python3 /tmp/rs/p/s06.plugin/bin/handoff.py --help  # exit 0
+find work spec -type f | head -50  # exit 0
+python3 /tmp/rs/p/s06.plugin/bin/door.py --check implement-task --project . --task task/fees/compute-late-fee  # exit 0
+python3 /tmp/rs/p/s06.plugin/bin/door.py --check review-change --project . --task task/fees/compute-late-fee  # exit 1
+python3 /tmp/rs/p/s06.plugin/bin/handoff.py --prepare --skill plan-work --project /tmp/rs/p/s06 --slug lending --language pt-BR  # exit 0
+python3 /tmp/rs/p/s06.plugin/bin/handoff.py --prepare --skill implement-task --project /tmp/rs/p/s06 --slug lending --language pt-BR  # exit 0
+sed -n 1,200p /tmp/rs/p/s06.plugin/schemas/handoff.json | head -150  # exit 0
+sed -n 150,400p /tmp/rs/p/s06.plugin/schemas/handoff.json  # exit 0
+python3 /tmp/rs/p/s06.plugin/bin/handoff.py --save-report /tmp/rs/p/s06/.git/siegard/handoff/20261115T180025Z-implement-task.md  # exit 0 (report on stdin)
+python3 /tmp/rs/p/s06.plugin/bin/handoff.py --render -  # exit 0 (record on stdin)
+git status --short  # exit 0 (clean)

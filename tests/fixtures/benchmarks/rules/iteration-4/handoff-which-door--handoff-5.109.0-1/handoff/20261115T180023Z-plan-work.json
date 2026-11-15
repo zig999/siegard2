@@ -1,0 +1,45 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/rs/p/s05",
+    "slug": "lending"
+  },
+  "decisions": [
+    {
+      "ask": "Implementar primeiro; a revisão vem depois. Só rodei verificações de leitura, nada foi alterado.",
+      "recommended": {
+        "door": "Implementar a tarefa da multa por atraso",
+        "why": "A revisão é recusada hoje: a tarefa ainda não tem registro de implementação.",
+        "reverses_if": "o registro de implementação da tarefa já existir",
+        "reply_word": "implementar",
+        "entry": "/implement-task",
+        "check": {
+          "answer": "accepts",
+          "refused": []
+        }
+      },
+      "relation": "one-of",
+      "others": [
+        {
+          "reply_word": "revisar",
+          "what_it_does": "Excluída: não há registro de implementação da tarefa para revisar.",
+          "entry": "/review-change",
+          "check": {
+            "answer": "refuses",
+            "refused": [
+              "deliver.py --check /tmp/rs/p/s05/delivery/lending /tmp/rs/p/s05/work/lending /tmp/rs/p/s05/app /tmp/rs/p/s05/spec exits 2",
+              "/tmp/rs/p/s05/delivery/lending/implementation holds no record — nothing is delivered, so a review has no subject"
+            ]
+          }
+        }
+      ],
+      "if_none": "Nada muda; a tarefa segue sem entrega.",
+      "invocation": "/implement-task task/fees/compute-late-fee"
+    }
+  ],
+  "report": "/tmp/rs/p/s05/.git/siegard/handoff/20261115T180023Z-plan-work.md"
+}

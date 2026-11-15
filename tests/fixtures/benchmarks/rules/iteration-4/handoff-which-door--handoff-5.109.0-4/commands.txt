@@ -1,0 +1,20 @@
+cat /tmp/rs/prompts/s02.txt	exit 0
+cat /tmp/rs/p/s02.rules.md	exit 0
+ls /tmp/rs/p/s02.plugin/bin	exit 0
+ls -la /tmp/rs/p/s02	exit 0
+cat /tmp/rs/p/s02/siegard.json	exit 0
+git -C /tmp/rs/p/s02 status --short	exit 0
+git -C /tmp/rs/p/s02 log --oneline | head	exit 0
+find work spec -type f | head -50	exit 0
+python3 /tmp/rs/p/s02.plugin/bin/door.py --help	exit 0
+python3 /tmp/rs/p/s02.plugin/bin/handoff.py --help	exit 0
+python3 /tmp/rs/p/s02.plugin/bin/door.py --check implement-task --project /tmp/rs/p/s02 --task task/fees/compute-late-fee	exit 0
+python3 /tmp/rs/p/s02.plugin/bin/door.py --check review-change --project /tmp/rs/p/s02 --task task/fees/compute-late-fee	exit 1
+python3 /tmp/rs/p/s02.plugin/bin/handoff.py --prepare --skill implement-task --project /tmp/rs/p/s02 --slug lending --target app --language pt-BR	exit 0
+ls /tmp/rs/p/s02.plugin/schemas/	exit 0
+python3 -c "<print schemas/handoff.json>" | head -300	exit 0 (BrokenPipe from head)
+python3 /tmp/rs/p/s02.plugin/bin/handoff.py --prepare --skill plan-work --project /tmp/rs/p/s02 --slug lending --target app --language pt-BR	exit 0
+python3 /tmp/rs/p/s02.plugin/bin/handoff.py --save-report /tmp/rs/p/s02/.git/siegard/handoff/20261115T180027Z-plan-work.md < (full report on stdin)	exit 0
+python3 /tmp/rs/p/s02.plugin/bin/handoff.py --render /tmp/rs/o/s02/record.json	exit 0
+python3 /tmp/rs/p/s02.plugin/bin/handoff.py --render /tmp/rs/o/s02/record.json > /tmp/rs/o/s02/report.md	exit 0
+git -C /tmp/rs/p/s02 status --short	exit 0

@@ -1,0 +1,4 @@
+/tmp/rs/prompts/s08.txt
+/tmp/rs/p/s08.rules.md
+/tmp/rs/p/s08/siegard.json
+/tmp/rs/p/s08.plugin/schemas/handoff.json

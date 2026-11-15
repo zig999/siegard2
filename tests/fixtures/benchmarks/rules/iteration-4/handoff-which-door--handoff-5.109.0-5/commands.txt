@@ -1,0 +1,15 @@
+mkdir -p /tmp/rs/o/s07; cd /tmp/rs/p/s07 && ls -a; ls /tmp/rs/p/s07.plugin/bin; git -C /tmp/rs/p/s07 status --short	exit 0
+python3 /tmp/rs/p/s07.plugin/bin/door.py --help	exit 0
+python3 /tmp/rs/p/s07.plugin/bin/handoff.py --help	exit 0
+python3 /tmp/rs/p/s07.plugin/bin/door.py --check review-change --project /tmp/rs/p/s07 --task task/fees/compute-late-fee	exit 1
+python3 /tmp/rs/p/s07.plugin/bin/door.py --check implement-task --project /tmp/rs/p/s07 --task task/fees/compute-late-fee	exit 0
+python3 /tmp/rs/p/s07.plugin/bin/handoff.py --prepare --skill plan-work --project /tmp/rs/p/s07 --slug lending --target app --language pt-BR	exit 0
+cat /tmp/rs/p/s07.plugin/schemas/handoff.json | python3 -c '<print schema minus x-jargon>' | head -300	exit 0
+mkdir -p /tmp/rs/s07work && cat > /tmp/rs/s07work/report.md <<EOF ... EOF	exit 0
+python3 /tmp/rs/p/s07.plugin/bin/handoff.py --save-report /tmp/rs/p/s07/.git/siegard/handoff/20261115T180015Z-plan-work.md < /tmp/rs/s07work/report.md	exit 0
+cat > /tmp/rs/s07work/record.json <<EOF ... EOF	exit 0
+python3 /tmp/rs/p/s07.plugin/bin/handoff.py --render /tmp/rs/s07work/record.json	exit 1
+sed -i 's/ Só depois de implementar\.//' /tmp/rs/s07work/record.json	exit 0
+python3 /tmp/rs/p/s07.plugin/bin/handoff.py --render /tmp/rs/s07work/record.json	exit 0
+python3 /tmp/rs/p/s07.plugin/bin/handoff.py --render /tmp/rs/s07work/record.json > /tmp/rs/o/s07/report.md	exit 0
+git -C /tmp/rs/p/s07 status --short	exit 0

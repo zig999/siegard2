@@ -1,0 +1,16 @@
+cat /tmp/rs/p/s08.rules.md; ls /tmp/rs/p/s08.plugin/bin; ls -a /tmp/rs/p/s08 — exit 0
+python3 /tmp/rs/p/s08.plugin/bin/door.py --help — exit 0
+python3 /tmp/rs/p/s08.plugin/bin/handoff.py --help — exit 0
+cat siegard.json (in /tmp/rs/p/s08) — exit 0
+find work spec -type f | head -50 (in /tmp/rs/p/s08) — exit 0
+git status --short (in /tmp/rs/p/s08) — exit 0
+git log --oneline | head (in /tmp/rs/p/s08) — exit 0
+python3 /tmp/rs/p/s08.plugin/bin/door.py --check implement-task --project /tmp/rs/p/s08 --task task/fees/compute-late-fee — exit 0
+python3 /tmp/rs/p/s08.plugin/bin/door.py --check review-change --project /tmp/rs/p/s08 --task task/fees/compute-late-fee — exit 1
+python3 /tmp/rs/p/s08.plugin/bin/handoff.py --prepare --skill implement-task --project /tmp/rs/p/s08 --slug lending --target app --language pt-BR — exit 0
+python3 /tmp/rs/p/s08.plugin/bin/handoff.py --prepare --skill plan-work --project /tmp/rs/p/s08 --slug lending --target app --language pt-BR — exit 0
+ls .git/siegard/handoff (in /tmp/rs/p/s08) — exit 0
+cat /tmp/rs/p/s08.plugin/schemas/handoff.json — exit 0
+python3 /tmp/rs/p/s08.plugin/bin/handoff.py --save-report /tmp/rs/p/s08/.git/siegard/handoff/20261115T180016Z-plan-work.md (report on stdin) — exit 0
+python3 /tmp/rs/p/s08.plugin/bin/handoff.py --render - (record on stdin) — exit 0
+git status --short (in /tmp/rs/p/s08) — exit 0

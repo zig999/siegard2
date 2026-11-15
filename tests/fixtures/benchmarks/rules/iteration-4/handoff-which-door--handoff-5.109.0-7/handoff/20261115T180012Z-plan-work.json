@@ -1,0 +1,30 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/rs/p/s04",
+    "slug": "lending"
+  },
+  "decisions": [
+    {
+      "ask": "Multa por atraso (task/fees/compute-late-fee): implementar ou revisar primeiro?",
+      "recommended": {
+        "door": "Implementar primeiro a tarefa da multa por atraso; a revisão vem depois da entrega.",
+        "why": "A revisão está excluída: ela mesma se recusa, porque a tarefa ainda não tem registro de implementação nem pasta de entrega; implementar é a única opção que resta, e a verificação dela passou.",
+        "reverses_if": "existir o registro de implementação delivery/lending/implementation/fees/compute-late-fee.md",
+        "reply_word": "implementar",
+        "entry": "/implement-task",
+        "check": {
+          "answer": "accepts",
+          "refused": []
+        }
+      },
+      "others": [],
+      "if_none": "Nada muda: a tarefa segue não entregue e nada foi executado."
+    }
+  ],
+  "report": "/tmp/rs/p/s04/.git/siegard/handoff/20261115T180012Z-plan-work.md"
+}

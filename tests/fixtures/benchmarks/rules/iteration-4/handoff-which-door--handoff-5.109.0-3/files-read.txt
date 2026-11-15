@@ -1,0 +1,5 @@
+/tmp/rs/prompts/s03.txt
+/tmp/rs/p/s03.rules.md
+/tmp/rs/p/s03/siegard.json
+/tmp/rs/p/s03.plugin/schemas/handoff.json
+/tmp/rs/scratch-s03/skel.json

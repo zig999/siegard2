@@ -1,0 +1,19 @@
+cat /tmp/rs/p/s03.rules.md; echo; ls /tmp/rs/p/s03.plugin/bin; ls -a /tmp/rs/p/s03 — exit 0
+python3 /tmp/rs/p/s03.plugin/bin/door.py --help — exit 0
+python3 /tmp/rs/p/s03.plugin/bin/handoff.py --help — exit 0
+cat /tmp/rs/p/s03/siegard.json — exit 0
+find work spec -maxdepth 4 | head -50 (in /tmp/rs/p/s03) — exit 0
+git status --short (in /tmp/rs/p/s03) — exit 0
+git log --oneline | head (in /tmp/rs/p/s03) — exit 0
+python3 /tmp/rs/p/s03.plugin/bin/door.py --check implement-task --project /tmp/rs/p/s03 --task task/fees/compute-late-fee — exit 0
+python3 /tmp/rs/p/s03.plugin/bin/door.py --check review-change --project /tmp/rs/p/s03 --task task/fees/compute-late-fee — exit 1
+python3 /tmp/rs/p/s03.plugin/bin/handoff.py --prepare --skill plan-work --project /tmp/rs/p/s03 --slug lending --language pt-BR — exit 0
+python3 /tmp/rs/p/s03.plugin/bin/handoff.py --prepare --skill implement-task --project /tmp/rs/p/s03 --slug lending --language pt-BR — exit 0
+ls /tmp/rs/p/s03.plugin/schemas | head — exit 0
+python3 -c (print /tmp/rs/p/s03.plugin/schemas/handoff.json) — exit 0
+python3 /tmp/rs/p/s03.plugin/bin/handoff.py --prepare --skill plan-work --project /tmp/rs/p/s03 --slug lending --language pt-BR > skeleton (first written to /tmp/rs/o/s03-skel.json by mistake) — exit 0
+mkdir -p /tmp/rs/scratch-s03 && mv /tmp/rs/o/s03-skel.json /tmp/rs/scratch-s03/skel.json && grep report — exit 0
+python3 /tmp/rs/p/s03.plugin/bin/handoff.py --save-report /tmp/rs/p/s03/.git/siegard/handoff/20261115T180035Z-plan-work.md < report text — exit 0
+python3 - (fill empty fields of the skeleton into /tmp/rs/scratch-s03/record.json) — exit 0
+python3 /tmp/rs/p/s03.plugin/bin/handoff.py --render /tmp/rs/scratch-s03/record.json — exit 0
+python3 /tmp/rs/p/s03.plugin/bin/handoff.py --render /tmp/rs/scratch-s03/record.json > /tmp/rs/o/s03/report.md — exit 0

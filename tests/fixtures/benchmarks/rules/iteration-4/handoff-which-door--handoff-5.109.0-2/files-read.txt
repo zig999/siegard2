@@ -1,0 +1,3 @@
+/tmp/rs/prompts/s06.txt
+/tmp/rs/p/s06.rules.md
+/tmp/rs/p/s06.plugin/schemas/handoff.json
