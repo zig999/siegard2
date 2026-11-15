@@ -1,0 +1,4 @@
+/tmp/rd/prompts/d07.txt
+/tmp/rd/p/d07.rules.md
+/tmp/rd/p/d07/siegard.json
+/tmp/rd/o/d07/report.md

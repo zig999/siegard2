@@ -1,0 +1,21 @@
+cat /tmp/rh/p/h06.rules.md	0
+ls /tmp/rh/p/h06.plugin/bin	0
+git status --porcelain -- app	0
+python3 /tmp/rh/p/h06.plugin/bin/handoff.py --help	0
+python3 /tmp/rh/p/h06.plugin/bin/door.py --help	0
+ls -a	0
+cat siegard.json	0
+git log --oneline | head	0
+git diff --stat -- app/lending/loans.py	0
+python3 /tmp/rh/p/h06.plugin/bin/handoff.py --prepare --skill implement-task --project . --slug lending --target app --file app/lending/fees.py --file app/tests/test_fees.py	0
+ls /tmp/rh/p/h06.plugin/schemas	0
+python3 -c (print schemas/handoff.json)	0
+python3 /tmp/rh/p/h06.plugin/bin/door.py --check commit --project . --slug lending --file app/lending/fees.py --file app/tests/test_fees.py	0
+python3 -c (print x- keys of schemas/handoff.json)	0
+python3 /tmp/rh/p/h06.plugin/bin/handoff.py --save-report /tmp/rh/p/h06/.git/siegard/handoff/20261115T163515Z-implement-task.md	0
+cat > /tmp/rh/o/h06/record.json (heredoc)	0
+python3 /tmp/rh/p/h06.plugin/bin/handoff.py --render /tmp/rh/o/h06/record.json	1
+python3 - (edit record.json fields)	0
+python3 /tmp/rh/p/h06.plugin/bin/handoff.py --render /tmp/rh/o/h06/record.json	1
+python3 - (edit record.json fields)	0
+python3 /tmp/rh/p/h06.plugin/bin/handoff.py --render /tmp/rh/o/h06/record.json	0

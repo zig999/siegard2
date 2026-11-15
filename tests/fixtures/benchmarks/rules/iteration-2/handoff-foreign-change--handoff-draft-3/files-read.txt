@@ -1,0 +1,5 @@
+/tmp/rh/prompts/h05.txt
+/tmp/rh/p/h05.rules.md
+/tmp/rh/p/h05/siegard.json
+/tmp/rh/p/h05.plugin/schemas/handoff.json
+/tmp/rh/o/h05/record.json

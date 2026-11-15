@@ -1,0 +1,18 @@
+cat /tmp/rd/p/d10.rules.md	exit 0
+ls /tmp/rd/p/d10.plugin/bin/	exit 0
+cd /tmp/rd/p/d10 && ls -la	exit 0
+cat siegard.json	exit 0
+git status --short	exit 0
+git log --oneline | head	exit 0
+python3 /tmp/rd/p/d10.plugin/bin/door.py --help	exit 0
+python3 /tmp/rd/p/d10.plugin/bin/handoff.py --help	exit 0
+python3 /tmp/rd/p/d10.plugin/bin/door.py --check review-change --project . --task task/fees/compute-late-fee	exit 1
+python3 /tmp/rd/p/d10.plugin/bin/door.py --check implement-task --project . --task task/fees/compute-late-fee	exit 0
+python3 /tmp/rd/p/d10.plugin/bin/handoff.py --prepare --skill plan-work --project . --slug lending --target app --language pt-BR	exit 0
+ls /tmp/rd/p/d10.plugin/schemas/	exit 0
+python3 -c "<print schemas/handoff.json>" | head -300	exit 0
+cat > /tmp/rd/o_d10_report.txt (heredoc)	exit 0
+python3 /tmp/rd/p/d10.plugin/bin/handoff.py --save-report /tmp/rd/p/d10/.git/siegard/handoff/20261115T171910Z-plan-work.md < /tmp/rd/o_d10_report.txt	exit 0
+cat > /tmp/rd/o_d10_record.json (heredoc)	exit 0
+python3 /tmp/rd/p/d10.plugin/bin/handoff.py --render /tmp/rd/o_d10_record.json	exit 0
+python3 /tmp/rd/p/d10.plugin/bin/handoff.py --render /tmp/rd/o_d10_record.json > /tmp/rd/o/d10/report.md	exit 0

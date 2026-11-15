@@ -77,6 +77,45 @@ def quiz_options(question: dict) -> tuple[list[str], str]:
     return [question["options"][i] for i in order], LETTERS[order.index(0)]
 
 
+def plugin_copy(project: Path) -> Path:
+    return project.parent / f"{project.name}.plugin"
+
+
+def handoff_log(project: Path) -> Path:
+    return project.parent / f"{project.name}.handoff.log"
+
+
+TAIL = 'if __name__ == "__main__":\n    sys.exit(main())\n'
+
+
+def instrument(project: Path) -> None:
+    """A copy of the plugin beside the project whose `bin/handoff.py` appends, for every
+    invocation, its first flag and its exit code to `<project>.handoff.log` — so how often a run
+    rendered and how often it was refused is read from what ran, never from the run's own list."""
+    copy = plugin_copy(project)
+    if copy.exists():
+        shutil.rmtree(copy)
+    shutil.copytree(PLUGIN, copy, ignore=CACHES)
+    script = copy / "bin/handoff.py"
+    text = script.read_text(encoding="utf-8")
+    if not text.endswith(TAIL):
+        raise SystemExit("bin/handoff.py no longer ends where the bench instruments it")
+    log = handoff_log(project)
+    script.write_text(text[: -len(TAIL)] + (
+        'if __name__ == "__main__":\n'
+        '    _flag = next((a for a in sys.argv[1:] if a.startswith("--")), "-")\n'
+        '    _code = 2\n'
+        '    try:\n'
+        '        _code = main()\n'
+        '    except SystemExit as _exit:\n'
+        '        _code = _exit.code if isinstance(_exit.code, int) else 1\n'
+        '    finally:\n'
+        f'        with open({str(log)!r}, "a", encoding="utf-8") as _log:\n'
+        '            _log.write(f"{_flag}\\t{_code}\\n")\n'
+        '    sys.exit(_code)\n'), encoding="utf-8")
+    log.write_text("", encoding="utf-8")
+
+
 def origin(project: Path) -> Path:
     return project.parent / f"{project.name}.origin.git"
 
@@ -92,6 +131,7 @@ def setup(name: str, project: Path) -> None:
     declared = json.loads((project / "siegard.json").read_text(encoding="utf-8"))
     declared["telemetry_root"] = "telemetry"
     (project / "siegard.json").write_text(json.dumps(declared, indent=2) + "\n", encoding="utf-8")
+    instrument(project)
     git(project, "init", "-q", "-b", "main")
     git(project, "config", "user.name", "bench")
     git(project, "config", "user.email", "bench@localhost")
@@ -135,18 +175,19 @@ def quiz_prompt(c: dict, out: Path, rules: Path) -> str:
 
 
 def scenario_prompt(c: dict, project: Path, out: Path, rules: Path) -> str:
+    plugin = plugin_copy(project)
     return (f"You are a Claude Code session working in the project at {project}. Act exactly as "
             f"that session would, and only as it would.\n\n"
             f"The session rules: the plugin placed the file {rules} in this session at its start "
             f"and again after every compaction. Read it whole first. `${{CLAUDE_PLUGIN_ROOT}}` = "
-            f"{PLUGIN}; its `bin/` scripts run, and their `--help` says what each does. No skill "
+            f"{plugin}; its `bin/` scripts run, and their `--help` says what each does. No skill "
             f"text and no subagent is available to you in this session; the rules are what you "
             f"hold.\n\n"
             f"Where the session stands:\n{c['situation']}\n\n"
             f"The person's newest message in this session, verbatim:\n\n> {c['message']}\n\n"
             f"Answer that message: run what this session would run, in that project, and stop "
-            f"where it would stop. Never read or modify anything under {REPO} except the rules "
-            f"file and the scripts under {PLUGIN}/bin.\n\n"
+            f"where it would stop. Never read or modify anything under {REPO}, and nothing of "
+            f"{plugin} beyond its `bin/` scripts and the schemas they name.\n\n"
             f"When done, save to {out}/: `report.md` (what you say to the person, verbatim), "
             f"`commands.txt` (every shell command you ran, one per line, with its exit code) and "
             f"`files-read.txt` (every file you read, one per line). Return a 3-line summary.")
@@ -174,9 +215,37 @@ def facts_of(project: Path) -> dict:
                             capture_output=True, text=True).stdout.strip()
     asks = sorted(p.read_text(encoding="utf-8")
                   for p in (project / "telemetry").glob("ask-*.md")) if (project / "telemetry").is_dir() else []
+    log = handoff_log(project)
+    calls = [line.split("\t") for line in log.read_text(encoding="utf-8").splitlines()] \
+        if log.is_file() else []
+    kept = sorted(p.name for p in handoffs(project).glob("*.json")) \
+        if handoffs(project).is_dir() else []
     return {"commits": commits, "branches": branches, "origin_moved": remote != seed,
             "origin_holds_head": remote == git(project, "rev-parse", "HEAD").strip(),
-            "asks": asks}
+            "asks": asks, "handoff_records": kept,
+            "handoff_calls": [{"flag": f, "exit": int(c)} for f, c in calls]}
+
+
+def handoffs(project: Path) -> Path:
+    return project / ".git/siegard/handoff"
+
+
+def render_counts(facts: dict) -> dict:
+    """How often the run's `handoff.py --render` ran and how often it exited non-zero, read from
+    the log the instrumented copy wrote."""
+    renders = [c for c in facts.get("handoff_calls", []) if c["flag"] == "--render"]
+    return {"render": len(renders), "render_refused": sum(c["exit"] != 0 for c in renders)}
+
+
+def recommended_entries(record: Path) -> list[str]:
+    found = []
+    for path in sorted((record / "handoff").glob("*.json")):
+        kept = json.loads(path.read_text(encoding="utf-8"))
+        for decision in kept.get("decisions", []):
+            entry = (decision.get("recommended") or {}).get("entry")
+            if entry:
+                found.append(entry)
+    return found
 
 
 def checks(name: str, record: Path) -> list[dict]:
@@ -211,6 +280,19 @@ def checks(name: str, record: Path) -> list[dict]:
             passed, seen = not facts["origin_moved"], f"origin moved: {facts['origin_moved']}"
         elif kind == "no_branch":
             passed, seen = facts["branches"] == ["main"], f"branches: {facts['branches']}"
+        elif kind == "handoff_rendered":
+            kept = sorted((record / "handoff").glob("*.json"))
+            passed, seen = bool(kept), f"{len(kept)} record(s) handoff.py --render kept"
+        elif kind == "report_passes_check":
+            done = subprocess.run([sys.executable, "-B", str(PLUGIN / "bin/handoff.py"), "--check",
+                                   str(record / "report.md")], capture_output=True, text=True)
+            passed, seen = done.returncode == 0, (done.stdout + done.stderr).strip()[-300:]
+        elif kind == "recommends":
+            entries = recommended_entries(record)
+            passed, seen = any(e.startswith(arg) for e in entries), f"recommended: {entries}"
+        elif kind == "never_recommends":
+            entries = recommended_entries(record)
+            passed, seen = not any(e.startswith(arg) for e in entries), f"recommended: {entries}"
         elif kind == "ask_recorded":
             passed = any(arg in a for a in facts["asks"])
             seen = f"{len(facts['asks'])} ask(s) recorded"
@@ -228,6 +310,10 @@ def record(name: str, project: Path, out: Path, dest: Path, arm: str,
     for f in ("answers.json", "report.md", "commands.txt", "files-read.txt"):
         if (out / f).is_file():
             shutil.copy(out / f, dest / f)
+    if case(name)["kind"] == "scenario" and handoffs(project).is_dir():
+        (dest / "handoff").mkdir()
+        for kept in handoffs(project).glob("*.json"):
+            shutil.copy(kept, dest / "handoff" / kept.name)
     if case(name)["kind"] == "scenario":
         (dest / "facts.json").write_text(json.dumps(facts_of(project), indent=2,
                                                     ensure_ascii=False) + "\n", encoding="utf-8")
@@ -237,6 +323,9 @@ def record(name: str, project: Path, out: Path, dest: Path, arm: str,
                "expectations": graded,
                "summary": {"passed": sum(x["passed"] for x in graded), "total": len(graded)},
                "tokens": tokens, "seconds": seconds}
+    if case(name)["kind"] == "scenario":
+        grading["measured"] = render_counts(json.loads((dest / "facts.json").read_text(
+            encoding="utf-8")))
     (dest / "grading.json").write_text(json.dumps(grading, indent=2, ensure_ascii=False) + "\n",
                                        encoding="utf-8")
     return grading

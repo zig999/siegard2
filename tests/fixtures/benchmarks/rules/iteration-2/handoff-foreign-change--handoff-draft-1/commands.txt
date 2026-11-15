@@ -1,0 +1,23 @@
+cat /tmp/rh/p/h07.rules.md	0
+ls /tmp/rh/p/h07.plugin/bin	0
+cd /tmp/rh/p/h07; ls -la	0
+git status --porcelain -- app	0
+cat siegard.json	0
+python3 /tmp/rh/p/h07.plugin/bin/door.py --help	0
+python3 /tmp/rh/p/h07.plugin/bin/handoff.py --help	0
+git diff --stat -- app/lending/loans.py	0
+git log --oneline -5	0
+python3 /tmp/rh/p/h07.plugin/bin/handoff.py --prepare --skill implement-task --project /tmp/rh/p/h07 --slug lending --target app	0
+ls /tmp/rh/p/h07.plugin/schemas	0
+python3 -c "import json;s=json.load(open('schemas/handoff.json'));print(json.dumps(s,indent=1))" | head -300	0
+python3 /tmp/rh/p/h07.plugin/bin/door.py --check commit --project /tmp/rh/p/h07 --slug lending --file app/lending/fees.py --file app/tests/test_fees.py	0
+python3 /tmp/rh/p/h07.plugin/bin/grant.py --help | head -40	0
+ls .git/siegard	0
+ls .git/siegard/handoff	0
+ls delivery	2
+ls work/lending	0
+python3 /tmp/rh/p/h07.plugin/bin/handoff.py --save-report /tmp/rh/p/h07/.git/siegard/handoff/20261115T163515Z-implement-task.md	0
+python3 /tmp/rh/p/h07.plugin/bin/handoff.py --render /tmp/rh/o/h07/record.json	1
+python3 (edit record.json to drop file names and shorten block 1)	0
+python3 /tmp/rh/p/h07.plugin/bin/handoff.py --render /tmp/rh/o/h07/record.json	0
+python3 /tmp/rh/p/h07.plugin/bin/handoff.py --render /tmp/rh/o/h07/record.json > /tmp/rh/o/h07/report.md	0

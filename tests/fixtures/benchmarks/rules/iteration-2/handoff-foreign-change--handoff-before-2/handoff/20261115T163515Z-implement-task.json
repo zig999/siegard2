@@ -1,0 +1,52 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "en",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/rh/p/h06",
+    "slug": "lending"
+  },
+  "decisions": [
+    {
+      "ask": "Nothing is committed: app/lending holds a loans change this task did not make. How do I commit the late-fee code and test?",
+      "recommended": {
+        "door": "Commit only the late-fee code and its test; the loans change stays uncommitted.",
+        "why": "A judgment: it keeps a change I cannot attribute untouched, and one revert undoes it.",
+        "reverses_if": "the loans change belongs to this task",
+        "reply_word": "files"
+      },
+      "relation": "one-of",
+      "others": [
+        {
+          "reply_word": "wait",
+          "what_it_does": "You settle the loans change yourself; then I rerun the task's commit."
+        },
+        {
+          "reply_word": "review",
+          "what_it_does": "Excluded: review refuses, no delivery record exists yet.",
+          "entry": "/review-change",
+          "check": {
+            "answer": "refuses",
+            "refused": [
+              "deliver.py --check /tmp/rh/p/h06/delivery/lending /tmp/rh/p/h06/work/lending /tmp/rh/p/h06/app /tmp/rh/p/h06/spec exits 2",
+              "/tmp/rh/p/h06/delivery/lending/implementation holds no record — nothing is delivered, so a review has no subject"
+            ]
+          }
+        },
+        {
+          "reply_word": "reconcile",
+          "what_it_does": "Re-reads named files; commits nothing here.",
+          "entry": "/reconcile",
+          "check": {
+            "answer": "not checked",
+            "why": "/reconcile reads the file set and free slug `trace.py --reconcile-set` prints, and no script here decides what it refuses"
+          }
+        }
+      ],
+      "if_none": "Nothing is committed; all three changes stay as they are."
+    }
+  ],
+  "report": "/tmp/rh/p/h06/.git/siegard/handoff/20261115T163515Z-implement-task.md"
+}

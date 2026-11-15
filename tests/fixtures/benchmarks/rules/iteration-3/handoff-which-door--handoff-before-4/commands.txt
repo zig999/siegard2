@@ -1,0 +1,11 @@
+ls /tmp/rd/p/d08.plugin/bin/; ls -la /tmp/rd/p/d08; cd /tmp/rd/p/d08 && git status --short && git log --oneline | head  # exit 0
+cd /tmp/rd/p/d08 && cat siegard.json && find work spec app -type f | head -50; python3 /tmp/rd/p/d08.plugin/bin/door.py --help  # exit 0
+python3 /tmp/rd/p/d08.plugin/bin/door.py --check review-change --project . --task task/fees/compute-late-fee  # exit 1
+python3 /tmp/rd/p/d08.plugin/bin/door.py --check implement-task --project . --task task/fees/compute-late-fee  # exit 0
+python3 /tmp/rd/p/d08.plugin/bin/handoff.py --help  # exit 0
+python3 /tmp/rd/p/d08.plugin/bin/handoff.py --prepare --skill plan-work --project /tmp/rd/p/d08 --slug lending --language pt-BR  # exit 0
+cat /tmp/rd/p/d08.plugin/schemas/handoff.json  # exit 0
+python3 /tmp/rd/p/d08.plugin/bin/handoff.py --save-report /tmp/rd/p/d08/.git/siegard/handoff/20261115T171912Z-plan-work.md < (full report on stdin)  # exit 0
+mkdir -p /tmp/rd/o/d08; cat > /tmp/rd/o/d08/record.json <<EOF ... (handoff record)  # exit 0
+python3 /tmp/rd/p/d08.plugin/bin/handoff.py --render /tmp/rd/o/d08/record.json  # exit 0
+cd /tmp/rd/p/d08 && git status --short  # exit 0

@@ -904,8 +904,9 @@ import bench_rules  # noqa: E402
 RULES = BENCH / "rules"
 
 
-def rules_runs() -> list[Path]:
-    return sorted(p for p in (RULES / "iteration-1").iterdir() if p.is_dir())
+def rules_runs(iteration: str = "") -> list[Path]:
+    iterations = [RULES / iteration] if iteration else sorted(RULES.glob("iteration-*"))
+    return sorted(p for it in iterations for p in it.iterdir() if p.is_dir())
 
 
 def test_the_rules_reading_quiz_has_one_answer_per_question_spread_over_the_letters():
@@ -915,9 +916,9 @@ def test_the_rules_reading_quiz_has_one_answer_per_question_spread_over_the_lett
     assert keys == set("abcd")
 
 
-@pytest.mark.parametrize("run", [p.name for p in rules_runs()])
+@pytest.mark.parametrize("run", [f"{p.parent.name}/{p.name}" for p in rules_runs()])
 def test_each_rules_run_grades_as_recomputed_from_its_record(run):
-    record = RULES / "iteration-1" / run
+    record = RULES / run
     grading = json.loads((record / "grading.json").read_text(encoding="utf-8"))
     recomputed = bench_rules.checks(grading["case"], record)
     assert [(e["text"], e["passed"]) for e in recomputed] == \
@@ -930,8 +931,48 @@ def test_the_commit_bullet_rewrite_does_not_separate_from_the_5_107_0_text():
     """Iteration 1 holds the 5.107.0 commit bullet against a rewrite split into scope,
     authorization and blast radius: every run of both arms met every expectation, the quiz and the
     four scenarios alike, so the rewrite bought nothing measured and was declined."""
-    gradings = [json.loads((r / "grading.json").read_text(encoding="utf-8")) for r in rules_runs()]
+    gradings = [json.loads((r / "grading.json").read_text(encoding="utf-8"))
+                for r in rules_runs("iteration-1")]
     for arm in ("before", "draft"):
         held = [g for g in gradings if g["arm"] == arm]
         assert len(held) == 10
         assert all(e["passed"] for g in held for e in g["expectations"]), arm
+
+
+def test_the_handoff_bullets_rewrite_does_not_lower_the_refusals_in_both_cases():
+    """Iteration 2 holds the 5.108.0 report and handoff bullets against a rewrite into labelled
+    bullets with the handoff's four steps numbered. The criterion fixed before the runs was fewer
+    `--render` refusals in both cases and no expectation passed less often. Over the foreign
+    change both arms were refused 5 times in 3 runs, so the rewrite was declined; over the choice
+    of a door, one 5.108.0 run composed its answer and rendered nothing, and every draft run
+    rendered unrefused."""
+    gradings = [json.loads((r / "grading.json").read_text(encoding="utf-8"))
+                for r in rules_runs("iteration-2")]
+    refused = {}
+    for g in gradings:
+        key = (g["case"], g["arm"])
+        refused[key] = refused.get(key, 0) + g["measured"]["render_refused"]
+    assert refused[("handoff-foreign-change", "handoff-before")] == 5
+    assert refused[("handoff-foreign-change", "handoff-draft")] == 5
+    assert refused[("handoff-which-door", "handoff-before")] == 1
+    assert refused[("handoff-which-door", "handoff-draft")] == 0
+    for g in gradings:
+        failed = [e["text"] for e in g["expectations"] if not e["passed"]]
+        if g["case"] == "handoff-which-door" and g["arm"] == "handoff-before":
+            assert failed in ([], ["handoff_rendered", "recommends:/implement-task"])
+        else:
+            assert failed == [], (g["case"], g["arm"], failed)
+
+
+def test_the_door_choice_misses_fall_on_the_5_108_0_text_over_eight_runs_a_side():
+    """Iterations 2 and 3 over `handoff-which-door`: two 5.108.0 runs composed free text and
+    rendered nothing, no draft run failed an expectation, and the draft was refused once to the
+    5.108.0 text's four. Recorded as read, not shipped."""
+    gradings = [json.loads((r / "grading.json").read_text(encoding="utf-8"))
+                for it in ("iteration-2", "iteration-3") for r in rules_runs(it)]
+    door = [g for g in gradings if g["case"] == "handoff-which-door"]
+    for arm, failing, refused in (("handoff-before", 2, 4), ("handoff-draft", 0, 1)):
+        held = [g for g in door if g["arm"] == arm]
+        assert len(held) == 8
+        assert sum(any(not e["passed"] for e in g["expectations"]) for g in held) == failing
+        assert sum(g["measured"]["render_refused"] for g in held) == refused

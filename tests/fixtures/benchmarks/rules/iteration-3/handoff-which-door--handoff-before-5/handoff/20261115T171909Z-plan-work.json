@@ -1,0 +1,45 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/rd/p/d09",
+    "slug": "lending"
+  },
+  "decisions": [
+    {
+      "ask": "Implementar primeiro; a revisão vem depois. Nada foi executado.",
+      "recommended": {
+        "door": "Implementar a tarefa da multa por atraso, quando você mandar.",
+        "why": "A revisão está excluída: recusa rodar porque a tarefa não tem registro de implementação, não há o que revisar.",
+        "reverses_if": "a tarefa já tivesse sido entregue, com o registro de implementação em delivery/lending/implementation/fees/compute-late-fee.md",
+        "reply_word": "implementar",
+        "entry": "/implement-task",
+        "check": {
+          "answer": "accepts",
+          "refused": []
+        }
+      },
+      "relation": "in-order",
+      "others": [
+        {
+          "reply_word": "revisar",
+          "what_it_does": "Revisar a entrega; hoje recusa rodar, pois nada foi entregue. Vem depois.",
+          "entry": "/review-change",
+          "check": {
+            "answer": "refuses",
+            "refused": [
+              "deliver.py --check /tmp/rd/p/d09/delivery/lending /tmp/rd/p/d09/work/lending /tmp/rd/p/d09/app /tmp/rd/p/d09/spec exits 2",
+              "task/fees/compute-late-fee holds no implementation record: /tmp/rd/p/d09/delivery/lending/implementation/fees/compute-late-fee.md does not exist — a review of a task nothing delivered has no subject"
+            ]
+          }
+        }
+      ],
+      "if_none": "Nada muda: a tarefa segue não entregue.",
+      "invocation": "/implement-task task/fees/compute-late-fee"
+    }
+  ],
+  "report": "/tmp/rd/p/d09/.git/siegard/handoff/20261115T171909Z-plan-work.md"
+}

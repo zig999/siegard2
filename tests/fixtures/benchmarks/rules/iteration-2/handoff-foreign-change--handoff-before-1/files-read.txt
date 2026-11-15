@@ -1,0 +1,5 @@
+/tmp/rh/prompts/h03.txt
+/tmp/rh/p/h03.rules.md
+/tmp/rh/p/h03/siegard.json
+/tmp/rh/p/h03/app/lending/loans.py (diff only)
+/tmp/rh/p/h03.plugin/schemas/handoff.json

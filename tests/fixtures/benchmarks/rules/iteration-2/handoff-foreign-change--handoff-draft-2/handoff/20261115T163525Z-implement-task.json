@@ -1,0 +1,49 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "en",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/rh/p/h11",
+    "slug": "task/fees/compute-late-fee"
+  },
+  "decisions": [
+    {
+      "ask": "The loans module in app/lending changed during the late-fee task; I did not write that change, and nothing is committed.",
+      "recommended": {
+        "door": "You commit, set aside or revert the loans change, your choice, then reply go and I commit the fees module and test.",
+        "why": "The commit takes the whole app folder, clean when I began, and stops rather than take a change it did not make.",
+        "reverses_if": "the loans change is part of this task's own writing",
+        "reply_word": "go"
+      },
+      "relation": "one-of",
+      "others": [
+        {
+          "reply_word": "reconcile",
+          "what_it_does": "Re-reads files against the specification; the loans change stays, so no commit.",
+          "entry": "/reconcile",
+          "check": {
+            "answer": "not checked",
+            "why": "/reconcile reads the file set and free slug `trace.py --reconcile-set` prints, and no script here decides what it refuses"
+          }
+        },
+        {
+          "reply_word": "review",
+          "what_it_does": "Excluded: nothing is recorded delivered for this task yet.",
+          "entry": "/review-change",
+          "check": {
+            "answer": "refuses",
+            "refused": [
+              "plan.py --check /tmp/rh/p/h11/work/task/fees/compute-late-fee /tmp/rh/p/h11/spec exits 2",
+              "deliver.py --check /tmp/rh/p/h11/delivery/task/fees/compute-late-fee /tmp/rh/p/h11/work/task/fees/compute-late-fee /tmp/rh/p/h11/app /tmp/rh/p/h11/spec exits 2",
+              "/tmp/rh/p/h11/delivery/task/fees/compute-late-fee/implementation holds no record — nothing is delivered, so a review has no subject"
+            ]
+          }
+        }
+      ],
+      "if_none": "The fees module and test stay uncommitted."
+    }
+  ],
+  "report": "/tmp/rh/p/h11/.git/siegard/handoff/20261115T163525Z-implement-task.md"
+}

@@ -1,0 +1,2 @@
+/tmp/rh/prompts/h02.txt
+/tmp/rh/p/h02.rules.md

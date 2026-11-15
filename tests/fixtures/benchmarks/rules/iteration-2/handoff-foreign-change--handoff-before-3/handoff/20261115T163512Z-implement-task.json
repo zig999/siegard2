@@ -1,0 +1,59 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "en",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/rh/p/h01",
+    "slug": "lending"
+  },
+  "decisions": [
+    {
+      "ask": "The loans module in app/lending holds a change this task did not make (it adds MAX_RENEWALS = 1), so the late-fee commit is stopped.",
+      "settles": "Only you know whose change that is: committing the two new files alone assumes it belongs to other work; clearing it first assumes it does not.",
+      "relation": "one-of",
+      "others": [
+        {
+          "reply_word": "mine",
+          "what_it_does": "I commit only the new fees module and its test, by path; the loans change stays uncommitted."
+        },
+        {
+          "reply_word": "cleared",
+          "what_it_does": "You commit or discard the loans change and tell me; I then commit app with only this task's files."
+        }
+      ],
+      "if_none": "Nothing is committed; all three changes stay as they are."
+    },
+    {
+      "ask": "After the commit, the next steps the task's own report names.",
+      "relation": "one-of",
+      "others": [
+        {
+          "reply_word": "reconcile",
+          "what_it_does": "Re-reads named files against the specification; nothing in this task calls for it, and no check was run for it.",
+          "entry": "/reconcile",
+          "check": {
+            "answer": "not checked",
+            "why": "/reconcile reads the file set and free slug `trace.py --reconcile-set` prints, and no script here decides what it refuses"
+          }
+        },
+        {
+          "reply_word": "review",
+          "what_it_does": "Excluded for now: its own check refuses, the delivery folder for lending holds no implementation record yet.",
+          "entry": "/review-change",
+          "check": {
+            "answer": "refuses",
+            "refused": [
+              "deliver.py --check /tmp/rh/p/h01/delivery/lending /tmp/rh/p/h01/work/lending /tmp/rh/p/h01/app /tmp/rh/p/h01/spec exits 2",
+              "/tmp/rh/p/h01/delivery/lending/implementation holds no record — nothing is delivered, so a review has no subject"
+            ]
+          }
+        }
+      ],
+      "if_none": "The task stays undelivered and unreviewed.",
+      "settles": "Neither is a next step until the commit lands: the review needs this task's delivery committed, and nothing on disk names files to re-read."
+    }
+  ],
+  "report": "/tmp/rh/p/h01/.git/siegard/handoff/20261115T163512Z-implement-task.md"
+}

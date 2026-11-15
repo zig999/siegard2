@@ -1,0 +1,18 @@
+cat /tmp/rh/p/h01.rules.md; ls /tmp/rh/p/h01.plugin/bin	0
+cd /tmp/rh/p/h01 && git status --porcelain -- app	0
+cat siegard.json	0
+git diff -- app/lending/loans.py	0
+git log --oneline | head -5	0
+python3 /tmp/rh/p/h01.plugin/bin/handoff.py --help	0
+python3 /tmp/rh/p/h01.plugin/bin/door.py --help	0
+python3 /tmp/rh/p/h01.plugin/bin/door.py --check commit --project . --slug lending --file app/lending/fees.py --file app/tests/test_fees.py	0
+python3 /tmp/rh/p/h01.plugin/bin/handoff.py --prepare --skill implement-task --project . --slug lending --target app	0
+ls /tmp/rh/p/h01.plugin/schemas/; python3 -c (print /tmp/rh/p/h01.plugin/schemas/handoff.json)	0
+python3 /tmp/rh/p/h01.plugin/bin/handoff.py --save-report /tmp/rh/p/h01/.git/siegard/handoff/20261115T163512Z-implement-task.md < (full report on stdin)	0
+mkdir -p /tmp/rh/o/h01 && cat > /tmp/rh/o/h01/record.json (handoff record)	0
+python3 /tmp/rh/p/h01.plugin/bin/handoff.py --render /tmp/rh/o/h01/record.json	1
+python3 - (add settles to /tmp/rh/o/h01/record.json)	0
+python3 /tmp/rh/p/h01.plugin/bin/handoff.py --render /tmp/rh/o/h01/record.json	1
+python3 - (rephrase fields in /tmp/rh/o/h01/record.json)	0
+python3 /tmp/rh/p/h01.plugin/bin/handoff.py --render /tmp/rh/o/h01/record.json	0
+python3 /tmp/rh/p/h01.plugin/bin/handoff.py --render /tmp/rh/o/h01/record.json > /tmp/rh/o/h01/report.md	0

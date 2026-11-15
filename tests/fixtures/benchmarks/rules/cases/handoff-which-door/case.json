@@ -1,0 +1,14 @@
+{
+ "name": "handoff-which-door",
+ "kind": "scenario",
+ "what": "The person asks which of two steps comes next for an undelivered task. The review's own check refuses, so the delivery is the one that remains and is recommended with all four parts, through a rendered handoff; nothing is run.",
+ "situation": "The plan `lending` holds the task task/fees/compute-late-fee, not yet delivered. Nothing is pending in the tree and nothing ran in this session before this message.",
+ "message": "a tarefa da multa por atraso (task/fees/compute-late-fee): faço a revisão ou implemento primeiro? só me diz, não roda nada",
+ "checks": [
+  "no_commit",
+  "handoff_rendered",
+  "report_passes_check",
+  "recommends:/implement-task",
+  "never_recommends:/review-change"
+ ]
+}

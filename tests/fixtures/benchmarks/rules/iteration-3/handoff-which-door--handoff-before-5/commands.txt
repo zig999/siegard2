@@ -1,0 +1,11 @@
+cat /tmp/rd/p/d09.rules.md; echo ---; ls /tmp/rd/p/d09.plugin/bin; ls -la /tmp/rd/p/d09 — exit 0
+cd /tmp/rd/p/d09; cat siegard.json; find . -path ./.git -prune -o -type f -print; git log --oneline | head; git status --short; python3 /tmp/rd/p/d09.plugin/bin/door.py --help; python3 /tmp/rd/p/d09.plugin/bin/handoff.py --help — exit 0
+python3 /tmp/rd/p/d09.plugin/bin/door.py --check implement-task --project . --task task/fees/compute-late-fee — exit 0
+python3 /tmp/rd/p/d09.plugin/bin/door.py --check review-change --project . --task task/fees/compute-late-fee — exit 1
+ls /tmp/rd/p/d09.plugin/schemas/; python3 -c (print /tmp/rd/p/d09.plugin/schemas/handoff.json) — exit 0
+python3 -c (print x-* keys, $defs.entry and $defs.check of /tmp/rd/p/d09.plugin/schemas/handoff.json) — exit 0
+python3 /tmp/rd/p/d09.plugin/bin/handoff.py --prepare --skill plan-work --project /tmp/rd/p/d09 --slug lending --language pt-BR — exit 0
+python3 /tmp/rd/p/d09.plugin/bin/handoff.py --save-report /tmp/rd/p/d09/.git/siegard/handoff/20261115T171909Z-plan-work.md (report on stdin) — exit 0
+cat > /tmp/rd/d09-record.json (record); python3 /tmp/rd/p/d09.plugin/bin/handoff.py --render /tmp/rd/d09-record.json — exit 1 (block 751 > 700)
+python3 - (shorten prose fields of /tmp/rd/d09-record.json); python3 /tmp/rd/p/d09.plugin/bin/handoff.py --render /tmp/rd/d09-record.json — exit 0
+python3 /tmp/rd/p/d09.plugin/bin/handoff.py --render /tmp/rd/d09-record.json > /tmp/rd/o/d09/report.md — exit 0

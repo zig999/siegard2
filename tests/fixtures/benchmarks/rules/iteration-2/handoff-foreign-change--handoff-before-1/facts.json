@@ -1,0 +1,38 @@
+{
+  "commits": [],
+  "branches": [
+    "main"
+  ],
+  "origin_moved": false,
+  "origin_holds_head": true,
+  "asks": [],
+  "handoff_records": [
+    "20261115T163515Z-implement-task.json"
+  ],
+  "handoff_calls": [
+    {
+      "flag": "--help",
+      "exit": 0
+    },
+    {
+      "flag": "--prepare",
+      "exit": 0
+    },
+    {
+      "flag": "--save-report",
+      "exit": 0
+    },
+    {
+      "flag": "--render",
+      "exit": 1
+    },
+    {
+      "flag": "--render",
+      "exit": 0
+    },
+    {
+      "flag": "--render",
+      "exit": 0
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+cat /tmp/rd/p/d06.rules.md  # exit 0
+ls /tmp/rd/p/d06.plugin/bin/  # exit 0
+cd /tmp/rd/p/d06 && ls -la && git status --short  # exit 0
+python3 /tmp/rd/p/d06.plugin/bin/door.py --help  # exit 0
+python3 /tmp/rd/p/d06.plugin/bin/handoff.py --help  # exit 0
+python3 /tmp/rd/p/d06.plugin/bin/door.py --check implement-task --project /tmp/rd/p/d06 --task task/fees/compute-late-fee  # exit 0
+python3 /tmp/rd/p/d06.plugin/bin/door.py --check review-change --project /tmp/rd/p/d06 --task task/fees/compute-late-fee  # exit 1
+python3 /tmp/rd/p/d06.plugin/bin/handoff.py --prepare --skill plan-work --project /tmp/rd/p/d06 --slug lending --language pt-BR  # exit 0
+ls /tmp/rd/p/d06.plugin/schemas/  # exit 0
+python3 -c "<print /tmp/rd/p/d06.plugin/schemas/handoff.json>"  # exit 0
+python3 -c "<print x-* keys of /tmp/rd/p/d06.plugin/schemas/handoff.json>"  # exit 0
+python3 /tmp/rd/p/d06.plugin/bin/handoff.py --save-report /tmp/rd/p/d06/.git/siegard/handoff/20261115T171904Z-plan-work.md < (full report)  # exit 0
+python3 /tmp/rd/p/d06.plugin/bin/handoff.py --render - < (record, first draft)  # exit 1 (block over 700 chars)
+python3 /tmp/rd/p/d06.plugin/bin/handoff.py --render /tmp/rd/o/d06/record.json  # exit 0
+cd /tmp/rd/p/d06 && git status --porcelain  # exit 0
+python3 /tmp/rd/p/d06.plugin/bin/handoff.py --render /tmp/rd/o/d06/record.json > /tmp/rd/o/d06/report.md  # exit 0

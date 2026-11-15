@@ -1,0 +1,3 @@
+/tmp/rh/prompts/h04.txt
+/tmp/rh/p/h04.rules.md
+/tmp/rh/p/h04.plugin/schemas/handoff.json

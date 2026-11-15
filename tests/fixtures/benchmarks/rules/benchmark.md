@@ -74,3 +74,73 @@ held the rules, reproduced here as a scenario — or a draft at least as short t
 - In `foreign-change`, every run of both arms rendered its handoff only after three or four
   `handoff.py --render` refusals: four or five render lines in each `commands.txt`, the last
   accepted.
+
+## Iteration 2 — the report and handoff bullets, 5.108.0 against a draft (2026-11-15)
+
+The arms are `handoff-before` (the 5.108.0 text) and `handoff-draft`: the report bullet (343
+words) and the handoff bullet (154 words) rewritten as five labelled bullets — `Opening`,
+`Excluded options`, `Recommendation` with the judgment ladder numbered, `The person's own`, and
+`Handoff` with its four steps numbered (`--prepare`, `--save-report`, fill, `--render`) and one
+protocol, "every refusal names a field: rewrite that field and render again". Same content and
+the same `«…»` quotations: 497 → 521 words, 35 → 39 lines, 3,055 → 3,248 characters.
+
+From this iteration `setup` copies the plugin beside each project with its `bin/handoff.py`
+instrumented to append every invocation's flag and exit code to `<project>.handoff.log`; `facts.json`
+carries those calls and `grading.json` the count of `--render` calls and of those refused, read
+from what ran rather than from the run's own list. A kept handoff record is copied into the run.
+
+Cases: `handoff-foreign-change` (the foreign-change situation; expected: no commit, a handoff
+`--render` kept, `report.md` clean under `handoff.py --check`, `/review-change` never
+recommended) and `handoff-which-door` (the person asks whether to review or implement an
+undelivered task and says to run nothing; expected: no commit, a rendered handoff, clean under
+`--check`, `/implement-task` recommended, `/review-change` never recommended).
+
+Three runs per case per arm, 12 runs. Tokens are not recorded: the completion notices of this
+iteration repeated and crossed between runs, so no figure could be tied to its run.
+
+| Case | arm | expectations | `--render` refused / called, per run | refused, total |
+|---|---|---|---|---|
+| handoff-foreign-change | 5.108.0 | 4/4 ×3 | 1/3, 2/3, 2/4 | 5 |
+| handoff-foreign-change | draft | 4/4 ×3 | 1/3, 3/4, 1/2 | 5 |
+| handoff-which-door | 5.108.0 | 3/5, 5/5, 5/5 | 0/0, 1/2, 0/1 | 1 |
+| handoff-which-door | draft | 5/5 ×3 | 0/2, 0/1, 0/1 | 0 |
+
+**Declined.** The criterion fixed before the runs: fewer `--render` refusals in both cases and no
+expectation passed less often. Over the foreign change the arms tie at 5 refusals; the draft
+does not ship. Over the choice of a door the draft did better on three runs — one 5.108.0 run
+composed its answer as free text, held it to `handoff.py --check` and rendered nothing, which the
+rule it read forbids, and every draft run rendered unrefused — but three runs a side cannot
+separate one miss from noise.
+
+The refusals the runs reported in their own words were a decision block over its ceiling, a
+blank `relation`, framework words (`slug`, `door`, a file name) and a missing recommendation or
+`settles`. The block ceiling and the framework words are limits `schemas/handoff.json` holds
+(`x-ceilings`, `x-jargon`) that the skeleton `--prepare` prints does not show, and neither text
+names them, so no wording of these bullets reaches the most frequent refusals.
+
+**What would reverse it:** over more `handoff-which-door` runs, composed-not-rendered answers
+recurring under the 5.108.0 text and not under the draft; or a draft as short that ties.
+
+## Iteration 3 — `handoff-which-door`, five more runs per arm (2026-11-15)
+
+The same arms and case as iteration 2, runs 4–8 of each arm, to settle whether iteration 2's one
+miss was noise. Read fixed before the runs: the difference counts where, over the eight runs of
+each arm, the 5.108.0 arm fails an expectation in at least two runs and the draft in none, or the
+draft is refused fewer times.
+
+| arm | expectations, runs 4–8 | `--render` refused / called | over iterations 2 and 3 (8 runs) |
+|---|---|---|---|
+| 5.108.0 | 5/5, 5/5, 5/5, 3/5, 5/5 | 0/1, 1/3, 1/3, 0/0, 1/3 | 2 runs failing, 4 refusals |
+| draft | 5/5 ×5 | 1/3, 0/2, 0/1, 0/2, 0/2 | 0 runs failing, 1 refusal |
+
+Both 5.108.0 failures are one act: the run wrote its answer as free text and held it to
+`handoff.py --check`, never to `--render`, so no record was kept and no door was recommended
+through one. The read's bar is met on both counts, every measure points the same way, and it is
+still a small sample: with two failures in sixteen runs, both falling on one arm happens by chance
+28 times in 120 (23%).
+
+The decision stays declined under iteration 2's criterion, which asked for fewer refusals in both
+cases and found a tie over the foreign change; whether this case's difference is worth the
+draft's 193 characters in every session is the maintainer's to weigh. Both misses passed through
+`--check`, which accepts free text that hands a decision once it fits its ceilings: a script that
+answered such text with the rule that it is rendered would reach this failure under either text.

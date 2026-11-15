@@ -1,0 +1,25 @@
+cat /tmp/rh/p/h05.rules.md	0
+mkdir -p /tmp/rh/o/h05	0
+ls /tmp/rh/p/h05.plugin/bin /tmp/rh/p/h05	0
+cd /tmp/rh/p/h05 && git status --porcelain -- app	0
+git log --oneline | head -5	0
+python3 /tmp/rh/p/h05.plugin/bin/door.py --help	0
+python3 /tmp/rh/p/h05.plugin/bin/handoff.py --help	0
+python3 /tmp/rh/p/h05.plugin/bin/grant.py --help | head -30	0
+python3 /tmp/rh/p/h05.plugin/bin/goal.py --help | head -30	0
+ls -a "$(git rev-parse --git-common-dir)"	0
+ls "$(git rev-parse --git-common-dir)/siegard"	2
+cat siegard.json	0
+find work spec -type f | head -30	0
+git diff --stat -- app/lending/loans.py	0
+python3 /tmp/rh/p/h05.plugin/bin/door.py --check commit --project . --slug lending --file app/lending/fees.py --file app/tests/test_fees.py	0
+python3 /tmp/rh/p/h05.plugin/bin/handoff.py --prepare --skill implement-task --project /tmp/rh/p/h05 --slug lending --target app > /tmp/rh/o/h05/record.json	0
+cat /tmp/rh/o/h05/record.json	0
+cat /tmp/rh/p/h05.plugin/schemas/handoff.json	0
+git diff -- app/lending/loans.py	0
+python3 /tmp/rh/p/h05.plugin/bin/ask.py --help | grep -n -i -E "usage|--read|--record" | head	0
+python3 /tmp/rh/p/h05.plugin/bin/handoff.py --save-report /tmp/rh/p/h05/.git/siegard/handoff/20261115T163525Z-implement-task.md	0
+python3 - (fill record.json fields)	0
+python3 /tmp/rh/p/h05.plugin/bin/handoff.py --render /tmp/rh/o/h05/record.json	1
+python3 - (revise record.json fields)	0
+python3 /tmp/rh/p/h05.plugin/bin/handoff.py --render /tmp/rh/o/h05/record.json	0

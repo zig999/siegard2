@@ -1,0 +1,11 @@
+cat /tmp/rd/p/d01.rules.md; ls /tmp/rd/p/d01.plugin/bin/; ls -la /tmp/rd/p/d01 — exit 0
+cd /tmp/rd/p/d01; cat siegard.json; git status --short; git log --oneline | head; find work spec app -maxdepth 4 | head -50 — exit 0
+python3 /tmp/rd/p/d01.plugin/bin/door.py --help — exit 0
+python3 /tmp/rd/p/d01.plugin/bin/door.py --check implement-task --project /tmp/rd/p/d01 --task task/fees/compute-late-fee — exit 0
+python3 /tmp/rd/p/d01.plugin/bin/door.py --check review-change --project /tmp/rd/p/d01 --task task/fees/compute-late-fee — exit 1
+python3 /tmp/rd/p/d01.plugin/bin/handoff.py --help — exit 0
+python3 /tmp/rd/p/d01.plugin/bin/handoff.py --prepare --skill plan-work --project /tmp/rd/p/d01 --slug lending --target app --language pt-BR — exit 0
+cat /tmp/rd/p/d01.plugin/schemas/handoff.json — exit 0
+python3 /tmp/rd/p/d01.plugin/bin/handoff.py --save-report /tmp/rd/p/d01/.git/siegard/handoff/20261115T171903Z-plan-work.md (report on stdin) — exit 0
+cat > /tmp/rd/o-d01-record.json (handoff record) — exit 0
+python3 /tmp/rd/p/d01.plugin/bin/handoff.py --render /tmp/rd/o-d01-record.json — exit 0

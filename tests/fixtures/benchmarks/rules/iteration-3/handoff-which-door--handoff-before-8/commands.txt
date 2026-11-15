@@ -1,0 +1,18 @@
+cat /tmp/rd/p/d04.rules.md	0
+ls /tmp/rd/p/d04.plugin/bin/	0
+ls -la /tmp/rd/p/d04	0
+python3 /tmp/rd/p/d04.plugin/bin/door.py --help	0
+python3 /tmp/rd/p/d04.plugin/bin/handoff.py --help	0
+git status --short	0
+python3 /tmp/rd/p/d04.plugin/bin/door.py --check implement-task --project /tmp/rd/p/d04 --task task/fees/compute-late-fee	0
+python3 /tmp/rd/p/d04.plugin/bin/door.py --check review-change --project /tmp/rd/p/d04 --task task/fees/compute-late-fee	1
+git status --short	0
+python3 /tmp/rd/p/d04.plugin/bin/handoff.py --prepare --skill plan-work --project /tmp/rd/p/d04 --slug lending --language pt-BR	0
+cat /tmp/rd/p/d04.plugin/schemas/handoff.json	0
+python3 /tmp/rd/p/d04.plugin/bin/handoff.py --save-report /tmp/rd/p/d04/.git/siegard/handoff/20261115T171908Z-plan-work.md (report from stdin)	0
+cat > /tmp/rd/o/d04/record.json (handoff record, heredoc)	0
+python3 /tmp/rd/p/d04.plugin/bin/handoff.py --render /tmp/rd/o/d04/record.json	1
+python3 - (shortened two fields of /tmp/rd/o/d04/record.json to fit the 700-char block ceiling)	0
+python3 /tmp/rd/p/d04.plugin/bin/handoff.py --render /tmp/rd/o/d04/record.json	0
+git status --short	0
+python3 /tmp/rd/p/d04.plugin/bin/handoff.py --render /tmp/rd/o/d04/record.json > /tmp/rd/o/d04/report.md	0

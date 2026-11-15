@@ -1,0 +1,4 @@
+/tmp/rh/prompts/h06.txt
+/tmp/rh/p/h06.rules.md
+/tmp/rh/p/h06/siegard.json
+/tmp/rh/p/h06.plugin/schemas/handoff.json

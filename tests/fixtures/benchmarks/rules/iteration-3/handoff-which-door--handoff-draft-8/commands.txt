@@ -1,0 +1,16 @@
+cat /tmp/rd/p/d05.rules.md; ls /tmp/rd/p/d05.plugin/bin /tmp/rd/p/d05 — exit 0
+python3 /tmp/rd/p/d05.plugin/bin/door.py --help — exit 0
+python3 /tmp/rd/p/d05.plugin/bin/handoff.py --help — exit 0
+find . -type f | grep -v '^./app/node_modules' | head -50 (in /tmp/rd/p/d05) — exit 0
+cat siegard.json (in /tmp/rd/p/d05) — exit 0
+python3 /tmp/rd/p/d05.plugin/bin/door.py --check implement-task --project . --task task/fees/compute-late-fee — exit 0
+python3 /tmp/rd/p/d05.plugin/bin/door.py --check review-change --project . --task task/fees/compute-late-fee — exit 1
+git status --short (in /tmp/rd/p/d05) — exit 0
+python3 /tmp/rd/p/d05.plugin/bin/handoff.py --prepare --skill plan-work --project . --slug lending --target app --language pt-BR — exit 0
+python3 /tmp/rd/p/d05.plugin/bin/handoff.py --prepare --skill implement-task --project . --slug lending --target app --language pt-BR — exit 0
+ls /tmp/rd/p/d05.plugin/schemas — exit 0
+cat /tmp/rd/p/d05.plugin/schemas/handoff.json — exit 0
+python3 /tmp/rd/p/d05.plugin/bin/handoff.py --save-report /tmp/rd/p/d05/.git/siegard/handoff/20261115T171904Z-plan-work.md (report on stdin) — exit 0
+cat > /tmp/rd/o/d05/record.json (handoff record) — exit 0
+python3 /tmp/rd/p/d05.plugin/bin/handoff.py --render /tmp/rd/o/d05/record.json — exit 0
+python3 /tmp/rd/p/d05.plugin/bin/handoff.py --render /tmp/rd/o/d05/record.json > /tmp/rd/o/d05/report.md — exit 0

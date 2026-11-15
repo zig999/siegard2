@@ -1,0 +1,5 @@
+/tmp/rh/prompts/h01.txt
+/tmp/rh/p/h01.rules.md
+/tmp/rh/p/h01/siegard.json
+/tmp/rh/p/h01/app/lending/loans.py (git diff only)
+/tmp/rh/p/h01.plugin/schemas/handoff.json

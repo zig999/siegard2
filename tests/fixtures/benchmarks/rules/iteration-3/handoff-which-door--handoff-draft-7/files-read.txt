@@ -1,0 +1,4 @@
+/tmp/rd/prompts/d02.txt
+/tmp/rd/p/d02.rules.md
+/tmp/rd/p/d02/siegard.json
+/tmp/rd/p/d02.plugin/schemas/handoff.json

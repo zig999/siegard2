@@ -1,0 +1,11 @@
+mkdir -p /tmp/rh/o/h02; ls /tmp/rh/p/h02 /tmp/rh/p/h02.plugin/bin; cd /tmp/rh/p/h02 && git status --short && git log --oneline | head -5 — exit 0
+python3 /tmp/rh/p/h02.plugin/bin/door.py --help — exit 0
+python3 /tmp/rh/p/h02.plugin/bin/handoff.py --help — exit 0
+python3 /tmp/rh/p/h02.plugin/bin/door.py --check implement-task --project /tmp/rh/p/h02 --task task/fees/compute-late-fee — exit 0
+python3 /tmp/rh/p/h02.plugin/bin/door.py --check review-change --project /tmp/rh/p/h02 --task task/fees/compute-late-fee — exit 1
+python3 /tmp/rh/p/h02.plugin/bin/handoff.py --prepare --skill implement-task --project /tmp/rh/p/h02 --slug lending --language pt-BR — exit 0
+python3 /tmp/rh/p/h02.plugin/bin/handoff.py --prepare --skill plan-work --project /tmp/rh/p/h02 --slug lending --language pt-BR — exit 0
+python3 /tmp/rh/p/h02.plugin/bin/handoff.py --check /tmp/rh/o/h02/report.md (first draft, 3354 chars) — exit 1
+python3 /tmp/rh/p/h02.plugin/bin/handoff.py --check /tmp/rh/o/h02/report.md (final) — exit 0
+ls -la /tmp/rh/p/h02/.git/siegard/handoff — exit 0
+save outputs + git status --short (tree clean) — exit 0

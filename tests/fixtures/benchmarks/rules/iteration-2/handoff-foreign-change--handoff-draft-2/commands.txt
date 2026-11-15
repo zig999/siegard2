@@ -1,0 +1,12 @@
+cat /tmp/rh/p/h11.rules.md	0
+mkdir -p /tmp/rh/o/h11; cd /tmp/rh/p/h11 && git status --porcelain -- app; ls /tmp/rh/p/h11.plugin/bin; ls	0
+python3 /tmp/rh/p/h11.plugin/bin/handoff.py --help	0
+python3 /tmp/rh/p/h11.plugin/bin/door.py --check commit --project /tmp/rh/p/h11 --slug task/fees/compute-late-fee --file app/lending/fees.py --file app/tests/test_fees.py	0
+python3 /tmp/rh/p/h11.plugin/bin/handoff.py --prepare --skill implement-task --project /tmp/rh/p/h11 --slug task/fees/compute-late-fee --target app --file app/lending/fees.py --file app/tests/test_fees.py	0
+ls /tmp/rh/p/h11.plugin/schemas; python3 -c "<print schemas/handoff.json>"	0
+python3 -c "<print x- keys of schemas/handoff.json>"; git diff --stat -- app/lending/loans.py	0
+python3 /tmp/rh/p/h11.plugin/bin/handoff.py --save-report /tmp/rh/p/h11/.git/siegard/handoff/20261115T163525Z-implement-task.md < report	0
+cat > /tmp/rh/o/h11/record.json; python3 /tmp/rh/p/h11.plugin/bin/handoff.py --render /tmp/rh/o/h11/record.json	1
+python3 - <edit record.json>; python3 /tmp/rh/p/h11.plugin/bin/handoff.py --render /tmp/rh/o/h11/record.json	1
+python3 - <edit record.json>; python3 /tmp/rh/p/h11.plugin/bin/handoff.py --render /tmp/rh/o/h11/record.json	1
+python3 - <edit record.json>; python3 /tmp/rh/p/h11.plugin/bin/handoff.py --render /tmp/rh/o/h11/record.json > /tmp/rh/o/h11/report.md	0

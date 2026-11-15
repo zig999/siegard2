@@ -1,0 +1,17 @@
+cat /tmp/rh/p/h03.rules.md; ls /tmp/rh/p/h03.plugin/bin; ls -la /tmp/rh/p/h03	0
+git status --porcelain	0
+git status --porcelain -- app	0
+git diff -- app/lending/loans.py	0
+cat siegard.json	0
+python3 /tmp/rh/p/h03.plugin/bin/handoff.py --help	0
+python3 /tmp/rh/p/h03.plugin/bin/handoff.py --prepare --skill implement-task --project /tmp/rh/p/h03 --slug task/fees/compute-late-fee --target app --file app/lending/fees.py --file app/tests/test_fees.py	0
+ls $(git rev-parse --git-common-dir)/siegard	0
+ls /tmp/rh/p/h03.plugin/schemas/	0
+python3 -c (print handoff.json schema)	0
+grep -ril renew spec work | head	0
+python3 /tmp/rh/p/h03.plugin/bin/door.py --check commit --project /tmp/rh/p/h03 --slug task/fees/compute-late-fee --file app/lending/fees.py --file app/tests/test_fees.py	0
+python3 /tmp/rh/p/h03.plugin/bin/handoff.py --save-report /tmp/rh/p/h03/.git/siegard/handoff/20261115T163515Z-implement-task.md < (full report)	0
+python3 /tmp/rh/p/h03.plugin/bin/handoff.py --render /tmp/rh/o/h03/record.json	1
+python3 - (shorten record prose in /tmp/rh/o/h03/record.json)	0
+python3 /tmp/rh/p/h03.plugin/bin/handoff.py --render /tmp/rh/o/h03/record.json	0
+python3 /tmp/rh/p/h03.plugin/bin/handoff.py --render /tmp/rh/o/h03/record.json > /tmp/rh/o/h03/report.md	0

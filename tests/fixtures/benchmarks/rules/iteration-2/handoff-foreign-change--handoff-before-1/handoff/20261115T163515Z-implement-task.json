@@ -1,0 +1,50 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "en",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/rh/p/h03",
+    "slug": "task/fees/compute-late-fee"
+  },
+  "decisions": [
+    {
+      "ask": "Nothing was committed: app/lending holds a loans change (MAX_RENEWALS = 1) this task did not write.",
+      "recommended": {
+        "door": "Commit or revert that change yourself, then reply commit; I commit only the late-fee code and its test.",
+        "why": "The task stops, rather than shrink its commit, when app holds a change it did not write.",
+        "reverses_if": "app shows only the late-fee files, and then the commit runs without you",
+        "reply_word": "commit"
+      },
+      "relation": "one-of",
+      "others": [
+        {
+          "reply_word": "reconcile",
+          "what_it_does": "Re-reads source against the specification; commits nothing here.",
+          "entry": "/reconcile",
+          "check": {
+            "answer": "not checked",
+            "why": "/reconcile reads the file set and free slug `trace.py --reconcile-set` prints, and no script here decides what it refuses"
+          }
+        },
+        {
+          "reply_word": "review",
+          "what_it_does": "Excluded: nothing is delivered yet, so a review has no subject.",
+          "entry": "/review-change",
+          "check": {
+            "answer": "refuses",
+            "refused": [
+              "plan.py --check /tmp/rh/p/h03/work/task/fees/compute-late-fee /tmp/rh/p/h03/spec exits 2",
+              "deliver.py --check /tmp/rh/p/h03/delivery/task/fees/compute-late-fee /tmp/rh/p/h03/work/task/fees/compute-late-fee /tmp/rh/p/h03/app /tmp/rh/p/h03/spec exits 2",
+              "/tmp/rh/p/h03/delivery/task/fees/compute-late-fee/implementation holds no record — nothing is delivered, so a review has no subject"
+            ]
+          }
+        }
+      ],
+      "if_none": "The late-fee files stay uncommitted; the loans change stays as it is.",
+      "invocation": "git status --porcelain -- app"
+    }
+  ],
+  "report": "/tmp/rh/p/h03/.git/siegard/handoff/20261115T163515Z-implement-task.md"
+}

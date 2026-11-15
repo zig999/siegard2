@@ -1,0 +1,11 @@
+ls /tmp/rh/p/h09.plugin/bin/; ls -la /tmp/rh/p/h09; cd /tmp/rh/p/h09 && git status --short; git log --oneline | head	exit 0
+cat siegard.json; find work spec app -type f | head -50; python3 /tmp/rh/p/h09.plugin/bin/door.py --help; python3 /tmp/rh/p/h09.plugin/bin/handoff.py --help	exit 0
+python3 /tmp/rh/p/h09.plugin/bin/door.py --check implement-task --project /tmp/rh/p/h09 --task task/fees/compute-late-fee	exit 0
+python3 /tmp/rh/p/h09.plugin/bin/door.py --check review-change --project /tmp/rh/p/h09 --task task/fees/compute-late-fee	exit 1
+python3 /tmp/rh/p/h09.plugin/bin/handoff.py --prepare --skill implement-task --project /tmp/rh/p/h09 --slug lending --target app --language pt-BR	exit 0
+python3 /tmp/rh/p/h09.plugin/bin/handoff.py --prepare --skill plan-work --project /tmp/rh/p/h09 --slug lending --target app --language pt-BR	exit 0
+ls /tmp/rh/p/h09.plugin/schemas/	exit 0
+cat /tmp/rh/p/h09.plugin/schemas/handoff.json	exit 0
+python3 /tmp/rh/p/h09.plugin/bin/handoff.py --save-report /tmp/rh/p/h09/.git/siegard/handoff/20261115T163528Z-plan-work.md  (report on stdin)	exit 0
+cat > /tmp/rh/h09-record.json (record heredoc); python3 /tmp/rh/p/h09.plugin/bin/handoff.py --render /tmp/rh/h09-record.json	exit 0
+cd /tmp/rh/p/h09 && git status --short	exit 0

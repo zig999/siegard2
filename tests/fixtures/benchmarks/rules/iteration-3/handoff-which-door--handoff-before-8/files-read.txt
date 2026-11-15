@@ -1,0 +1,3 @@
+/tmp/rd/p/d04.rules.md
+/tmp/rd/p/d04.plugin/schemas/handoff.json
+/tmp/rd/o/d04/record.json

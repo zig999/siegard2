@@ -1,0 +1,11 @@
+ls /tmp/rh/p/h08 /tmp/rh/p/h08.plugin/bin; cd /tmp/rh/p/h08 && git status --short && git log --oneline | head; cat siegard.json	0
+python3 /tmp/rh/p/h08.plugin/bin/door.py --help	0
+python3 /tmp/rh/p/h08.plugin/bin/handoff.py --help	0
+python3 /tmp/rh/p/h08.plugin/bin/door.py --check implement-task --project . --task task/fees/compute-late-fee	0
+python3 /tmp/rh/p/h08.plugin/bin/door.py --check review-change --project . --task task/fees/compute-late-fee	1
+python3 /tmp/rh/p/h08.plugin/bin/handoff.py --prepare --skill plan-work --project . --slug lending --target app --language pt-BR	0
+python3 -c (print x- keys and $defs entry/check of /tmp/rh/p/h08.plugin/schemas/handoff.json)	0
+python3 /tmp/rh/p/h08.plugin/bin/handoff.py --save-report /tmp/rh/p/h08/.git/siegard/handoff/20261115T163529Z-plan-work.md	0
+cat > /tmp/rh/o/h08/record.json (handoff record)	0
+python3 /tmp/rh/p/h08.plugin/bin/handoff.py --render /tmp/rh/o/h08/record.json	0
+git status --short	0
