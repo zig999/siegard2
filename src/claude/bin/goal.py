@@ -53,7 +53,8 @@ that the specification is sound, that nothing is pending under the specification
 or target root, nor in the trace or `siegard-reconcile/` beside it — paths the route commits
 (the first stop `/deliver-scope` raises), that the slug names no closed plan, and
 that every scope id names an epic or a task of the live plan. It pins where `HEAD` stands, the
-plugin's version and every change already pending outside those roots, and prints the condition:
+plugin's version and every change already pending outside those roots and the telemetry root,
+which the measure commits whole, and prints the condition:
 the route, the authorization, the scope, and the `--state` invocation that answers it — «A goal
 condition names the route, the authorization, the scope and the invocation that answers its
 state, and states no rule: the rules are those of the plugin version the invocation pins.»
@@ -566,8 +567,10 @@ def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
     branch = git(fields["home"], "branch", "--show-current") or "a detached HEAD"
     version = plugin_version()
     status = git(fields["home"], "status", "--porcelain", "--untracked-files=all")
+    measured = relative(fields, fields["telemetry_root"]).rstrip("/") + "/"
     untouched = [line[3:] for line in status.splitlines() if line.strip()
-                 and (kept is None or line[3:] != relative(fields, kept))]
+                 and (kept is None or line[3:] != relative(fields, kept))
+                 and not line[3:].startswith(measured)]
     said += [f"HEAD: {since} on {branch}", f"plugin: {version}",
              f"untouched: {', '.join(untouched) if untouched else 'nothing'}"]
 

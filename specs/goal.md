@@ -89,7 +89,7 @@ session that stopped while its subagents were still running. The harness refuses
 ### What a goal carries
 
 - **R5** — A scope restricted to an epic or a set of tasks carries with it every task of the same plan it depends on that holds no record, transitively, and the deliverable set within a scope is a script's answer.
-- **R6** — A goal condition names the route, the authorization, the scope and the invocation that answers its state, and states no rule: the rules are those of the plugin version the invocation pins. The condition is composed by a script that checks, before any goal is armed, what the first step of the route would refuse, and it is armed by the person: through the harness by pasting it after `/goal`, which no skill does for them, or through the framework by `goal.py --arm`, which only `/siegard-goal` runs, and only where the person's invocation of it opens with `--arm`: the skill is closed to the model's invocation, so its arguments are the person's own words, and no other component runs `goal.py --arm`. An invocation that opens with `--arm` over a citation composes and does not arm, because the text the person would arm is the one the script wrote, read before an invocation naming that file arms it. An objective in prose is written to a file under the telemetry root and named in the condition by path and digest, so the condition is one line whatever the objective's length; an objective the person cites — text already in the conversation they point at and adopt — is copied whole into that file, never cut to fit the route, and the evaluator reads the state command rather than the objective. A condition over an objective in prose asks to specify it, under R10, unless the person's invocation says `--no-specify`; one over epics or tasks never does. The report that composes a condition without arming it hands the one line that arms it through the framework, and the condition itself, whole, sits in the full report on disk for a person who arms through the harness. Where the person gives one, the condition states the findings policy, and a policy names only findings a route corrects: conformance findings of kind `contradicts`, which the corrective increment answers. A condition carries no budget of judged doors: a judged door is taken only under a grant the person armed (SPEC-011).
+- **R6** — A goal condition names the route, the authorization, the scope and the invocation that answers its state, and states no rule: the rules are those of the plugin version the invocation pins. The condition is composed by a script that checks, before any goal is armed, what the first step of the route would refuse, and it is armed by the person: through the harness by pasting it after `/goal`, which no skill does for them, or through the framework by `goal.py --arm`, which only `/siegard-goal` runs, and only where the person's invocation of it opens with `--arm`: the skill is closed to the model's invocation, so its arguments are the person's own words, and no other component runs `goal.py --arm`. An invocation that opens with `--arm` over a citation composes and does not arm, because the text the person would arm is the one the script wrote, read before an invocation naming that file arms it. An objective in prose is written to a file under the telemetry root and named in the condition by path and digest, so the condition is one line whatever the objective's length; an objective the person cites — text already in the conversation they point at and adopt — is copied whole into that file, never cut to fit the route, and the evaluator reads the state command rather than the objective. A condition over an objective in prose asks to specify it, under R10, unless the person's invocation says `--no-specify`; one over epics or tasks never does. The report that composes a condition without arming it hands the one line that arms it through the framework, and the condition itself, whole, sits in the full report on disk for a person who arms through the harness. Where the person gives one, the condition states the findings policy, and a policy names only findings a route corrects: conformance findings of kind `contradicts`, which the corrective increment answers. A condition carries no budget of judged doors: a judged door is taken only under a grant the person armed (SPEC-011). The condition declares untouched every path the tree holds pending when it is composed, beyond those under the telemetry root, which the measure commits whole: a recorded ask or a grant's words pending there is the measure's to commit, never the person's to keep.
 
 ### How an armed goal ends
 
@@ -179,13 +179,28 @@ session that stopped while its subagents were still running. The harness refuses
    passing `handoff.py --check`. Tests hold `goal.py --compose` to specifying an objective in
    prose by default: its condition carries the sentence that asks to specify without any flag,
    `--no-specify` leaves it out, `--specify` changes nothing, the two together are refused, and
-   either over a scope of epics or tasks is refused.
+   either over a scope of epics or tasks is refused, and to declaring untouched no path
+   under the telemetry root.
 12. Tests hold `/deliver-scope` to R8 over its text: the re-bind, the decided-fact route and the
    reconciliation a record writer names each taken in a run with or without a goal, each under
    its commit message, once per task, a second time over one task a stop —
    `tests/test_deliver_scope.py` proves each.
 
 ## Readings
+
+- 2026-11-15 — grounds for leaving the telemetry root out of what a condition declares untouched,
+  read from `goals-ended.jsonl` and git of five sales consumers (Siegard 5.89.0 to 5.106.0). The
+  condition declared untouched every pending path, so the asks `ask.py --record` writes and a
+  grant's words — which `ask.py`, `/siegard-grant` and R18 each say the measure commits with the
+  telemetry root — were also "never edit, commit or discard". Of the 29 pairs of a goal and a
+  telemetry file it declared untouched, four measures committed six against the condition
+  (configurator `cb3097c`, `7fc90b4`; partymgmt `a61f6c8`, which the session reported as its own
+  mistake; productorder `0df5ef7`), the person committed five such files by hand afterwards
+  (configurator `b2049d8`, productorder `f51b502`), and nine stay untracked on this date
+  (configurator 3, `salese2e` 5, productcatalog 1), each declared untouched again by the next goal. `state` saw none of it: a path committed leaves no pending change for `tree` to
+  read. Leaving the measure only its own report instead was weighed and set aside: it contradicts
+  three shipped statements, and the asks would never be committed. Reversal: a file the person
+  placed under the telemetry root by hand, committed by a measure against their wish.
 
 - 2026-11-14 — grounds for specifying a prose objective by default, read from
   `goals-ended.jsonl` of every sales consumer (Siegard 5.43.0 to 5.100.0): of 27 goals armed over

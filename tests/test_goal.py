@@ -891,6 +891,20 @@ def test_disarming_ends_the_record_into_the_ended_log(project):
         "no goal is armed in this project"
 
 
+def test_a_pending_file_under_the_telemetry_root_is_the_measures_and_never_left_untouched(project):
+    """R6: the measure commits the telemetry root whole, so a recorded ask or a grant's words
+    pending there when the goal is composed are not declared untouched."""
+    (project["home"] / "notes.txt").write_text("pending elsewhere\n")
+    (project["home"] / "telemetry").mkdir(exist_ok=True)
+    (project["home"] / "telemetry" / "ask-20261115T005935Z.md").write_text("autorizo\n")
+    result = compose(project, "--scope", "epic/checkout")
+    assert result.returncode == 0, result.stdout + result.stderr
+    condition = result.stdout.split("paste after /goal:\n\n", 1)[1]
+    assert "Leave untouched — never edit, commit or discard: notes.txt." in condition
+    assert "ask-20261115T005935Z.md" not in condition
+    assert "untouched: notes.txt" in result.stdout
+
+
 def test_arming_names_the_objective_file_compose_wrote_rather_than_writing_another(project):
     composed = compose(project, "--objective", "An order is billed once.")
     assert composed.returncode == 0, composed.stdout + composed.stderr
