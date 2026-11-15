@@ -15,7 +15,10 @@ rather than what was said; and a sibling project, whose session is another conte
 be handed to. It binds `bin/ask.py`, `bin/relay.py`, and the session rules that read what they
 write. And it fixes the one choice the person makes before saying anything: the project a skill
 runs over, named in the invocation or chosen by opening the session in it. That binds
-`bin/project.py --here` and every shipped skill that takes the project root as an input.
+`bin/project.py --here` and every shipped skill that takes the project root as an input. Last,
+it fixes which acts on the repository the person's words alone open — a push, a branch, a history
+rewrite — and which files no session writes by hand, and it binds the plugin's `PreToolUse` hook,
+`hooks/bounds.py`, that refuses both where a script can tell.
 
 Grounds for R6, read from consumer transcripts on 2026-11-07: of the invocations of the skills
 that take a project root, `/siegard-status` ran 24 times and `/siegard-progress` 6 times with no
@@ -81,6 +84,44 @@ project, and a ready command saved under `/tmp` was gone when it was needed.
   question beside the commit. The skills' own clean-tree checks are what make every pending
   change under their roots, at their last step, the invocation's own.
 
+- **R8** — A push, a branch or a history rewrite is never a skill's, a goal's or a grant's. Where a goal or a grant is armed through the framework, the plugin's `PreToolUse` hook refuses a shell command that runs `git push`; creates, renames or deletes a branch; rewrites history — `git rebase`, `git commit --amend`, `git reset --hard`, `git filter-branch`, `git filter-repo`; stashes; or stages or commits all that is tracked. Outside them, a session runs one only where the person's own words in that session name it.
+
+  Grounds, read on 2026-11-15 from 16,779 transcript files of the sales consumers, `eternal` and
+  `ifsora`: every command was split into its shell commands, heredoc bodies left out, and each
+  `git` invocation classified by its verb and flags: 69 such acts over 31,549 shell calls. About
+  28 distinct pushes ran, each after a message of the person's naming it — "pode comitar e
+  pushar", "faça o push", "pode pushar a master" — three of them in a session that had armed a goal
+  or a grant earlier, two of those on 2026-11-15 under a grant, which holds until the person
+  clears it; 3 branches were created, after a pasted brief, "siga as
+  três recomendações" and "pode fazer os commits"; about 6 amends ran inside `/implement-task`, after
+  a compaction or under a standing go-ahead; one stash and one rebase ran, the rebase before a push
+  the person asked for. Under a goal or a grant armed in the session, the acts no word of the
+  person's named were two amends inside `/implement-task` under a standing go-ahead
+  (2026-11-11), a `git stash` and `git stash pop` around a check inside `/implement-task` twice,
+  and a `git add -A .` inside `/analyse` (2026-11-15); no shipped skill states any of them. The
+  written rule said "never a push" and was crossed at the person's request every time, so a hook
+  that refused in every state would have refused all 28 and prevented nothing. A goal or a grant is the state in which no person reads the next command, and
+  the one a script can read from disk. Most `git add -A` ran with a pathspec, which bounds it as a
+  path does, so only one with no path is all that is tracked. A first count by pattern alone
+  matched "push" inside heredoc text 70 times, which is why the hook reads commands, not text.
+  Reversal: a push, a branch or a rewrite a session ran with no goal or grant armed and no word of
+  the person's naming it, read from a consumer transcript, narrows the outside half to the hook's
+  refusal in every state; refusals of a push the person's own words named while only a grant was
+  armed, read as outnumbering the acts the hook refused that no word named, narrow the armed
+  state to a goal.
+
+### What a script alone writes
+
+- **R9** — A file a script derives or captures is written by that script alone. In a project that declares `siegard.json`, the plugin's `PreToolUse` hook refuses a `Write` or an `Edit` of `siegard-trace.json`, of `plan.json` in an initiative under the work root, of `delivery.json` in an initiative under the delivery root, and of any path under an initiative's `run/` under the delivery root; `siegard.json`, which `/siegard-config` writes, is not refused.
+
+  Grounds, read on 2026-11-15 from the same transcripts: of 29,051 `Write` and `Edit` calls, none
+  named `plan.json`, `delivery.json`, `siegard-trace.json` or a path under `run/`, and two named
+  `siegard.json`, both `/siegard-config`'s. The refusal costs no measured session anything. What
+  it holds is the evidence: `task-implementer` and `test-author` hold `Write` and no shell, so a
+  `run.json` they could write is the one way an agent could make `bin/deliver.py` read a run that
+  never happened. A shell command that writes the same files is not refused here; the session
+  rules state the writers.
+
 ## Validation required before acceptance
 
 1. Tests hold `ask.py` to R1 and R2 over a fixture project: an ask recorded byte for byte and its
@@ -105,6 +146,16 @@ project, and a ready command saved under `/tmp` was gone when it was needed.
    telemetry reads a commit whose subject opens with a route skill's name and a slug as the
    framework's, never as a hand edit — `tests/test_skill_contract.py`, `tests/test_rules_health.py`
    and `tests/test_telemetry.py` prove each.
+6. For R8: over fixture repositories, with a goal armed, with a grant armed and with neither, the
+   hook refuses each act R8 names under an armed goal or grant and lets it run with neither; it lets
+   a pathspec-scoped `git add -A` and a commit naming paths run in every state, reads no `git`
+   word inside a heredoc, a quoted argument or another command's arguments, reads the command
+   handed to `bash -c`, and never fails a session over input it cannot read — `tests/test_bounds.py`
+   proves each.
+7. For R9: over a fixture project, the hook refuses a `Write` and an `Edit` of each file R9 names,
+   lets `siegard.json`, a `plan.json` outside an initiative of the work root and every file of a
+   project that declares no `siegard.json` be written — `tests/test_bounds.py` proves each; the
+   session rules name the hook in the commit bullet — `tests/test_rules_health.py`.
 
 ## Readings
 

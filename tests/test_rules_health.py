@@ -25,7 +25,7 @@ BIN = REPO / "src/claude/bin"
 SCHEMAS = REPO / "src/claude/schemas"
 
 PINNED_LINES = 163
-PINNED_CHARACTERS = 13037
+PINNED_CHARACTERS = 13122
 GUIDANCE_CEILING_LINES = 200
 
 SCRIPT_SPAN = re.compile(r"`bin/([a-z_]+)\.py([^`]*)`")

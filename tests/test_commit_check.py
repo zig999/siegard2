@@ -90,8 +90,10 @@ def allowed(done: subprocess.CompletedProcess) -> None:
 
 def test_the_hook_is_declared_for_bash_and_is_executable():
     declared = json.loads((HOOK.parent / "hooks.json").read_text(encoding="utf-8"))["hooks"]
-    assert declared["PreToolUse"] == [{"matcher": "Bash", "hooks": [
-        {"type": "command", "command": 'python3 "${CLAUDE_PLUGIN_ROOT}/hooks/commit_check.py"'}]}]
+    shell = [group for group in declared["PreToolUse"] if group["matcher"] == "Bash"]
+    assert len(shell) == 1, "one Bash group runs every hook that reads a command"
+    assert shell[0]["hooks"][0] == {
+        "type": "command", "command": 'python3 "${CLAUDE_PLUGIN_ROOT}/hooks/commit_check.py"'}
     assert os.access(HOOK, os.X_OK)
 
 

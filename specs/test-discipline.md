@@ -19,7 +19,8 @@ It decides the obligation set, the necessity and stopping rules, the partition o
 preference for a test over a reading wherever a finite test decides a fact, that no test a
 delivery changes goes unnamed by its records, and which halves the validator enforces
 mechanically. It also decides where a proof is cut (R18–R21, R23), when an implementation that stands still stands (R26), who answers a red build or a
-red suite (R24, R25), and what a review answers for (R22).
+red suite (R24, R25), what a review answers for (R22), and what a run records of the tree it
+ran over (R31).
 
 Grounds: measured over 483 proof records and 95 reviews of two consumer projects in September
 2026, the share of criteria a coverage audit found covered rose from 60% at one test per
@@ -360,6 +361,20 @@ left out — so the file set the review that followed was handed never held them
   was to keep, or a rewrite that dropped a condition a node still stated, narrows R30 to the stop
   alone.
 
+### What a run saw
+
+- **R31** — A captured run records the tree it ran over. At the run's end `bin/run.py` writes the git toplevel of its working directory, the commit `HEAD` named, and the sha256 digest of every path `git status` reports changed or untracked outside the delivery root's `run/`, a deleted path as null. `bin/trace.py --bind-record` refuses a record whose file it would bind where the file's bytes are not what a run that the task's implementation or proof record points at saw; a run recorded without a tree is named in a receipt and refuses nothing.
+
+  Grounds: until this requirement a run recorded each step's command, outcome and clock, and
+  nothing of the tree, so whether the source a record bound was the source its green run built
+  could be read from nothing on disk; `bin/deliver.py` held a record to its run's outcome, steps
+  and directory, never to its bytes. The proof's run is admitted beside the implementation's
+  because a red suite answered `code` sends the implementer back into the source after the
+  implementation record was written, and the suite run that follows is the one that saw the
+  source the bind pins. Reversal: a bind this refuses where the person reads the file as unchanged
+  in substance — a formatter's rewrite a step made — read in more than one of ten refusals, moves
+  the comparison to what the run printed rather than the bytes.
+
 ## Validation required before acceptance
 
 1. The test author's judgment states R1 to R12 and cites each in the words above; the coverage
@@ -448,6 +463,12 @@ left out — so the file set the review that followed was handed never held them
     on that test and for a test the author returns under `contested`; `agents/test-author.md`
     names the input that carries it, and `/deliver-scope`'s stop list holds `producers` to those
     two — `tests/test_skill_contract.py` proves each.
+17. For R31: `bin/run.py` records the toplevel, `HEAD` and the changed and untracked paths' digests
+    of a run in a repository, null where no repository holds the working directory, and never a
+    path under the delivery root's `run/` — `tests/test_run.py`; `bin/trace.py --bind-record`
+    binds a file unchanged since the implementation's or the proof's run, refuses one changed after
+    both, refuses one changed after a run of a tree whose `HEAD` held it unchanged, and binds over a
+    run recorded without a tree with a receipt naming it — `tests/test_run_tree.py` proves each.
 
 ## Readings
 

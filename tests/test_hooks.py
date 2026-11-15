@@ -67,12 +67,13 @@ def test_both_starts_are_declared_and_neither_is_narrowed():
     hooks = declared()
     assert sorted(hooks) == sorted((*EVENTS, "Stop", "PreToolUse")), \
         f"hooks.json declares {sorted(hooks)}; the rules must reach the session and every agent, " \
-        f"an armed goal's stop is answered on Stop, and a commit is read before Bash runs it"
+        f"an armed goal's stop is answered on Stop, and a command or a write is read before it runs"
     for event in hooks:
         for group in hooks[event]:
             if event == "PreToolUse":
-                assert group.get("matcher") == "Bash", \
-                    f"PreToolUse matches {group.get('matcher')!r}; only a Bash command commits"
+                assert group.get("matcher") in ("Bash", "Write|Edit|MultiEdit"), \
+                    f"PreToolUse matches {group.get('matcher')!r}; a command is read on Bash and " \
+                    f"a hand write on the tools that write a file, and nothing else"
             else:
                 assert "matcher" not in group, \
                     f"{event} carries a matcher; the rules hold for every {event}, not a subset"

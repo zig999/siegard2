@@ -222,8 +222,10 @@ Five bounds hold it, and giving up any of them is a proposal, never a change:
   its decision log and its report rather than reviewed before the commit, and the person reviews
   it after the fact. A session's own commit, made outside a skill, commits only under the person's
   own words in that session — a commit word, a go-ahead naming the next step, or an ask
-  `bin/ask.py` recorded verbatim — and never a push, a branch or a rewrite; the same holds for the
-  one write a session makes itself: the registry entry the bound above admits.
+  `bin/ask.py` recorded verbatim; the same holds for the one write a session makes itself: the
+  registry entry the bound above admits. A push, a branch or a history rewrite is never a skill's,
+  a goal's or a grant's: where a goal or a grant is armed, the plugin's `PreToolUse` hook refuses
+  it; outside them, a session runs one only where the person's own words in that session name it.
 - **Only what a delivery is made of holds a write.** `task-implementer` and `test-author` grant
   `Write` and `Edit`; every other agent returns content and the caller writes it, and
   `tests/test_agent_contract.py` is what enforces it. The grant cannot be scoped to a path —

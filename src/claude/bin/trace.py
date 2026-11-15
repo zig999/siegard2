@@ -232,6 +232,17 @@ says about them depends on whether a binding held each pair — `--owed` is the 
 either way. What the bind owes instead is a receipt naming them, so a partial bind never reads
 like a complete one.
 
+An implementation record's bind is also held to what its runs saw: «`bin/trace.py --bind-record`
+refuses a record whose file it would bind where the file's bytes are not what a run that the task's
+implementation or proof record points at saw» (SPEC-004 R31). The runs are the record's own and
+the proof's beside it, at the same path under `proof/`, because a red suite answered `code` sends
+the implementer back into the source after the implementation record was written, and the suite
+run that follows is the one that saw the source the bind pins. A file passes where any of those
+runs saw its bytes: a path the run's `tree.changed` names, by its digest; any other, by the blob
+the run's `HEAD` holds, compared through git so that a checkout filter reads the same both ways. A
+run written before the tree was recorded holds nothing of the files to it: the bind names it in a
+receipt. A reconciliation record names no run and is never held here.
+
 A bind stamps what a judge read, and the workspace is where the staging recorded what that was.
 `--bind-record --workspace <dir>` reads the staging's manifest back — the digest of every staged
 file and of every node it pinned — and refuses the whole record where any of them differs from
@@ -6136,6 +6147,85 @@ def restamped_certification(declared: dict, node_id: str, home: Path,
             f"test's digest is restamped")
 
 
+def task_runs(record: Path) -> list[tuple[str, dict]]:
+    """The runs the task's implementation and proof records point at, each with its captured
+    record, for an implementation or proof record at `<root>/<kind>/<epic>/<slug>.md`; none for any
+    other record."""
+    kind_dir = record.resolve().parent.parent
+    if kind_dir.name not in ("implementation", "proof"):
+        return []
+    root = kind_dir.parent
+    within = record.resolve().relative_to(kind_dir)
+    runs, seen = [], set()
+    for kind in ("implementation", "proof"):
+        front, _ = frontmatter_of(root / kind / within)
+        where = (front or {}).get("run")
+        if not isinstance(where, str) or Path(where).is_absolute() or where in seen:
+            continue
+        seen.add(where)
+        try:
+            captured = json.loads((root / where / "run.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(captured, dict):
+            runs.append((where, captured))
+    return runs
+
+
+def git_out(home: Path, *args: str) -> str | None:
+    done = subprocess.run(["git", "-C", str(home), *args], capture_output=True, text=True,
+                          check=False)
+    return done.stdout.strip() if done.returncode == 0 else None
+
+
+def saw(tree: dict, home: Path, name: str, digest: str) -> bool:
+    """Whether the run that left `tree` saw the file's bytes as they are now. The path is read as
+    the trace spells it, from the toplevel, and git is asked here: a run captured in a worktree of
+    this repository spells its paths the same way and its `HEAD` is a commit this repository
+    holds."""
+    changed = tree.get("changed") if isinstance(tree.get("changed"), dict) else {}
+    if name in changed:
+        return changed[name] == digest
+    head = tree.get("head")
+    if not isinstance(head, str):
+        return False
+    held = git_out(home, "rev-parse", "-q", "--verify", f"{head}:{name}")
+    now = git_out(home, "hash-object", f"--path={name}", str(home / name))
+    return held is not None and held == now
+
+
+def run_tree_problems(record: Path, home: Path,
+                      folded: list[tuple[str, list[dict], dict | None]]) -> tuple[list[str], list[str]]:
+    """The files a record binds whose bytes no run of its task saw, refused, and the receipt for
+    runs that carry no tree."""
+    runs = task_runs(record)
+    if not runs:
+        return [], []
+    trees = [(where, captured["tree"]) for where, captured in runs
+             if isinstance(captured.get("tree"), dict)]
+    untreed = [where for where, captured in runs if not isinstance(captured.get("tree"), dict)]
+    receipt = []
+    if untreed:
+        receipt.append(f"  {', '.join(untreed)} recorded no tree, so the files bound from "
+                       f"{record.name} were not held to what {'it' if len(untreed) == 1 else 'they'}"
+                       f" saw; a run captured by this version records one")
+    if not trees:
+        return [], receipt
+    names = ", ".join(where for where, _ in trees)
+    found, checked = [], set()
+    for _, traced, _ in folded:
+        for entry in traced:
+            if entry["path"] in checked:
+                continue
+            checked.add(entry["path"])
+            if not any(saw(tree, home, entry["path"], entry["digest"]) for _, tree in trees):
+                found.append(f"{entry['path']}: its bytes are not what {names} saw — it changed "
+                             f"after every run the task's records point at; capture a run of the "
+                             f"tree as it stands with `bin/run.py --next` and point the record at "
+                             f"it, or restore the file")
+    return found, receipt
+
+
 def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = False,
                 workspace: Path | None = None) -> int:
     """Every binding one implementation record states, written as one act.
@@ -6221,6 +6311,10 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
                 traced = [{**entry, JUDGED: True} for entry in traced]
             folded.append((node_id, traced, certification))
 
+    tree_receipt = []
+    if not judged_here:
+        stale_since_run, tree_receipt = run_tree_problems(record, home, folded)
+        refusals += stale_since_run
     declared, refusal = opened(target, spec_root, home)
     if refusal is not None:
         refusals.append(refusal)
@@ -6286,6 +6380,8 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
         if let_go:
             print(let_go)
     print(f"{len(held)} binding(s) written at {trace_path(target)}, read from {record.name}")
+    for line in tree_receipt:
+        print(line)
     let_go_paths = sum(len(dropped) for _, _, dropped, _, _ in held)
     if let_go_paths:
         print(f"{let_go_paths} path(s) released across {sum(1 for _, _, d, _, _ in held if d)} "

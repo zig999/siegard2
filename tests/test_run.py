@@ -319,3 +319,63 @@ def test_a_refused_name_hands_the_flag_that_names_it(delivery: Path) -> None:
     result = invoke(delivery, "--run", "e-t-setup", "--timeout-seconds", "30", "--step", "ok=true")
     assert result.returncode == 2
     assert "run again with --next" in result.stderr
+
+
+# ---------------------------------------------------------------------- the tree it ran over
+
+
+def git_in(home: Path, *args: str) -> str:
+    return subprocess.run(["git", "-C", str(home), "-c", "user.name=t", "-c", "user.email=t@t",
+                           *args], check=True, capture_output=True, text=True).stdout
+
+
+def test_a_run_records_the_tree_it_left(tmp_path, run_contract):
+    """«A captured run records the tree it ran over.» (SPEC-004 R31)"""
+    import hashlib
+    home = tmp_path / "consumer"
+    (home / "src").mkdir(parents=True)
+    git_in(home, "init", "-q")
+    (home / "src" / "kept.txt").write_text("kept\n", encoding="utf-8")
+    (home / "src" / "gone.txt").write_text("gone\n", encoding="utf-8")
+    git_in(home, "add", "-A")
+    git_in(home, "commit", "-qm", "init")
+    (home / "src" / "gone.txt").unlink()
+    (home / "src" / "new.txt").write_text("new\n", encoding="utf-8")
+    delivery = home / "delivery" / "one"
+    delivery.mkdir(parents=True)
+    (delivery / "run" / "earlier").mkdir(parents=True)
+    (delivery / "run" / "earlier" / "run.json").write_text("{}", encoding="utf-8")
+    done = invoke(delivery, "--run", "tree", "--cwd", str(home / "src"), "--timeout-seconds", "20",
+                  "--step", "write=python3 -c \"open('late.txt','w').write('late')\"")
+    assert done.returncode == 0, done.stderr
+    record = record_of(delivery, "tree")
+    assert [e.message for e in run_contract.iter_errors(record)] == []
+    assert record["contract_version"] == "siegard-run/3"
+    tree = record["tree"]
+    assert tree["root"] == str(home.resolve())
+    assert tree["head"] == git_in(home, "rev-parse", "HEAD").strip()
+    digest = "sha256:" + hashlib.sha256(b"new\n").hexdigest()
+    assert tree["changed"]["src/new.txt"] == digest
+    assert tree["changed"]["src/gone.txt"] is None, "a deleted path is recorded as null"
+    assert "src/late.txt" in tree["changed"], \
+        "the tree is taken after the last step, so what a step wrote is what the run left"
+    assert "src/kept.txt" not in tree["changed"], "an unchanged path is the bytes HEAD holds"
+    assert not [name for name in tree["changed"] if "/run/" in f"/{name}"], \
+        "the delivery root's runs — this one's logs and every earlier one — are never recorded"
+
+
+def test_a_run_no_repository_holds_records_a_null_tree(tmp_path, run_contract):
+    outside = tmp_path / "plain"
+    outside.mkdir()
+    delivery = tmp_path / "delivery"
+    delivery.mkdir()
+    probe = subprocess.run(["git", "-C", str(outside), "rev-parse", "--show-toplevel"],
+                           capture_output=True)
+    if probe.returncode == 0:
+        pytest.skip("the temporary directory sits inside a git repository on this machine")
+    done = invoke(delivery, "--run", "plain", "--cwd", str(outside), "--timeout-seconds", "20",
+                  "--step", "one=python3 -c pass")
+    assert done.returncode == 0, done.stderr
+    record = record_of(delivery, "plain")
+    assert record["tree"] is None
+    assert [e.message for e in run_contract.iter_errors(record)] == []

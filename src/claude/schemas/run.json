@@ -12,13 +12,14 @@
     "outcome",
     "failed_step",
     "steps",
-    "combined_output"
+    "combined_output",
+    "tree"
   ],
   "additionalProperties": false,
   "properties": {
     "contract_version": {
-      "const": "siegard-run/2",
-      "description": "Which contract this record was written against. siegard-run/1 carried no step timestamps; a /1 record is still a run that happened, read by tolerant readers, and never rewritten to match — evidence is not migrated."
+      "const": "siegard-run/3",
+      "description": "Which contract this record was written against. siegard-run/1 carried no step timestamps and siegard-run/2 no tree; a record under either is still a run that happened, read by tolerant readers, and never rewritten to match — evidence is not migrated. `bin/trace.py --bind-record` names a run without a tree in a receipt and holds nothing of its files to it."
     },
     "run": {
       "type": "string",
@@ -167,6 +168,45 @@
       "type": "string",
       "minLength": 1,
       "description": "The log holding every step's output in order, each under a header naming the step, its command and its outcome — relative to the run's own directory. It is the file a diagnosis reads in full; the per-step logs stay byte-exact beside it."
+    },
+    "tree": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "The tree the run left, taken after its last step: «A captured run records the tree it ran over.» (SPEC-004 R31) Null where no git repository holds `cwd`. A path `changed` does not name holds, for this run, the bytes `head` holds for it; `bin/trace.py --bind-record` binds a file only where its bytes are what a run the task's implementation or proof record points at saw.",
+      "required": [
+        "root",
+        "head",
+        "changed"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "root": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The git toplevel of `cwd`, resolved; every path of `changed` is spelled from it."
+        },
+        "head": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{40,64}$",
+          "description": "The commit `HEAD` named when the run ended, or null in a repository holding no commit."
+        },
+        "changed": {
+          "type": "object",
+          "description": "Every path `git status` reported changed or untracked when the run ended, outside the delivery root's `run/`, mapped to the sha256 digest of its bytes then, `sha256:<hex>`, or null where the path was deleted.",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      }
     }
   },
   "allOf": [

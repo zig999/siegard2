@@ -73,6 +73,17 @@ keeps the record and loses only the convenience. And it is never a diagnosis's i
 says why a run failed reads the whole log from the run directory, which is why the record names
 it.
 
+**The record says what tree the run saw.** «A captured run records the tree it ran over.»
+(SPEC-004 R31) At the run's end, after every step, `tree` holds the git toplevel of the working
+directory, the commit `HEAD` named, and `changed`: the sha256 digest of every path `git status`
+reported changed or untracked, spelled from the toplevel, a deleted path as null, and nothing under
+this delivery root's `run/`, which holds this run's own logs and every earlier run's. A path
+`changed` does not name is the bytes `HEAD` holds for it. Taken at the end, because a step may
+rewrite what it read — a formatter the registry declares — and the tree a record binds is the one
+the run left. Where no repository holds the working directory, `tree` is null. This is what
+`bin/trace.py --bind-record` holds a record's files to: a file whose bytes no run of the task saw
+is not bound.
+
 Declared dependencies: none beyond the standard library.
 
 Usage:  run.py <delivery-root> --run <slug> [--next] --cwd DIR --timeout-seconds N
@@ -86,6 +97,7 @@ Exit:   0 every step passed
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import shlex
@@ -96,10 +108,11 @@ from pathlib import Path
 from typing import NoReturn
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-run/2"
+CONTRACT = "siegard-run/3"
 RUN_DIR = "run"
 COMBINED_LOG = "run.log"
 EXCERPT_LINE = 500
+GIT_TIMEOUT_SECONDS = 60
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 
 
@@ -118,6 +131,43 @@ def next_name(runs: Path, base: str) -> str:
     if not held and not (runs / base).exists() and not (runs / base).is_symlink():
         return base
     return f"{base}-{max([1, *held]) + 1}"
+
+
+def git_answer(cwd: Path, *args: str) -> str | None:
+    """What git printed, or nothing where it did not answer: a run is never refused for the tree."""
+    try:
+        done = subprocess.run(["git", "-C", str(cwd), *args], capture_output=True,
+                              timeout=GIT_TIMEOUT_SECONDS, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return done.stdout.decode("utf-8", errors="surrogateescape") if done.returncode == 0 else None
+
+
+def tree_of(cwd: Path, runs: Path) -> dict | None:
+    """The tree the run left: toplevel, `HEAD`, and the digest of every changed or untracked path
+    outside `runs`; null where no repository holds the working directory."""
+    top = git_answer(cwd, "rev-parse", "--show-toplevel")
+    if top is None:
+        return None
+    toplevel = Path(top.strip()).resolve()
+    head = git_answer(toplevel, "rev-parse", "--verify", "-q", "HEAD")
+    status = git_answer(toplevel, "status", "--porcelain=v1", "-z", "--untracked-files=all",
+                        "--no-renames")
+    changed: dict[str, str | None] = {}
+    entries = (status or "").split("\0")
+    for entry in entries:
+        if len(entry) < 4:
+            continue
+        name = entry[3:]
+        full = toplevel / name
+        if full.resolve().is_relative_to(runs.resolve()):
+            continue
+        if full.is_file():
+            changed[name] = "sha256:" + hashlib.sha256(full.read_bytes()).hexdigest()
+        elif not full.exists():
+            changed[name] = None
+    return {"root": str(toplevel), "head": head.strip() if head else None,
+            "changed": dict(sorted(changed.items()))}
 
 
 def now() -> str:
@@ -292,6 +342,7 @@ def main() -> int:
         "failed_step": None if failed is None else failed["name"],
         "steps": recorded,
         "combined_output": COMBINED_LOG,
+        "tree": tree_of(cwd, root / RUN_DIR),
     }
     (run_dir / "run.json").write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n",
                                       encoding="utf-8")
