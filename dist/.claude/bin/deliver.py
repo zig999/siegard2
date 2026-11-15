@@ -285,6 +285,16 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         first; nothing where no review cites one.
                                                         Orders what a delivery's producers read
                                                         first and decides nothing else
+        deliver.py --standing <delivery-root> <target> <target-source-root> [--rule <id>]... [--file <path>]...
+                                                        print the standard findings of the
+                                                        target's past reviews whose quoted lines
+                                                        the review's commit held and the file still
+                                                        holds, grouped by file, most first, each
+                                                        with its rule, review, first quoted line
+                                                        and correction — after one line counting
+                                                        those that stand, changed, sit in removed
+                                                        files, or quote nothing decidable. A
+                                                        report: it ranks and refuses nothing
         deliver.py --unrecorded <target-source-root> <record> [<record> ...]
                                                         print every path the working tree
                                                         changed under the target source root —
@@ -2740,6 +2750,87 @@ def recurring(delivery_root: str, target: str, standard: str) -> int:
     return 0
 
 
+def quoted_lines(evidence: str) -> list[str]:
+    """The lines a finding's evidence quotes from its file: the longest line of each excerpt the
+    evidence separates with `[...]`, spacing collapsed, and only one long enough to name a
+    place — a short line such as a closing brace is held by too many places to say anything."""
+    found = []
+    for excerpt in str(evidence).split("[...]"):
+        lines = [" ".join(line.split()) for line in excerpt.splitlines()]
+        longest = max(lines, key=len, default="")
+        if len(longest) >= 15:
+            found.append(longest)
+    return found
+
+
+def standing(delivery_root: str, target: str, source_root: str, rules: list[str],
+             files: list[str]) -> int:
+    """The standard findings of a target's past reviews whose quoted source still stands —
+    «The standard findings of a target's past reviews whose quoted source still stands are a
+    report, never a verdict» (SPEC-007 R7). A finding is held to the lines its evidence quotes:
+    the review's commit must have held them, or the finding is not decidable from them; the
+    file holding them still is what stands. Two reviews recording one finding over the same
+    lines are one."""
+    root, source = Path(delivery_root), Path(source_root)
+    if not root.is_dir() or not source.is_dir():
+        print(f"cannot run: {root if not root.is_dir() else source} is not a directory",
+              file=sys.stderr)
+        return CANNOT_RUN
+    top = subprocess.run(["git", "-C", str(source), "rev-parse", "--show-toplevel"],
+                         capture_output=True, text=True).stdout.strip()
+    counts = {"stand": 0, "changed": 0, "gone": 0, "undecidable": 0}
+    seen: set[tuple] = set()
+    held: dict[str, list[tuple[str, str, str, str]]] = {}
+    reviews = 0
+    for path in sorted(root.resolve().parent.glob("*/review/*.md")):
+        front, _, _ = spec.parse_node(path)
+        if not isinstance(front, dict) or "reviewed" not in front or front.get("target") != target:
+            continue
+        reviews += 1
+        commit = subprocess.run(["git", "-C", str(path.parent), "log", "-1", "--format=%H",
+                                 "--diff-filter=A", "--", path.name],
+                                capture_output=True, text=True).stdout.strip()
+        for finding in listed(front, "findings"):
+            if not isinstance(finding, dict) or finding.get("pass") != "standard" \
+                    or not finding.get("file"):
+                continue
+            name, rule = str(finding["file"]), str(finding.get("cites"))
+            if (rules and rule not in rules) or (files and name not in files):
+                continue
+            lines = quoted_lines(finding.get("evidence", ""))
+            key = (name, rule, tuple(lines))
+            if key in seen:
+                continue
+            seen.add(key)
+            file = source / name
+            if commit and top:
+                spelled = os.path.relpath(file.resolve(), top)
+                then = subprocess.run(["git", "-C", top, "show", f"{commit}:{spelled}"],
+                                      capture_output=True, text=True).stdout
+                lines = [line for line in lines if line in " ".join(then.split())]
+            if not lines:
+                counts["undecidable"] += 1
+            elif not file.is_file():
+                counts["gone"] += 1
+            elif all(line in " ".join(file.read_text(encoding="utf-8", errors="replace").split())
+                     for line in lines):
+                counts["stand"] += 1
+                held.setdefault(name, []).append(
+                    (rule, path.stem, lines[0], " ".join(str(finding.get("correction", "")).split())))
+            else:
+                counts["changed"] += 1
+    print(f"standing: {counts['stand']} finding(s) of target {target} stand in {len(held)} "
+          f"file(s); {counts['changed']} changed since, {counts['gone']} in files since removed, "
+          f"{counts['undecidable']} not decidable from their evidence — over {reviews} review(s)")
+    for name, entries in sorted(held.items(), key=lambda item: (-len(item[1]), item[0])):
+        cited = ", ".join(sorted({rule for rule, _, _, _ in entries}))
+        print(f"- {name} — {cited} ({len(entries)} finding(s))")
+        for rule, review, line, correction in entries:
+            print(f"    {rule} ({review}): {line[:120]}"
+                  + (f" → {correction[:160]}" if correction else ""))
+    return 0
+
+
 def contested_report(review: Path, tasks: list[str]) -> list[str]:
     """Every disagreement the proof of a reviewed task recorded under `contested`, whole and by
     task, as the person's to settle. «A review's report relays, whole and by task, every
@@ -3822,6 +3913,27 @@ def main() -> int:
                   file=sys.stderr)
             return CANNOT_RUN
         return print_findings(named)
+    if "--standing" in args:
+        at = args.index("--standing")
+        rest = args[at + 1:]
+        del args[at:]
+        narrowed: dict[str, list[str]] = {"--rule": [], "--file": []}
+        positional = []
+        while rest:
+            word = rest.pop(0)
+            if word in narrowed and rest and not rest[0].startswith("--"):
+                narrowed[word].append(rest.pop(0))
+            elif word.startswith("--"):
+                positional = []
+                break
+            else:
+                positional.append(word)
+        if verify or report or single is not None or against is not None \
+                or specification is not None or args or len(positional) != 3:
+            print("cannot run: expected --standing <delivery-root> <target> <target-source-root> "
+                  "[--rule <id>]... [--file <path>]...", file=sys.stderr)
+            return CANNOT_RUN
+        return standing(*positional, narrowed["--rule"], narrowed["--file"])
     if "--recurring" in args:
         at = args.index("--recurring")
         rest = args[at + 1:]

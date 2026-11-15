@@ -66,6 +66,7 @@ never a requirement that one does; nothing said which step such a rule may name.
 - **R4** — A rule decided by a step other than the one whose role is `suite` holds over a tree that holds no test of the task being delivered; a rule that requires a test file to exist names the `suite` step.
 - **R5** — A step whose role is `fix` rewrites the tree into the form the registry's checks hold: a delivery runs every such step after the install and before every check, in its build and its suite alike, and owes it as it owes a check; it runs neither at setup nor in a review's or a reconciliation's run, it decides no rule, and a file it changes is held to the delivery's records like any other the delivery wrote.
 - **R6** — A delivery's producers read first the rules of their target's standard that the target's past reviews cite. `bin/deliver.py --recurring <delivery-root> <target> <standard>` counts, over every review record of every initiative beside the delivery root whose `target` is the one named, the reviews whose standard findings cite each rule the standard holds, and prints each rule cited at least once, most cited first, with its count, the number of reviews read and the rule's statement. The count orders what a producer reads first and decides nothing else: it makes no rule binding that the standard does not, leaves no rule out of what a producer is given, and prints nothing where no review cites a rule the standard holds.
+- **R7** — The standard findings of a target's past reviews whose quoted source still stands are a report, never a verdict. `bin/deliver.py --standing <delivery-root> <target> <target-source-root>` reads the standard findings of every review record of every initiative beside the delivery root whose `target` is the one named, and holds each to its evidence: a finding whose quoted lines the review's commit held and the file still holds stands; one whose quoted lines the file no longer holds has changed; one whose file is gone is gone; one whose evidence quotes no line the review's commit held is not decidable from it. It prints the findings that stand grouped by file, most first, each with its rule, its review, its first quoted line and its correction, after one line counting the four, and narrows to the rules or files named with `--rule` and `--file`. It refuses nothing and ranks no finding: which to correct, and whether, stays the person's.
 
 ## Validation required before acceptance
 
@@ -101,21 +102,41 @@ never a requirement that one does; nothing said which step such a rule may name.
    producers. The criterion that reverses R6: the same reading as its grounds, taken over a
    consumer's reviews written after its delivery ran the release, finding the rules R6 printed
    first cited by as large a share of reviews as before.
+7. For R7: `bin/deliver.py --standing` counts a finding whose quoted lines stand, changed and gone
+   each as such, and one whose evidence quotes nothing the review's commit held as not decidable;
+   folds a finding two reviews recorded over the same lines into one; groups by file; narrows by
+   `--rule` and `--file`; and exits 0 over any answer — `tests/test_standing.py` proves each. The
+   criterion that reverses R7: its report, read against a consumer's reviews, disagreeing with a
+   reading of the files on more findings than it agrees.
 
 ## Readings
 
-- 2026-11-15 — grounds for R6, read from the 283 review records of six sales consumers. The
-  standard pass found the same few rules review after review in each project: in `productcatalog`
-  MNT-03 in 34 of 76 reviews, TST-01 in 28, TYP-04 in 21; in `partymgmt` TYP-04 in 17 of 26; in
-  `salese2e` TST-01 in 21 of 64. Standard findings per review fell between the earlier and the later
-  half of each project's reviews (`productcatalog` 10.5 to 2.9), and the three rules each project's
-  reviews cited most still appeared in 12 of 17, 11 of 13, 21 of 38, 12 of 21 and 13 of 32 of the
-  later half. The findings were not corrected where they were found: of 770 whose quoted source
-  could be read at the review's commit and at `HEAD`, 537 (70%) stood unchanged, 169 changed — every
-  one in a later `/implement-task` or `/deliver-scope` commit, a median 43 hours after the review —
-  and 64 were in files since removed. The producers were given the whole standard, 8 to 62 rules,
-  to read and write to; nothing told them which of those this project's reviews keep finding. The
-  same reading found no recurring signal in the failures pass: 15 findings in 283 reviews.
+- 2026-11-15 — grounds for R7, read from the same reviews as R6's by `deliver.py --standing`
+  itself: 938 standard findings once folded across reviews, of which 597 quoted lines the review's
+  commit held. 432 stood at `HEAD` — `productcatalog` 179, `productorder` 98, `salese2e` 71,
+  `partymgmt` 58, `configurator` 24, `inventory` 2 — 113 had changed and 52 were in files since
+  removed; 341 quoted nothing the review's commit held. One initiative in one consumer was planned
+  from a review's findings, its scope copied by hand from that review; nothing read the findings
+  of several reviews together or said which still stood. Whether a quoted line is still in its
+  file is decided from the tree. Planning a correction from the report needs no new route —
+  `/plan-work` plans from the scope a person gives, as it did there.
+
+- 2026-11-15 — grounds for R6, read from the 283 review records of six sales consumers. The standard
+  pass found the same few rules review after review in each project: in `productcatalog` MNT-03 in
+  34 of 76 reviews, TST-01 in 28, TYP-04 in 21; in `partymgmt` TYP-04 in 17 of 26; in `salese2e`
+  TST-01 in 21 of 64. Standard findings per review fell between the earlier and the later half of
+  each project's reviews (`productcatalog` 10.5 to 2.9), and the three rules each project's reviews
+  cited most still appeared in 12 of 17, 11 of 13, 21 of 38, 12 of 21 and 13 of 32 of the later
+  half. The findings were not corrected where they were found: read by `deliver.py --standing` (R7)
+  — each finding held to the longest line of each excerpt its evidence quotes, folded across reviews
+  that recorded it over the same lines — 432 of the 597 decidable stood at `HEAD`, 113 had changed
+  and 52 were in files since removed. Every change the hand reading traced to its commit came in a
+  later `/implement-task` or `/deliver-scope`, a median 43 hours after the review. A first reading
+  by hand, before the script, counted 537 of 770 standing by the first quoted line of each excerpt
+  and no folding; the script's figures replace it. The producers were given the whole standard, 8 to
+  62 rules, to read and write to; nothing told them which of those this project's reviews keep
+  finding. The same reading found no recurring signal in the failures pass: 15 findings in 283
+  reviews.
 
 - 2026-11-09 — grounds for R5, read from the orchestration logs and transcripts of the sales
   consumers between 2026-11-03 and 2026-11-09: a delivery's producers hold no shell, so a
