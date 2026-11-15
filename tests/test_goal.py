@@ -192,6 +192,54 @@ def test_a_scope_whose_task_is_the_substrate_alone_reaches_state_a_without_a_pro
     assert first(result).startswith("state A"), result.stdout
     assert "implemented as the substrate alone, which owes no proof" in result.stdout
 
+def remainder(project: dict, node: str, proof: str = "tests/place.spec.ts") -> None:
+    """The reconciliation record the review `first` leaves beside the trace, holding one node
+    its certification left with a testable remainder."""
+    home = project["home"]
+    (home / "siegard-reconcile").mkdir(exist_ok=True)
+    front = {"nodes": [{"node": node, "remainder": "testable",
+                        "remainder_why": "no test reads the order number back",
+                        "read_at": {"proof": [{"file": proof}]}}]}
+    (home / "siegard-reconcile" / "first.md").write_text(
+        "---\n" + yaml.safe_dump(front, sort_keys=False) + "---\n", encoding="utf-8")
+
+
+def test_a_testable_remainder_over_a_scope_task_is_owed_its_proof_only_re_delivery(project):
+    """«each certification the first review committed since the goal began refused with a
+    testable remainder, over the proof of a task of the scope, is answered by a proof-only
+    re-delivery of one such task committed after that review» (SPEC-008 R2): the step that
+    closes it runs once, and is never a run's to skip."""
+    deliver(project)
+    remainder(project, "domain/sales/order")
+    review(project)
+    commit(project["home"], f"review-change {SLUG}: reconciliation", "siegard-reconcile")
+    measure(project)
+    result = state(project)
+    assert first(result).startswith("not yet"), result.stdout
+    assert failing(result) == {"prove"}
+    assert f"domain/sales/order: no proof-only re-delivery committed after it, of {TASK}" \
+        in result.stdout
+    proof = project["home"] / "deliveries" / SLUG / "proof" / "checkout" / "record-order.md"
+    proof.write_text(proof.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    commit(project["home"], f"deliver-scope {SLUG}: prove {TASK}", "deliveries")
+    (project["home"] / "telemetry" / "report-2.json").write_text("{}\n", encoding="utf-8")
+    commit(project["home"], f"deliver-scope {SLUG}: measure", "telemetry")
+    result = state(project)
+    assert "check prove: pass" in result.stdout
+    assert f"answered by the proof-only re-delivery of {TASK}" in result.stdout
+
+
+def test_a_testable_remainder_over_a_proof_no_scope_task_holds_is_not_owed(project):
+    deliver(project)
+    remainder(project, "domain/sales/invoice", proof="tests/bill.spec.ts")
+    review(project)
+    commit(project["home"], f"review-change {SLUG}: reconciliation", "siegard-reconcile")
+    measure(project)
+    result = state(project)
+    assert first(result).startswith("state A"), result.stdout
+    assert "check prove: pass" in result.stdout
+
+
 def test_records_no_review_names_after_them_are_not_yet(project):
     deliver(project)
     measure(project)

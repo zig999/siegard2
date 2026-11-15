@@ -66,7 +66,7 @@ session that stopped while its subagents were still running. The harness refuses
 ### What a goal ends on
 
 - **R1** — A goal's state is a script's answer, read from disk and git alone: its first line is `state A`, `state B` or `not yet`, and every check it ran follows with its output verbatim.
-- **R2** — State A holds when every task of the scope holds an implementation record and a proof record, or an implementation record of the substrate alone, which owes no proof; no implementation record of the scope records a criterion unmet that R12 does not answer; every task of the scope whose records changed since the goal began is named by a review record committed after them; the delivery and the plan check against their sources; the specification is sound; a measure is committed after the last record and the last review; the tree holds no change but those the condition declared untouched; every commit since the goal began names a skill and the slug, or is a reconciliation that touches only the trace and its own record; none of those commits is on a remote; and the plugin runs the version the goal began under.
+- **R2** — State A holds when every task of the scope holds an implementation record and a proof record, or an implementation record of the substrate alone, which owes no proof; no implementation record of the scope records a criterion unmet that R12 does not answer; every task of the scope whose records changed since the goal began is named by a review record committed after them; each certification the first review committed since the goal began refused with a testable remainder, over the proof of a task of the scope, is answered by a proof-only re-delivery of one such task committed after that review; the delivery and the plan check against their sources; the specification is sound; a measure is committed after the last record and the last review; the tree holds no change but those the condition declared untouched; every commit since the goal began names a skill and the slug, or is a reconciliation that touches only the trace and its own record; none of those commits is on a remote; and the plugin runs the version the goal began under.
 - **R3** — State B holds when the initiative's orchestration log, changed since the goal began, ends with a stop line whose class is one of `blocking`, `silence`, `rebind`, `producers`, `gave-up`, `infrastructure`, `project-file`, `pending-change`, `specification`, `contradiction`, `stands`, `analyse`, `outside-task`, `already-met`, `unclassified`, and the measure, commit and remote conditions of R2 hold; what the tree still holds is reported as left for the person, because a delivery that stopped leaves its files for a person to read. A plugin whose version changed since the goal began is state B on its own, and so is a commit since the goal began that touches the project file or a standard it declares: the rules the goal ran under are no longer the ones that answer, or what only the person authors changed under a goal.
 - **R11** — A commit since the goal began that names no skill and the slug, and is no reconciliation R2 admits, is state B on its own: the route never rewrites history, so that commit stands until a person reads it, and a goal waiting for it to disappear never ends.
 - **R12** — A scope that holds every condition of R2 but one — an implementation record of it records a criterion unmet — is state B, each such criterion named beside its task: the record says the source does not satisfy the criterion, and state A would say the scope is delivered. A criterion recorded `met: false` is answered, and no longer one recorded unmet, where a review committed since the goal began names the criterion's task and gives the criterion `covered` by a test in a file the task's own proof record names: the implementer writes no test, so a criterion that asks for one is recorded before the test exists, and the test the proof names, in a suite the proof's run passed, is the answer. The answer names each criterion so answered beside the test that answers it.
@@ -185,8 +185,29 @@ session that stopped while its subagents were still running. The harness refuses
    reconciliation a record writer names each taken in a run with or without a goal, each under
    its commit message, once per task, a second time over one task a stop —
    `tests/test_deliver_scope.py` proves each.
+13. Tests hold `goal.py --state` to R2's proof clause: a certification the first review left
+   with a testable remainder over the proof of a task of the scope is `not yet` under `prove`
+   until a `deliver-scope <slug>: prove <task>` commit of one such task follows the review, and
+   a remainder over a proof no task of the scope holds owes nothing — `tests/test_goal.py`.
 
 ## Readings
+
+- 2026-11-15 — grounds for R2's proof clause: `/deliver-scope`'s step 5 «runs once per run», and
+  runs skipped it with reasons the step does not state. Read from the sales consumers' git and
+  orchestration logs since the step's present form (5.68.0): of the first reviews of a run that
+  left a testable remainder over a task of its own, eleven were followed by proof-only
+  re-deliveries, one began its re-delivery and stopped, and five did not run the step — productcatalog `remover-tmf679-qualificacao-oferta` ("not
+  run" by a `decided:` line, cost given as the reason in the report), inventory
+  `product-inventory` (skipped "por custo" until the person answered "1"), `salese2e`
+  `prontidao-em-duas-ondas` (a drift elsewhere), `configurator-no-e2e-etapas` (tests "no task of
+  this run owns") and `troca-origem-tmf679-productorder` (a stop line). Two of those ended their
+  goal in state A, which the state could not see. Replayed over every goal ended in state A, the
+  clause fails exactly those two. A certification names under `read_at` the proof files it read,
+  and the step's run in `salese2e` `perfis-de-acesso-do-bff` answered five certifications with two
+  re-deliveries, one task per certification, so one re-delivery among the tasks a certification
+  read closes it. A run without a goal is not read by the state, and keeps the step's text alone.
+  Reversal: a goal held at `not yet` on `prove` whose re-delivery the step's own text would not
+  owe.
 
 - 2026-11-15 — grounds for leaving the telemetry root out of what a condition declares untouched,
   read from `goals-ended.jsonl` and git of five sales consumers (Siegard 5.89.0 to 5.106.0). The

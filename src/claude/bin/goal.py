@@ -18,8 +18,9 @@ follows with its output verbatim.» (SPEC-008 R1)
   scope where one is named), no implementation record of the scope recording a criterion unmet
   that R12 does not answer,
   a review record naming each task whose records changed since the
-  goal began and committed after them, `deliver.py --check`, `plan.py --check`, `spec.py`, a
-  commit under the telemetry root after the last record and review, a tree holding only the
+  goal began and committed after them, a proof-only re-delivery answering each certification
+  the first such review refused with a testable remainder over a task of the scope, `deliver.py --check`,
+  `plan.py --check`, `spec.py`, a commit under the telemetry root after the last record and review, a tree holding only the
   changes the condition declared untouched, every commit since the goal began naming a skill and
   the slug, none of them on a remote, and the plugin at the version the goal began under.
 - `state B` — the initiative's orchestration log, changed since the goal began, ends with a stop
@@ -267,6 +268,63 @@ def reconciliation_only(fields: dict, commit: str, line: str) -> bool:
                                or p.startswith(f"{record}.returns/") for p in paths)
 
 
+def proof_answer(fields: dict, slug: str, since: str, delivery: Path,
+                 tasks: list[str]) -> tuple[bool, str]:
+    """Whether the run closed what its review left testable: «each certification the first review
+    committed since the goal began refused with a testable remainder, over the proof of a task of
+    the scope, is answered by a proof-only re-delivery of one such task committed after that
+    review» (SPEC-008 R2). A certification names, under `read_at`, the proof files it read; the
+    tasks it owes are those whose proof records name them, and one re-delivery among them closes
+    it. The review is the first whose reconciliation record, beside the trace under the review's
+    name, holds such a certification; a later review's remainder is relayed, as the step runs
+    once."""
+    proving: dict[str, str] = {}
+    for tid in tasks:
+        record = delivery / "proof" / f"{tid[len('task/'):]}.md"
+        if record.is_file():
+            for entry in front_of(record).get("tests") or []:
+                if isinstance(entry, dict) and isinstance(entry.get("file"), str):
+                    proving.setdefault(entry["file"], tid)
+    added = git(fields["home"], "log", "--reverse", "--diff-filter=A", "--format=%H",
+                "--name-only", f"{since}..HEAD", "--", relative(fields, delivery / "review"))
+    stamp, owed, review = None, {}, None
+    for line in added.splitlines():
+        if re.fullmatch(r"[0-9a-f]{40}", line):
+            stamp = line
+            continue
+        record = fields["home"] / "siegard-reconcile" / Path(line).name
+        if not line.endswith(".md") or not record.is_file():
+            continue
+        for e in front_of(record).get("nodes") or []:
+            if not isinstance(e, dict) or e.get("remainder") != "testable":
+                continue
+            read = [proof.get("file") for proof in (e.get("read_at") or {}).get("proof") or []
+                    if isinstance(proof, dict)]
+            held = sorted({proving[name] for name in read if name in proving})
+            if held:
+                owed[str(e.get("node"))] = held
+        if owed:
+            review = line
+            break
+    if not owed:
+        return True, ("no review committed since the goal began left a testable remainder over "
+                      "the proof of a task of the scope")
+    proved = git(fields["home"], "log", "--format=%H %s", f"{stamp}..HEAD")
+    done = {f"task/{m.group(1)}" for line in proved.splitlines()
+            if (m := re.match(rf"^\S+ deliver-scope {re.escape(slug)}: prove (?:task/)?(\S+)$",
+                              line))}
+    open_ = [node for node, held in owed.items() if not done & set(held)]
+    lines = [f"{review} left {len(owed)} certification(s) with a testable remainder over the "
+             f"proof of a task of the scope"]
+    for node, held in owed.items():
+        answer = sorted(done & set(held))
+        lines.append(f"  {node}: " + (f"answered by the proof-only re-delivery of {answer[0]}"
+                                      if answer else
+                                      "no proof-only re-delivery committed after it, of "
+                                      + " or ".join(held)))
+    return not open_, "\n".join(lines)
+
+
 def front_of(record: Path) -> dict:
     import spec
     text = record.read_text(encoding="utf-8")
@@ -414,9 +472,11 @@ def checks(fields: dict, slug: str, since: str, version: str, scope: list[str],
                            "review committed after them" if not unreviewed else
                            "no review committed after the records names: " + ", ".join(unreviewed))
         found["criteria"] = criteria_answer(fields, since, delivery, tasks, named)
+        found["prove"] = proof_answer(fields, slug, since, delivery, tasks)
     except Refused as refusal:
         found["review"] = (False, str(refusal))
         found["criteria"] = (False, str(refusal))
+        found["prove"] = (False, str(refusal))
 
     code, out = script("deliver.py", "--check", str(delivery), str(work), str(target),
                        *([] if closed else [str(specification)]))
