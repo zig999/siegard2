@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.114.0 — 2026-11-15
+
+`goal.py --state` gains the `prove` check: a goal reaches state A only once each certification its first review refused with a testable remainder over a task of the scope is answered by a `deliver-scope <slug>: prove <task>` re-delivery of one task whose proof it read (SPEC-008 R2). (`ee4c8b6`)
+
 ## 5.113.0 — 2026-11-15
 
 `goal.py --compose` declares untouched no path under the telemetry root, which the measure commits whole, so a recorded ask or a grant's words pending there is committed by the measure rather than forbidden by the condition (SPEC-008 R6). (`37c87eb`)
