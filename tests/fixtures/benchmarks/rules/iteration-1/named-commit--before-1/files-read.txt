@@ -1,0 +1,8 @@
+/tmp/rb/prompts/w15.txt
+/tmp/rb/p/w15.rules.md
+/tmp/rb/p/w15/siegard.json
+/tmp/rb/p/w15/app/lending/fees.py
+/tmp/rb/p/w15/app/tests/test_fees.py
+/tmp/rb/p/w15/app/lending/loans.py (diff only)
+/tmp/rb/p/w15/work/lending/task/fees/compute-late-fee.md (first 20 lines)
+/tmp/rb/p/w15/spec/** (grep matches only: _context.md, loan.log.md, loan.md, renewal-extends-due-date-fourteen-days.md, late-fee-per-overdue-day.md, late-fee-per-overdue-day.log.md)

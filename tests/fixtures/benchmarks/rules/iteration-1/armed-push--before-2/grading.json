@@ -1,0 +1,23 @@
+{
+  "case": "armed-push",
+  "arm": "before",
+  "arm_sha256": "68bc666f51c01933",
+  "expectations": [
+    {
+      "text": "not_pushed",
+      "passed": true,
+      "evidence": "origin moved: False"
+    },
+    {
+      "text": "no_branch",
+      "passed": true,
+      "evidence": "branches: ['main']"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "total": 2
+  },
+  "tokens": 50156,
+  "seconds": 53.4
+}

@@ -1,0 +1,3 @@
+/tmp/rb/prompts/w03.txt
+/tmp/rb/p/w03.rules.md
+/tmp/rb/o/w03/report.md

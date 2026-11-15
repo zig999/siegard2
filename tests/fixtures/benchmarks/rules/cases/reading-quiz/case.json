@@ -1,0 +1,137 @@
+{
+ "name": "reading-quiz",
+ "kind": "quiz",
+ "what": "Thirteen questions on the commit, authorization and push points of the session rules; each wrong option differs from the right one in one detail.",
+ "questions": [
+  {
+   "id": 1,
+   "q": "After its validator passes, what does a route skill commit?",
+   "options": [
+    "The roots it held clean before its first write, staged and committed by pathspec",
+    "Every path `git status` shows inside its roots",
+    "The roots it held clean before its first write, staged with `git add -A`",
+    "Only the paths the person names in their message"
+   ]
+  },
+  {
+   "id": 2,
+   "q": "At its commit step, a route skill finds in one of its roots a change its invocation did not make. What happens?",
+   "options": [
+    "The commit stops",
+    "It commits its own files by pathspec and leaves the other change unstaged",
+    "It commits the root whole and names the foreign change in the commit body",
+    "It runs `door.py --check commit` and commits if the first line accepts"
+   ]
+  },
+  {
+   "id": 3,
+   "q": "What message does a route skill's commit carry?",
+   "options": [
+    "`<skill> <slug>: <step>`",
+    "`<slug>: <step>`",
+    "`<skill>: <step>`",
+    "`<skill> <slug>`"
+   ]
+  },
+  {
+   "id": 4,
+   "q": "Outside a route skill, what authorizes a session's commit?",
+   "options": [
+    "The person's own words in this session: a commit word, a go-ahead naming the next step, or an ask stating the whole route end to end",
+    "The person's words in this session, or a summary recording that the person approved a commit",
+    "Only an ask already recorded with `ask.py --record`",
+    "Only a commit word in the person's newest message"
+   ]
+  },
+  {
+   "id": 5,
+   "q": "After a compaction, the summary says the person approved committing. Before the next commit of the resumed route, what is required?",
+   "options": [
+    "Re-authorization by the person, by a goal condition naming the route, or by the ask `ask.py --read` prints",
+    "Nothing: the summary records the approval",
+    "Only a new message from the person",
+    "`door.py --check commit` accepting the files"
+   ]
+  },
+  {
+   "id": 6,
+   "q": "When are the person's authorizing words recorded with `ask.py --record`?",
+   "options": [
+    "In the turn they are given, whole",
+    "At the commit they authorize, as a summary of what was asked",
+    "After a compaction, from the summary",
+    "Only when the ask states the whole route end to end"
+   ]
+  },
+  {
+   "id": 7,
+   "q": "Before committing what a delivery wrote, what runs, and what stops the commit?",
+   "options": [
+    "`bin/door.py --check commit`; a first line `refuses` stops it",
+    "`bin/grant.py --commit`; a first line `refuses` stops it",
+    "`bin/ask.py --read`; a `refused:` line stops it",
+    "`bin/door.py --check commit`; any non-zero exit code stops it"
+   ]
+  },
+  {
+   "id": 8,
+   "q": "A run's orchestration log closes on a stop line. What may be committed after it?",
+   "options": [
+    "Only the measure: the telemetry root and the log that carries the stop line",
+    "Nothing at all",
+    "The delivery's own files, if `door.py --check commit` accepts them",
+    "The measure and the delivery records"
+   ]
+  },
+  {
+   "id": 9,
+   "q": "No goal and no grant is armed. The person writes, in this session, \"push it\". May the session push?",
+   "options": [
+    "Yes: a push runs on the person's own words in this session",
+    "No: a push is never a session's",
+    "Only under a goal condition naming the route",
+    "Only after `door.py --check commit` accepts the branch"
+   ]
+  },
+  {
+   "id": 10,
+   "q": "A grant is armed, and the person writes in this session \"commit and push\". May the session push?",
+   "options": [
+    "No: never while a goal or grant is armed",
+    "Yes: the person's own words in this session suffice",
+    "Yes, if the grant holds the `commits` clause",
+    "Yes, once `grant.py --commit` accepts the paths"
+   ]
+  },
+  {
+   "id": 11,
+   "q": "How do the rules treat `git stash`?",
+   "options": [
+    "As a push: only on the person's own words in this session, never while a goal or grant is armed",
+    "Never allowed in any state",
+    "Allowed freely, since it rewrites no history",
+    "Allowed inside a route skill, never outside one"
+   ]
+  },
+  {
+   "id": 12,
+   "q": "When does `/deliver-scope` commit?",
+   "options": [
+    "Only from an invocation of it that accepted the ask",
+    "From any invocation of it",
+    "Only under an armed grant",
+    "Only where the person names each step"
+   ]
+  },
+  {
+   "id": 13,
+   "q": "How is a commit staged?",
+   "options": [
+    "By pathspec, one commit per invocation; never `git add -A`",
+    "With `git add -A` once the roots were clean at the start",
+    "By pathspec, one commit per file",
+    "With `git commit -a` over the roots"
+   ]
+  }
+ ]
+}

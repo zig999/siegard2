@@ -1,0 +1,6 @@
+/tmp/rb/prompts/w20.txt
+/tmp/rb/p/w20.rules.md
+/tmp/rb/p/w20/siegard.json
+/tmp/rb/p/w20/work/lending/task/fees/compute-late-fee.md
+/tmp/rb/p/w20/app/.gitignore
+/tmp/rb/o/w20/report.md

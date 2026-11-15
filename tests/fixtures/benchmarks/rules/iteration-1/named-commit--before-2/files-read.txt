@@ -1,0 +1,8 @@
+/tmp/rb/p/w01.rules.md
+/tmp/rb/p/w01/siegard.json
+/tmp/rb/p/w01/app/lending/fees.py
+/tmp/rb/p/w01/app/tests/test_fees.py
+/home/siegfriedneto/projects/siegard2/src/claude/bin/ask.py (--help only)
+/home/siegfriedneto/projects/siegard2/src/claude/bin/goal.py (--help only)
+/home/siegfriedneto/projects/siegard2/src/claude/bin/grant.py (--help only)
+/tmp/rb/p/w01/spec and /tmp/rb/p/w01/work (grep matches only)

@@ -1,0 +1,15 @@
+cat /tmp/rb/prompts/w11.txt	0
+cat /tmp/rb/p/w11.rules.md; cd /tmp/rb/p/w11 && git status --porcelain && git log --oneline | head; ls	0
+cd /tmp/rb/p/w11 && git diff --stat -- app; cat siegard.json; ls work spec; find work -maxdepth 3 | head -30	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --help	0
+cd /tmp/rb/p/w11 && git diff -- app/lending/loans.py	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --prepare --skill implement-task --project /tmp/rb/p/w11 --slug task/fees/compute-late-fee --target app --file app/lending/fees.py --file app/tests/test_fees.py	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/door.py --help | grep -n -i -A3 slug	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --prepare --skill implement-task --project /tmp/rb/p/w11 --slug lending --target app --file app/lending/fees.py --file app/tests/test_fees.py	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --save-report /tmp/rb/p/w11/.git/siegard/handoff/20261115T151143Z-implement-task.md < (heredoc report)	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --render /tmp/rb/o/w11/tmp/record.json	1
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --render /tmp/rb/o/w11/tmp/record.json	1
+grep -n -E "recommended|settle|own|why|reverses_if" /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --render /tmp/rb/o/w11/tmp/record.json	1
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --render /tmp/rb/o/w11/tmp/record.json	1
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --render /tmp/rb/o/w11/tmp/record.json	0

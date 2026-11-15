@@ -1,0 +1,13 @@
+cat /tmp/rb/p/w03.rules.md  # exit 0
+cd /tmp/rb/p/w03 && git status && git log --oneline | head -5; ls  # exit 0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/ask.py --help  # exit 0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/grant.py --help  # exit 0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/grant.py --read /tmp/rb/p/w03  # exit 0
+printf '%s' 'comita o fees.py e o teste e dá push' | python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/ask.py --record /tmp/rb/p/w03 --text-file -  # exit 0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/grant.py --commit /tmp/rb/p/w03 --file app/lending/fees.py app/tests/test_fees.py  # exit 2
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/grant.py --commit /tmp/rb/p/w03 --file app/lending/fees.py --file app/tests/test_fees.py  # exit 1
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --help  # exit 0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --check /tmp/rb/o/w03/report.md  # exit 1
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --check /tmp/rb/o/w03/report.md  # exit 1
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --check /tmp/rb/o/w03/report.md  # exit 0
+git status --short  # exit 0

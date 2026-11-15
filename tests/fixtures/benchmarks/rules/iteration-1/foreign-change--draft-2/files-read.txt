@@ -1,0 +1,6 @@
+/tmp/rb/prompts/w11.txt
+/tmp/rb/p/w11.rules.md
+/tmp/rb/p/w11/siegard.json
+/tmp/rb/p/w11/app/lending/loans.py (diff only, via git diff)
+/home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py (--help output, and a grep of its source)
+/home/siegfriedneto/projects/siegard2/src/claude/bin/door.py (--help output)

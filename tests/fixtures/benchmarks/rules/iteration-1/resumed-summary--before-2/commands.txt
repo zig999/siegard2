@@ -1,0 +1,10 @@
+cat /tmp/rb/p/w07.rules.md; cd /tmp/rb/p/w07 && git status && git log --oneline | head; ls	exit 0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/ask.py --help; cat siegard.json; find . -path ./.git -prune -o -type f -print	exit 0 (ask.py --help exit 0)
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/ask.py --read /tmp/rb/p/w07	exit 1
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/door.py --check commit --project /tmp/rb/p/w07 --slug compute-late-fee --file app/lending/fees.py --file app/tests/test_fees.py	exit 0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/goal.py --help | grep -n -- --state	exit 0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --help | head -60	exit 0
+ls "$(git rev-parse --git-common-dir)/siegard"	exit 2
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --check /tmp/rb/o/w07/report.md	exit 1
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --check /tmp/rb/o/w07/report.md	exit 1
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --check /tmp/rb/o/w07/report.md	exit 0

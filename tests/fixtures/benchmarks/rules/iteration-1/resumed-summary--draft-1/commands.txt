@@ -1,0 +1,14 @@
+cat /tmp/rb/p/w20.rules.md	0
+mkdir -p /tmp/rb/o/w20; cd /tmp/rb/p/w20 && ls -la && git status && git log --oneline | head; cat siegard.json; find . -path ./.git -prune -o -type f -print | head -80	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/ask.py --help	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/ask.py --read /tmp/rb/p/w20	1
+ls telemetry delivery	2
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/door.py --help | head -60	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/door.py --check implement-task --project /tmp/rb/p/w20 --slug lending --task task/fees/compute-late-fee	1
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/door.py --check commit --project /tmp/rb/p/w20 --slug lending --file app/lending/fees.py app/tests/test_fees.py	2
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/door.py --check commit --project /tmp/rb/p/w20 --slug lending --file app/lending/fees.py --file app/tests/test_fees.py	0
+cat work/lending/task/fees/compute-late-fee.md; ls -a app; cat app/.gitignore	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --help | sed -n 1,80p	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --check /tmp/rb/o/w20/report.md	1
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --check /tmp/rb/o/w20/report.md	1
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --check /tmp/rb/o/w20/report.md	0

@@ -1,0 +1,10 @@
+/tmp/rb/prompts/w10.txt
+/tmp/rb/p/w10.rules.md
+/tmp/rb/p/w10/siegard.json
+/tmp/rb/p/w10/app/lending/fees.py
+/tmp/rb/p/w10/app/tests/test_fees.py
+/tmp/rb/p/w10/app/lending/loans.py (diff only)
+/tmp/rb/p/w10/spec/rules/lending/late-fee-per-overdue-day.md
+/home/siegfriedneto/projects/siegard2/src/claude/bin/ask.py (--help)
+/home/siegfriedneto/projects/siegard2/src/claude/bin/goal.py (--help)
+/home/siegfriedneto/projects/siegard2/src/claude/bin/grant.py (--help)

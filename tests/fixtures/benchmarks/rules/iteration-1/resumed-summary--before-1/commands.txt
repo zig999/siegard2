@@ -1,0 +1,14 @@
+cat /tmp/rb/p/w08.rules.md  # exit 0
+git status (in /tmp/rb/p/w08)  # exit 0
+git log --oneline | head  # exit 0
+ls -la  # exit 0
+cat siegard.json  # exit 0
+find spec work -type f | head -50  # exit 0
+ls -la .siegard*  # exit 2 (no match)
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/ask.py --help  # exit 0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/ask.py --read /tmp/rb/p/w08  # exit 1
+ls telemetry  # exit 2
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/goal.py --help | grep -i -E "usage|--state|armed" | head  # exit 0
+ls .git/siegard  # exit 2
+ls -a .git | head -30  # exit 0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/door.py --check commit --project /tmp/rb/p/w08 --slug compute-late-fee --file app/lending/fees.py --file app/tests/test_fees.py  # exit 0

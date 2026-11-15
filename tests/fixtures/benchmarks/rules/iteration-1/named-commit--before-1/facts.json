@@ -1,0 +1,19 @@
+{
+  "commits": [
+    {
+      "subject": "session lending: compute-late-fee — late fee and its test",
+      "paths": [
+        "app/lending/fees.py",
+        "app/tests/test_fees.py"
+      ]
+    }
+  ],
+  "branches": [
+    "main"
+  ],
+  "origin_moved": true,
+  "origin_holds_head": true,
+  "asks": [
+    "comita o fees.py e o teste dele e manda pro origin"
+  ]
+}

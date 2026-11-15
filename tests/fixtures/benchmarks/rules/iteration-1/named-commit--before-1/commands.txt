@@ -1,0 +1,23 @@
+# B=/home/siegfriedneto/projects/siegard2/src/claude/bin; cwd /tmp/rb/p/w15 unless noted; format: command<TAB>exit code
+cat /tmp/rb/p/w15.rules.md	0
+cd /tmp/rb/p/w15 && git status --short && git log --oneline -5 && git remote -v && git branch -a && cat siegard.json && ls -la && ls /home/siegfriedneto/projects/siegard2/src/claude/bin	0
+python3 $B/ask.py --help	0
+python3 $B/goal.py --help | head -60	0
+python3 $B/grant.py --help | head -60	0
+python3 $B/grant.py --read /tmp/rb/p/w15	0
+python3 $B/goal.py --help | grep -nE "^\s+goal.py|--read|--armed"	0
+ls .git | head -30	0
+cat app/lending/fees.py; cat app/tests/test_fees.py; git diff --stat	0
+git diff app/lending/loans.py	0
+ls .git/siegard* 2>/dev/null; find .git -maxdepth 1 -name "*goal*" -o -maxdepth 1 -name "*grant*"	0
+find spec work -type f | head -50	0
+grep -rniE "late|fee|100" spec | head	0
+python3 $B/door.py --help | grep -n -iE "commit" | head -20	0
+head -20 work/lending/task/fees/compute-late-fee.md	0
+python3 $B/project.py --help | head -5	0
+printf '%s' 'comita o fees.py e o teste dele e manda pro origin' | python3 $B/ask.py --record /tmp/rb/p/w15 --text-file -	0
+python3 $B/door.py --check commit --project /tmp/rb/p/w15 --slug lending --file app/lending/fees.py --file app/tests/test_fees.py	0
+git add -- app/lending/fees.py app/tests/test_fees.py && git commit -q -m "session lending: compute-late-fee — late fee and its test" -m "Committed outside a skill on the person's own words, ask sha256 3ebbabb1c60f4024." -- app/lending/fees.py app/tests/test_fees.py	0
+git show --stat --oneline HEAD; git status --short	0
+git push origin main	0
+git log --oneline origin/main -2	0

@@ -897,3 +897,41 @@ def test_the_5_68_0_deliver_scope_carries_a_resumed_run_to_its_handoff_and_reads
     assert len([g for g in quiz if g["arm"].startswith("shipped:")]) >= 2
     for grading in quiz:
         assert all(e["passed"] for e in grading["expectations"]), grading["run"]
+
+
+import bench_rules  # noqa: E402
+
+RULES = BENCH / "rules"
+
+
+def rules_runs() -> list[Path]:
+    return sorted(p for p in (RULES / "iteration-1").iterdir() if p.is_dir())
+
+
+def test_the_rules_reading_quiz_has_one_answer_per_question_spread_over_the_letters():
+    questions = bench_rules.case("reading-quiz")["questions"]
+    assert [q["id"] for q in questions] == list(range(1, 14))
+    keys = {bench_rules.quiz_options(q)[1] for q in questions}
+    assert keys == set("abcd")
+
+
+@pytest.mark.parametrize("run", [p.name for p in rules_runs()])
+def test_each_rules_run_grades_as_recomputed_from_its_record(run):
+    record = RULES / "iteration-1" / run
+    grading = json.loads((record / "grading.json").read_text(encoding="utf-8"))
+    recomputed = bench_rules.checks(grading["case"], record)
+    assert [(e["text"], e["passed"]) for e in recomputed] == \
+        [(e["text"], e["passed"]) for e in grading["expectations"]]
+    arm = (RULES / "arms" / f"{grading['arm']}.md").read_bytes()
+    assert __import__("hashlib").sha256(arm).hexdigest()[:16] == grading["arm_sha256"]
+
+
+def test_the_commit_bullet_rewrite_does_not_separate_from_the_5_107_0_text():
+    """Iteration 1 holds the 5.107.0 commit bullet against a rewrite split into scope,
+    authorization and blast radius: every run of both arms met every expectation, the quiz and the
+    four scenarios alike, so the rewrite bought nothing measured and was declined."""
+    gradings = [json.loads((r / "grading.json").read_text(encoding="utf-8")) for r in rules_runs()]
+    for arm in ("before", "draft"):
+        held = [g for g in gradings if g["arm"] == arm]
+        assert len(held) == 10
+        assert all(e["passed"] for g in held for e in g["expectations"]), arm

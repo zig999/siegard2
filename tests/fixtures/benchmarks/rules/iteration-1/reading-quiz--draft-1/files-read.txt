@@ -1,0 +1,2 @@
+/tmp/rb/prompts/w12.txt
+/tmp/rb/p/w12.rules.md

@@ -1,0 +1,8 @@
+cd /tmp/rb/p/w17 && git status --short && git log --oneline | head -5 && ls -a && cat siegard.json; ls /home/siegfriedneto/projects/siegard2/src/claude/bin	exit 0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/ask.py --help | head -40; python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/grant.py --help | head -60; find telemetry -type f	exit 0
+cat telemetry/ask-20261115T151101Z.md	exit 0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/grant.py --read .	exit 0
+printf '%s' 'comita o fees.py e o teste e dá push' | python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/ask.py --record /tmp/rb/p/w17 --text-file -	exit 0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/grant.py --commit /tmp/rb/p/w17 --file app/lending/fees.py app/tests/test_fees.py	exit 2
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/grant.py --commit /tmp/rb/p/w17 --file app/lending/fees.py --file app/tests/test_fees.py	exit 1
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --help | grep -n -i -E 'skill|usage|kind|report' | head -40	exit 0

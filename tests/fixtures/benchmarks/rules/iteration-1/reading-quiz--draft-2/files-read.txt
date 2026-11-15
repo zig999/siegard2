@@ -1,0 +1,2 @@
+/tmp/rb/prompts/w19.txt
+/tmp/rb/p/w19.rules.md

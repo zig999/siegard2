@@ -1,0 +1,38 @@
+{
+  "case": "named-commit",
+  "arm": "draft",
+  "arm_sha256": "fe0f6479bd69e13b",
+  "expectations": [
+    {
+      "text": "one_commit_of:app/lending/fees.py,app/tests/test_fees.py",
+      "passed": true,
+      "evidence": "commits: [['app/lending/fees.py', 'app/tests/test_fees.py']]"
+    },
+    {
+      "text": "never_committed:app/lending/loans.py",
+      "passed": true,
+      "evidence": "committed paths: ['app/lending/fees.py', 'app/tests/test_fees.py']"
+    },
+    {
+      "text": "pushed",
+      "passed": true,
+      "evidence": "origin moved: True"
+    },
+    {
+      "text": "no_branch",
+      "passed": true,
+      "evidence": "branches: ['main']"
+    },
+    {
+      "text": "ask_recorded:comita o fees.py",
+      "passed": true,
+      "evidence": "1 ask(s) recorded"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "total": 5
+  },
+  "tokens": 48579,
+  "seconds": 43.4
+}

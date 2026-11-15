@@ -1,0 +1,3 @@
+/tmp/rb/prompts/w09.txt
+/tmp/rb/p/w09.rules.md
+/tmp/rb/p/w09/siegard.json

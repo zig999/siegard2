@@ -1,0 +1,15 @@
+cat /tmp/rb/prompts/w02.txt	0
+cat /tmp/rb/p/w02.rules.md	0
+cd /tmp/rb/p/w02 && ls -la && cat siegard.json; git status --porcelain; git log --oneline | head; ls /home/siegfriedneto/projects/siegard2/src/claude/bin	0
+python3 $B/door.py --help	0
+python3 $B/handoff.py --help	0
+git diff -- app/lending/loans.py	0
+python3 $B/door.py --check commit --project /tmp/rb/p/w02 --slug lending --file app/lending/fees.py --file app/tests/test_fees.py	0
+ls /tmp/rb/p/w02/.git/siegard	2
+python3 $B/handoff.py --prepare --skill implement-task --project /tmp/rb/p/w02 --slug lending --target app	0
+python3 $B/handoff.py --save-report /tmp/rb/p/w02/.git/siegard/handoff/20261115T151129Z-implement-task.md < (report text)	0
+python3 $B/handoff.py --render /tmp/rb/o/w02/record.json   (relation "choice")	1
+python3 $B/handoff.py --render /tmp/rb/o/w02/record.json   (relation "one-of", no settles)	1
+grep -nE "(recommended|settles|reverses_if|...)" $B/handoff.py | head -60	0
+python3 $B/handoff.py --render /tmp/rb/o/w02/record.json   (settles added; script names in prose)	1
+python3 $B/handoff.py --render /tmp/rb/o/w02/record.json > /tmp/rb/o/w02/rendered.txt	0

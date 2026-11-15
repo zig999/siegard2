@@ -1,0 +1,12 @@
+{
+  "commits": [],
+  "branches": [
+    "main"
+  ],
+  "origin_moved": false,
+  "origin_holds_head": true,
+  "asks": [
+    "--commits --doors none",
+    "comita o fees.py e o teste e dá push"
+  ]
+}

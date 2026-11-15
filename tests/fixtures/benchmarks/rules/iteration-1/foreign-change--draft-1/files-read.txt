@@ -1,0 +1,4 @@
+/tmp/rb/prompts/w05.txt
+/tmp/rb/p/w05.rules.md
+/tmp/rb/p/w05/siegard.json
+/home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py (lines 160-200, 400-520)

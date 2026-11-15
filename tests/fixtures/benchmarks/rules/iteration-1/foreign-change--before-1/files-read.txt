@@ -1,0 +1,6 @@
+/tmp/rb/prompts/w02.txt
+/tmp/rb/p/w02.rules.md
+/tmp/rb/p/w02/siegard.json
+/home/siegfriedneto/projects/siegard2/src/claude/bin/door.py (--help output)
+/home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py (--help output; grep for field names)
+/tmp/rb/p/w02/app/lending/loans.py (git diff only)

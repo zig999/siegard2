@@ -1,0 +1,2 @@
+/tmp/rb/prompts/w18.txt
+/tmp/rb/p/w18.rules.md

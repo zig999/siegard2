@@ -1,0 +1,19 @@
+cat /tmp/rb/prompts/w05.txt	0
+cat /tmp/rb/p/w05.rules.md	0
+cd /tmp/rb/p/w05 && git status --porcelain -- app	0
+ls; cat siegard.json; git diff --stat -- app	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --help	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --prepare --skill implement-task --project /tmp/rb/p/w05 --slug fees/compute-late-fee --target app --file app/lending/fees.py --file app/tests/test_fees.py	0
+git diff -- app/lending/loans.py	0
+ls /home/siegfriedneto/projects/siegard2/src/claude/schemas/handoff.json	0
+cat > /tmp/rb/w05-record.json (heredoc, record filled from the skeleton)	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --render /tmp/rb/w05-record.json	1
+sed -i 's/"relation": ""/"relation": "one-of"/' /tmp/rb/w05-record.json	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --render /tmp/rb/w05-record.json	1
+grep -n -o -E "<field names>" /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py	0
+sed -n 160,200p .../bin/handoff.py; sed -n 400,520p .../bin/handoff.py	0
+python3 - (edit record JSON: settles, what_it_does)	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --render /tmp/rb/w05-record.json	1
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --save-report /tmp/rb/p/w05/.git/siegard/handoff/20261115T151124Z-implement-task.md	0
+python3 - (edit record JSON: prose without script names, under ceiling)	0
+python3 /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --render /tmp/rb/w05-record.json	0

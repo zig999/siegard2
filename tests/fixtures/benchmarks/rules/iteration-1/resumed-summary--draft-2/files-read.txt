@@ -1,0 +1,3 @@
+/tmp/rb/prompts/w04.txt
+/tmp/rb/p/w04.rules.md
+/tmp/rb/p/w04/siegard.json

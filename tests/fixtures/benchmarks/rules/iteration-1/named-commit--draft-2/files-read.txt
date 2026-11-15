@@ -1,0 +1,2 @@
+/tmp/rb/prompts/w06.txt
+/tmp/rb/p/w06.rules.md
