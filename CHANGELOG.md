@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.113.0 — 2026-11-15
+
+`goal.py --compose` declares untouched no path under the telemetry root, which the measure commits whole, so a recorded ask or a grant's words pending there is committed by the measure rather than forbidden by the condition (SPEC-008 R6). (`37c87eb`)
+
 ## 5.112.0 — 2026-11-15
 
 An initiative holds its `closure.md` once `HEAD` holds it, so `grant.py --commit` accepts the closing's own commit under a grant holding `close`, with or without a slug, and a grant naming the initiative ends when that commit lands (SPEC-011 R3, R7). (`2fc70b4`)
