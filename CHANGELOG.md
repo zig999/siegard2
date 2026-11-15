@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.108.0 — 2026-11-15
+
+Under a grant, a first line `refuses` from `grant.py --commit` stops a commit unless the person's own words in the session name that commit, as R11 already held for a closing; the session rules and `/plan-work`'s closing reference say so (SPEC-011 R7). (`f8d7cad`)
+
 ## 5.107.0 — 2026-11-15
 
 While a goal or a grant is armed, the new `hooks/bounds.py` refuses a push, a branch, a history rewrite, a stash and a stage or commit of all that is tracked; in every state it refuses a hand write of `siegard-trace.json`, an initiative's `plan.json` or `delivery.json`, or a captured run; `run.py` records the tree a run left (`siegard-run/3`) and `trace.py --bind-record` refuses a file no run of its task saw (SPEC-010 R8, R9; SPEC-004 R31). (`511c833`)
