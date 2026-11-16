@@ -244,3 +244,77 @@ def test_a_judged_door_under_a_grant_that_names_no_initiative_goes_ahead(home):
                                                            encoding="utf-8")
     append(home, JUDGED)
     allowed(hook(home, "git commit -am x"))
+
+
+STOP = ("stop: outside-task — the red lies in a file no record of the task names; "
+        "the door is /plan-work")
+RUN = f"deliveries/{SLUG}/run/first-suite-2"
+MEASURE = "telemetry/20261116T141613Z.json"
+
+
+def write(home: Path, path: str, text: str = "x\n") -> None:
+    target = home / path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text, encoding="utf-8")
+
+
+def test_a_commit_recording_a_stop_with_a_run_directory_is_refused(home):
+    write(home, f"{RUN}/run.json", "{}")
+    append(home, STOP)
+    reason = refused(hook(home, f"git add -- {RUN} {LOG} && git commit -q -m x -- {RUN} {LOG}"))
+    assert "closes the log on a stop" in reason and "first-suite-2" in reason
+
+
+def test_a_commit_recording_a_stop_with_the_log_alone_goes_ahead(home):
+    append(home, STOP)
+    allowed(hook(home, f"git add -- {LOG} && git commit -q -m x -- {LOG}"))
+
+
+def test_a_commit_recording_a_stop_with_the_log_and_the_measure_goes_ahead(home):
+    write(home, MEASURE)
+    append(home, STOP)
+    allowed(hook(home, f"git add -- {LOG} {MEASURE} && git commit -q -m x -- {LOG} {MEASURE}"))
+
+
+def test_a_commit_after_a_stop_adding_no_stop_line_goes_ahead(home):
+    append(home, STOP)
+    git(home, "add", LOG)
+    git(home, "commit", "-q", "-m", "stop")
+    write(home, f"deliveries/{SLUG}/implementation/a/b.md")
+    append(home, "- step: /implement-task a/b committed")
+    allowed(hook(home, f"git add -A && git commit -q -m x"))
+
+
+def test_a_commit_of_all_that_is_tracked_recording_a_stop_with_a_tracked_file_is_refused(home):
+    write(home, "target/a.ts")
+    git(home, "add", "-A"); git(home, "commit", "-q", "-m", "a")
+    write(home, "target/a.ts", "changed\n")
+    append(home, STOP)
+    assert "closes the log on a stop" in refused(hook(home, "git commit -am x"))
+
+
+def test_a_line_naming_no_stop_class_is_not_a_stop(home):
+    write(home, f"{RUN}/run.json", "{}")
+    append(home, "stop: no-such-class — whatever")
+    allowed(hook(home, f"git add -- {RUN} {LOG} && git commit -q -m x -- {RUN} {LOG}"))
+
+
+def test_a_staged_file_the_commit_pathspec_leaves_out_is_not_carried(home):
+    write(home, "target/other.ts")
+    git(home, "add", "target/other.ts")
+    append(home, STOP)
+    allowed(hook(home, f"git commit -q -m x -- {LOG}"))
+
+
+def test_a_stop_commit_in_a_project_without_siegard_json_is_never_read(home):
+    (home / "siegard.json").unlink()
+    write(home, f"{RUN}/run.json", "{}")
+    append(home, STOP)
+    allowed(hook(home, f"git add -A && git commit -q -m x"))
+
+
+def test_a_stop_commit_over_an_unreadable_log_goes_ahead(home):
+    append(home, STOP)
+    (home / LOG).write_bytes(b"\xff\xfe\x00 stop: outside-task")
+    write(home, f"{RUN}/run.json", "{}")
+    allowed(hook(home, f"git add -A && git commit -q -m x"))

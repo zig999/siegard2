@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Refuses a commit that adds a door line out of form to an orchestration log, in a Siegard project.
+"""Refuses a commit that adds a door line out of form to an orchestration log, or that records a stop
+alongside more than the measure, in a Siegard project.
 
 The harness runs this on `PreToolUse` for the Bash tool, as `hooks/hooks.json` declares. Every
 door an orchestrating run takes or recommends is one line of its orchestration log, and that line
@@ -26,6 +27,12 @@ none is armed, an armed goal notwithstanding» (SPEC-011 R6)
 - **Which lines.** Those the log holds on disk beyond what it holds at `HEAD`, each read past an
   opening `- ` and its backticks; a log `HEAD` does not hold is read whole. A line opening with
   neither word is no door line and is never read for form.
+- **Which stop commits.** A commit that adds to such a log a line `goal.STOP_LINE` matches, of a
+  class in `goal.STOP_CLASSES`, and carries a path other than an orchestration log or a path under
+  the telemetry root: «the commit that records a stop is the measure alone» (SPEC-008 R19). The
+  paths it carries are those the command names, else the ones the index holds staged, and every
+  tracked path that differs from `HEAD` where it commits all that is tracked. A commit that adds
+  no stop line is never read for this.
 - **What refuses.** A door line `goal.DOOR_LINE` does not match — the one form telemetry and the
   grant's budget read — and a `decided:` line whose criterion is one of `goal.JUDGED` while the
   grant armed by `grant.py --arm` is absent or names another initiative. A derived `decided:` line
@@ -176,6 +183,46 @@ def problems_of(goal, log: Path, lines: list[str], delivery: Path,
     return found
 
 
+def carried(home: Path, named: list[Path], whole: bool) -> list[Path]:
+    """The paths the commit carries: those the command names, else the ones the index holds
+    staged, and every tracked path that differs from `HEAD` where it commits all that is
+    tracked."""
+    if named:
+        paths = list(named)
+    else:
+        code, out = git(home, "diff", "--cached", "--name-only")
+        paths = [(home / line).resolve() for line in out.splitlines() if line.strip()] \
+            if code == 0 else []
+    if whole:
+        code, out = git(home, "diff", "HEAD", "--name-only")
+        paths += [(home / line).resolve() for line in out.splitlines() if line.strip()] \
+            if code == 0 else []
+    return paths
+
+
+def stop_commit_refusals(goal, home: Path, telemetry: Path, paths: list[Path],
+                         reached: list[Path]) -> list[str]:
+    """A commit that adds a stop line to an initiative's orchestration log carries the log and
+    the telemetry root and nothing else: «A run whose orchestration log closes on a stop line
+    commits nothing after it but the measure: the telemetry root, and the log that carries the
+    stop line.» (SPEC-008 R18)"""
+    found = []
+    for log in reached:
+        stops = [line for line in added_lines(home, log)
+                 if (match := goal.STOP_LINE.match(goal.log_line(line)))
+                 and match.group(1) in goal.STOP_CLASSES]
+        if not stops:
+            continue
+        beyond = [path for path in paths if path != log and telemetry not in path.parents
+                  and path != telemetry and path.name != LOG_FILE]
+        if beyond:
+            found.append(f"{log}: `{goal.log_line(stops[-1])}` closes the log on a stop, and "
+                         f"this commit also carries {', '.join(str(p) for p in beyond[:3])}"
+                         f"{' and more' if len(beyond) > 3 else ''} — after a stop the "
+                         f"measure alone is committed: the telemetry root and the log")
+    return found
+
+
 def refusals(record: dict) -> list[str]:
     """What refuses the command, or nothing; any failure to read is nothing."""
     command = (record.get("tool_input") or {}).get("command")
@@ -204,13 +251,16 @@ def refusals(record: dict) -> list[str]:
     for log, staged in changed_logs(home, [delivery, home / SURVEY_ROOT]):
         if staged or whole or any(path == log or path in log.parents for path in named):
             reached.append(log)
-    if not reached:
-        return []
-    held_path = goal.armed_path(home).with_name("grant.json")
-    granted = goal.read_armed(held_path) if held_path.exists() else None
     found = []
-    for log in reached:
-        found += problems_of(goal, log, added_lines(home, log), delivery, granted)
+    if reached:
+        held_path = goal.armed_path(home).with_name("grant.json")
+        granted = goal.read_armed(held_path) if held_path.exists() else None
+        for log in reached:
+            found += problems_of(goal, log, added_lines(home, log), delivery, granted)
+    telemetry = fields.get("telemetry_root")
+    if telemetry is not None and reached:
+        found += stop_commit_refusals(goal, home, telemetry.resolve(),
+                                      carried(home, named, whole), reached)
     return found
 
 
@@ -229,9 +279,11 @@ def main() -> int:
     if not found:
         return 0
     reason = ("Siegard refuses this commit: it adds door lines to an orchestration log that "
-              "nothing can count or that no grant armed. Rewrite or remove each line, then "
-              "commit again. A judged door with no grant armed is not taken: hand it to the person "
-              "instead.\n" + "\n".join(f"- {line}" for line in found))
+              "nothing can count or that no grant armed, or it records a stop alongside files "
+              "that are not the measure. Rewrite or remove each line, or commit the stop line "
+              "with the log and the telemetry root alone, then commit again. A judged door with "
+              "no grant armed is not taken: hand it to the person instead.\n"
+              + "\n".join(f"- {line}" for line in found))
     print(json.dumps({"hookSpecificOutput": {"hookEventName": EVENT,
                                              "permissionDecision": "deny",
                                              "permissionDecisionReason": reason}}))

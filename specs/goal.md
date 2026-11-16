@@ -122,6 +122,10 @@ session that stopped while its subagents were still running. The harness refuses
   of the delivery was committed. The log's stop line was already the record that the run ended;
   nothing read it before the commit.
 
+- **R19** — A `git commit` a session runs in a project that declares `siegard.json` is refused by the plugin's `PreToolUse` hook where it adds a stop line to an initiative's orchestration log and carries a path other than an orchestration log or a path under the telemetry root: the commit that records a stop is the measure alone, and the delivery's files, a red run no record names among them, are left for the person. A commit that adds no stop line is not read by this requirement.
+
+  Grounds, as read on 2026-11-16 from the inventory session that stopped `token-do-catalogo`: the commit carrying the stop line also carried the red run `...-suite-2`, and R18's check, which the session was told to run before committing, was not run. Replayed over the 213 commits of six consumer repositories that touched a delivery root in the preceding 48 hours, the refusal reads the stop line itself, so it refuses that commit and no other; the wider reading of R18, a log closing on a stop line at the time of any later commit, refused 20 commits more, of which the doors a stop hands (`/implement-task` re-delivery, `/review-change`) and the person's own corrections after a stop were most.
+
 ## Validation required before acceptance
 
 1. Tests hold `goal.py --state` to R2, R3, R11, R12 and R13 over fixture repositories: one
@@ -189,6 +193,12 @@ session that stopped while its subagents were still running. The harness refuses
    with a testable remainder over the proof of a task of the scope is `not yet` under `prove`
    until a `deliver-scope <slug>: prove <task>` commit of one such task follows the review, and
    a remainder over a proof no task of the scope holds owes nothing — `tests/test_goal.py`.
+14. Tests hold the commit hook to R19 over fixture repositories: a commit adding a stop line and
+   carrying a run directory refused, and the same with a commit of all that is tracked; a commit
+   of the log alone, of the log and the measure, and of a log whose added line names no stop
+   class going ahead; a commit after the stop adding no stop line going ahead; a staged file the
+   commit's pathspec leaves out not counted; and a project without `siegard.json`, or a log that
+   cannot be read, going ahead.
 
 ## Readings
 
