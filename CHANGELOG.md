@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.118.0 — 2026-11-16
+
+The commit hook refuses a commit that adds a stop line to an orchestration log and carries anything but the log and the telemetry root, so a stopped run no longer commits its red run or its delivery files with the stop. (`3fad336`)
+
 ## 5.117.0 — 2026-11-16
 
 A proof owes the red suite attempts numbered before the run it cites; a red attempt after it belongs to the next invocation's record and no longer stops `deliver.py --outstanding` or the corrective task a red proof-only re-delivery points to. (`b06ce9e`)
