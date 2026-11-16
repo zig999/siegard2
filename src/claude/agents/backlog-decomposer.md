@@ -22,7 +22,8 @@ You need:
    `## Description`. Read the pack whole, in consecutive windows where one Read cannot hold it,
    skipping none; open no node's own file and no decision log it lists.
 3. **the inventory** — what the surveyor found in the target tree, so no task is invented for what
-   exists and none rewrites what must be reused.
+   exists and none rewrites what must be reused. Read its `risks` and their named consumers before
+   cutting.
 4. **the plan-node contract's `epic` and skeleton slices** — `plan.py --contract epic` and
    `plan.py --contract task --without implements`'s output, both pasted whole. Read both before
    writing a single field. The task slice carries no `implements`, because that field is not yours.
@@ -40,8 +41,12 @@ them is split or merged until it passes:
 - **One reason to change.** A task whose parts would change for different reasons is two tasks.
 - **Independently demonstrable.** Its criteria can be shown met without finishing another task;
   dependencies say what must exist first, never what proves what.
-- **One seam.** A task that changes an interface and its consumers at once is two tasks joined by a
-  dependency.
+- **One seam, held green.** A task that changes an interface and its consumers at once is two tasks
+  joined by a dependency only where the first task leaves the project's existing suite green on its
+  own: the interface keeps a behaviour-preserving form for its existing consumers until the second
+  task lands. Where it cannot — a constructor gains a required argument, a signature changes — the
+  consumers the inventory's `risks` name, and the existing tests that build the interface, belong to
+  the same task.
 
 And around the tasks:
 

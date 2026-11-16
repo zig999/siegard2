@@ -1275,6 +1275,21 @@ def test_a_blocking_note_is_the_cut_s_to_answer_before_it_is_a_person_s():
     assert "misroutes the settlement of a blocking note" not in decomposer
 
 
+def test_the_decomposer_keeps_an_interface_and_its_existing_consumers_in_one_task():
+    """A task changing an interface whose existing consumers the suite exercises cannot pass the
+    suite alone when the consumers are cut into a later task: the decomposer reads the inventory's
+    risks and keeps those consumers with the change unless the interface can keep a form they still
+    work with."""
+    decomposer = " ".join((REPO / "src/claude/agents/backlog-decomposer.md")
+                          .read_text(encoding="utf-8").split())
+    assert "**One seam, held green.**" in decomposer
+    assert "only where the first task leaves the project's existing suite green on its own" in decomposer
+    assert ("the consumers the inventory's `risks` name, and the existing tests that build the "
+            "interface, belong to the same task") in decomposer
+    assert "Read its `risks` and their named consumers before cutting." in decomposer
+    assert "- **One seam.** A task" not in decomposer, "the unqualified seam rule is gone"
+
+
 def test_a_note_asking_which_value_a_node_leaves_open_is_unstated():
     """SPEC-001 R17's second sentence. The configurator shape of 2026-11-07: "no node says which
     code the 503 of the deadline carries", classed blocking because a node lists the codes, and
