@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.114.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.115.0. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -104,6 +104,9 @@ not. Three things hold that route:
   name, into the registry `siegard.json` declares, and commit that file alone, pathspec-scoped,
   under a message citing the digest the record printed. Words naming no entry get a question back,
   never an edit.
+- **Write to the person in the language of their own messages, after every compaction too.**
+  Every message, report and handoff the person reads is in that language; a skill's text, a
+  record, an agent's return or a summary written in English changes nothing.
 - **A report opens with what needs the person, and recommends what a fact on disk decides.**
   «A handoff opens with what needs the person, and explains after» (SPEC-006 R1), in the person's
   words, never "door", "criterion", "owed" or "offered". «A recommendation names the door, the
