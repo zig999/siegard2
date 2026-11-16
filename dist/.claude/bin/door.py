@@ -51,7 +51,8 @@ write:
 
 **One act is checked beside the doors: `commit`**, the commit a session is about to make of an
 initiative's delivery. «A run whose orchestration log closes on a stop line commits nothing after
-it but the measure: the telemetry root, and the log that carries the stop line.» (SPEC-008 R18)
+it but the measure: the telemetry root, the log that carries the stop line, and the captured runs of
+the initiative that ended `passed`.» (SPEC-008 R18)
 The log is read as it stands on disk against `HEAD`: the stop line a commit is held to is a line
 `goal.py` reads a goal's state from that the commit adds, and a stop line already committed binds
 the run that wrote it, not the commit of a later invocation. A commit adding one is held to the
@@ -597,6 +598,22 @@ def under(path: Path, root: Path) -> bool:
     return path == root or root in path.parents
 
 
+def passed_run(path: Path, delivery: Path) -> bool:
+    """Whether `path` is a captured run of this initiative, or a file of one, whose record ended
+    `passed`, so that it rides with the measure: «the captured runs of the initiative that ended
+    `passed`» (SPEC-008 R18). The run directory itself counts where every run under it passed."""
+    import deliver
+    runs = delivery / RUN_DIR
+    if not under(path, runs):
+        return False
+    if path == runs:
+        held = [d for d in runs.iterdir() if d.is_dir()] if runs.is_dir() else []
+        return bool(held) and all(passed_run(d, delivery) for d in held)
+    directory = runs / path.relative_to(runs).parts[0]
+    captured, _ = deliver.read_run(directory / "run.json", f"{RUN_DIR}/{directory.name}")
+    return captured is not None and captured.get("outcome") == "passed"
+
+
 def door_commit(fields: dict, slug: str, args: dict, answer: Answer) -> None:
     import deliver
     delivery = fields["delivery_root"].resolve() / slug
@@ -606,7 +623,8 @@ def door_commit(fields: dict, slug: str, args: dict, answer: Answer) -> None:
 
     stops = added_stop_lines(log, fields["home"])
     if stops:
-        beyond = [path for path in named if path != log and not under(path, telemetry)]
+        beyond = [path for path in named if path != log and not under(path, telemetry)
+                  and not passed_run(path, delivery)]
         if not named:
             answer.refuse(f"{log} gains a stop line, and no --file names the commit — after a "
                           f"stop nothing of the delivery is committed but the measure: the "
@@ -618,7 +636,8 @@ def door_commit(fields: dict, slug: str, args: dict, answer: Answer) -> None:
                           f"person", "\n".join([stops[-1], *(str(path) for path in beyond)]))
         else:
             answer.checked.append(f"{log} gains a stop line, and every path named lies under the "
-                                  f"telemetry root or is the log — the measure")
+                                  f"telemetry root, is the log or is a run that passed — the "
+                                  f"measure")
     else:
         answer.checked.append(f"{log} gains no stop line")
 

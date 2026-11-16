@@ -42,6 +42,13 @@ run a stop ended closes its orchestration log with one stop line: its class name
 list R3 holds, and its fact is the stopping report's own words.» (SPEC-008 R4) A goal's state is
 read from that line, so nothing is appended after it — the measure's commit carries it.
 
+The measure's commit also carries each run under the initiative's `run/` that ended `passed` and
+git does not hold, each named by its path and never as the directory when one under it did not
+pass: «commits nothing after it but the measure: the telemetry root, the log that carries the stop
+line, and the captured runs of the initiative that ended `passed`» (SPEC-008 R18). A run that
+passed left pending would be a change `/deliver-scope` and `goal.py --arm` refuse at the next
+invocation; a run that did not pass is never committed with a stop.
+
 A resume of the slug leaves that line where it stands, appends its first line after it, and commits
 that line with its first step: «A run that resumes an initiative whose log closes on a stop line
 appends its lines after it and never removes it: the stop stays the record of the run it ended, and

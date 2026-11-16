@@ -318,3 +318,26 @@ def test_a_stop_commit_over_an_unreadable_log_goes_ahead(home):
     (home / LOG).write_bytes(b"\xff\xfe\x00 stop: outside-task")
     write(home, f"{RUN}/run.json", "{}")
     allowed(hook(home, f"git add -A && git commit -q -m x"))
+
+
+def test_a_commit_recording_a_stop_with_a_run_that_passed_goes_ahead(home):
+    write(home, f"{RUN}/run.json", json.dumps({"outcome": "passed"}))
+    write(home, f"{RUN}/run.log", "ok")
+    append(home, STOP)
+    allowed(hook(home, f"git add -- {RUN} {LOG} && git commit -q -m x -- {RUN} {LOG}"))
+
+
+def test_a_commit_recording_a_stop_with_a_run_that_did_not_pass_is_refused(home):
+    write(home, f"{RUN}/run.json", json.dumps({"outcome": "failed"}))
+    append(home, STOP)
+    reason = refused(hook(home, f"git add -- {RUN} {LOG} && git commit -q -m x -- {RUN} {LOG}"))
+    assert "closes the log on a stop" in reason
+
+
+def test_a_commit_recording_a_stop_with_a_passed_run_and_a_delivery_file_is_refused(home):
+    write(home, f"{RUN}/run.json", json.dumps({"outcome": "passed"}))
+    write(home, f"deliveries/{SLUG}/implementation/a/b.md")
+    append(home, STOP)
+    B = f"deliveries/{SLUG}/implementation/a/b.md"
+    reason = refused(hook(home, f"git add -- {RUN} {B} {LOG} && git commit -q -m x -- {RUN} {B} {LOG}"))
+    assert "b.md" in reason

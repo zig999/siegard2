@@ -2371,6 +2371,32 @@ def stands_offers(unbound: list[str], implements: list[str], bound: dict[str, se
     return held, moved_only, nowhere
 
 
+def unheld_by_adoption(home: Path, offset: PurePosixPath, stands: list[str]) -> dict[str, str]:
+    """The nodes an adoption already committed over every one of the `stands` files left held by
+    none of its files, each with the record that says so — «A node the adoption leaves bound to
+    none of the files is a stop, and the person's: the implementer and the reconciliation's judges
+    read the same files two ways.» (SPEC-004 R20) A reconciliation that cannot be read says
+    nothing."""
+    found: dict[str, str] = {}
+    wanted = {(offset / p).as_posix() for p in stands}
+    directory = home / RECONCILE_DIR
+    for record in sorted(directory.glob("*.md")) if directory.is_dir() else []:
+        try:
+            front = spec.parse_node(record)[0]
+        except (OSError, ValueError, UnicodeDecodeError):
+            continue
+        if not isinstance(front, dict) or front.get("adopted") is not True:
+            continue
+        covered = {(offset / f["path"]).as_posix() for f in front.get("files") or []
+                   if isinstance(f, dict) and isinstance(f.get("path"), str)}
+        if not wanted <= covered:
+            continue
+        for entry in front.get("unheld") or []:
+            if isinstance(entry, dict) and isinstance(entry.get("node"), str):
+                found[entry["node"]] = f"{RECONCILE_DIR}/{record.name}"
+    return found
+
+
 def stands_reading(nid: str, front: dict, task_file: Path,
                    root: Path) -> tuple[list[str], str | None]:
     """`stands_binding_problems`' problems, and the one door that answers them where one does —
@@ -2409,9 +2435,17 @@ def stands_reading(nid: str, front: dict, task_file: Path,
     findings, refusals = trace.drift_of(declared, home) if declared is not None else ([], [])
     held, moved_only, nowhere = stands_offers(unbound, implements, bound, findings, refusals,
                                               offset)
+    already = unheld_by_adoption(home, offset, stands)
+    nowhere = [node for node in nowhere if node not in already]
     found = []
     for node in unbound:
-        if node in held:
+        if node in already:
+            found.append(f"the trace binds {node} to no file `stands` names ({named}); the "
+                         f"adoption {already[node]} over those files read it and no file holds "
+                         f"it, so it is not an adoption's candidate again: the implementer and "
+                         f"the judges read the same files two ways, and which reading stands is "
+                         f"the person's")
+        elif node in held:
             found.append(f"the trace binds {node} to no file `stands` names ({named}); it binds "
                          f"{node} to {', '.join(held[node])}, each current: name at least one of "
                          f"them in `stands`, and the implementation stands at it")
@@ -2429,8 +2463,9 @@ def stands_reading(nid: str, front: dict, task_file: Path,
               for path, spelled in anchored.items()
               if not any(path in bound.get(node, set()) for node in implements)]
     if nowhere:
+        candidates = nowhere + [node for node in unbound if node in held and node not in already]
         return found, (f"door: /reconcile, an adoption — files: {' '.join(stands)} — "
-                       f"candidates: {' '.join(nowhere)}")
+                       f"candidates: {' '.join(candidates)}")
     if moved_only and not held:
         files = list(dict.fromkeys(f for fs in moved_only.values() for f in fs))
         return found, f"door: /reconcile — files: {' '.join(files)}"

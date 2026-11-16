@@ -174,9 +174,9 @@ them itself, as `implement-task <slug>: deliver <task>`; append the step's line 
 A delivery that ends in a stop instead of records ends the loop, unless `references/doors.md` or,
 under a goal, `references/goal.md` answers it. Read `references/stops.md`: relay that report's own
 doors whole, commit nothing further but the measure, and go to step 6. A delivery that stopped is
-never committed but for runs `references/doors.md` names: what it wrote is the person's to read,
-keep or discard. A task whose delivery gave up is not re-attempted in this run: the same invocation
-again is the person's cost decision.
+never committed but for runs `references/doors.md` and `references/stops.md` name: what it wrote
+is the person's to read, keep or discard. A task whose delivery gave up is not re-attempted in this
+run: the same invocation again is the person's cost decision.
 
 ### 4. Review
 
@@ -211,7 +211,8 @@ to step 6.
 At the end of every run, the one a stop ended included: what a run cost is lost once the harness
 drops its transcripts. Run `telemetry.py --probe --since <the instant step 1 began>` over the
 project root; announce the read as that script requires; run it. Commit the telemetry root
-`project.py` answers under `deliver-scope <slug>: measure`. A probe that cannot read is a report
+`project.py` answers under `deliver-scope <slug>: measure`, with the runs
+`references/stops.md` names where a stop ended the run. A probe that cannot read is a report
 line, never a stop.
 
 A stop ends the route, never the measure: step 6 runs after it, and commits.

@@ -3410,6 +3410,49 @@ def test_a_record_found_standing_with_one_node_unbound_names_only_that_candidate
             f"candidates: domain/sales/invoice") in done.stdout
 
 
+def test_the_adoption_door_also_names_a_node_bound_to_files_the_stands_files_extend(
+        planned, delivery, work, root, target, standing, write_plan):
+    """«an adoption is the door only for a node the trace binds to no file» (SPEC-004 R20) holds
+    for what makes the door; once an adoption is the door, a node bound to other files whose
+    binding is current rides it, so a file that extends a set of files the node already holds is
+    bound to it by the judges' reading instead of being answered by naming one of the others."""
+    two_standing(work, root, target, standing, write_plan,
+                 ["domain/sales/order", "domain/sales/invoice"])
+    (target / "src/orders/other.ts").write_text("export const other = () => 1\n", encoding="utf-8")
+    bind_file(target, root, "domain/sales/invoice", "src/orders/other.ts")
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 1
+    assert (f"door: /reconcile, an adoption — files: {STANDING_FILE} {SECOND_STANDING_FILE} — "
+            f"candidates: domain/sales/order domain/sales/invoice") in done.stdout
+    assert "each current: name at least one of them in `stands`" in done.stdout
+
+
+def test_a_node_an_adoption_over_the_same_files_left_held_by_none_is_not_offered_again(
+        planned, delivery, work, root, target, standing, write_plan):
+    """«A node the adoption leaves bound to none of the files is a stop, and the person's»
+    (SPEC-004 R20): the adoption already read it, so the writer names that and hands no door."""
+    import subprocess
+    two_standing(work, root, target, standing, write_plan,
+                 ["domain/sales/order", "domain/sales/invoice"])
+    bind_file(target, root, "domain/sales/order", STANDING_FILE)
+    top = subprocess.run(["git", "-C", str(target), "rev-parse", "--show-toplevel"],
+                         capture_output=True, text=True, check=True).stdout.strip()
+    record = Path(top) / "siegard-reconcile" / "adopt-orders.md"
+    record.parent.mkdir(exist_ok=True)
+    record.write_text(yaml.safe_dump({
+        "adopted": True,
+        "files": [{"path": STANDING_FILE}, {"path": SECOND_STANDING_FILE}],
+        "unheld": [{"node": "domain/sales/invoice", "how": "every judge answered `nowhere`"}],
+    }), encoding="utf-8")
+    record.write_text("---\n" + record.read_text(encoding="utf-8") + "---\n", encoding="utf-8")
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 1
+    assert "door:" not in done.stdout
+    assert ("the adoption siegard-reconcile/adopt-orders.md over those files read it and no file "
+            "holds it") in done.stdout
+    assert not (delivery / "implementation/checkout/record-order.md").exists()
+
+
 def test_a_record_found_standing_over_a_moved_binding_names_an_ordinary_reconciliation(
         planned, delivery, work, root, target, standing):
     """«or an ordinary one where every node is bound and a binding moved» (SPEC-004 R20)."""

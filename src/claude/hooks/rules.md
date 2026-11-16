@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.119.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.120.0. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -98,7 +98,8 @@ not. Three things hold that route:
   rewrite only on the person's own words in this session, never while a goal or grant is armed. Before committing what a delivery wrote, run `bin/door.py --check commit --project
   <project-root> --slug <slug> --file <path>...`; a first line `refuses` stops the commit: «A run
   whose orchestration log closes on a stop line commits nothing after it but the measure: the
-  telemetry root, and the log that carries the stop line.» (SPEC-008 R18)
+  telemetry root, the log that carries the stop line, and the captured runs of the initiative that
+  ended `passed`.» (SPEC-008 R18)
 - **Write the project's standard only where the person's own words name the entry.** Record
   those words with `bin/ask.py --record` first, then write the package or the step they name, by
   name, into the registry `siegard.json` declares, and commit that file alone, pathspec-scoped,

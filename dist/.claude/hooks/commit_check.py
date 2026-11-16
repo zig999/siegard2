@@ -28,8 +28,8 @@ none is armed, an armed goal notwithstanding» (SPEC-011 R6)
   opening `- ` and its backticks; a log `HEAD` does not hold is read whole. A line opening with
   neither word is no door line and is never read for form.
 - **Which stop commits.** A commit that adds to such a log a line `goal.STOP_LINE` matches, of a
-  class in `goal.STOP_CLASSES`, and carries a path other than an orchestration log or a path under
-  the telemetry root: «the commit that records a stop is the measure alone» (SPEC-008 R19). The
+  class in `goal.STOP_CLASSES`, and carries a path other than an orchestration log, a path under
+  the telemetry root or a captured run of that initiative that ended `passed`: «the commit that records a stop is the measure alone» (SPEC-008 R19). The
   paths it carries are those the command names, else the ones the index holds staged, and every
   tracked path that differs from `HEAD` where it commits all that is tracked. A commit that adds
   no stop line is never read for this.
@@ -200,12 +200,13 @@ def carried(home: Path, named: list[Path], whole: bool) -> list[Path]:
     return paths
 
 
-def stop_commit_refusals(goal, home: Path, telemetry: Path, paths: list[Path],
+def stop_commit_refusals(goal, door, home: Path, telemetry: Path, paths: list[Path],
                          reached: list[Path]) -> list[str]:
-    """A commit that adds a stop line to an initiative's orchestration log carries the log and
-    the telemetry root and nothing else: «A run whose orchestration log closes on a stop line
-    commits nothing after it but the measure: the telemetry root, and the log that carries the
-    stop line.» (SPEC-008 R18)"""
+    """A commit that adds a stop line to an initiative's orchestration log carries the log, the
+    telemetry root and the runs that passed, and nothing else: «A run whose orchestration log
+    closes on a stop line commits nothing after it but the measure: the telemetry root, the log
+    that carries the stop line, and the captured runs of the initiative that ended `passed`.»
+    (SPEC-008 R18)"""
     found = []
     for log in reached:
         stops = [line for line in added_lines(home, log)
@@ -214,12 +215,13 @@ def stop_commit_refusals(goal, home: Path, telemetry: Path, paths: list[Path],
         if not stops:
             continue
         beyond = [path for path in paths if path != log and telemetry not in path.parents
-                  and path != telemetry and path.name != LOG_FILE]
+                  and path != telemetry and path.name != LOG_FILE
+                  and not door.passed_run(path, log.parent)]
         if beyond:
             found.append(f"{log}: `{goal.log_line(stops[-1])}` closes the log on a stop, and "
                          f"this commit also carries {', '.join(str(p) for p in beyond[:3])}"
                          f"{' and more' if len(beyond) > 3 else ''} — after a stop the "
-                         f"measure alone is committed: the telemetry root and the log")
+                         f"measure alone is committed: the telemetry root, the log and the runs that passed")
     return found
 
 
@@ -259,7 +261,7 @@ def refusals(record: dict) -> list[str]:
             found += problems_of(goal, log, added_lines(home, log), delivery, granted)
     telemetry = fields.get("telemetry_root")
     if telemetry is not None and reached:
-        found += stop_commit_refusals(goal, home, telemetry.resolve(),
+        found += stop_commit_refusals(goal, door, home, telemetry.resolve(),
                                       carried(home, named, whole), reached)
     return found
 
@@ -281,7 +283,7 @@ def main() -> int:
     reason = ("Siegard refuses this commit: it adds door lines to an orchestration log that "
               "nothing can count or that no grant armed, or it records a stop alongside files "
               "that are not the measure. Rewrite or remove each line, or commit the stop line "
-              "with the log and the telemetry root alone, then commit again. A judged door with "
+              "with the log, the telemetry root and the runs that passed alone, then commit again. A judged door with "
               "no grant armed is not taken: hand it to the person instead.\n"
               + "\n".join(f"- {line}" for line in found))
     print(json.dumps({"hookSpecificOutput": {"hookEventName": EVENT,

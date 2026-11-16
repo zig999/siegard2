@@ -532,6 +532,42 @@ def test_commit_accepts_the_measure_after_a_stop_line(project):
                  "--file", str(log.relative_to(project))))
 
 
+def test_commit_accepts_a_run_that_passed_beside_the_measure_after_a_stop_line(project):
+    """«the captured runs of the initiative that ended `passed`» (SPEC-008 R18) ride with the
+    measure: the evidence a stopped delivery captured is not a delivery file."""
+    log = stop_the_log(project)
+    green_run(project, "first-setup")
+    accepts(door(project, "commit", "--slug", SLUG, "--file", f"deliveries/{SLUG}/run/first-setup",
+                 "--file", str(log.relative_to(project))))
+
+
+def test_commit_accepts_the_run_directory_where_every_run_under_it_passed(project):
+    log = stop_the_log(project)
+    green_run(project, "first-setup")
+    green_run(project, "first-build")
+    accepts(door(project, "commit", "--slug", SLUG, "--file", f"deliveries/{SLUG}/run",
+                 "--file", str(log.relative_to(project))))
+
+
+def test_commit_refuses_a_red_run_beside_the_measure_after_a_stop_line(project):
+    log = stop_the_log(project)
+    green_run(project, "first-setup")
+    red_run(project, "first-suite")
+    refuses(door(project, "commit", "--slug", SLUG, "--file", f"deliveries/{SLUG}/run",
+                 "--file", str(log.relative_to(project))), "names paths outside the telemetry root")
+    refuses(door(project, "commit", "--slug", SLUG, "--file",
+                 f"deliveries/{SLUG}/run/first-suite", "--file", str(log.relative_to(project))),
+            "names paths outside the telemetry root")
+
+
+def test_commit_refuses_a_delivery_file_beside_a_run_that_passed_after_a_stop_line(project):
+    log = stop_the_log(project)
+    green_run(project, "first-setup")
+    refuses(door(project, "commit", "--slug", SLUG, "--file", f"deliveries/{SLUG}/run/first-setup",
+                 "--file", f"deliveries/{SLUG}/implementation", "--file",
+                 str(log.relative_to(project))), "names paths outside the telemetry root")
+
+
 def test_commit_reads_the_log_after_a_resume(project):
     log = stop_the_log(project)
     commit(project)
