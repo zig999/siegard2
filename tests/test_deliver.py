@@ -9,6 +9,7 @@ on, and no pin outlives the plan it read.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -3813,3 +3814,89 @@ def test_a_delivered_task_no_review_names_is_reported_as_never_reviewed(
     assert problems_of(delivery, work, target, root) == [], "the line refuses nothing"
     write_delivery("review/first", review_front(work, root))
     assert never_reviewed_lines(delivery, work, target, root) == []
+
+
+# --------------------------------------------------------------------- red suite attempts
+
+SUITE = "checkout-record-order-suite"
+
+
+
+def proof_citing_run(delivery, write_delivery, run_name, notes=""):
+    written = delivery / "implementation/checkout/record-order.md"
+    write_delivery("proof/checkout/record-order", {
+        "title": "Proof for recording a placed order",
+        "summary": "What proves the recorded order.",
+        "implementation": "sha256:" + hashlib.sha256(written.read_bytes()).hexdigest(),
+        "run": f"run/{run_name}",
+        "tests": [{"file": "tests/place.spec.ts",
+                   "name": "returns the order_number for a valid submission",
+                   "proves": "Submitting a valid order returns its order_number.",
+                   "fails_when": "place() answers with anything but the stored order_number"}],
+    }, body=f"## Notes\n{notes}\n" if notes else "## What it is\nProof.\n")
+
+
+def unnamed_red_runs(problems):
+    return [p for p in problems if "ran this task's suite and did not pass" in p]
+
+
+@pytest.fixture
+def seeded_red_runs(delivery, work, root, target, sound_delivery, write_delivery, run_dir):
+    def go(cited, reds, notes=""):
+        for name in [cited] + list(reds):
+            run_dir(outcome="passed" if name == cited else "failed", slug=name)
+        proof_citing_run(delivery, write_delivery, cited, notes)
+        return unnamed_red_runs(problems_of(delivery, work, target, root))
+    return go
+
+
+def test_a_red_attempt_after_the_run_a_proof_cites_does_not_invalidate_it(seeded_red_runs):
+    """The case of 2026-11-16: the proof cites `-suite`; the re-delivery's `-suite-2` ended red and
+    stopped before writing a record."""
+    assert seeded_red_runs(SUITE, [f"{SUITE}-2"]) == []
+
+
+def test_a_red_attempt_before_the_cited_run_is_owed_until_named(seeded_red_runs):
+    found = seeded_red_runs(f"{SUITE}-3", [SUITE, f"{SUITE}-2"])
+    assert len(found) == 1 and f"run/{SUITE}," in found[0] and f"run/{SUITE}-2" in found[0]
+
+
+def test_naming_the_earlier_red_attempts_clears_them(seeded_red_runs):
+    notes = f"{SUITE} red: code. {SUITE}-2 red: test."
+    assert seeded_red_runs(f"{SUITE}-3", [SUITE, f"{SUITE}-2"], notes) == []
+
+
+def test_only_the_red_attempt_before_the_cited_run_is_owed(seeded_red_runs):
+    found = seeded_red_runs(f"{SUITE}-2", [SUITE, f"{SUITE}-3"])
+    assert len(found) == 1
+    owed = found[0].split("names none of ", 1)[1].split(", which", 1)[0]
+    assert owed == f"run/{SUITE}", owed
+
+
+def test_a_proof_citing_no_run_owes_every_red_attempt(delivery, work, root, target,
+                                                         sound_delivery, run_dir):
+    run_dir(outcome="failed", slug=SUITE)
+    run_dir(outcome="failed", slug=f"{SUITE}-2")
+    assert len(unnamed_red_runs(problems_of(delivery, work, target, root))) == 1
+
+
+def test_a_proof_citing_a_run_outside_the_suite_names_owes_every_red_attempt(
+        delivery, work, root, target, sound_delivery, write_delivery, run_dir):
+    run_dir(outcome="passed", slug="first")
+    run_dir(outcome="failed", slug=SUITE)
+    proof_citing_run(delivery, write_delivery, "first")
+    assert len(unnamed_red_runs(problems_of(delivery, work, target, root))) == 1
+
+
+def test_the_proof_writer_applies_the_same_red_attempt_rule(delivery, run_dir):
+    """`--write-proof` calls red_run_problems too: a new record citing `-suite-3` owes `-suite-2`
+    (named or refused), and one citing `-suite` owes nothing for a later `-suite-2`."""
+    run_dir(outcome="passed", slug=SUITE)
+    run_dir(outcome="failed", slug=f"{SUITE}-2")
+    run_dir(outcome="passed", slug=f"{SUITE}-3")
+    body = "## Notes\nnothing\n"
+    assert deliver.red_run_problems("proof/checkout/record-order", body, delivery, f"run/{SUITE}") == []
+    owed = deliver.red_run_problems("proof/checkout/record-order", body, delivery, f"run/{SUITE}-3")
+    assert len(owed) == 1 and f"run/{SUITE}-2" in owed[0]
+    named = f"## Notes\n{SUITE}-2 red: test.\n"
+    assert deliver.red_run_problems("proof/checkout/record-order", named, delivery, f"run/{SUITE}-3") == []

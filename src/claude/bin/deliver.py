@@ -1441,11 +1441,19 @@ def notes_of(body: str) -> str:
     return notes if found else ""
 
 
-def red_suite_runs(nid: str, root: Path) -> list[str]:
+def suite_rank(name: str) -> int:
+    """The attempt a suite run's name carries: `<epic>-<slug>-suite` is the first, `-N` the Nth."""
+    tail = name.rsplit("-suite", 1)[1]
+    return int(tail[1:]) if tail else 1
+
+
+def red_suite_runs(nid: str, root: Path, cited: str | None = None) -> list[str]:
     """Every run under the delivery root captured under this proof's suite name — `<epic>-<slug>-
     suite`, and the `-N` names a retry takes — whose outcome is not `passed`, as the runner named
     them. Read from the directory and never from a record, because the runs that failed are
-    exactly the ones no record points at."""
+    exactly the ones no record points at. Where the record cites one of those suite runs, only the
+    attempts numbered before it are its to name: a red attempt numbered after it belongs to a
+    later invocation, and the record that invocation writes names it."""
     _, epic, slug = nid.split("/")
     suite = re.compile(rf"^{re.escape(epic)}-{re.escape(slug)}-suite(-[0-9]+)?$")
     red: list[str] = []
@@ -1458,10 +1466,13 @@ def red_suite_runs(nid: str, root: Path) -> list[str]:
         captured, _ = read_run(directory / "run.json", f"{RUN_DIR}/{directory.name}")
         if captured is not None and captured.get("outcome") != "passed":
             red.append(directory.name)
+    cited_name = Path(cited).name if isinstance(cited, str) else None
+    if cited_name is not None and suite.fullmatch(cited_name):
+        red = [name for name in red if suite_rank(name) < suite_rank(cited_name)]
     return red
 
 
-def red_run_problems(nid: str, body: str, root: Path) -> list[str]:
+def red_run_problems(nid: str, body: str, root: Path, cited: str | None = None) -> list[str]:
     """A proof's `## Notes` against the red suite runs beside it. A suite that failed before it
     passed keeps every attempt's directory, and the proof names each red one with the cause its
     diagnosis returned — the diagnosis otherwise lives only in the conversation that made it,
@@ -1469,7 +1480,7 @@ def red_run_problems(nid: str, body: str, root: Path) -> list[str]:
     why. Held as a substring of the section, so the run is named by its directory or by its
     `run/` path alike."""
     notes = notes_of(body)
-    unnamed = [name for name in red_suite_runs(nid, root) if name not in notes]
+    unnamed = [name for name in red_suite_runs(nid, root, cited) if name not in notes]
     if not unnamed:
         return []
     return [f"## Notes names none of {', '.join(f'{RUN_DIR}/{n}' for n in unnamed)}, which "
@@ -2021,7 +2032,8 @@ def collect(root: Path, validator, names: list[str], closed: bool = False,
                      for p in node_problems(front, kind, validator, names)]
         problems += [f"{nid}: {p}" for p in body_problems(body)]
         if kind == "proof":
-            unnamed += [f"{nid}: {p}" for p in red_run_problems(nid, body, root)]
+            cited = front.get("run") if isinstance(front, dict) else None
+            unnamed += [f"{nid}: {p}" for p in red_run_problems(nid, body, root, cited)]
         if isinstance(front, dict):
             nodes[nid] = {"front": front, "kind": kind}
     return nodes, problems + receipted(unnamed, closed, receipts)
@@ -2568,7 +2580,7 @@ def write_record(kind: str, args: list[str]) -> int:
     problems += record_run_problems(nid, front, root)
     door = None
     if kind == "proof":
-        problems += red_run_problems(nid, body, root)
+        problems += red_run_problems(nid, body, root, front.get("run"))
     elif not problems:
         standing, door = stands_reading(nid, front, pinned_from, root)
         problems += standing
