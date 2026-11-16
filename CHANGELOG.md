@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.115.0 — 2026-11-16
+
+The session rules gain one bullet: every message, report and handoff the person reads is written in the language of the person's own messages, after every compaction too. (`db00cc7`)
+
 ## 5.114.0 — 2026-11-15
 
 `goal.py --state` gains the `prove` check: a goal reaches state A only once each certification its first review refused with a testable remainder over a task of the scope is answered by a `deliver-scope <slug>: prove <task>` re-delivery of one task whose proof it read (SPEC-008 R2). (`ee4c8b6`)
