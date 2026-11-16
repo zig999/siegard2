@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.120.0 — 2026-11-16
+
+The commit that records a stop carries the runs that passed, so the next arming finds no pending change, and the record writer's adoption door names every node the `stands` files extend and is not offered twice over the same files. (`febb263`)
+
 ## 5.119.0 — 2026-11-16
 
 `door.py --check commit` holds a commit to the stop line it adds, so the doors a stop hands and a resumed run are no longer refused for one already committed, and a red run a later attempt passed is answered. (`7ee7773`)
