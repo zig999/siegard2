@@ -52,14 +52,16 @@ write:
 **One act is checked beside the doors: `commit`**, the commit a session is about to make of an
 initiative's delivery. «A run whose orchestration log closes on a stop line commits nothing after
 it but the measure: the telemetry root, and the log that carries the stop line.» (SPEC-008 R18)
-The log is read as it stands on disk — its last line that is not blank, matched against the stop
-line `goal.py` reads a goal's state from — and a commit is held to that by the paths it names with
-`--file`, spelled from the project root; with none named, the commit is read as one of the
-delivery, which a stop line refuses. The runs are read as `deliver.py` reads them, `run.json`
-under `run/` at the initiative's delivery root: «A captured run that ended other than `passed`,
-that git does not hold, and that no record under the initiative's delivery root names, is refused
-to a commit that reaches that delivery root» (SPEC-008 R18) — a red attempt a record names beside
-its retry is the delivery's own evidence, and one no record names is a red nothing answered.
+The log is read as it stands on disk against `HEAD`: the stop line a commit is held to is a line
+`goal.py` reads a goal's state from that the commit adds, and a stop line already committed binds
+the run that wrote it, not the commit of a later invocation. A commit adding one is held to the
+paths it names with `--file`, spelled from the project root; with none named, the commit is read as
+one of the delivery, which a stop line refuses. The runs are read as `deliver.py` reads them,
+`run.json` under `run/` at the initiative's delivery root: «A captured run that ended other than
+`passed`, that git does not hold, that no record under the initiative's delivery root names and
+that no later attempt under the same run name passed, is refused to a commit that reaches that
+delivery root» (SPEC-008 R18) — a red attempt a record names, or a later attempt answers, is the
+delivery's own evidence, and one neither answers is a red nothing answered.
 Whether the person's words authorize the commit at all is no file's answer: it is listed as not
 decided, and `ask.py --read` prints the ask recorded verbatim.
 
@@ -546,39 +548,79 @@ def named_by_a_record(delivery: Path, name: str) -> bool:
                for path in (delivery / kind).rglob("*.md"))
 
 
+def added_stop_lines(log: Path, home: Path) -> list[str]:
+    """The stop lines the log holds on disk beyond those it holds at `HEAD`; a log `HEAD` does
+    not hold is read whole."""
+    import goal
+    if not log.is_file():
+        return []
+    try:
+        relative = log.relative_to(home).as_posix()
+    except ValueError:
+        relative = None
+    earlier: list[str] = []
+    if relative is not None:
+        code, before = command(["git", "-C", str(home), "show", f"HEAD:{relative}"])
+        earlier = before.splitlines() if code == 0 else []
+    remaining = [line.strip() for line in earlier]
+    added = []
+    for raw in log.read_text(encoding="utf-8", errors="replace").splitlines():
+        if raw.strip() in remaining:
+            remaining.remove(raw.strip())
+            continue
+        matched = goal.STOP_LINE.match(goal.log_line(raw))
+        if matched and matched.group(1) in goal.STOP_CLASSES:
+            added.append(raw.strip())
+    return added
+
+
+ATTEMPT = re.compile(r"^(?P<series>.+?)(?:-(?P<number>[0-9]+))?$")
+
+
+def answered_by_a_later_attempt(runs: Path, name: str) -> bool:
+    """Whether a run of the same name with a higher attempt number — `<name>` is the first,
+    `<name>-N` the Nth — passed."""
+    import deliver
+    own = ATTEMPT.match(name)
+    series, rank = own.group("series"), int(own.group("number") or 1)
+    for sibling in sorted(runs.iterdir()):
+        other = ATTEMPT.match(sibling.name)
+        if other.group("series") != series or int(other.group("number") or 1) <= rank:
+            continue
+        captured, _ = deliver.read_run(sibling / "run.json", f"{RUN_DIR}/{sibling.name}")
+        if captured is not None and captured.get("outcome") == "passed":
+            return True
+    return False
+
+
 def under(path: Path, root: Path) -> bool:
     return path == root or root in path.parents
 
 
 def door_commit(fields: dict, slug: str, args: dict, answer: Answer) -> None:
     import deliver
-    import goal
     delivery = fields["delivery_root"].resolve() / slug
     telemetry = fields["telemetry_root"].resolve()
     log = delivery / LOG_FILE
     named = [(fields["home"] / path).resolve() for path in args["file"]]
 
-    lines = [line for line in log.read_text(encoding="utf-8").splitlines() if line.strip()] \
-        if log.is_file() else []
-    matched = goal.STOP_LINE.match(lines[-1]) if lines else None
-    if matched and matched.group(1) in goal.STOP_CLASSES:
+    stops = added_stop_lines(log, fields["home"])
+    if stops:
         beyond = [path for path in named if path != log and not under(path, telemetry)]
         if not named:
-            answer.refuse(f"{log} closes on a stop line, and no --file names the commit — after a "
+            answer.refuse(f"{log} gains a stop line, and no --file names the commit — after a "
                           f"stop nothing of the delivery is committed but the measure: the "
-                          f"telemetry root {telemetry} and the log itself", lines[-1])
+                          f"telemetry root {telemetry} and the log itself", stops[-1])
         elif beyond:
-            answer.refuse(f"{log} closes on a stop line, and the commit names paths outside the "
+            answer.refuse(f"{log} gains a stop line, and the commit names paths outside the "
                           f"telemetry root {telemetry} and the log — after a stop the measure "
-                          f"alone is committed, and the delivery's files are left for the person",
-                          "\n".join([lines[-1], *(str(path) for path in beyond)]))
+                          f"alone is committed, and the delivery's files are left for the "
+                          f"person", "\n".join([stops[-1], *(str(path) for path in beyond)]))
         else:
-            answer.checked.append(f"{log} closes on a stop line, and every path named lies under "
-                                  f"the telemetry root or is the log — the measure")
-    elif lines:
-        answer.checked.append(f"{log} does not close on a stop line: {lines[-1]}")
+            answer.checked.append(f"{log} gains a stop line, and every path named lies under the "
+                                  f"telemetry root or is the log — the measure")
     else:
-        answer.checked.append(f"{log} holds no line — no run of /deliver-scope wrote one")
+        answer.checked.append(f"{log} gains no stop line")
 
     runs = delivery / RUN_DIR
     if named and not any(under(path, delivery) or under(delivery, path) for path in named):
@@ -591,7 +633,8 @@ def door_commit(fields: dict, slug: str, args: dict, answer: Answer) -> None:
             continue
         captured, unreadable = deliver.read_run(record, f"{RUN_DIR}/{directory.name}")
         outcome = None if captured is None else captured.get("outcome")
-        if outcome != "passed" and not named_by_a_record(delivery, directory.name):
+        if outcome != "passed" and not named_by_a_record(delivery, directory.name) \
+                and not answered_by_a_later_attempt(runs, directory.name):
             red.append(f"{RUN_DIR}/{directory.name}: " + (
                 unreadable or f"ended `{outcome}` at the step `{captured.get('failed_step')}`"))
     if red:

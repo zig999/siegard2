@@ -486,17 +486,43 @@ def test_commit_accepts_a_delivery_with_no_stop_and_no_red_run(project):
     result = door(project, "commit")
     accepts(result)
     assert f"decided: slug {SLUG} — the one live initiative" in result.stdout
-    assert "holds no line" in result.stdout
+    assert "gains no stop line" in result.stdout
     assert "not decided: whether the person's own words" in result.stdout, \
         "the authorization is a reading, listed and never answered"
 
 
-def test_commit_refuses_a_log_closing_on_a_stop_line(project):
+def test_commit_refuses_a_commit_adding_a_stop_line(project):
     stop_the_log(project)
-    out = refuses(door(project, "commit", "--slug", SLUG), "closes on a stop line")
+    out = refuses(door(project, "commit", "--slug", SLUG), "gains a stop line")
     assert STOP in out
     refuses(door(project, "commit", "--slug", SLUG, "--file", f"deliveries/{SLUG}/implementation"),
             "names paths outside the telemetry root")
+
+
+def test_commit_does_not_refuse_for_a_stop_line_already_committed(project):
+    """A stop line already committed binds the run that wrote it: the door a stop hands, a resumed
+    run and a correction the person asked for commit after it without a line of their own."""
+    stop_the_log(project)
+    commit(project)
+    result = door(project, "commit", "--slug", SLUG, "--file", f"deliveries/{SLUG}/implementation")
+    accepts(result)
+    assert "gains no stop line" in result.stdout
+
+
+def test_commit_reads_a_log_head_does_not_hold_whole(project):
+    log = project / "deliveries" / SLUG / "orchestration.md"
+    if log.exists():
+        log.unlink()
+        commit(project)
+    stop_the_log(project)
+    refuses(door(project, "commit", "--slug", SLUG, "--file", f"deliveries/{SLUG}/run"),
+            "gains a stop line")
+
+
+def test_commit_reads_no_line_naming_no_stop_class_as_a_stop(project):
+    log = project / "deliveries" / SLUG / "orchestration.md"
+    log.write_text("stop: no-such-class — whatever\n", encoding="utf-8")
+    accepts(door(project, "commit", "--slug", SLUG, "--file", f"deliveries/{SLUG}/run"))
 
 
 def test_commit_accepts_the_measure_after_a_stop_line(project):
@@ -508,11 +534,12 @@ def test_commit_accepts_the_measure_after_a_stop_line(project):
 
 def test_commit_reads_the_log_after_a_resume(project):
     log = stop_the_log(project)
+    commit(project)
     with log.open("a", encoding="utf-8") as appended:
         appended.write("- resumed — /implement-task over task/checkout/bill-order\n")
     result = door(project, "commit", "--slug", SLUG)
     accepts(result)
-    assert "does not close on a stop line" in result.stdout
+    assert "gains no stop line" in result.stdout
 
 
 def test_commit_refuses_a_red_run_uncommitted_and_named_by_no_record(project):
@@ -529,11 +556,52 @@ def test_commit_accepts_a_red_run_a_record_names(project):
     accepts(door(project, "commit", "--slug", SLUG))
 
 
-def test_commit_does_not_read_a_retry_as_naming_the_red_run(project):
+def test_commit_does_not_read_a_record_naming_a_retry_as_naming_the_red_run(project):
     red_run(project)
     proof = project / "deliveries" / SLUG / "review" / "r.md"
     proof.parent.mkdir(exist_ok=True)
     proof.write_text(f"The suite passed at run/{RED_RUN}-2.\n", encoding="utf-8")
+    refuses(door(project, "commit", "--slug", SLUG), "holds a red run")
+
+
+def green_run(home: Path, name: str) -> Path:
+    run = home / "deliveries" / SLUG / "run" / name
+    run.mkdir(parents=True)
+    (run / "run.json").write_text(json.dumps({"outcome": "passed", "failed_step": None}),
+                                  encoding="utf-8")
+    return run
+
+
+def test_commit_accepts_a_red_run_a_later_attempt_answered(project):
+    red_run(project)
+    green_run(project, f"{RED_RUN}-2")
+    accepts(door(project, "commit", "--slug", SLUG))
+
+
+def test_commit_accepts_a_red_run_a_later_attempt_but_one_answered(project):
+    red_run(project)
+    red_run(project, f"{RED_RUN}-2")
+    green_run(project, f"{RED_RUN}-3")
+    accepts(door(project, "commit", "--slug", SLUG))
+
+
+def test_commit_refuses_a_red_run_a_later_attempt_did_not_answer(project):
+    red_run(project)
+    red_run(project, f"{RED_RUN}-2")
+    out = refuses(door(project, "commit", "--slug", SLUG), "holds a red run")
+    assert f"run/{RED_RUN}:" in out and f"run/{RED_RUN}-2:" in out
+
+
+def test_commit_refuses_a_red_run_only_an_earlier_attempt_passed(project):
+    green_run(project, RED_RUN)
+    red_run(project, f"{RED_RUN}-2")
+    out = refuses(door(project, "commit", "--slug", SLUG), "holds a red run")
+    assert f"run/{RED_RUN}-2:" in out and f"run/{RED_RUN}:" not in out
+
+
+def test_commit_refuses_a_red_run_only_another_series_passed(project):
+    red_run(project, "checkout-bill-order-suite")
+    green_run(project, "checkout-bill-order-build-2")
     refuses(door(project, "commit", "--slug", SLUG), "holds a red run")
 
 
