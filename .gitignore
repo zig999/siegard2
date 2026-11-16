@@ -4,6 +4,7 @@
 # Per-maintainer instructions, never shared
 CLAUDE.local.md
 .claude/settings.local.json
+claude.sh
 
 # Python bytecode from running the validators
 __pycache__/
