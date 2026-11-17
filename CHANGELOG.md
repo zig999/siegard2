@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.125.0 — 2026-11-17
+
+Where a build red only a test answers runs the proof ahead of the record, `/implement-task` hands the test-author the implementer's final reply, written outside the tree by the new `deliver.py --implementer-return`, never the implementer's transcript, as SPEC-004 already required. (`0800ffc`)
+
 ## 5.124.1 — 2026-11-17
 
 `/siegard-grant` names the `project_root:` line of `project.py --here` as the root where the invocation names none, as every other skill that resolves the root does, so a session no longer hands `grant.py` the whole project report as a path. (`9945c31`)
