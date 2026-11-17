@@ -97,8 +97,8 @@ PLAN_AGENTS = ("backlog-decomposer", "codebase-surveyor", "execution-contract-bi
                "unstated-fact-decider")
 PLAN_BASELINE = REPO / "tests/fixtures/benchmarks/plan-work/text-metrics-5.64.0.json"
 PLAN_PINS = {
-    "chars": 77_372,
-    "skill_chars": 19_872,
+    "chars": 77_487,
+    "skill_chars": 19_987,
     "sentence_words_median": 17,
     "sentence_words_p90": 35,
     "sentences_over_60_words": 3,
@@ -281,7 +281,7 @@ DELIVER_AGENTS = ("door-decider",)
 DELIVER_BASELINE = REPO / "tests/fixtures/benchmarks/deliver-scope/text-metrics-5.67.0.json"
 DELIVER_PINS = {
     "chars": 34_401,
-    "skill_chars": 16_825,
+    "skill_chars": 16_966,
     "sentence_words_median": 19,
     "sentence_words_p90": 35,
     "sentences_over_60_words": 3,
@@ -358,7 +358,7 @@ def test_the_deliver_scope_terms_are_schemas_terms_json_s_and_each_is_used_outsi
 # in no other measure.
 IMPLEMENT_B_BASELINE = REPO / "tests/fixtures/benchmarks/implement-task/text-metrics-5.68.0.json"
 IMPLEMENT_B_PINS = {
-    "chars": 102_586,
+    "chars": 102_587,
     "skill_chars": 19_900,
     "sentence_words_median": 18,
     "sentence_words_p90": 35,

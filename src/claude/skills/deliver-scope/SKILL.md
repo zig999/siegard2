@@ -209,8 +209,10 @@ to step 6.
 ### 6. Measure
 
 At the end of every run, the one a stop ended included: what a run cost is lost once the harness
-drops its transcripts. Run `telemetry.py --probe --since <the instant step 1 began>` over the
-project root; announce the read as that script requires; run it. Commit the telemetry root
+drops its transcripts. Probe with `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/telemetry.py --probe
+<project-root> --since <the instant step 1 began, ISO-8601>`; announce the read as that script
+requires; then run it without `--probe`: `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/telemetry.py
+<project-root> --since <the same instant>`. Commit the telemetry root
 `project.py` answers under `deliver-scope <slug>: measure`, with the runs
 `references/stops.md` names where a stop ended the run. A probe that cannot read is a report
 line, never a stop.

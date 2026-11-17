@@ -58,22 +58,23 @@ The trace outlives the delivery's records: it is what lets a later `/plan-work` 
 whether this code and the specification it followed have since moved apart.
 
 - **It binds what the record already says.** `--bind-record` reads the record's `nodes` and binds
-  every entry carrying `encoded_at`, at exactly the paths it lists. A node answered only by `how`
-  is not bound, and a record with no such entry binds nothing — neither is a failure. The trace
+  every entry carrying `encoded_at`, at the paths it lists. A node answered only by `how`
+  is not bound, and a record with none binds nothing — neither is a failure. The trace
   binds what the source encodes; the proof's criteria stay with the records.
-- **It binds the whole record or nothing.** A node or file that does not resolve refuses all of it.
+- **It binds the whole record or nothing.** A node or file that does not resolve refuses it all.
 - **It is the one write outside your three roots** — `siegard-trace.json`, beside `siegard.json`
   at the target's git toplevel. What it refuses — a node the specification no longer holds, a trace
   bound to a different specification root — is reported plainly, never worked around. A refusal
-  does not unwrite the delivery: the validated records stand, and the files are just not yet linked.
+  does not unwrite the delivery: the validated records stand, and the files are not yet linked.
 - **It may print a stale-bindings receipt**, never a refusal: another node's binding over a file
   this delivery rewrote, or a file this task's nodes carried from an earlier bind that has since
   changed. Keep the receipt whole for the report. The `/review-change` that follows reads every
-  file of the change against every node bound to it and restamps what cleared; where no review
-  follows, the report's `/reconcile` door is what answers it.
+  file of the change against every node bound to it and restamps what cleared; where none
+  follows, the report's `/reconcile` door answers it.
 
 ## The commit
 
 Once the bind has run, commit the delivery root, the target source root and the trace as the
-plugin's rules state, `door.py --check commit` first: `implement-task <slug>: deliver <task>`. A
-stop commits nothing; its runs stay for whoever takes its door.
+plugin's rules state, `door.py --check commit --project <root> --slug <slug> --file <path>...`
+first: `implement-task <slug>: deliver <task>`. A stop commits nothing; its runs stay for whoever
+takes its door.

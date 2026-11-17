@@ -1209,7 +1209,7 @@ def test_the_deliver_scope_skill_survives_a_compaction_whole():
     held = unwrapped(text)
     for kept in ("handoff.py --prepare --skill deliver-scope", "--save-report",
                  "handoff.py --render", "(SPEC-006 R10)", "(SPEC-006 R1)",
-                 "telemetry.py --probe --since <the instant step 1 began>",
+                 "telemetry.py --probe <project-root> --since <the instant step 1 began",
                  "A stop ends the route, never the measure", "references/report.md",
                  "references/stops.md", "references/goal.md", "references/prove.md"):
         assert kept in held, f"deliver-scope's SKILL.md lost {kept!r}"

@@ -68,7 +68,7 @@ def test_every_run_ends_measured_and_a_stop_does_not_skip_it():
     """The harness keeps the transcripts a run's cost is read from for a while, not for ever, and
     a run that ended at a stop is the one whose cost a retrospective most needs."""
     assert "`deliver-scope <slug>: measure`" in SKILL
-    assert "telemetry.py --probe --since <the instant step 1 began>" in SKILL
+    assert "telemetry.py --probe <project-root> --since <the instant step 1 began" in SKILL
     assert "A stop ends the route, never the measure" in SKILL
 
 

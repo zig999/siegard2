@@ -154,6 +154,9 @@ Usage:  spec.py <spec-root>              validate everything
                                           validate one file (cross-node checks do not run)
         spec.py --impact <identity>[,<identity>...] <spec-root>
                                           print one hop around each named node, both directions
+        spec.py --pack <identity>[,<identity>...] <spec-root>
+                                          print each named node verbatim under its identity and
+                                          digest, then the decision logs beside them
         spec.py --decide <identity> <spec-root>  < entry.json
                                           append one decision-log entry beside the named node,
                                           then validate everything
