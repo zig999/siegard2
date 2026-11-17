@@ -28,7 +28,7 @@ BASELINE = REPO / "tests/fixtures/benchmarks/implement-task/text-metrics-5.61.0.
 AGENTS = ("task-implementer", "test-author", "failure-diagnostician")
 
 PINS = {
-    "chars": 105_720,
+    "chars": 105_927,
     "skill_chars": 19_900,
     "sentence_words_median": 18,
     "sentence_words_p90": 35,
@@ -360,7 +360,7 @@ def test_the_deliver_scope_terms_are_schemas_terms_json_s_and_each_is_used_outsi
 # in no other measure.
 IMPLEMENT_B_BASELINE = REPO / "tests/fixtures/benchmarks/implement-task/text-metrics-5.68.0.json"
 IMPLEMENT_B_PINS = {
-    "chars": 105_720,
+    "chars": 105_927,
     "skill_chars": 19_900,
     "sentence_words_median": 18,
     "sentence_words_p90": 35,

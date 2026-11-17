@@ -233,6 +233,16 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         beside it stamped on; refused while a
                                                         red suite attempt is not named in the
                                                         --note lines
+        deliver.py --implementer-return <delivery-root> task/<epic>/<slug> --from <transcript>
+                                                        write the task-implementer's final reply,
+                                                        verbatim, outside the tree — under the
+                                                        repository's git common directory, at
+                                                        siegard/returns/<delivery-root name>/
+                                                        <epic>/<slug>.md — and print its path:
+                                                        what the test-author is handed in the
+                                                        implementation record's place where a
+                                                        build red only a test answers runs the
+                                                        proof ahead of the record
         deliver.py --standard <file> [--against DIR] [--specification DIR]
                                                         validate one project standard on its own;
                                                         stands alone, needs no root. With a tree
@@ -2503,6 +2513,61 @@ def stands_reading(nid: str, front: dict, task_file: Path,
     return found, f"door: /reconcile — files: {' '.join(dict.fromkeys(moved))}"
 
 
+RETURNS_DIR = ("siegard", "returns")
+
+
+def implementer_return(args: list[str]) -> int:
+    """`--implementer-return`: the implementer's final reply, read from its transcript by the
+    reader every record writer uses, written byte for byte to a file outside the tree. Where a
+    build red only a test answers, the proof runs before the record exists, and the test-author
+    reads the return in the record's place; a transcript holds every turn the implementer took,
+    and the record is written from its last one alone. The file lives under the git common
+    directory so it is never a pending change of the tree a delivery commits from."""
+    rest = list(args)
+    transcript = None
+    if "--from" in rest:
+        at = rest.index("--from")
+        if at + 1 >= len(rest):
+            print("cannot run: --from takes the implementer's transcript", file=sys.stderr)
+            return CANNOT_RUN
+        transcript = rest[at + 1]
+        del rest[at:at + 2]
+    if transcript is None or len(rest) != 2 or any(a.startswith("--") for a in rest):
+        print("cannot run: expected --implementer-return <delivery-root> task/<epic>/<slug> "
+              "--from <transcript>", file=sys.stderr)
+        return CANNOT_RUN
+    root, tid = Path(rest[0]), rest[1]
+    if not root.is_dir():
+        print(f"cannot run: delivery root {root} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    parts = tid.split("/")
+    if len(parts) != 3 or parts[0] != "task" or not all(parts[1:]):
+        print(f"cannot run: {tid} is not task/<epic>/<slug>", file=sys.stderr)
+        return CANNOT_RUN
+    text, problem = return_text(transcript, None)
+    if problem is not None:
+        print(f"cannot run: {problem}", file=sys.stderr)
+        return CANNOT_RUN
+    try:
+        done = subprocess.run(["git", "-C", str(root), "rev-parse", "--path-format=absolute",
+                               "--git-common-dir"], capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired) as broken:
+        print(f"cannot run: git cannot be asked where {root} keeps its repository: {broken}",
+              file=sys.stderr)
+        return CANNOT_RUN
+    if done.returncode != 0 or not done.stdout.strip():
+        print(f"cannot run: {root} is not inside a git repository; the reply is written under "
+              f"its git common directory, outside the tree", file=sys.stderr)
+        return CANNOT_RUN
+    path = Path(done.stdout.strip()).joinpath(*RETURNS_DIR, root.resolve().name, parts[1],
+                                              f"{parts[2]}.md")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    print(f"wrote {path} — {len(text.encode('utf-8'))} byte(s) of the implementer's final reply, "
+          f"verbatim; hand this path as the implementation record's place")
+    return 0
+
+
 def write_record(kind: str, args: list[str]) -> int:
     """`--write-implementation` and `--write-proof`: one record, from the producer's return and
     what the invocation knows, validated before a byte is written. The return is parsed with the
@@ -4004,6 +4069,8 @@ def main() -> int:
         # so `--help` prints that rather than a second copy of it that could drift.
         print(__doc__.strip())
         return 0
+    if "--implementer-return" in args:
+        return implementer_return([a for a in args if a != "--implementer-return"])
     for mode, kind in WRITE_MODES.items():
         if mode in args:
             # The writer's options are its own, and parsed as one invocation: a flag another

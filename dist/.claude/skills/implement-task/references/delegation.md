@@ -52,8 +52,8 @@ by spelling, and a registry scope reaches a file only under that anchor.
 ```
 task file:             <absolute path of work-root/task/<epic>/<slug>.md>
 implementation record: <absolute path of the record step 4 wrote — or, where step 4 runs this
-                        step ahead of the record, the implementer's transcript, whose final
-                        reply the record will be written from>
+                        step ahead of the record, the implementer's final reply, at the path
+                        `deliver.py --implementer-return` printed>
 red build:             <the build run's absolute path and each path its fix lies in — omit
                         unless step 4 runs this step ahead of the record>
 target source root:    <absolute path>

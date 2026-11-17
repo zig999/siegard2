@@ -3943,3 +3943,44 @@ def test_the_proof_writer_applies_the_same_red_attempt_rule(delivery, run_dir):
     assert len(owed) == 1 and f"run/{SUITE}-2" in owed[0]
     named = f"## Notes\n{SUITE}-2 red: test.\n"
     assert deliver.red_run_problems("proof/checkout/record-order", named, delivery, f"run/{SUITE}-3") == []
+
+
+def test_the_implementer_return_is_written_verbatim_outside_the_tree(tmp_path, delivery):
+    """«`/implement-task` hands the red to the test author only where every path is one, with the
+    implementer's return in the record's place» (SPEC-004 R24, validation 11): the return is the
+    transcript's final reply alone, written where no commit of the tree can take it."""
+    import subprocess
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    reply = yaml.safe_dump(IMPLEMENTATION_RETURN, sort_keys=False)
+    transcript = transcript_of(tmp_path / "implementer.jsonl",
+                               [{"type": "text", "text": "a first attempt, long superseded"}],
+                               [{"type": "tool_use", "name": "Write", "input": {}}],
+                               [{"type": "text", "text": reply}])
+    done = writer("--implementer-return", delivery, TASK, "--from", transcript)
+    assert done.returncode == 0, done.stdout + done.stderr
+    written = tmp_path / ".git/siegard/returns/delivery/checkout/record-order.md"
+    assert f"wrote {written}" in done.stdout
+    assert written.read_text(encoding="utf-8") == reply, "the final reply, byte for byte"
+    assert "superseded" not in written.read_text(encoding="utf-8"), "no earlier turn"
+    status = subprocess.run(["git", "-C", str(tmp_path), "status", "--porcelain",
+                             "--untracked-files=all"], capture_output=True, text=True).stdout
+    assert "returns" not in status, "the reply is never a pending change of the tree"
+    again = writer("--implementer-return", delivery, TASK, "--from", transcript)
+    assert again.returncode == 0, "a re-entered implementer's reply overwrites the earlier one"
+
+
+def test_the_implementer_return_refuses_what_it_cannot_place(tmp_path, delivery):
+    reply = transcript_of(tmp_path / "implementer.jsonl",
+                          [{"type": "text", "text": yaml.safe_dump(IMPLEMENTATION_RETURN)}])
+    outside = writer("--implementer-return", delivery, TASK, "--from", reply)
+    assert outside.returncode == 2 and "not inside a git repository" in outside.stderr
+    import subprocess
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    assert writer("--implementer-return", delivery, "checkout/record-order", "--from",
+                  reply).returncode == 2, "the task is named as task/<epic>/<slug>"
+    assert writer("--implementer-return", delivery, TASK).returncode == 2, "--from is required"
+    unfinished = transcript_of(tmp_path / "busy.jsonl",
+                               [{"type": "tool_use", "name": "Write", "input": {}}])
+    busy = writer("--implementer-return", delivery, TASK, "--from", unfinished)
+    assert busy.returncode == 2 and not (tmp_path / ".git/siegard/returns").exists(), \
+        "a transcript that ends on a tool call holds no reply, and nothing is written"

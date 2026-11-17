@@ -458,10 +458,12 @@ left out — so the file set the review that followed was handed never held them
     `tests/test_skill_contract.py` prove each.
 11. For R24: `bin/project.py --declared-tests` says which paths a red's fix names are tests the
     target declares; `/implement-task` hands the red to the test author only where every path is
-    one, with the implementer's return in the record's place, and the test author takes that
-    return; a declared test another task's proof names is answered only where this delivery's
-    files include one that task's record names, and is otherwise the stop —
-    `tests/test_project.py` and `tests/test_skill_contract.py` prove each.
+    one, with the implementer's return in the record's place — its final reply, which
+    `bin/deliver.py --implementer-return` writes outside the tree, never the transcript — and the
+    test author takes that return; a declared test another task's proof names is answered only
+    where this delivery's files include one that task's record names, and is otherwise the stop —
+    `tests/test_project.py`, `tests/test_deliver.py` and `tests/test_skill_contract.py` prove
+    each.
 12. For R25: `bin/deliver.py --test-owner` prints, per test, every other task's proof naming
     it, that proof's plan live or closed, the files the two implementation records share, and
     `adopt`, `rewrite` or `re-deliver` — `tests/test_test_owner.py` proves each shape;

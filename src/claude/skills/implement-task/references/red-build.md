@@ -43,9 +43,13 @@ record is written» (SPEC-004 R24).
    first and the build runs again; what is left of the red decides whose it is.
 4. **Where every path is a declared test**, the implementer keeps its source and, re-entered once
    more, returns the whole mapping over that source; that final reply is what the record will be
-   written from. Step 5 runs now, ahead of the record: the test-author is handed the implementer's
-   transcript in the record's place, and the run and those paths under `red build`, and writes the
-   proof whole, those files with it.
+   written from. Step 5 runs now, ahead of the record: the test-author is handed that final reply
+   in the record's place — never the transcript — and the run and those paths under `red build`,
+   and writes the proof whole, those files with it. This prints the reply's path:
+
+   ```
+   python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --implementer-return <delivery-root> task/<epic>/<slug> --from <the implementer's transcript>
+   ```
 5. **A path the proof of another task names** is answered as step 6 answers a test an earlier
    task owns: run `deliver.py --test-owner` over it — with no record yet it lists a live owner's
    files, for the return to name or not — and `re-deliver` is the stop below, naming the test and

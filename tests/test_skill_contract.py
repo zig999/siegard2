@@ -877,6 +877,25 @@ def test_a_build_red_only_a_test_can_answer_goes_to_the_test_author_before_the_r
     assert "A fix that lies only in tests the target declares is not this stop" in orchestrator
 
 
+def test_a_red_build_hands_the_test_author_the_implementers_final_reply_not_its_transcript():
+    """«`/implement-task` hands the red to the test author only where every path is one, with the
+    implementer's return in the record's place — its final reply, which `bin/deliver.py
+    --implementer-return` writes outside the tree, never the transcript» (SPEC-004 R24,
+    validation 11). A transcript holds every turn the implementer took and exceeds what one Read
+    returns; the record is written from the last turn alone, and so is what stands in for it."""
+    build = " ".join(reference_text("implement-task", "red-build").split())
+    assert ("bin/deliver.py --implementer-return <delivery-root> task/<epic>/<slug> --from "
+            "<the implementer's transcript>") in build
+    assert "the test-author is handed that final reply in the record's place" in build
+    assert "in the record's place — never the transcript —" in build
+    assert "the test-author is handed the implementer's transcript" not in build
+    block = " ".join(reference_text("implement-task", "delegation").split(
+        "## What step 5 hands the test-author", 1)[1].split("## Waiting", 1)[0].split())
+    assert ("the implementer's final reply, at the path `deliver.py --implementer-return` "
+            "printed") in block
+    assert "transcript" not in block.split("implementation record:", 1)[1].split("red build:", 1)[0]
+
+
 def test_a_review_is_validated_as_the_review_being_written():
     """«The review being written is held to its tasks as they stand, and refused where it falls
     short» (SPEC-004 R22): step 5 names it with `--review`, and every earlier review is
