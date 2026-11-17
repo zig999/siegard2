@@ -16,6 +16,9 @@ decision, wherever one exists» (SPEC-004 R10).
    and the clean-tree stop each invocation opens with keeps them apart. A re-delivery that stops red
    leaves its files for the person, every one already committed stands, and those not yet begun are
    relayed as not reached.
+   A re-delivery whose red the diagnosis read as `code` on its own new test went on inside
+   `/implement-task`: «the same invocation goes on as the task's re-delivery, once» (SPEC-004 R32),
+   and its commit carries the source and both records it rewrote, under the same `prove` message.
 3. Then invoke `/review-change` once more over exactly those tasks, named by step 4's rule; it
    commits itself.
 

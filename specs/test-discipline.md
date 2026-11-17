@@ -19,7 +19,7 @@ It decides the obligation set, the necessity and stopping rules, the partition o
 preference for a test over a reading wherever a finite test decides a fact, that no test a
 delivery changes goes unnamed by its records, and which halves the validator enforces
 mechanically. It also decides where a proof is cut (R18–R21, R23), when an implementation that stands still stands (R26), who answers a red build or a
-red suite (R24, R25), what a review answers for (R22), and what a run records of the tree it
+red suite (R24, R25, R32), what a review answers for (R22), and what a run records of the tree it
 ran over (R31).
 
 Grounds: measured over 483 proof records and 95 reviews of two consumer projects in September
@@ -216,7 +216,7 @@ left out — so the file set the review that followed was handed never held them
   changed; the session handed the test author a red build and no record, outside any stated
   route. A red worded otherwise in its log is not counted.
 
-- **R25** — A suite red on a test the proof of an earlier task names is answered by this delivery only where its files include one that task's implementation record names, or where no plan whose proof names the test is live: the test author rewrites the test whole and it joins this delivery's proof. Where every plan whose proof names the test is closed, this delivery adopts the test whatever the files share: a closed plan takes no further record, so no re-delivery answers it. The rewrite keeps every condition an owning proof says the test fails when, except where a node as it stands states otherwise; one a node still states is never rewritten away, and the red is then a contradiction only a person settles. The proof's notes name each owning task. Which answer a red takes is printed by `bin/deliver.py --test-owner`, and only a red the diagnosis reads as `test` takes one. Otherwise the test is not edited here: the answer is a proof-only re-delivery of the owning task, which only a person names, which rewrites the proof and never the implementation record, and which runs only while every binding of a node that task implements to a file its implementation record names is current. A binding of another node to one of those files does not close it: the review that follows reads that binding, as it does for a task carrying `stands` (R26).
+- **R25** — A suite red on a test the proof of an earlier task names is answered by this delivery only where its files include one that task's implementation record names, or where no plan whose proof names the test is live: the test author rewrites the test whole and it joins this delivery's proof. Where every plan whose proof names the test is closed, this delivery adopts the test whatever the files share: a closed plan takes no further record, so no re-delivery answers it. The rewrite keeps every condition an owning proof says the test fails when, except where a node as it stands states otherwise; one a node still states is never rewritten away, and the red is then a contradiction only a person settles. The proof's notes name each owning task. Which answer a red takes is printed by `bin/deliver.py --test-owner`, and only a red the diagnosis reads as `test` takes one. Otherwise the test is not edited here: the answer is a proof-only re-delivery of the owning task, which only a person names, which rewrites the proof and never the implementation record unless R32 finds that the implementation does not stand, and which runs only while every binding of a node that task implements to a file its implementation record names is current. A binding of another node to one of those files does not close it: the review that follows reads that binding, as it does for a task carrying `stands` (R26).
 
   Grounds: stated in `/implement-task` since the proof-only re-delivery shipped (9a2a3df) and in
   no specification until the audit of 2026-11-01 found the route with no requirement to hold it;
@@ -377,6 +377,33 @@ left out — so the file set the review that followed was handed never held them
   in substance — a formatter's rewrite a step made — read in more than one of ten refusals, moves
   the comparison to what the run printed rather than the bytes.
 
+### When a proof-only re-delivery finds the implementation does not stand
+
+- **R32** — A proof-only re-delivery whose suite is red on a test its own test author wrote, which the diagnosis reads as `code`, has found that the implementation does not stand, and the same invocation goes on as the task's re-delivery, once: the task implementer is handed the failing test and the diagnosis as the red it must answer, writes the source, the build runs, the implementation record is rewritten whole over that build, and the suite runs again. The implementer changes no file the project declares as its tests but those the test-author already wrote, and a declared test changed since the implementer was spawned is put back and ends the invocation: `bin/deliver.py --red-guard` holds the tree before the spawn, checks it after each return, and restores what moved. The test is not edited to answer it, and the proof is written over the suite that passed. A second suite red the diagnosis reads as `code`, or an implementer that returns no mapping, ends the invocation as a red no change to the task's own files can answer.
+
+  Grounds: a test the proof-only re-delivery writes names, under `demonstrates`, a node the task
+  implements, so a `code` red on it says the task's own implementation misses its own node — the
+  case R25's premise that "the implementation stands" excludes. The route held no producer for it:
+  `/implement-task` sends a `code` red to the task implementer, re-entered, and a proof-only
+  re-delivery spawns none, so the red was logged as the stop `outside-task` and handed
+  `/plan-work`, the person's. Read on 2026-11-17 by
+  `temp/20261117-goal/c1/scan_proofonly_code.py` over the sales consumers' orchestration logs:
+  92 stop lines, 21 `outside-task`, 4 a proof-only re-delivery red diagnosed `code`. In three
+  (`partymgmt` 2026-11-01, `inventory` 2026-11-16, `salese2e` 2026-11-17) the failing test
+  demonstrated a node the task implements and the fix lay in source; each ended its run, the
+  person answered with a corrective increment over the same fact, and in one the corrective
+  task was implemented outside the gate and the next run ended in a second stop. In the fourth
+  (`salese2e` 2026-11-12) the fix lay in journeys the project declares as tests and the test
+  author contested the node's reach: that red answers to no implementer, and the stop stands.
+  Replayed in clones, an implementer handed that red edited the four journeys of other tasks,
+  which that project's implementation records name and its `tests` declaration also matches —
+  with leave to write any file holding the node's fact, and again when told in words that a file
+  the declaration matches was never its own. The declaration is the boundary, since it is the
+  project's own and a script reads it, and a script holds it: an instruction alone did not.
+  Reversal: a re-delivery under R32 whose source a later review finds written against a test
+  the diagnosis misread — a `code` red the specification settles against the test — in more than
+  one of five, narrows R32 to the stop alone.
+
 ## Validation required before acceptance
 
 1. The test author's judgment states R1 to R12 and cites each in the words above; the coverage
@@ -471,6 +498,16 @@ left out — so the file set the review that followed was handed never held them
     binds a file unchanged since the implementation's or the proof's run, refuses one changed after
     both, refuses one changed after a run of a tree whose `HEAD` held it unchanged, and binds over a
     run recorded without a tree with a receipt naming it — `tests/test_run_tree.py` proves each.
+18. For R32: `/implement-task`'s re-delivery file sends a `code` red on a test the proof-only
+    re-delivery wrote to a task implementer handed it as the red it must answer, holds the tree
+    with `--red-guard` before the spawn and checks it after each return, then the build and the
+    implementation record rewritten whole, once; its red-suite file and
+    `agents/task-implementer.md` name the same input, and `/deliver-scope`'s prove step commits
+    what that re-delivery wrote under the prove message — `tests/test_skill_contract.py` proves
+    each. `bin/deliver.py --red-guard` accepts a source change and a held test left as held,
+    refuses a declared test changed, added or deleted since the hold — another task's or the
+    test author's own — and restores each to its held or `HEAD` state —
+    `tests/test_red_guard.py` proves each.
 
 ## Readings
 

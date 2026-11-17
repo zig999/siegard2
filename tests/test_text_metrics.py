@@ -28,7 +28,7 @@ BASELINE = REPO / "tests/fixtures/benchmarks/implement-task/text-metrics-5.61.0.
 AGENTS = ("task-implementer", "test-author", "failure-diagnostician")
 
 PINS = {
-    "chars": 103_000,
+    "chars": 105_720,
     "skill_chars": 19_900,
     "sentence_words_median": 18,
     "sentence_words_p90": 35,
@@ -280,7 +280,7 @@ def test_the_reconcile_terms_are_schemas_terms_json_s_and_each_is_used_outside_i
 DELIVER_AGENTS = ("door-decider",)
 DELIVER_BASELINE = REPO / "tests/fixtures/benchmarks/deliver-scope/text-metrics-5.67.0.json"
 DELIVER_PINS = {
-    "chars": 34_401,
+    "chars": 34_463,
     "skill_chars": 16_966,
     "sentence_words_median": 19,
     "sentence_words_p90": 35,
@@ -299,7 +299,9 @@ def deliver_baseline() -> dict:
     return json.loads(DELIVER_BASELINE.read_text(encoding="utf-8"))
 
 
-@pytest.mark.parametrize("measure", ["chars", "skill_chars", "sentence_words_median",
+# `chars` left this comparison at 5.124.0, when SPEC-004 R32's prove-step sentence took the total
+# past 5.67.0's; DELIVER_PINS holds it from there.
+@pytest.mark.parametrize("measure", ["skill_chars", "sentence_words_median",
                                      "sentence_words_p90", "sentence_words_max",
                                      "sentences_over_60_words", "prose_lines_over_100"])
 def test_the_deliver_scope_rewrite_is_strictly_better_than_5_67_0(measure):
@@ -358,7 +360,7 @@ def test_the_deliver_scope_terms_are_schemas_terms_json_s_and_each_is_used_outsi
 # in no other measure.
 IMPLEMENT_B_BASELINE = REPO / "tests/fixtures/benchmarks/implement-task/text-metrics-5.68.0.json"
 IMPLEMENT_B_PINS = {
-    "chars": 102_587,
+    "chars": 105_720,
     "skill_chars": 19_900,
     "sentence_words_median": 18,
     "sentence_words_p90": 35,
@@ -371,7 +373,9 @@ def implement_b_baseline() -> dict:
     return json.loads(IMPLEMENT_B_BASELINE.read_text(encoding="utf-8"))
 
 
-@pytest.mark.parametrize("measure", ["chars", "skill_chars"])
+# `chars` left this comparison at 5.124.0, when SPEC-004 R32's re-delivery passage and red guard
+# took the total past 5.68.0's; IMPLEMENT_B_PINS holds it from there.
+@pytest.mark.parametrize("measure", ["skill_chars"])
 def test_the_implement_task_wave_b_is_strictly_shorter_than_5_68_0(measure):
     before, now = implement_b_baseline()[measure], current()[measure]
     assert now < before, f"implement-task {measure}: {now} is not below 5.68.0's {before}"

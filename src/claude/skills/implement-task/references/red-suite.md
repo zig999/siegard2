@@ -53,9 +53,13 @@ test, which you know and it is not told. Every rerun is the same command; `--nex
 | `test` | an earlier task | the exit `deliver.py --test-owner` prints: see below | on `re-deliver` |
 | `setup` | — | nothing goes to a producer; the suite runs again once | on a second `setup` |
 
-- **`code`.** Where the implementer returns that the fix lies only in files no record of this task
-  names, the red is the stop `references/red-build.md` names for a red no change to this task's own
-  files can answer.
+- **`code`.** The implementer answers it, never you: whose files the fix touches is read from its
+  return, not judged before it is spawned. A proof-only re-delivery has no implementer to
+  re-enter: a `code` red on a test its own test-author wrote is `references/redelivery.md`'s, and
+  the invocation goes on as the task's re-delivery, once, whichever files the diagnosis names.
+  Where the implementer returns that the fix lies only in files no record of this task names, the
+  red is the stop `references/red-build.md` names for a red no change to this task's own files can
+  answer.
 - **`test`, on a test an earlier task owns.** Its exit is printed, never read from the assertion,
   and only for this cause: a `code` red is the implementer's whoever owns the test. Name each
   failing test as `<file>::<name>`, as the run printed it:

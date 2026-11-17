@@ -28,6 +28,9 @@ reference:             <each path the task's `reference` declares, resolved agai
                         root — omit where it declares none>
 earlier record:        <absolute path of the implementation record this re-delivery replaces —
                         omit on a first delivery>
+red to answer:         <the failing test as `<file>::<name>`, the diagnosis's finding whole, and
+                        the target's `tests` line `project.py` printed — omit unless a proof-only
+                        re-delivery goes on as the task's re-delivery>
 
 You write no file under the delivery root: return the record's content as text.
 ```

@@ -1007,6 +1007,52 @@ def test_a_red_on_the_deliverys_own_test_is_rewritten_once_by_the_test_author():
             "left under `contested` — `producers`") in stops
 
 
+def test_a_code_red_on_a_proof_only_tests_goes_on_as_the_tasks_re_delivery():
+    """«A proof-only re-delivery whose suite is red on a test its own test author wrote, which the
+    diagnosis reads as `code`, has found that the implementation does not stand» (SPEC-004 R32):
+    the re-delivery file hands that red to a fresh implementer as the red it must answer, rewrites
+    the implementation record over a new build, edits no test and keeps the stop for a second red;
+    the red-suite file routes there, the implementer and its block name the same input, and the
+    prove step commits what it wrote under the prove message."""
+    redelivery = " ".join(reference_text("implement-task", "redelivery").split())
+    assert ("**A suite red on a test this re-delivery's test-author wrote, which the diagnosis "
+            "reads as `code`,** «has found that the implementation does not stand, and the same "
+            "invocation goes on as the task's re-delivery, once» (SPEC-004 R32).") in redelivery
+    assert ("its `red to answer:` the failing test as `<file>::<name>`, the diagnosis's finding "
+            "whole and the target's `tests` line") in redelivery
+    assert "`--write-implementation --replace`" in redelivery
+    assert "The test is not edited and the test-author is not re-entered for it" in redelivery
+    assert ("A second red the diagnosis reads as `code`, or an implementer that returns no "
+            "mapping, is the stop `references/red-build.md` names") in redelivery
+    suite = " ".join(reference_text("implement-task", "red-suite").split())
+    assert ("The implementer answers it, never you: whose files the fix touches is read from its "
+            "return, not judged before it is spawned.") in suite
+    assert ("A proof-only re-delivery has no implementer to re-enter: a `code` red on a test its "
+            "own test-author wrote is `references/redelivery.md`'s, and the invocation goes on as "
+            "the task's re-delivery, once, whichever files the diagnosis names.") in suite
+    assert ("Whichever files the diagnosis names, and whatever records name them, spawn a fresh "
+            "`siegard:task-implementer`") in redelivery
+    assert "bin/deliver.py --red-guard hold <target-source-root>" in redelivery
+    assert ("After each return of that implementer, before anything runs over its source, check "
+            "it:") in redelivery
+    assert ("`refuses` is the stop: run `--red-guard restore <target-source-root>`") in redelivery
+    block = reference_text("implement-task", "delegation").split(
+        "## What step 5 hands the test-author", 1)[0]
+    assert "red to answer:" in block
+    implementer = " ".join((REPO / "src/claude/agents/task-implementer.md").read_text(
+        encoding="utf-8").split())
+    assert "**the red to answer**" in implementer
+    assert ("A file another task's record names is yours here only where no declared test "
+            "pattern matches it.") in implementer
+    assert "never touch the failing test" in implementer
+    assert ("except, under a red to answer, a file no declared test pattern matches that holds "
+            "the fact of the node it names") in implementer
+    assert "the target's `tests` line `project.py` printed" in block
+    prove = " ".join(reference_text("deliver-scope", "prove").split())
+    assert ("went on inside `/implement-task`: «the same invocation goes on as the task's "
+            "re-delivery, once» (SPEC-004 R32)") in prove
+
+
 def test_only_the_tasks_own_bindings_decide_whether_an_implementation_stands():
     """«A binding of a node the task does not implement to one of those files is never that
     refusal: the review that follows reads each `stands` file against every node the trace binds

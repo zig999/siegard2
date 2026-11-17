@@ -55,6 +55,12 @@ Optionally:
 - **the earlier record** — the implementation record this re-delivery replaces. Named, the task was
   delivered before and re-planned since: read that record and the task as it stands, and write
   what the task now needs that those files do not yet hold.
+- **the red to answer** — a test the task's proof names, failing, the diagnosis that reads the
+  source as the cause, and the patterns the project declares its tests by. The source does not
+  meet the node that test demonstrates, whatever the earlier record says: write what makes it
+  pass wherever that node's fact is held, record every file you write, and never touch the
+  failing test. A file another task's record names is yours here only where no declared test
+  pattern matches it.
 
 **A reference decides form, never fact.** It decides that the status column sits on the right or
 that a control is a button. It decides nothing about which statuses exist, what one tells the user,
@@ -191,7 +197,8 @@ Say so plainly in one sentence, and leave the tree as you found it, where:
   entry;
 - the specification is silent on a fact the work needs;
 - the fix a red run asks for lies only in files this task's records do not name — another task's
-  or no task's. Name those files.
+  or no task's — except, under a red to answer, a file no declared test pattern matches that
+  holds the fact of the node it names. Name those files.
 
 Where you already wrote files and must stop, name them, so your caller reports a failure over a
 tree somebody has to look at; source abandoned halfway is worse than none.

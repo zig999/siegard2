@@ -318,6 +318,16 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         owning plan closed), or `re-deliver` over
                                                         each live owner sharing none. A query: it
                                                         exits 0 over any answer
+        deliver.py --red-guard hold|check|restore <target-source-root>
+                                                        hold a proof-only re-delivery that goes on
+                                                        as the task's re-delivery to the tests it
+                                                        already holds: `hold` records every path
+                                                        pending under the target with its bytes,
+                                                        under the repository's git directory;
+                                                        `check` exits 1 naming each path the
+                                                        target declares as a test that changed
+                                                        since the hold; `restore` puts each such
+                                                        path back as the hold found it
         deliver.py --worktreeinclude <file> <target-source-root> [--write]
                                                         print every `presupposes` path, joined
                                                         onto the target source root, as
@@ -3515,6 +3525,116 @@ def test_owner(delivery: str, task: str, tests: list[str]) -> int:
     return 0
 
 
+RED_GUARD = "red-guard.json"
+
+
+def red_guard(verb: str, target: str) -> int:
+    """`--red-guard`'s own body: «The implementer changes no file the project declares as its tests
+    but those the test-author already wrote, and a declared test changed since the implementer was
+    spawned is put back and ends the invocation» (SPEC-004 R32). `hold` runs before the
+    implementer is spawned and records every path pending under the target — the test-author's
+    files — with its bytes, at the repository's git directory, never in the tree a record names;
+    `check` runs after it returns and names each path the target declares as a test whose state
+    differs from the hold; `restore` writes each such path back to the state the hold recorded,
+    or to `HEAD`'s where the hold found it unchanged. Which paths are tests is `project.py`'s
+    match over the target's declared scopes, the same one `--declared-tests` answers."""
+    import base64
+    import trace
+
+    base = Path(target).resolve()
+    if not base.is_dir():
+        print(f"cannot run: target source root {base} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    home = project.toplevel_of(base)
+    roots, trouble = target_roots(base)
+    if trouble is not None:
+        print(f"cannot run: {trouble}", file=sys.stderr)
+        return CANNOT_RUN
+    keys = [key for key, root in roots.items() if root.resolve() == base]
+    if not keys:
+        print(f"cannot run: {base} is no target siegard.json declares", file=sys.stderr)
+        return CANNOT_RUN
+    declared = json.loads((home / "siegard.json").read_text(encoding="utf-8"))
+    scopes = [s for s in (declared.get("tests") or {}).get(keys[0]) or [] if isinstance(s, dict)]
+    probe = subprocess.run(["git", "-C", str(home), "rev-parse", "--absolute-git-dir"],
+                           capture_output=True, text=True)
+    if probe.returncode != 0:
+        print(f"cannot run: git holds no repository at {home}", file=sys.stderr)
+        return CANNOT_RUN
+    held_at = Path(probe.stdout.strip()) / "siegard" / RED_GUARD
+
+    def pending() -> dict[str, str | None]:
+        changed, failed = trace.changed_paths(home, None)
+        if failed is not None:
+            raise RuntimeError(failed)
+        found: dict[str, str | None] = {}
+        for spelled in changed:
+            where = (home / spelled).resolve()
+            if where == base or base not in where.parents:
+                continue
+            found[where.relative_to(base).as_posix()] = (
+                hashlib.sha256(where.read_bytes()).hexdigest() if where.is_file() else None)
+        return found
+
+    try:
+        now = pending()
+    except RuntimeError as failed:
+        print(f"cannot run: {failed}", file=sys.stderr)
+        return CANNOT_RUN
+    if verb == "hold":
+        record = {"target": str(base), "paths": {
+            path: (base64.b64encode((base / path).read_bytes()).decode("ascii")
+                   if digest is not None else None) for path, digest in now.items()},
+            "digests": now}
+        held_at.parent.mkdir(parents=True, exist_ok=True)
+        held_at.write_text(json.dumps(record, indent=1) + "\n", encoding="utf-8")
+        print(f"held: {len(now)} path(s) pending under {base}, at {held_at}")
+        return 0
+    if not held_at.is_file():
+        print(f"cannot run: no hold at {held_at}; `--red-guard hold` runs before the implementer "
+              f"is spawned", file=sys.stderr)
+        return CANNOT_RUN
+    record = json.loads(held_at.read_text(encoding="utf-8"))
+    if record.get("target") != str(base):
+        print(f"cannot run: the hold at {held_at} is over {record.get('target')}, not {base}",
+              file=sys.stderr)
+        return CANNOT_RUN
+    before: dict[str, str | None] = record.get("digests") or {}
+    moved = sorted(path for path in set(now) | set(before)
+                   if now.get(path, "head") != before.get(path, "head")
+                   and any(project.reaches(scope, path) for scope in scopes))
+    if verb == "check":
+        if not moved:
+            print(f"accepts: no path {keys[0]} declares as a test changed since the hold")
+            return 0
+        for path in moved:
+            print(f"changed test: {path}")
+        print(f"refuses: {len(moved)} path(s) {keys[0]} declares as tests changed since the hold; "
+              f"`deliver.py --red-guard restore {base}` puts them back")
+        return 1
+    for path in moved:
+        where = base / path
+        if path in before:
+            content = record["paths"].get(path)
+            if content is None:
+                where.unlink(missing_ok=True)
+            else:
+                where.parent.mkdir(parents=True, exist_ok=True)
+                where.write_bytes(base64.b64decode(content))
+        else:
+            relative = where.relative_to(home).as_posix()
+            shown = subprocess.run(["git", "-C", str(home), "show", f"HEAD:{relative}"],
+                                   capture_output=True)
+            if shown.returncode == 0:
+                where.parent.mkdir(parents=True, exist_ok=True)
+                where.write_bytes(shown.stdout)
+            else:
+                where.unlink(missing_ok=True)
+        print(f"restored: {path}")
+    print(f"{len(moved)} path(s) put back as the hold found them")
+    return 0
+
+
 def unrecorded(target: str, named: list[str]) -> int:
     """`--unrecorded`'s own body: every path the working tree changed under the target source
     root — against `HEAD`, staged, unstaged and untracked together — that none of the named
@@ -3992,6 +4112,17 @@ def main() -> int:
                   file=sys.stderr)
             return CANNOT_RUN
         return recurring(*rest)
+    if "--red-guard" in args:
+        at = args.index("--red-guard")
+        rest = args[at + 1:]
+        del args[at:]
+        if verify or report or single is not None or against is not None \
+                or specification is not None or args or len(rest) != 2 \
+                or rest[0] not in ("hold", "check", "restore"):
+            print("cannot run: expected --red-guard hold|check|restore <target-source-root>",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        return red_guard(rest[0], rest[1])
     if "--unrecorded" in args:
         at = args.index("--unrecorded")
         rest = args[at + 1:]

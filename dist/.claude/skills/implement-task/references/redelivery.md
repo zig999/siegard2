@@ -3,6 +3,12 @@
 Read at step 1, before anything is written, when a record already sits at the path this task
 computes to, when the person names a proof-only re-delivery, or when the task carries `stands`.
 
+## Contents
+
+- A record already at the path
+- The implementation stands, and only the proof moves
+- A task carrying `stands`
+
 ## A record already at the path
 
 **A record already at the path this task computes to makes this a re-delivery**, not a stop, and
@@ -34,6 +40,34 @@ Steps 3 and 4 do not run: the implementation record is not touched. A fresh test
 the proof whole against the tree as it stands, the suite runs and is captured as ever, and the
 proof is written through `--write-proof --replace` with every `--note` line given again. The
 writer restamps the proof's pin, which stays valid because the implementation record did not move.
+
+**A suite red on a test this re-delivery's test-author wrote, which the diagnosis reads as `code`,**
+«has found that the implementation does not stand, and the same invocation goes on as the task's
+re-delivery, once» (SPEC-004 R32). Whichever files the diagnosis names, and whatever records name
+them, spawn a fresh `siegard:task-implementer` with step 3's block, its `earlier record:` the
+standing implementation record and its `red to answer:` the failing test as `<file>::<name>`, the
+diagnosis's finding whole and the target's `tests` line. Before the spawn, hold the tree:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --red-guard hold <target-source-root>
+```
+
+After each return of that implementer, before anything runs over its source, check it:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --red-guard check <target-source-root>
+```
+
+`refuses` is the stop: run `--red-guard restore <target-source-root>`, which puts each declared test
+it named back as the hold found it, and end as the red no change to this task's own files can
+answer, naming those tests — «The implementer changes no file the project declares as its tests but
+those the test-author already wrote» (SPEC-004 R32). `accepts` goes on to step 4 — the build under
+the next name, and the implementation record rewritten whole through `--write-implementation
+--replace` — and step 6's suite under the next name. The test is not edited and the test-author is
+not re-entered for it; the proof is written over the suite that passes, with a `--note` naming the
+red run the re-delivery answered. A second red the diagnosis reads as `code`, or an implementer that
+returns no mapping, is the stop `references/red-build.md` names for a red no change to this task's
+own files can answer.
 
 Before anything is written, run over the target:
 
