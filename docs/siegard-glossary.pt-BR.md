@@ -6,14 +6,10 @@ Siegard**: nenhum conhecimento prévio do framework é pressuposto. Cada verbete
 significa, por que ele existe, em que momento do trabalho aparece, como funciona passo a passo e,
 sempre que possível, traz um exemplo.
 
-**Versão descrita.** Esta edição descreve o Siegard **5.19.0**. Ela amplia a tradução de
-`glossary/siegard-glossary.md`, que ainda descreve a 4.21.3; os verbetes sobre levantamento
-(`/survey`), material de intenção, ledger, `/adopt-scope`, `/clarify-request`, o campo `tests`, as
-ondas de delegação e os agentes `domain-surveyor` e `test-intent-reader` ainda não têm par na
-versão inglesa. O capítulo 12 também traz os auxiliares da 5.43.0 e da 5.44.0: o goal armado, o
-handoff renderizado, a verificação de porta, o pedido gravado, o relay e a linha de progresso. Onde
-as duas
-versões divergirem, vale a inglesa, conforme a regra do repositório para traduções.
+**Versão descrita.** Esta edição descreve o Siegard **5.124.1**, a versão que consta em
+`src/claude/.claude-plugin/plugin.json`. Num projeto, a versão instalada é a que a primeira linha
+das regras de sessão (`hooks/rules.md`) declara, e o `/siegard-status` a informa; se ela for outra,
+os arquivos do plugin instalado prevalecem sobre este texto.
 
 **Precedência.** Este glossário explica; ele não governa. Onde ele divergir do `SKILL.md` de uma
 skill, do `--help` de um script ou de um schema em `schemas/`, valem esses arquivos, porque são
@@ -52,4 +48,4 @@ tradução usual em português, ela aparece entre parênteses na primeira ocorr�
   - 17. [Perguntas frequentes](siegard-glossary.pt-BR/17-perguntas-frequentes.md)
   - 18. [Índice alfabético](siegard-glossary.pt-BR/18-indice-alfabetico.md)
 
-Cada capítulo é um arquivo em `glossary/siegard-glossary.pt-BR/`. Os números das seções (§) citados no texto são os dos capítulos.
+Cada capítulo é um arquivo em `docs/siegard-glossary.pt-BR/`. Os números das seções (§) citados no texto são os dos capítulos.

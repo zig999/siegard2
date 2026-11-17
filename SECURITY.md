@@ -15,25 +15,37 @@ Siegard executes. Knowing what it runs and where its limits sit is the first par
   repository's git directory (`siegard/`), never in the working tree, and every failure of its own
   allows the stop. `hooks/commit_check.py` runs before every Bash command and reads only a
   `git commit`: it can refuse that commit where it adds to an orchestration log a `decided:` or
-  `recommended:` line out of form, or a judged `decided:` line no armed goal granted. It writes
-  nothing, and every failure of its own lets the commit go ahead.
+  `recommended:` line out of form, or a judged `decided:` line no armed grant covers, or where it
+  records a stop line alongside anything but the logs, the telemetry root and the initiative's
+  captured runs that ended `passed`. It writes nothing, and every failure of its own lets the
+  commit go ahead. `hooks/bounds.py` runs before every Bash command and every `Write`, `Edit` or
+  `MultiEdit`: while a goal or a grant is armed it refuses a `git push`, a branch created, renamed
+  or deleted, a history rewrite, a stash, and staging or committing all that is tracked; in every
+  state it refuses a hand write of `siegard-trace.json`, an initiative's `plan.json` or
+  `delivery.json`, or a captured run. It writes nothing, and every failure of its own lets the act
+  go ahead.
 - **Skills run commands the project's own registry declares.** A skill installs what a project's
   standard authorizes and runs the steps it declares, so a delivery hands over a project that
   installs and builds. This repository composes no command and authorizes no package: every
   command, bound and package name is the consumer registry's. Approving a package is that
-  registry gaining an entry, written by a person in their own file.
+  registry gaining an entry: written by a person in their own file, or by a session over the
+  person's own words naming the package or the step, once `bin/ask.py` has recorded them, and
+  committed alone under a message citing their digest.
 - **Every execution goes through `bin/run.py`,** which captures it and refuses a run under a name
   that already exists. A run that was not captured did not happen.
 - **No agent holds a shell.** The shipped agents run without `Bash`, and
   `tests/test_agent_contract.py` enforces it. Only `task-implementer` and `test-author` can write
   files; every other agent returns content and the calling skill writes it.
-- **Commits are bounded.** Only `/deliver-scope` and `/adopt-scope` commit, pathspec-scoped, one
-  per step, never a branch, a push or a rewrite, and only under an ask the person's own words
-  state end to end. Outside them, a session commits what the skill it invoked wrote, one
-  pathspec-scoped commit per invocation, only under the person's own words in that session — a
-  commit word, a go-ahead naming the next step, a goal condition naming the route, or an ask
-  `bin/ask.py` recorded verbatim — and, after a run's log closes on a stop line, nothing but the
-  measure `bin/door.py --check commit` accepts.
+- **Commits are bounded.** A route skill (`/analyse`, `/plan-work`, `/implement-task`,
+  `/review-change`, `/reconcile`) commits, once its validator passes, only the files its own
+  invocation wrote, pathspec-scoped, one commit per invocation, and stops on a path holding a
+  change it did not make. `/deliver-scope` and `/adopt-scope` commit the same way, one per step,
+  and only under an ask the person's own words state end to end. Any other commit a session makes
+  needs the person's own words in that session — a commit word, a go-ahead naming the next step,
+  a goal condition naming the route, an ask `bin/ask.py` recorded verbatim, or a grant armed with
+  `--commits` whose `bin/grant.py --commit` accepts the paths. After a run's log closes on a stop
+  line, nothing is committed but the measure `bin/door.py --check commit` accepts. None of them
+  pushes, branches, stashes or rewrites history.
 - **Text crosses projects only through a file the origin keeps.** `bin/relay.py --to` writes a
   message for a sibling project under this project's own telemetry root and never into the
   sibling; the receiving session reads it through `relay.py --confirm`, which refuses outside the

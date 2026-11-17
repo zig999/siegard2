@@ -31,15 +31,17 @@ and not trusted.
   `/siegard:reconcile` adopt source no delivery wrote, one context at a time.
 - **The decisions its stops hand back, taken by your own words.** `/siegard:siegard-grant` records what you grant for the project, until you clear it with `/siegard:siegard-grant --clear` (or `--slug` to limit it to one initiative): which doors a stop may take (all six, `analyse` among them, unless you narrow them with `--doors` or write `--doors none`; the budget of judged ones, `--budget`, counted for each initiative, starts at zero), the commits the route owes (`--commits`) and the closing of an initiative once everything in it is delivered, proven and reviewed (`--close`, your words being the reason). At a stop a session asks `grant.py --decide`: a door its own check leaves alone is taken, a choice of cost goes to a decider that never sees the grant, and a choice that is yours stays yours. A commit is held to the paths the route writes and never carries `siegard.json`, a standard, `CLAUDE.md`, a credential or a changed specification file; no grant takes a push, a branch or an edit outside a skill.
 - **A scope carried with nobody asked along the way.** `/siegard:siegard-goal` composes the
-  condition of a Claude Code `/goal` over an objective, an epic or a set of tasks; you paste it after `/goal`, or invoke `/siegard:siegard-goal --arm` with the same scope and it arms the goal itself with `goal.py --arm` and the plugin's `Stop` hook answers each stop from `goal.py --state` (state A or B ends it, `not yet` sends the session back with the failing checks, four identical `not yet` answers pause it; `goal.py --disarm <project-root>` ends it by hand),
+  condition of a goal over an objective, an epic or a set of tasks and hands you the
+  `/siegard:siegard-goal --arm` line that arms it (the condition stays in its full report, for
+  pasting after a Claude Code `/goal` instead); invoked with `--arm` first, it arms the goal itself with `goal.py --arm` and the plugin's `Stop` hook answers each stop from `goal.py --state` (state A or B ends it, `not yet` sends the session back with the failing checks, four identical `not yet` answers pause it; `goal.py --disarm <project-root>` ends it by hand),
   `/siegard:deliver-scope` carries the scope, and the goal ends when `goal.py --state` reads
   `state A` (delivered, proven, reviewed, measured) or `state B` (stopped where only you move it)
   from disk. Under the goal, a door a fact decides is taken without you; a choice of cost is
   taken only under a grant you armed, by a decider that never sees the goal; and the
   findings you name in advance are corrected once. A contradiction, two readings of one piece of
-  evidence and a finding's worth stay yours. With `--specify`, a goal over an objective runs
-  `/analyse` on it once before planning and commits that specification apart, for you to review
-  after the goal.
+  evidence and a finding's worth stay yours. Unless you write `--no-specify`, a goal over an
+  objective runs `/analyse` on it once before planning and commits that specification apart, for
+  you to review after the goal.
 
 It is meant for Claude Code projects that want delivered code to stay traceable to a decision.
 It needs Claude Code and `python3` with PyYAML and jsonschema; it builds no application of its own.
@@ -67,15 +69,15 @@ hands back two doors without choosing: the code is right and the specification i
 (`/siegard:analyse` with the finding as material, so a node gains "an order carries at most one
 invoice"), or the specification is right and the code is wrong (a corrective increment of
 `/siegard:plan-work`). Until a record clears the pair, `trace.py --owed backend` keeps listing it.
-The glossary walks the same case step by step in
-[One complete example: a hand fix](glossary/siegard-glossary/12-one-complete-example-a-hand-fix.md).
+The glossary (in Portuguese) walks the same case step by step in
+[Exemplo completo 1: uma correção feita à mão](docs/siegard-glossary.pt-BR/15-exemplo-completo-1-uma-correcao-feita.md).
 
 ## Where things are stated
 
 What each script and skill does is stated where it is enforced: a script's module docstring,
 printed by `--help`, and a skill's own `SKILL.md` under `src/claude/skills/`. The requirements
 the framework must meet are in `specs/`, the structure they require is in `schemas/`, and the
-[glossary](glossary/siegard-glossary.md) explains the vocabulary in plain words; where the
+[glossary](docs/siegard-glossary.pt-BR.md) (in Portuguese) explains the vocabulary in plain words; where the
 glossary and a specification, a schema or code disagree, those win.
 
 - [`CHANGELOG.md`](CHANGELOG.md) — what each version changed.
@@ -174,17 +176,21 @@ route a change takes, and what is never hand-edited or invented — and nothing 
 script states in its own file. `/plugin` lists the skills; each script's `--help` states what it
 does.
 
-Three of those rules shape how you work with a session, so expect them:
+These rules, and the hooks beside them, shape how you work with a session, so expect them:
 
-- **A session commits only what your own words in that session authorized, and only what the
-  skill it invoked wrote.** Say "commit", say to proceed with a named next step (which covers the one commit that step needs before it runs, never a push), or state the whole route end to end in your ask. A
-  summary of an earlier context is not an authorization: after a compaction, a resumed route asks
-  again before its next commit. Each commit is pathspec-scoped, one per invocation — never a
-  branch, a push, a stash or a rewrite.
+- **A route skill commits what its own invocation wrote; a session commits anything else only
+  under your own words in that session.** `/analyse`, `/plan-work`, `/implement-task`,
+  `/review-change` and `/reconcile` commit, once their validator passes, the roots they held clean
+  before their first write, and stop on a root holding a change they did not make. For any other
+  commit, say "commit", say to proceed with a named next step (which covers the one commit that
+  step needs before it runs, never a push), or state the whole route end to end in your ask. A
+  summary of an earlier context is not an authorization: after a compaction, a resumed route reads
+  your recorded words back (`bin/ask.py --read`) or asks again before its next commit. Each commit
+  is pathspec-scoped, one per invocation — never a branch, a push, a stash or a rewrite.
 - **A question about where the project stands is answered from disk.** Ask it, and the session
   runs `/siegard:siegard-status` (the whole project) or `/siegard:siegard-progress` (one
-  initiative) rather than recalling the conversation; the framework's version is `project.py`'s
-  answer.
+  initiative) rather than recalling the conversation; the framework's version is the one the
+  rules' first line states.
 - **A decision is handed to you rendered, short, and with its recommendation first.** `bin/handoff.py --render` prints it from a record; the state it opens with is a script's line, never the session's — `bin/handoff.py --prepare` writes it, with each next door already checked, and `--render` refuses a state that no longer matches its script; the full report stays on disk, and telemetry's `handoff_form` (`siegard-telemetry/17`) counts how many handed decisions ran long, opened in framework words or carried no recommendation. `bin/door.py --check` tells, before a door is handed, whether its own entry point would refuse it. For a running count without asking, ask `/siegard:siegard-config` to set the status line: `bin/progress.py --install` writes `statusLine` into the project's `.claude/settings.local.json` with this machine's absolute path, merged with what the file holds — one line, read from disk, empty outside a Siegard project. A plugin update leaves the entry on the earlier version and the line says so; run the step again. `--uninstall` removes it. `bin/door.py --check commit` tells, before a delivery is committed, whether its log closed on a stop line or a red run went unanswered. `bin/ask.py --record` keeps the words you authorized with, verbatim under a digest, so a session resumed after a compaction reads them back with `--read` instead of asking again. `bin/relay.py` writes text for a sibling project's session into this project, headed by a line that prints it only in the right project under the right plugin version.
 - **The message a session stops on is checked as it is handed.** In a project with no armed goal, the plugin's `Stop` hook holds it to `bin/handoff.py --check` and records the result outside the tree, in `<git-common-dir>/siegard/handoff-checks.jsonl`; telemetry counts it under `handoff_form.stop_checks` (`siegard-telemetry/18`). It only measures by default; `SIEGARD_HANDOFF_STOP=enforce` in the project's settings `env` blocks a violating stop once and allows the next. A session that starts under a different plugin version than an armed goal began under is told so in one line.
 - **A report opens with what needs you, and a finding stops nothing.** Its first lines are what
@@ -236,9 +242,9 @@ say; three of its fields are worth deciding before any work starts:
 - `/siegard:siegard-status` runs with no `rules:` line — no copy of the rules sits at the root.
 - Skills are invoked as `/siegard:<name>`; the bare form (`/analyse`, `/plan-work`, …) also works
   where no other plugin claims the name.
-- Four skills are closed to the model and run only when you type them: `siegard-config`,
-  `siegard-standard`, `siegard-archive` and `clarify-request`. A skill that needs one of them
-  hands you the invocation ready to paste.
+- Six skills are closed to the model and run only when you type them: `siegard-config`,
+  `siegard-standard`, `siegard-archive`, `clarify-request`, `siegard-goal` and `siegard-grant`.
+  A skill that needs one of them hands you the invocation ready to paste.
 
 `/siegard:clarify-request <your request>` makes a request precise before anything acts on it. Given a
 request in your own words, it reads the conversation and the project to settle what "this", "the
@@ -277,7 +283,7 @@ time, after steps 1–6 above:
    file's own facts reached; each cleared node is bound to the files that hold its fact; the
    first adoption writes `siegard-trace.json`. Tests you know assert a node's own condition may
    be offered as certifications in the same run. The judges run in waves of at most twenty, the
-   harness's ceiling on agents running at once, and a wave ends when `trace.py --save-return`
+   harness's ceiling on agents running at once, and a wave ends when `trace.py --save-returns`
    prints `0 pending` for it. A launch the harness refuses anyway is a wave cut too wide: the
    report hands `trace.py --stage … --concurrency <fewer>` ready to run again.
 5. **Read what it hands back.** A candidate no file holds, a `contradicts` and an `unstated`

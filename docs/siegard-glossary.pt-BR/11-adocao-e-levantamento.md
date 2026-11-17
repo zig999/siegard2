@@ -17,7 +17,7 @@ finalmente, vincular cada nó aos arquivos que de fato o contêm.
    levantamento**: os fatos de domínio que o código exibe, cada um ao lado do arquivo onde foi
    lido.
 3. **`/analyse`** sobre esse material — escreve os nós e o **ledger**, que diz em qual nó foi parar
-   cada fato do material.
+   cada fato do material, ou por que ficou de fora.
 4. **`/reconcile` como adoção**, com o ledger — cada arquivo é lido contra os candidatos em que os
    seus próprios fatos foram parar. A primeira adoção cria o `siegard-trace.json`.
 5. Ler o que voltou: candidatos `unheld`, findings `contradicts` e `unstated` → de volta ao
@@ -85,7 +85,14 @@ Lê **uma área** de código e devolve o material de levantamento no formato de
 `schemas/survey.json`. Só lê (ferramentas `Read`, `Grep`, `Glob`); devolve texto, e a skill grava.
 Sua regra principal: **código é evidência; texto nunca é**. Comentários, docstrings, READMEs e
 mensagens de commit dizem o que alguém acreditava; o agente lê os desvios, as comparações e as
-respostas do código.
+respostas do código. Toda recusa entra com a resposta que ela devolve, e a ordem das verificações é
+lida operação por operação, nunca generalizada.
+**O que não é fato de domínio.** O que a implementação escolheu (rotas de transporte, fiação do
+framework, eventos de log, limites de desempenho) vai para `## Outside the domain`. O mesmo vale
+para um texto que só nomeia um controle (o rótulo de um botão, coluna, aba ou menu, um nome
+acessível, um placeholder) e para o ajuste que um cliente faz das próprias requisições (tempo de
+cache, número de tentativas). Já um texto que muda o que uma pessoa pode saber ou fazer (uma
+mensagem de recusa ou de falha, o rótulo de um vocabulário fechado, um aviso de resultado) é fato.
 
 ### `test-intent-reader` — o agente da forma de testes
 Lê **uma área de testes declarados** e devolve material de intenção no formato de
@@ -107,6 +114,8 @@ entender a área, cada um com o porquê — lidos, mas sem fatos atribuídos).
 | `## Upstream artifacts` | O que sistemas externos impõem (tabelas, colunas, códigos, tópicos). |
 | `## Outside the domain` | O que foi lido e deixado de fora por não ser domínio. |
 | `## Observed and not decided here` | Comportamentos observados que o levantamento não decide (por exemplo, dois trechos que discordam). |
+
+Um cabeçalho sem nada a dizer leva a linha `None.`.
 
 **Linha de fato (fact line).** Um item de lista de primeiro nível (`- `) sob um dos quatro
 primeiros cabeçalhos, terminando com o caminho onde foi lido, entre crases. Um item recuado
@@ -136,33 +145,44 @@ ledger entrega a cada **arquivo governado** os nós em que os seus fatos foram p
 o lugar onde um fato foi lido: nunca é um arquivo do conjunto julgado.
 
 ### Ledger (livro-razão do material)
-**O que é.** O arquivo `ledger.md`, escrito pelo `/analyse` **ao lado do material** — de
-levantamento ou de intenção — (nunca dentro da especificação), que diz para onde foi **cada linha
-de fato** do material. Contrato:
-`schemas/ledger.json` (`siegard-ledger/1`).
+**O que é.** O arquivo `ledger.md`, escrito pelo `/analyse` **ao lado do material** que leu (nunca
+dentro da especificação), que diz para onde foi **cada linha** do material. Contrato:
+`schemas/ledger.json` (`siegard-ledger/1`). O material pode ser de levantamento, de intenção ou
+qualquer outro arquivo entregue ao `/analyse` (prosa, por exemplo). No material de levantamento e
+de intenção, as linhas contadas são as linhas de fato; num arquivo sem contrato de material do
+Siegard, o `trace.py` enumera as linhas de item (uma linha que abre com negrito, um item de lista
+no começo da linha, uma linha de corpo de tabela ou a primeira linha de um parágrafo).
 **Por que existe.** Sem ele, um fato que o material declarava e a análise não transformou em nó
 simplesmente desapareceria — e só seria redescoberto, arquivo por arquivo e a alto custo, pelos
 juízes da adoção, como finding `unstated`. O ledger torna essa perda visível **antes** da adoção:
-todo fato cai num nó **ou** é deixado de fora com um motivo declarado.
-**Formato.** Uma entrada por linha de fato:
+toda linha cai num nó, é deixada de fora com um motivo declarado, ou fica **em aberto** com o que
+falta responder.
+**Formato.** O frontmatter tem `material` (os arquivos que o ledger cobre, com caminho relativo à
+pasta do ledger), `digests` (o `sha256:` de cada arquivo como estava quando o ledger foi respondido;
+obrigatório para material sem contrato, porque um digest que não bate mais significa que os
+números de linha deixaram de localizar os itens) e `entries`, uma entrada por linha:
 
 | Campo | Significado |
 |---|---|
-| `at` | A linha de fato: `<arquivo do material>:<número da linha>`. |
+| `at` | A linha: `<arquivo do material>:<número da linha>`. |
 | `node` | O nó cujos campos agora contêm o fato. Se um fato cai em vários nós, uma entrada por nó. |
-| `outside` | Por que nenhum nó contém o fato: conhecimento de implementação, fato que pertence a outro incremento, comportamento observado e não decidido. Uma única justificativa que um revisor possa rejeitar. |
+| `outside` | Por que nenhum nó contém a linha: conhecimento de implementação, fato que pertence a outro contexto ou sistema, comportamento observado e não decidido, ou uma linha que não declara fato. Uma única justificativa que um revisor possa rejeitar. |
+| `open` | O que da linha ainda falta responder, e que um incremento seguinte da análise responde. Uma linha respondida em parte cai nos nós que a respondem e fica `open` pelo resto. |
 
-Uma entrada tem `node` **ou** `outside`, nunca os dois.
+Uma entrada tem `node`, `outside` ou `open`, nunca dois deles. Uma linha sem entrada é um fato que
+a análise deixou cair, e o ledger é recusado.
 **Para que a adoção o usa.** O `--stage --adopt --ledger` lê o ledger para entregar a cada juiz,
 no seu pacote, **só os candidatos em que os fatos daquele arquivo foram parar** — em vez de todos
-os candidatos do incremento. Isso reduz muito o que cada juiz precisa ler.
-**Por quanto tempo existe** (desde a 5.91.0). O ledger vive enquanto o material está em uso. Com
-alguma linha `open`, ou enquanto uma adoção ainda vai lê-lo, ele é commitado junto com a
-especificação. Sem linha aberta e sem adoção que o leia — algum material é prosa —, o commit do
-incremento que o fechou o remove, e a mensagem desse commit traz a saída do `trace.py --ledger`.
-Um ledger lido por uma adoção é removido pelo commit da adoção. A última linha do `--ledger` diz
-qual dos casos vale: `ledger: keep` ou `ledger: remove`. As versões anteriores ficam no histórico
-do git.
+os candidatos do incremento. Isso reduz muito o que cada juiz precisa ler. A adoção só aceita um
+ledger cujo material todo seja de levantamento ou de intenção e que não tenha nenhuma linha `open`.
+**Por quanto tempo existe.** O ledger vive enquanto o material está em uso. Com alguma linha `open`,
+ou enquanto uma adoção ainda vai lê-lo, ele é commitado junto com a especificação. Sem linha aberta
+e sem adoção que o leia (algum material é prosa), o commit do incremento que o fechou o remove, e a
+mensagem desse commit traz a saída do `trace.py --ledger`. Um ledger lido por uma adoção é removido
+pelo commit dessa adoção; uma adoção parada o deixa. A última linha do `--ledger` diz qual dos
+casos vale: `ledger: keep` ou `ledger: remove`. As versões anteriores ficam no histórico do git.
+**Não confundir com.** O decision log ao lado de cada nó (§5), que registra **o que** foi decidido
+sobre um nó. O ledger registra **para onde** foi cada linha do material, e não guarda fato nenhum.
 
 ### `trace.py --area`, `trace.py --survey` e `trace.py --ledger`
 
@@ -170,6 +190,7 @@ do git.
 trace.py --area <target-root> <caminho-ou-pasta> ...  # os arquivos de uma área, sem os testes declarados
 trace.py --survey <material.md> ...          # confere material contra o seu contrato e conta fatos por cabeçalho
 trace.py --ledger <ledger.md> <spec-root>    # confere o ledger contra o material e os nós
+trace.py --untraced <target-root> [--all]    # os arquivos rastreados que nenhum vínculo nomeia, por estado
 ```
 
 - `--area` lista os arquivos rastreados que os caminhos de uma área contêm, deixa de fora os
@@ -183,24 +204,35 @@ trace.py --ledger <ledger.md> <spec-root>    # confere o ledger contra o materia
   as linhas de fato por cabeçalho e aponta os arquivos da área que nenhum fato menciona (isso é um
   dado a relatar, não um erro: o arquivo pode não conter nada de domínio) e, no material de
   intenção, os testes em que nenhum fato foi lido.
-- `--ledger` recusa um ledger ao qual falte uma linha de fato, ou que nomeie um nó que não existe.
-  Íntegro, imprime o conjunto de arquivos que o material leu e os candidatos por arquivo — o que a
-  adoção vai usar.
+- `--ledger` recusa um ledger ao qual falte uma linha, uma entrada que não aponte para uma linha
+  do material, um nó que não existe e um digest que não bate mais com o arquivo. Íntegro, imprime
+  `ledger sound:` com as contagens (linhas que caíram em nós, deixadas de fora, em aberto), as
+  linhas ainda `open` com o que falta em cada uma, os motivos de exclusão agrupados por contagem
+  (o maior primeiro), o conjunto de arquivos que o material leu e os candidatos por arquivo — o que
+  a adoção vai usar —, e termina com `ledger: keep` ou `ledger: remove`.
+- `--untraced` lista os arquivos rastreados sob o target que nenhum vínculo nomeia, por diretório,
+  com a contagem de cada estado (`holds-nothing`, `outside`, `uncertified`, `unsurveyed`; ver §9).
+  Não recusa nada: a maioria dos arquivos de um sistema real não carrega fato de domínio.
 
 ### O stage da adoção
 
 ```sh
 trace.py --stage <target-root> <spec-root> <slug> <workspace> \
-    --adopt --ledger <ledger.md> [<arquivos>] [--outside <arquivo> ...] [--certify <arquivo>]
+    --adopt --ledger <ledger.md> [<arquivos>] [--outside <arquivo> ...] [--certify <arquivo-de-certificações>]
+trace.py --stage <target-root> <spec-root> <slug> <workspace> \
+    --adopt --node <candidato> ... [--outside <arquivo> ...] [--certify <arquivo-de-certificações>]
 ```
+
+- O ledger só é aceito quando todo o material é de levantamento ou de intenção e nenhuma linha
+  está `open`; senão, o stage não roda e diz por quê.
 
 - O conjunto de arquivos é, por padrão, o das áreas do material — no material de intenção, os
   arquivos que ele governa, nunca os testes — (ou o subconjunto nomeado).
 - Um arquivo que o target declara como teste é recusado no conjunto: um teste nunca é código
-  adotado. A recusa entrega, no lugar, a entrada de `--certify` para oferecê-lo como prova de um
-  nó, que segue no mesmo stage.
+  adotado. A recusa diz para tirá-lo do conjunto e entrega, pronta, a entrada de `--certify` que o
+  oferece como prova de um nó (`{node: …, proof: […], step: …}`).
 - Cada arquivo recebe os candidatos em que o ledger colocou os seus fatos. Um arquivo que nenhum
-  fato menciona não recebe juiz e fica `unbound`.
+  fato menciona não recebe juiz e fica sem vínculo.
 - O índice de candidatos continua listando todos os candidatos, com os arquivos de cada um, para
   um fato que o juiz encontre e o seu pacote não resolva.
 - **Sem ledger**, cada candidato é nomeado com `--node`, e o juiz de todo arquivo lê todos eles.
@@ -236,8 +268,12 @@ pessoa revisa o intervalo de commits depois. Em compensação, **nunca** invoca 
 comportamento errado que ela encontre é um novo pedido.
 **Entradas.** O pedido (literal), a raiz do projeto, o target, o slug do contexto e as áreas; e,
 opcionalmente, os arquivos `outside` e as certificações, sempre nas palavras do pedido. Um slug cujo
-registro de reconciliação já existe é uma **retomada**: a skill continua do passo cujo commit o log
-não tem.
+log de orquestração (`siegard-survey/<slug>/orchestration.md`) já existe é uma **retomada**: a
+skill continua do passo cujo commit o log não tem, e o relatório diz isso.
+**Antes de tudo.** O `spec.py` precisa passar sobre uma raiz de especificação commitada, e o
+`git status --porcelain` sobre a especificação, a raiz de código do target, o `siegard-trace.json`,
+o `siegard-reconcile` e o `siegard-survey/<slug>` não pode imprimir nada. A skill commita onde o
+`HEAD` já está; começar numa branch própria é ato da pessoa, oferecido na abertura do relatório.
 
 ```mermaid
 flowchart TB
@@ -248,11 +284,47 @@ flowchart TB
 pronta, e esta skill a usa literalmente, preenchendo só as lacunas que o pedido cobre. **Toda
 decisão de rota é a resposta de um script** (`--survey`, `--ledger`, `spec.py`, o fold,
 `--reconciliation`, `--untraced`): uma parada de script é parada desta skill.
-**Log.** Mantém `orchestration.md` em `siegard-survey/<slug>/`, uma linha por passo — um marcador,
-nunca um nó.
+**Os passos.**
+1. **survey** — invoca o `/survey` com as áreas do pedido; commit de `siegard-survey/<slug>` como
+   `adopt-scope <slug>: survey`.
+2. **analyse** — invoca o `/analyse` que o relatório do survey entregou; commit da raiz de
+   especificação e de `siegard-survey/<slug>` (nós, logs e ledger são um incremento) como
+   `adopt-scope <slug>: analyse`.
+3. **adopt** — invoca o `/reconcile` como adoção que o relatório da análise entregou, com o
+   `outside` e as certificações do pedido; commit do `siegard-trace.json`, do `siegard-reconcile` e
+   de `siegard-survey/<slug>` (já sem o ledger, que a adoção remove) como `adopt-scope <slug>: adopt`.
+4. **measure** — `telemetry.py --probe` desde o início do passo 1, o anúncio da leitura e a
+   telemetria; commit da raiz de telemetria como `adopt-scope <slug>: measure`. Uma sonda que não
+   consegue ler é uma linha no relatório, nunca uma parada.
+
+**Log.** Mantém `orchestration.md` em `siegard-survey/<slug>/`, uma linha por passo (o que foi
+invocado, o hash do commit e o resultado) — um marcador, nunca um nó. É o único lugar em que as
+decisões da própria execução (slug derivado, target decidido, passo retomado, parada final)
+sobrevivem à conversa.
 **Paradas.** Toda parada de uma skill interna encerra a execução, com as portas repassadas
-literalmente; nenhuma é contornada nem repetida. Candidatos `unheld`, findings, fatos deixados de
-fora pelo ledger e decisões registradas **não** param nada: são divulgação, e vão para o relatório.
+literalmente; nenhuma é contornada nem repetida. Também param: um ledger que ainda tem linha `open`,
+um campo que o `siegard.json` não declara e uma alteração pendente que a skill não fez. Quando o
+relatório que parou recomendava uma porta, o log ganha uma linha
+`recommended: <porta> — <critério> — <fato que decide>` (§12). Candidatos `unheld`, findings
+(`contradicts`, `unstated`, `restates`), fatos deixados de fora pelo ledger, decisões registradas e
+uma certificação recusada **não** param nada: são divulgação, e vão para o relatório.
+**O relatório.** Sai por `handoff.py --prepare`/`--render` (§12): onde o `HEAD` estava no início,
+cada commit da execução e o intervalo do `git log` que os contém (é a revisão, e é da pessoa), cada
+entrada decidida e não recebida, as contagens do `--survey`, a saída do `--ledger`, as decisões
+registradas, as contagens da adoção, o `trace.py --untraced` depois do bind, o recibo da telemetria
+e o que a skill nunca fez.
+
+### Outras "adoções" que não são esta rota
+**Não confundir com.**
+- **A adoção que uma entrega pede.** Quando o implementador de uma tarefa descobre que o código já
+  cumpre a tarefa, o registro de implementação leva `stands`; se o trace não tem os vínculos, o
+  gravador do registro entrega uma porta de `/reconcile` como adoção, cujos candidatos são os nós
+  da tarefa que nenhum dos arquivos vincula (§7, §10). É a mesma adoção do `/reconcile`, mas sem
+  levantamento nem ledger: os arquivos são os que o implementador encontrou.
+- **O teste "adotado" por uma entrega.** O `deliver.py --test-owner` responde `adopt` quando uma
+  suíte fica vermelha num teste de outra tarefa cujos planos donos estão todos fechados: a entrega
+  atual assume esse teste e o reescreve (§7). Isso é sobre um teste, não sobre código que nenhuma
+  entrega escreveu.
 
 ---
 > [← Glossário](../siegard-glossary.pt-BR.md) · Anterior: [Reconciliação (`/reconcile`)](10-reconciliacao.md) · Próximo: [As demais skills e os scripts auxiliares](12-as-demais-skills-e-os-scripts.md)

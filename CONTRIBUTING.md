@@ -39,8 +39,9 @@ it goes and what it displaces, in an issue. Everything else here is ordinary wor
 
 Every committed artifact is English (en-US): source, specifications, schemas, tests, fixtures and
 commit messages. Explanatory material — a README, a glossary, a guide — may be written in another
-language beside its English original as `<name>.<locale>.md`; it states no requirement, and the
-English document governs. Identifiers the framework defines are never translated.
+language; it states no requirement, and where it disagrees with a specification, a schema or code,
+those win. A translation of an English document sits beside its original as `<name>.<locale>.md`,
+and the English one governs. Identifiers the framework defines are never translated.
 
 ## Tests
 

@@ -35,6 +35,11 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/<script>.py ...
 Para encurtar, este glossário escreve `trace.py ...` onde a forma completa é
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py ...`.
 
+**Convenção para skills.** O nome canônico de uma skill leva o prefixo do plugin:
+`/siegard:plan-work`, `/siegard:deliver-scope`. A forma curta (`/plan-work`) funciona enquanto
+nenhum outro plugin usar o mesmo nome; este glossário a usa para encurtar. Os agentes seguem a
+mesma regra (§1).
+
 **Convenção para caminhos.** Nos exemplos, `backend` é o nome de um target (uma base de código,
 ver §4), `specification` é a pasta da especificação e `src/...` são arquivos de código.
 
