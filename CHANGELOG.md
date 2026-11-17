@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.121.0 — 2026-11-16
+
+`handoff.py --prepare` prints the `--save-report` and `--render` invocations ready to paste after its limits, and its limits name the words a recommending body says the reversing fact after and that the record holds the skeleton's fields alone. (`ec475ae`)
+
 ## 5.120.0 — 2026-11-16
 
 The commit that records a stop carries the runs that passed, so the next arming finds no pending change, and the record writer's adoption door names every node the `stands` files extend and is not offered twice over the same files. (`febb263`)
