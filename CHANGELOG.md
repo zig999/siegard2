@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.123.0 — 2026-11-17
+
+`trace.py --save-returns` saves a whole wave of judge returns in one call, each found by the pack its subagent's prompt names; `/review-change` and `/reconcile` hand it as the wave's save. (`93b9546`)
+
 ## 5.122.0 — 2026-11-17
 
 `/plan-work`, `/deliver-scope` and `/implement-task` hand `spec.py --pack`, `telemetry.py` and `door.py --check commit` as invocations ready to paste, and `spec.py --help` lists `--pack`. (`4fd4027`)
