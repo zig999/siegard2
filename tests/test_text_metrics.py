@@ -150,8 +150,8 @@ REVIEW_AGENTS = ("coverage-auditor", "specification-conformance-reviewer",
                  "standard-conformance-reviewer")
 REVIEW_BASELINE = REPO / "tests/fixtures/benchmarks/review-change/text-metrics-5.65.0.json"
 REVIEW_PINS = {
-    "chars": 91_725,
-    "skill_chars": 19_994,
+    "chars": 91_977,
+    "skill_chars": 19_995,
     "sentence_words_median": 19,
     "sentence_words_p90": 37,
     "sentences_over_60_words": 1,
@@ -205,8 +205,8 @@ def test_the_review_change_skill_names_its_trigger_first():
 RECONCILE_AGENTS = ("coverage-auditor", "specification-conformance-reviewer")
 RECONCILE_BASELINE = REPO / "tests/fixtures/benchmarks/reconcile/text-metrics-5.66.0.json"
 RECONCILE_PINS = {
-    "chars": 82_704,
-    "skill_chars": 17_223,
+    "chars": 82_654,
+    "skill_chars": 17_224,
     "sentence_words_median": 19,
     "sentence_words_p90": 38,
     "sentences_over_60_words": 1,

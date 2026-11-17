@@ -562,7 +562,7 @@ def test_a_wave_ends_on_the_save_s_receipt_and_never_on_a_count_kept_in_the_sess
     save's receipt may sit in the references the skill names at the step that reads them."""
     text = (REPO / "src/claude/skills" / skill / "SKILL.md").read_text(encoding="utf-8")
     flat = " ".join(text.split())
-    assert "A wave ends when `--save-return` reports `0 pending` for it, read from the returns " \
+    assert "A wave ends when `--save-returns` reports `0 pending` for it, read from the returns " \
            "on disk; a count of notifications kept in the session is never the signal" in flat, \
         f"{skill} lets the session count notifications"
     corpus = " ".join(skill_corpus(skill).split())

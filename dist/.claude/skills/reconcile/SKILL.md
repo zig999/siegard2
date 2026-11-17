@@ -195,7 +195,7 @@ never a chosen subset.**
 
 Spawn one `siegard:specification-conformance-reviewer` subagent per file the manifest holds nodes
 for, dispatched by the waves the staging receipt lists: one wave whole, in one message, then every
-return of that wave saved before the next wave is spawned. A wave ends when `--save-return`
+return of that wave saved before the next wave is spawned. A wave ends when `--save-returns`
 reports `0 pending` for it, read from the returns on disk; a count of notifications kept in the
 session is never the signal. A launch the harness refuses ran no judge and is a wave cut too wide:
 the report hands `--stage --concurrency <fewer>` ready to run again, and no judge is dispatched a

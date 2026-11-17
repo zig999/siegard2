@@ -104,6 +104,10 @@ What this script does, and nobody else does any of it:
                                                                   reply, verbatim, as the return
                                                                   for a staged file (or a node
                                                                   staged for certification)
+    trace.py --save-returns <target-root> <workspace> <transcripts-dir>
+                                                                  save every pending return at
+                                                                  once, each from the transcript
+                                                                  whose prompt names its pack
     trace.py --fold <target-root> <workspace> <premise> <record>  fold the subagents' returns
                                                                   into the reconciliation record
     trace.py --fold ... --run <run-dir>                           the same, the mechanical tier
@@ -497,6 +501,7 @@ Usage:  trace.py <target-root>
                  [--certify <certifications-file>] [--rewrite <rewrite-file>]
                  [--concurrency <n>]
         trace.py --save-return <target-root> <workspace-dir> <file> <transcript>
+        trace.py --save-returns <target-root> <workspace-dir> <transcripts-dir>
         trace.py --stage-release <target-root> <spec-root> <record> <workspace>
         trace.py --fold <target-root> <workspace-dir> <premise-file> <record> [--run <run-dir>]
         trace.py --encodes --rank <target-root> [--all]
@@ -5017,6 +5022,89 @@ def save_return_from(target: Path, workspace: Path, given: str, transcript: Path
     return 0
 
 
+def first_prompt_of(transcript: Path) -> str:
+    """The text a subagent was spawned with: its transcript's first user message."""
+    for entry in telemetry.entries_of(transcript):
+        if entry.get("type") != "user" or not isinstance(entry.get("message"), dict):
+            continue
+        content = entry["message"].get("content")
+        if isinstance(content, str):
+            return content
+        return "".join(block.get("text", "") for block in content or []
+                       if isinstance(block, dict) and block.get("type") == "text")
+    return ""
+
+
+def save_returns_from(target: Path, workspace: Path, directory: Path) -> int:
+    """Save every return a staging still waits for, each from the transcript of the subagent that
+    was handed its pack. Every subagent of a staging is handed one pack whose path is unique to
+    its file or its certification, so the transcript whose spawning prompt names that path is the
+    one that answered it — found by reading, never by a mapping kept by hand. Where several
+    transcripts name one pack, the subagent ran again, and the one that answered last is saved.
+    A transcript that has not answered yet leaves its return pending; each save is the one
+    `--save-return` writes, verbatim, and is held to the fold's reading at once."""
+    manifest_path = workspace / "manifest.json"
+    if not manifest_path.is_file():
+        print(f"cannot run: {workspace} holds no manifest.json; save into a staged workspace",
+              file=sys.stderr)
+        return CANNOT_RUN
+    if not directory.is_dir():
+        print(f"cannot run: {directory} is not a directory; name the one the harness writes the "
+              f"spawned agents' output files to", file=sys.stderr)
+        return CANNOT_RUN
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    returns_dir = home_of(target) / RECONCILE_DIR / f"{manifest['slug']}.returns"
+    if not returns_dir.is_dir():
+        print(f"cannot run: {returns_dir} does not exist; --stage creates it", file=sys.stderr)
+        return CANNOT_RUN
+    prefix = RELEASE_PREFIX if manifest.get("release") else ""
+    wanted: dict[str, tuple[str, str, dict | None]] = {}
+    for given, staged_for in manifest["files"].items():
+        if staged_for.get("pack"):
+            wanted[staged_for["pack"]] = (prefix + return_name(given), given, None)
+    for entry in manifest.get("certify") or []:
+        if entry.get("pack"):
+            wanted[entry["pack"]] = (certify_return_name(entry["node"]),
+                                     f"{CERTIFY_PREFIX}{entry['node']}", entry)
+    answered: dict[str, tuple[float, Path, str]] = {}
+    waiting: set[str] = set()
+    for transcript in sorted(set(directory.glob("*.jsonl")) | set(directory.glob("*.output"))):
+        prompt = first_prompt_of(transcript)
+        packs = [pack for pack in wanted if pack in prompt]
+        if len(packs) != 1:
+            continue
+        text, problem = final_reply_of(transcript)
+        if problem is not None:
+            waiting.add(packs[0])
+            continue
+        when = transcript.stat().st_mtime
+        if packs[0] not in answered or when > answered[packs[0]][0]:
+            answered[packs[0]] = (when, transcript, text)
+    saved, refused = [], []
+    for pack, (when, transcript, text) in sorted(answered.items()):
+        name, subagent, ask = wanted[pack]
+        path = returns_dir / name
+        if path.is_file() and path.read_text(encoding="utf-8") == text:
+            continue
+        path.write_text(text, encoding="utf-8")
+        saved.append(subagent)
+        held = return_refusals(manifest, text, subagent, ask)
+        if held:
+            refused.append(f"{subagent}: {'; '.join(held)}")
+    print(f"saved {len(saved)} return(s) verbatim from {directory}"
+          + (f": {', '.join(saved)}" if saved else ""))
+    still = sorted(wanted[pack][1] for pack in waiting if pack not in answered)
+    if still:
+        print(f"  {len(still)} subagent(s) have not answered yet: {', '.join(still)}")
+    for line in refused:
+        print(f"  the fold will refuse {line} — a subagent to run again with its prompt fixed")
+    print(f"  {pending_receipt(manifest, returns_dir, '')}")
+    for number in range(1, len(manifest.get("waves") or []) + 1):
+        wave = manifest["waves"][number - 1]
+        print(f"  {pending_receipt(manifest, returns_dir, wave[0])}")
+    return 0
+
+
 def return_refusals(manifest: dict, text: str, subagent: str, ask: dict | None) -> list[str]:
     """Why the fold would refuse this return, by the rule the fold applies: a file's return is
     held to the node set its subagent was handed, a certification's to its node and proof."""
@@ -6792,6 +6880,7 @@ def main() -> int:
     do_stage = "--stage" in args
     do_fold = "--fold" in args
     do_save_return = "--save-return" in args
+    do_save_returns = "--save-returns" in args
     do_stage_release = "--stage-release" in args
     replace = "--replace" in args
     do_rank = "--rank" in args
@@ -6908,7 +6997,7 @@ def main() -> int:
     args = [a for a in args
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
                          "--release", "--carry", "--reconciliation", "--owed", "--encodes", "--stage",
-                         "--fold", "--save-return", "--stage-release", "--rank", "--changed", "--audit", "--review",
+                         "--fold", "--save-return", "--save-returns", "--stage-release", "--rank", "--changed", "--audit", "--review",
                          "--convergence", "--untraced", "--adopt", "--ledger", "--survey",
                          "--area", "--reconcile-set")]
     if reconcile_set and not check:
@@ -6925,6 +7014,7 @@ def main() -> int:
                                       ("--stage", do_stage),
                                       ("--fold", do_fold),
                                       ("--save-return", do_save_return),
+                                      ("--save-returns", do_save_returns),
                                       ("--stage-release", do_stage_release),
                                       ("--convergence", do_convergence),
                                       ("--untraced", do_untraced),
@@ -7157,6 +7247,14 @@ def main() -> int:
             return CANNOT_RUN
         target, spec_root, record, workspace = args
         return stage_release(Path(target), Path(spec_root), Path(record), Path(workspace))
+
+    if do_save_returns:
+        if len(args) != 3 or any(a.startswith("--") for a in args):
+            print("cannot run: expected --save-returns <target-root> <workspace-dir> "
+                  "<transcripts-dir>", file=sys.stderr)
+            return CANNOT_RUN
+        target, workspace, directory = args
+        return save_returns_from(Path(target), Path(workspace), Path(directory))
 
     if do_save_return:
         if len(args) != 4 or any(a.startswith("--") for a in args):

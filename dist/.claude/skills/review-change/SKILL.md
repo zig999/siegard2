@@ -230,7 +230,7 @@ owes. Read `references/passes.md` before spawning any: it states what each subag
 - **conformance** — one `siegard:specification-conformance-reviewer` subagent **per file the
   staging manifest holds**, dispatched **by the waves the staging receipt lists**: one wave whole,
   in one message, then every return of that wave saved before the next wave is spawned. A wave
-  ends when `--save-return` reports `0 pending` for it, read from the returns on disk; a count of
+  ends when `--save-returns` reports `0 pending` for it, read from the returns on disk; a count of
   notifications kept in the session is never the signal. A launch the harness refuses is a wave
   cut too wide, reported with `--stage --concurrency <fewer>` ready to run again, and never a
   subagent dispatched a second time on its own.

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -749,6 +750,55 @@ def test_a_fenced_reply_is_saved_as_written_and_the_fold_refuses_it_by_name(cons
     assert done.returncode == 1, done.stdout + done.stderr
     assert f"{FILE}: the return does not parse" in done.stdout
     assert not record.exists()
+
+
+def test_save_returns_finds_each_return_by_the_pack_its_prompt_names(consumer):
+    """`--save-returns` saves a wave whole: each pending return from the transcript whose
+    spawning prompt names that file's pack, the later of two that name one, verbatim; a
+    transcript that has not answered leaves its return pending, and one naming no pack is read
+    for nothing."""
+    _, workspace = staged(consumer)
+    pack = manifest_of(workspace)["files"][FILE]["pack"]
+    agents = consumer / "agents"
+    agents.mkdir()
+    first = yaml.safe_dump(clean_return([NODE, OTHER]), sort_keys=False)
+    later = first.replace("export function place() {}", "export function place(): void {}")
+
+    def spawned(name: str, prompt: str, *blocks: list[dict]) -> Path:
+        path = transcript_of(agents / name, *blocks)
+        entries = path.read_text(encoding="utf-8").splitlines()
+        entries[0] = json.dumps({"type": "user", "message": {"role": "user", "content": prompt}})
+        path.write_text("\n".join(entries) + "\n", encoding="utf-8")
+        return path
+
+    older = spawned("a.jsonl", f"file = {FILE}; pack = {pack}", [{"type": "text", "text": first}])
+    newer = spawned("b.jsonl", f"pack = {pack}", [{"type": "text", "text": later}])
+    os.utime(older, (1, 1))
+    spawned("c.jsonl", "pack = /elsewhere/packs/other.md", [{"type": "text", "text": "x"}])
+    done = run("--save-returns", consumer / "backend", workspace, agents)
+    assert done.returncode == 0, done.stdout + done.stderr
+    saved = consumer / "siegard-reconcile" / "round.returns" / "src__orders__place.ts.yaml"
+    assert saved.read_text(encoding="utf-8") == later, \
+        "the subagent ran twice over one pack, and the answer that came last is the one saved"
+    assert "saved 1 return(s)" in done.stdout
+    assert "0 pending" in done.stdout
+    assert newer.is_file()
+
+
+def test_save_returns_leaves_a_subagent_that_has_not_answered_pending(consumer):
+    _, workspace = staged(consumer)
+    pack = manifest_of(workspace)["files"][FILE]["pack"]
+    agents = consumer / "agents"
+    agents.mkdir()
+    path = transcript_of(agents / "a.jsonl", [{"type": "tool_use", "name": "Read", "input": {}}])
+    lines = path.read_text(encoding="utf-8").splitlines()
+    lines[0] = json.dumps({"type": "user", "message": {"role": "user", "content": f"pack = {pack}"}})
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    done = run("--save-returns", consumer / "backend", workspace, agents)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"have not answered yet: {FILE}" in done.stdout
+    assert not (consumer / "siegard-reconcile" / "round.returns"
+                / "src__orders__place.ts.yaml").exists()
 
 
 def test_save_return_refuses_a_delegation_that_has_not_answered(consumer):

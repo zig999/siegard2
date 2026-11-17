@@ -20,19 +20,21 @@ can compose. It is a small YAML file in the workspace, carrying:
 
 ## Save every return
 
-Every conformance return is on disk by now, saved verbatim the moment its notification arrived — a
-copy of the subagent's transcript and nothing else, never retyped from the notification that
-relays it:
+Every conformance return is on disk by now, saved verbatim as its wave closed — a copy of the
+subagent's transcript and nothing else, never retyped from the notification that relays it. Save a
+wave whole, once its notifications have arrived:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --save-return <target-source-root> <workspace> <file> <transcript>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --save-returns <target-source-root> <workspace> <transcripts-dir>
 ```
 
-`<file>` is the staged file's path as the manifest lists it, or a certification as the wave names
-it, `certify__<node>`; `<transcript>` is the output file the harness names for the spawned agent.
-The save prints what the wave still waits for, and whether the fold will refuse what was just
-saved. A save whose receipt says so is a subagent to run again before the wave closes, never a
-return repaired.
+`<transcripts-dir>` is the directory of the output files the harness names for the spawned
+agents. The script finds each pending return by the pack path its subagent's prompt names, prints
+what each wave still waits for, and whether the fold will refuse what was just saved. A subagent
+not yet answered stays pending; run it again when its notification arrives. A save the receipt
+says the fold will refuse is a subagent to run again before the wave closes, never a return
+repaired. `--save-return <target-source-root> <workspace> <file> <transcript>` saves one return
+where a single transcript is the one to read.
 
 ## Fold, check and bind
 

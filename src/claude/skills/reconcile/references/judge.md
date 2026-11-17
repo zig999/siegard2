@@ -25,11 +25,10 @@ it carries a judgment the subagent never made. The copy is the script's, from th
 transcript — the output file the harness names for the spawned agent:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --save-return <target-root> <workspace> <file> <transcript>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --save-returns <target-root> <workspace> <transcripts-dir>
 ```
 
-- `<file>` is the staged file's path as the manifest lists it, or a certification by its node
-  identity or as the wave names it, `certify__<node>`.
+- `<transcripts-dir>` holds those output files; each return is found by the pack its prompt names.
 - The save prints what the wave still waits for, and whether the fold will refuse what was just
   saved. A save whose receipt says so is the subagent to run again before the wave closes, never a
   return repaired.
