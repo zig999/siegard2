@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -1336,3 +1338,22 @@ def test_the_second_reading_is_a_checklist_step_never_skipped(skill):
     checklist = skill_text(skill).split("```", 2)[1]
     flat = " ".join(checklist.split())
     assert "--stage-release" in flat and "never skipped" in flat
+
+
+def test_the_skills_hand_the_commands_a_session_looked_up_as_invocations_ready_to_paste():
+    """Where a skill names `spec.py --pack`, `telemetry.py` or `door.py --check commit`, it hands
+    the invocation with its arguments, and `spec.py --help`'s usage lists `--pack`: sessions read
+    a script's --help on the call before each of these when the skill named the command alone."""
+    plugin = Path(__file__).resolve().parent.parent / "src" / "claude"
+    def text(rel: str) -> str:
+        return " ".join((plugin / rel).read_text(encoding="utf-8").split())
+    assert ("bin/spec.py --pack <identity>,<identity>... <specification-root> > <file>"
+            in text("skills/plan-work/SKILL.md"))
+    deliver = text("skills/deliver-scope/SKILL.md")
+    assert "bin/telemetry.py --probe <project-root> --since <the instant step 1 began" in deliver
+    assert "bin/telemetry.py <project-root> --since <the same instant>" in deliver
+    assert ("door.py --check commit --project <root> --slug <slug> --file <path>..."
+            in text("skills/implement-task/references/finish.md"))
+    usage = subprocess.run([sys.executable, "-B", str(plugin / "bin" / "spec.py"), "--help"],
+                           capture_output=True, text=True).stdout
+    assert "spec.py --pack <identity>[,<identity>...] <spec-root>" in usage
