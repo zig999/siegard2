@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.124.1 — 2026-11-17
+
+`/siegard-grant` names the `project_root:` line of `project.py --here` as the root where the invocation names none, as every other skill that resolves the root does, so a session no longer hands `grant.py` the whole project report as a path. (`9945c31`)
+
 ## 5.124.0 — 2026-11-17
 
 A proof-only re-delivery whose suite is red on its own new test, diagnosed `code`, goes on as the task's re-delivery — a fresh implementer, a new build and both records rewritten — and `deliver.py --red-guard` holds that implementer to the tests already in the tree, putting back any declared test it changed. (`ebddadf`)
