@@ -39,7 +39,10 @@ under a git directory; it refuses a path outside `siegard/handoff/` and a report
 Every field only the model can fill is left empty, and the skeleton fails the schema on exactly
 those. Beside it, on standard error, `limits:` lines print what `--render` will hold the
 record to: «the ceilings of the state, of each decision's block and of the message, what a
-decision carries, and the closed list's terms, phrases and pattern names» (SPEC-006 R10).
+decision carries, the words in the record's language a body that recommends says the reversing
+fact after, that the record holds the skeleton's fields and no other, and the closed list's terms,
+phrases and pattern names» (SPEC-006 R10); after them, `next:` lines print the `--save-report`
+and `--render` invocations ready to paste.
 
 `--render` reads `state_from` again and refuses a record whose `state` differs from what the
 script prints now; it is required of kind `decision`. A state read from a script is quoted as the
@@ -620,17 +623,22 @@ def take(args: list[str], flag: str, many: bool = False):
     return values if many else (values[0] if values else None)
 
 
-def limits(contract: dict) -> str:
+def limits(contract: dict, language: str = "en") -> str:
     """What `--render` holds a record to, in the words a session fills the record by: the ceilings,
-    what a decision carries, and every term, phrase and pattern name of the closed list."""
+    what a decision carries, the words a recommending body says the reversing fact after, that the
+    record holds the skeleton's fields alone, and every term, phrase and pattern name of the closed
+    list."""
     ceilings = contract["x-ceilings"]
     jargon = contract["x-jargon"]
     words = [*jargon["terms"], *jargon["english_terms"], *jargon["phrases"], *jargon["patterns"]]
+    reverses = contract["x-labels"][language]["reverses_if"]
     return (f"limits: state <= {ceilings['state']} characters; each decision's block <= "
             f"{ceilings['block']}, its line ready to paste aside; the message <= "
             f"{ceilings['message']}\n"
             f"limits: a decision carries `recommended` (door, why, reverses_if, reply_word) or "
             f"`settles`; two doors or more carry `relation`: one-of, in-order or independent\n"
+            f"limits: a body that recommends says the fact that would change it after "
+            f"'{reverses}'; the record holds the skeleton's fields and no other\n"
             f"limits: no prose field carries " + ", ".join(words) + "\n")
 
 
@@ -676,8 +684,19 @@ def main_prepare(args: list[str], contract: dict) -> int:
         return CANNOT_RUN
     record = prepare(skill, root, slug, target, files, language, contract, ledger)
     print(json.dumps(record, indent=2, ensure_ascii=False))
-    print(limits(contract), end="", file=sys.stderr)
+    print(limits(contract, language), end="", file=sys.stderr)
+    print(next_steps(record), end="", file=sys.stderr)
     return 0
+
+
+def next_steps(record: dict) -> str:
+    """The two invocations that follow a skeleton, ready to paste: the report written from standard
+    input to the path the skeleton names, and the record rendered once its empty fields are filled."""
+    me = f"python3 -B {Path(__file__).resolve()}"
+    save = (f"next: {me} --save-report {record['report']} <<'EOF' … the full report … EOF\n"
+            if record.get("report") else "")
+    return (save + f"next: {me} --render - <<'EOF' … the record, its empty fields filled … EOF"
+            f" — or --render <record.json>; hand the person exactly what it prints\n")
 
 
 def main_save_report(args: list[str]) -> int:

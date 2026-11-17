@@ -974,12 +974,17 @@ def test_a_skeleton_filled_but_for_its_relation_is_refused_on_that_field_alone(p
 def test_prepare_prints_the_limits_beside_the_skeleton_on_standard_error(project):
     """«Beside the skeleton, on standard error, it prints the limits `--render` holds a record to
     — the ceilings of the state, of each decision's block and of the message, what a decision
-    carries, and the closed list's terms, phrases and pattern names» (SPEC-006 R10)."""
-    done = run("--prepare", "--skill", "implement-task", "--project", str(project), "--slug", SLUG)
+    carries, the words in the record's language a body that recommends says the reversing fact
+    after, that the record holds the skeleton's fields and no other, and the closed list's terms,
+    phrases and pattern names» (SPEC-006 R10)."""
+    done = run("--prepare", "--skill", "implement-task", "--project", str(project), "--slug", SLUG,
+               "--language", "pt-BR")
     assert done.returncode == 0, done.stdout + done.stderr
     json.loads(done.stdout)
     lines = done.stderr.splitlines()
-    assert lines and all(line.startswith("limits: ") for line in lines)
+    assert lines and all(line.startswith(("limits: ", "next: ")) for line in lines)
+    assert CONTRACT["x-labels"]["pt-BR"]["reverses_if"] in done.stderr
+    assert "no other" in done.stderr
     ceilings, jargon = CONTRACT["x-ceilings"], CONTRACT["x-jargon"]
     for key in ("state", "block", "message"):
         assert str(ceilings[key]) in done.stderr
@@ -988,3 +993,18 @@ def test_prepare_prints_the_limits_beside_the_skeleton_on_standard_error(project
     for word in (*jargon["terms"], *jargon["english_terms"], *jargon["phrases"],
                  *jargon["patterns"]):
         assert word in done.stderr, word
+
+
+def test_prepare_prints_the_invocations_that_follow_ready_to_paste(project):
+    """«after them the two invocations that follow, ready to paste: `--save-report` over the
+    skeleton's report path, the report read from standard input, and `--render` over the filled
+    record» (SPEC-006 R10)."""
+    done = run("--prepare", "--skill", "implement-task", "--project", str(project), "--slug", SLUG)
+    assert done.returncode == 0, done.stdout + done.stderr
+    record = json.loads(done.stdout)
+    after = done.stderr.splitlines()
+    nexts = [line for line in after if line.startswith("next: ")]
+    assert len(nexts) == 2 and after[-2:] == nexts
+    assert f"--save-report {record['report']}" in nexts[0]
+    assert "--render" in nexts[1]
+    assert all(str(SCRIPT) in line or "handoff.py" in line for line in nexts)
