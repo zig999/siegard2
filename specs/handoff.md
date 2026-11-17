@@ -221,6 +221,11 @@ review, a drift count — as one bullet list; that part is decided in the report
   skeleton does not hold and for the missing reversal words, which the limits now name.
   Reversal: `--help` reads after `--prepare` persisting in consumer transcripts under a release that
   prints them.
+  Re-measured 2026-11-17 over the code 5.121.0 shipped (both limits included), same review, four
+  runs per arm against 5.120.0: handoff `--help` and schema reads 12 -> 2, `--render` refusals 0 and
+  0, every run rendered; mean cost $0.416 against $0.415. The 8% saving above did not reproduce —
+  the cost of this step is dominated by how far the session reads the review to compose the
+  report (11 to 21 turns in both arms), and the change's measured effect is the lookups alone.
 
 - 2026-11-15 — grounds for R8's refusal of a composed decision by `--check`, and for R10's limits
   beside the skeleton. In the session-rules benchmark (`tests/fixtures/benchmarks/rules/`,
