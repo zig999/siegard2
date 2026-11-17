@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.122.0 — 2026-11-17
+
+`/plan-work`, `/deliver-scope` and `/implement-task` hand `spec.py --pack`, `telemetry.py` and `door.py --check commit` as invocations ready to paste, and `spec.py --help` lists `--pack`. (`4fd4027`)
+
 ## 5.121.0 — 2026-11-16
 
 `handoff.py --prepare` prints the `--save-report` and `--render` invocations ready to paste after its limits, and its limits name the words a recommending body says the reversing fact after and that the record holds the skeleton's fields alone. (`ec475ae`)
