@@ -28,7 +28,7 @@ Read the arguments once, and decide nothing they do not say:
 | What | How it is recognised | If absent |
 |---|---|---|
 | **No argument** | the invocation holds nothing at all | — : it arms nothing, below |
-| **Project root** | the first argument, a directory holding `siegard.json` | the git toplevel of the directory the invocation was typed in, disclosed: `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py --here` |
+| **Project root** | the first argument, a directory holding `siegard.json` | the git toplevel of the directory the invocation was typed in, disclosed: the `project_root:` line `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py --here` prints, never its whole output, which goes on to the project's other fields |
 | **Clear** | `--clear`, alone beside the root | the invocation arms |
 | **Slug** | `--slug <slug>`, a live initiative | the grant covers every live initiative of the project |
 | **Target** | `--target <key>` | the script takes the first key `siegard.json` declares and says so |
