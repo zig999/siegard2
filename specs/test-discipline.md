@@ -200,6 +200,17 @@ left out — so the file set the review that followed was handed never held them
   of its scope delivered — while the full suite of its last review ran that task's 9 test files
   green.
 
+- **R34** — A task carrying `stands` binds nothing at its delivery, so it leaves no file to a delivery. The file set a reconciliation is offered over a target leaves out a file bound to a node whose binding moved while a live task not yet delivered implements the node, because that task's delivery rebinds it; a task carrying `stands` is never such a task, and a file only such tasks would leave out is in the set — the reconciliation R20 names as their door.
+
+  Grounds: `trace.py --check --reconcile-set` counted every undelivered task of a live plan as
+  one whose delivery rebinds its nodes, and a delivery whose implementation stands binds nothing
+  (R20). Replayed on 2026-11-18 over the 36 states of six sales consumers where a live plan held
+  an undelivered task carrying `stands`: in 6, files were left "to a delivery" only because every
+  live implementer of the moved node carried `stands` — 89 files, 11 of them the `stands` tasks'
+  own, which the door of their refusal names. In a `claude -p` replay of `/deliver-scope` over one
+  such state, one run read that set, concluded the reconciliation would not clear the refusal,
+  and stopped where SPEC-008 R8 takes the door.
+
 ### Who answers a red build
 
 - **R24** — A build red whose fix lies only in files the project declares as its tests is answered by the delivery's test author, before the implementation record is written: the implementer writes no test, and the record cites the build that passed once the test author answered. A test the proof of another task names is answered here only where this delivery's files include one that task's implementation record names, or where every plan whose proof names it is closed; otherwise the red is a stop.
@@ -531,6 +542,9 @@ left out — so the file set the review that followed was handed never held them
     framework's records, and runs where a path outside them changed, the steps or the directory
     differ, or the earlier run did not pass; `/review-change` captures with `--reuse` and names
     the run the record says — `tests/test_run.py` and `tests/test_skill_contract.py` prove each.
+20. For R34: `bin/trace.py --check --reconcile-set` keeps in the set a file of a moved node that
+    only an undelivered task carrying `stands` implements, and leaves to a delivery one an
+    undelivered task writing source implements — `tests/test_trace.py` proves each.
 
 ## Readings
 

@@ -1630,6 +1630,28 @@ def test_a_file_of_a_node_a_live_task_implements_is_left_to_the_delivery(consume
     assert f"  {FILE}  (moved: {NODE})" in done.stdout
 
 
+def test_a_file_of_a_node_only_a_stands_task_implements_is_in_the_set(consumer):
+    """SPEC-004 R34: a task carrying `stands` binds nothing at its delivery, so a node only such
+    a task implements is not left to a delivery — its moved files are the reconciliation's, the
+    door the task's own refusal names (R20)."""
+    bind(consumer)
+    committed(consumer)
+    work = planned(consumer)
+    task = work / "first/task/cases/record-case.md"
+    task.write_text(task.read_text(encoding="utf-8").replace(
+        "implements:", f"stands:\n- {FILE}\nimplements:", 1), encoding="utf-8")
+    assert "stands:" in task.read_text(encoding="utf-8")
+    (consumer / "siegard.json").write_text(json.dumps(
+        {"specification_root": "specs", "targets": {"backend": "backend"},
+         "work_root": "work"}) + "\n", encoding="utf-8")
+    moved_node(consumer)
+    committed(consumer)
+    done = run("--check", consumer / "backend", "--reconcile-set")
+    assert done.returncode == 1
+    assert "left to a delivery" not in done.stdout
+    assert f"  {FILE}  (moved: {NODE})" in done.stdout
+
+
 def test_a_file_of_a_node_whose_live_task_is_already_delivered_is_in_the_set(consumer):
     """A task whose implementation record exists has restamped all its delivery ever will; the
     node's moved files are a reading's again, never a delivery's still to come."""

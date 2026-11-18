@@ -1338,7 +1338,10 @@ def live_implementers(work_root: Path | None,
                       delivery_root: Path | None = None) -> dict[str, list[str]]:
     """Node -> every task of a live initiative that implements it and is not yet delivered, as
     `<slug> <task id>`. A closed initiative implements nothing now, and a task whose
-    implementation record exists has already restamped what its delivery will ever restamp."""
+    implementation record exists has already restamped what its delivery will ever restamp. A
+    task carrying `stands` is never one: its delivery binds nothing, and the reconciliation over
+    its files is the door its own refusal names — «A task carrying `stands` binds nothing at its
+    delivery, so it leaves no file to a delivery» (SPEC-004 R34)."""
     held: dict[str, list[str]] = {}
     if work_root is None or not work_root.is_dir():
         return held
@@ -1352,6 +1355,8 @@ def live_implementers(work_root: Path | None,
             if delivery_root is not None and (
                     delivery_root / initiative.name / "implementation"
                     / f"{nid.removeprefix('task/')}.md").is_file():
+                continue
+            if spec.listed(node.get("front") or {}, "stands"):
                 continue
             for ref in spec.listed(node.get("front") or {}, "implements"):
                 if isinstance(ref, str):
@@ -1409,7 +1414,8 @@ def reconcile_set_report(declared: dict, home: Path, target: Path,
     under the specification root — a bind stamps the digest on disk, and a digest of pending
     text is a binding to a specification that may never exist; a file bound to a node whose
     entry moved and which a live task not yet delivered implements — that task's delivery
-    rebinds the node, and a reconciliation first pays the reading twice; and a certified test that changed, which a certification the person offers
+    rebinds the node, and a reconciliation first pays the reading twice, unless the task carries
+    `stands`, whose delivery binds nothing; and a certified test that changed, which a certification the person offers
     answers, never a reading owed. Any of the three the person still wants read is named to
     `/reconcile` by hand, which is why each is listed by path."""
     spec_relative = declared["specification"]
