@@ -23,7 +23,8 @@ around, and none is retried. Each carries its class, in backticks after it:
   `pending-change`;
 - a specification the gate does not pass — `specification`;
 - a fact the decided-fact route returns as one the specification contradicts — `contradiction`;
-- a planned `stands` the record writer refuses again after its reconciliation — `stands`;
+- a planned `stands` that does not stand again after its reconciliation, read by `/implement-task`
+  or refused by the writer — `stands`;
 - under a goal that asks to specify, a stop of `/analyse` other than one over material that states
   no fact or names nodes and changes none — `analyse`;
 - a red no change to the task's own files can answer — a build red over a tree the delivery left

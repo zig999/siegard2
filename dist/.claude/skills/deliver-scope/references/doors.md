@@ -17,10 +17,12 @@ and the three reserved questions are never taken. With a grant armed, run `bin/g
 Write `decided: <door> — <criterion> — <deciding fact>` to the log, copied from the report, and
 commit the log. Invoke the door as handed — it commits what it wrote — and resume step 3:
 
-- **A record carrying `stands` the writer refused**: `/reconcile` as `/implement-task` handed it
-  from the writer's `door:` line; its premise's `said` is the ask this log quotes. Commit the runs
-  the stopped delivery captured under `run/`, each `passed`, before invoking it, as
-  `deliver-scope <slug>: runs <task>`. A second refusal ends the run.
+- **A `stands` that does not stand** — `/implement-task` read a finding on a node the task
+  implements before writing, or the writer refused the record: `/reconcile` over the files that
+  refusal names, as `/implement-task` handed it, from the writer's `door:` line where one printed;
+  its premise's `said` is the ask this log quotes. Commit the runs the stopped delivery captured
+  under `run/`, each `passed`, before invoking it, as `deliver-scope <slug>: runs <task>`. A
+  second refusal of the same task, by either reading, ends the run.
 - **A task waiting on a re-bind**: `/plan-work` over the slug, as `--outstanding` names it.
 - **A fact no node states**: the decided-fact `/plan-work` handed beside `/analyse`. A fact
   returned as contradicted ends the run.

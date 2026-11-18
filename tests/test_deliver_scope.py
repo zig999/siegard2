@@ -138,18 +138,25 @@ def test_a_derived_door_is_taken_under_the_ask_that_invoked_the_run():
     assert "take its derived door (`references/doors.md`)" in SKILL
 
 
-def test_a_record_the_writer_refused_is_reconciled_and_delivered_again_once():
-    """SPEC-004 R20: the reconciliation the record writer names is the delivery's one door, taken
-    once per task; it is committed with the passed runs the stopped delivery left, so the task's
-    next delivery starts from a clean tree, and a second refusal ends the run as the person's."""
-    assert "**A record carrying `stands` the writer refused**" in DOORS
-    assert "from the writer's `door:` line" in DOORS
+def test_a_stands_that_does_not_stand_is_reconciled_and_delivered_again_once():
+    """SPEC-004 R20, SPEC-008 R8: the reconciliation the refusal names is the delivery's one door,
+    taken once per task, whether /implement-task read the binding out of date before writing or
+    the writer refused the record; it is committed with the passed runs the stopped delivery left,
+    so the task's next delivery starts from a clean tree, and a second refusal ends the run as the
+    person's."""
+    assert "**A `stands` that does not stand**" in DOORS
+    assert "`/implement-task` read a finding on a node the task implements before writing" in DOORS
+    assert "or the writer refused the record" in DOORS
+    assert "from the writer's `door:` line where one printed" in DOORS
+    assert "A record carrying `stands` the writer refused" not in DOORS
     assert "`deliver-scope <slug>: runs <task>`" in DOORS, "the stopped delivery's runs"
     assert "each `passed`" in DOORS
-    assert "A second refusal ends the run" in DOORS
+    assert "second refusal of the same task, by either reading, ends the run" in DOORS
     stops = flat("src/claude/skills/deliver-scope/references/stops.md")
     assert ("a task found already met that the record writer refuses again after its "
             "reconciliation") in stops
+    assert ("a planned `stands` that does not stand again after its reconciliation, read by "
+            "`/implement-task` or refused by the writer — `stands`") in stops
     assert "where the door the trace decides is not one this run takes" not in stops
 
 

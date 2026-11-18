@@ -105,7 +105,19 @@ session that stopped while its subagents were still running. The harness refuses
 
 ### What a goal answers without a person
 
-- **R8** — In an orchestrating run, under a goal or under the person's own ask alike, a delivery that stopped over a fact no node states is answered by planning's decided-fact route, a task waiting on a re-bind by planning over its slug, and a delivery whose record carrying `stands` the writer refused by the reconciliation the refusal names (SPEC-004 R20), each once per task, before the run resumes; a second time over one task is a stop.
+- **R8** — In an orchestrating run, under a goal or under the person's own ask alike, a delivery that stopped over a fact no node states is answered by planning's decided-fact route, a task waiting on a re-bind by planning over its slug, and a delivery whose `stands` does not stand — a record carrying it the writer refused, or a planned one `/implement-task` read out of date on a node the task implements before writing — by the reconciliation the refusal names (SPEC-004 R20), each once per task, before the run resumes; a second time over one task is a stop.
+
+  Reading of 2026-11-18, from the `configurator` run of `pendencias-tmforum-do-configurator`:
+  three planned `stands` tasks whose files were stamped against an earlier text of the contract
+  each implements — moved by the run's own `/analyse` — were read out of date by
+  `/implement-task` before any write, as SPEC-004 R26 asks, and never reached the writer; the
+  run's door was written for the writer's refusal alone, so it took none and closed on
+  `stop: stands`, a class meant for a refusal after the reconciliation. The person ran the
+  reconciliation by hand. Replayed with `claude -p` (Sonnet, the run resumed at the task, three
+  runs per arm over that state and over a `partymgmt` one): the reconciliation was taken in 1 of
+  6 runs under the writer-only wording — the one run that skipped the earlier reading and was
+  refused by the writer — and in 5 of 6 under this one; a blind Opus judge scored the route 1.67
+  and 4.17 of 5.
 - **R9** — Under a goal whose findings policy names a finding's kind, each such finding of the run's review is answered by one corrective increment over the file it names, delivered and reviewed in the same run, once: what that review finds is reported and never corrected again.
 
 - **R10** — Under a goal whose condition asks to specify a prose objective, the orchestrating entry point invokes `/analyse` once, before the plan, over the objective as the person armed it, and the specification root is committed apart, by `/analyse` itself (SPEC-010 R7). That commit takes the ledger the analysis answered beside the objective with it while a line of it is open, and its removal once none is (SPEC-001 R16). A stop of `/analyse` over material that states no fact, or that names nodes and changes none, is nothing to specify, and the plan follows; every other stop of it ends the run. Each of those two stops is printed as one line of its own, `stop: no-fact — <what the material would have to state>` or `stop: no-change — <the nodes it names>`.
@@ -190,7 +202,8 @@ session that stopped while its subagents were still running. The harness refuses
    either over a scope of epics or tasks is refused, and to declaring untouched no path
    under the telemetry root.
 12. Tests hold `/deliver-scope` to R8 over its text: the re-bind, the decided-fact route and the
-   reconciliation a record writer names each taken in a run with or without a goal, each under
+   reconciliation a `stands` refusal names, by `/implement-task` before writing or by the record
+   writer, each taken in a run with or without a goal, each under
    its commit message, once per task, a second time over one task a stop —
    `tests/test_deliver_scope.py` proves each.
 13. Tests hold `goal.py --state` to R2's proof clause: a certification the first review left
