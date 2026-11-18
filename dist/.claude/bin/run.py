@@ -84,12 +84,28 @@ the run left. Where no repository holds the working directory, `tree` is null. T
 `bin/trace.py --bind-record` holds a record's files to: a file whose bytes no run of the task saw
 is not bound.
 
+**`--reuse` names a run that already stands, and executes nothing.** «A run of the delivery that
+passed the steps the review would run, in the working directory it would run them in, over a tree
+whose every path outside the framework's records holds the bytes the tree holds now, is the
+review's capture, and `bin/run.py --reuse` names it and executes nothing.» (SPEC-004 R33) With it,
+before anything is created, the tree as it stands is compared with the tree each earlier run under
+this delivery root's `run/` recorded — one that passed, in the same directory, whose steps carry
+the same names and commands in the same order — newest first. Where every path outside the
+framework's records holds the same bytes in both, the first line printed is `standing: <run>`, the
+record printed after it is that run's, whose `run` says which run to name, and nothing is
+written. Where none stands, the run proceeds under `--run` as it would without the flag. The
+records are the delivery root itself, the delivery, work and telemetry roots `siegard.json`
+declares where one sits at or above it, and `siegard-trace.json` and `siegard-reconcile/` at the
+toplevel: what the framework writes and no build reads. The specification root is compared, since
+a project's tests may read it. A path git does not report — an ignored one — is outside both trees
+alike, so a change to one does not stop a reuse.
+
 Declared dependencies: none beyond the standard library.
 
-Usage:  run.py <delivery-root> --run <slug> [--next] --cwd DIR --timeout-seconds N
+Usage:  run.py <delivery-root> --run <slug> [--next] [--reuse] --cwd DIR --timeout-seconds N
                --step NAME="COMMAND" [--step NAME="COMMAND" ...] [--excerpt N]
         run.py --help    print this text and stop
-Exit:   0 every step passed
+Exit:   0 every step passed, or --reuse found a run that stands
         1 a step failed, timed out, or could not be found
         2 cannot run
 """
@@ -168,6 +184,89 @@ def tree_of(cwd: Path, runs: Path) -> dict | None:
             changed[name] = None
     return {"root": str(toplevel), "head": head.strip() if head else None,
             "changed": dict(sorted(changed.items()))}
+
+
+def record_places(delivery: Path, toplevel: Path) -> tuple[set[str], tuple[str, ...]]:
+    """The framework's records, spelled from the toplevel: the files and the directory prefixes a
+    reused run's tree may differ in, since no build reads them."""
+    places = [delivery.resolve()]
+    for home in (delivery.resolve(), *delivery.resolve().parents):
+        declared_file = home / "siegard.json"
+        if declared_file.is_file():
+            try:
+                declared = json.loads(declared_file.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                declared = {}
+            for key in ("delivery_root", "work_root", "telemetry_root"):
+                if isinstance(declared, dict) and isinstance(declared.get(key), str):
+                    places.append((home / declared[key]).resolve())
+            break
+        if home == toplevel:
+            break
+    prefixes = tuple(sorted({place.relative_to(toplevel).as_posix() + "/" for place in places
+                             if place.is_relative_to(toplevel) and place != toplevel}))
+    return {"siegard-trace.json"}, prefixes + ("siegard-reconcile/",)
+
+
+def bytes_at(toplevel: Path, tree: dict, path: str, cache: dict) -> str | None:
+    """The digest a recorded tree holds for a path: what `changed` says, else the blob at `head`,
+    else nothing — an absent path and a deleted one read alike."""
+    if path in tree["changed"]:
+        return tree["changed"][path]
+    key = (tree["head"], path)
+    if key not in cache:
+        try:
+            done = subprocess.run(["git", "-C", str(toplevel), "cat-file", "blob",
+                                   f"{tree['head']}:{path}"], capture_output=True,
+                                  timeout=GIT_TIMEOUT_SECONDS, check=False)
+            cache[key] = ("sha256:" + hashlib.sha256(done.stdout).hexdigest()
+                          if done.returncode == 0 else None)
+        except (OSError, subprocess.TimeoutExpired):
+            cache[key] = "unreadable"
+    return cache[key]
+
+
+def standing_run(delivery: Path, cwd: Path, steps: list[tuple[str, list[str]]]) -> dict | None:
+    """The newest passed run of these steps in this directory whose recorded tree holds, outside
+    the framework's records, the bytes the tree holds now; nothing where none does."""
+    runs = delivery / RUN_DIR
+    current = tree_of(cwd, runs)
+    if current is None or not current["head"] or not runs.is_dir():
+        return None
+    toplevel = Path(current["root"])
+    files, prefixes = record_places(delivery, toplevel)
+    wanted = [[name, shlex.join(argv)] for name, argv in steps]
+    found = []
+    for path in runs.glob("*/run.json"):
+        try:
+            record = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        tree = record.get("tree") if isinstance(record, dict) else None
+        recorded = record.get("steps") if isinstance(record, dict) else None
+        if record.get("outcome") != "passed" or record.get("cwd") != str(cwd) \
+                or not isinstance(tree, dict) or tree.get("root") != current["root"] \
+                or not tree.get("head") or not isinstance(tree.get("changed"), dict) \
+                or not isinstance(recorded, list) \
+                or [[s.get("name"), s.get("command")] for s in recorded
+                    if isinstance(s, dict)] != wanted:
+            continue
+        found.append((str(recorded[-1].get("ended_at") or ""), record))
+    cache: dict = {}
+    for _, record in sorted(found, key=lambda pair: pair[0], reverse=True):
+        tree = record["tree"]
+        paths = set(tree["changed"]) | set(current["changed"])
+        if tree["head"] != current["head"]:
+            moved = git_answer(toplevel, "diff", "--name-only", "-z", "--no-renames",
+                               tree["head"], current["head"])
+            if moved is None:
+                continue
+            paths |= {name for name in moved.split("\0") if name}
+        if all(path in files or path.startswith(prefixes)
+               or bytes_at(toplevel, tree, path, cache) == bytes_at(toplevel, current, path, cache)
+               for path in paths):
+            return record
+    return None
 
 
 def now() -> str:
@@ -255,6 +354,7 @@ def main() -> int:
     parser.add_argument("delivery_root")
     parser.add_argument("--run", required=True, metavar="SLUG")
     parser.add_argument("--next", action="store_true")
+    parser.add_argument("--reuse", action="store_true")
     parser.add_argument("--timeout-seconds", required=True, type=int)
     parser.add_argument("--step", action="append", required=True, metavar="NAME=COMMAND")
     parser.add_argument("--cwd", required=True)
@@ -280,6 +380,14 @@ def main() -> int:
     # run directory would leave an empty one behind and, worse, burn the name: the next run
     # under it would be refused for a run that never happened.
     steps = parse_steps(args.step)
+
+    if args.reuse:
+        standing = standing_run(root, cwd, steps)
+        if standing is not None:
+            print(f"standing: {standing.get('run')} passed these steps in this directory over this "
+                  f"tree, outside the framework's records; nothing ran, and that run is the capture")
+            print(json.dumps(standing, indent=2, ensure_ascii=False))
+            return 0
 
     while True:
         name = next_name(root / RUN_DIR, args.run) if args.next else args.run

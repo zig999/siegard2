@@ -1422,3 +1422,23 @@ def test_the_skills_hand_the_commands_a_session_looked_up_as_invocations_ready_t
     usage = subprocess.run([sys.executable, "-B", str(plugin / "bin" / "spec.py"), "--help"],
                            capture_output=True, text=True).stdout
     assert "spec.py --pack <identity>[,<identity>...] <spec-root>" in usage
+
+
+def test_a_review_captures_with_reuse_and_names_the_run_that_stands():
+    """«A run of the delivery that passed the steps the review would run, in the working directory
+    it would run them in, over a tree whose every path outside the framework's records holds the
+    bytes the tree holds now, is the review's capture, and `bin/run.py --reuse` names it and
+    executes nothing.» (SPEC-004 R33, validation 19) The capture's command carries the flag, and
+    the step says which run the record names when it prints `standing:`."""
+    skill = " ".join(skill_text("review-change").split())
+    step = skill.split("### 2. Capture", 1)[1].split("### 3. The passes", 1)[0]
+    assert ("bin/run.py <delivery-root> --run <review-name> --reuse --cwd <target-source-root>"
+            in step)
+    assert "Output opening `standing: <run>` means nothing ran" in step
+    assert "the printed record's `run` is the run this review reads and names" in step
+    assert "already ran the same steps green" not in step
+    standard = " ".join(reference_text("review-change", "standard").split())
+    assert "**A run that already stands is the capture.**" in standard
+    assert "Step 2's `--reuse` finds it" in standard
+    checklist = skill.split("### 2. Capture", 1)[0]
+    assert "run.py --run <review-name> --reuse --cwd <target-source-root>" in checklist

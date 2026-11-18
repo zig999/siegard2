@@ -150,8 +150,8 @@ REVIEW_AGENTS = ("coverage-auditor", "specification-conformance-reviewer",
                  "standard-conformance-reviewer")
 REVIEW_BASELINE = REPO / "tests/fixtures/benchmarks/review-change/text-metrics-5.65.0.json"
 REVIEW_PINS = {
-    "chars": 91_977,
-    "skill_chars": 19_995,
+    "chars": 92_504,
+    "skill_chars": 20_000,
     "sentence_words_median": 19,
     "sentence_words_p90": 37,
     "sentences_over_60_words": 1,

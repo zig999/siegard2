@@ -379,3 +379,110 @@ def test_a_run_no_repository_holds_records_a_null_tree(tmp_path, run_contract):
     record = record_of(delivery, "plain")
     assert record["tree"] is None
     assert [e.message for e in run_contract.iter_errors(record)] == []
+
+
+# ---------------------------------------------------------------------- a run that already stands
+
+
+@pytest.fixture
+def standing(tmp_path: Path) -> dict:
+    """A consumer whose delivery holds one passed run of a step that writes a marker; the tree is
+    committed whole, so the run's tree is `HEAD` plus what the step wrote outside the records."""
+    home = tmp_path / "consumer"
+    for sub in ("backend/src", "siegard/specification", "siegard/work/one",
+                "siegard/delivery/one", "siegard/telemetry"):
+        (home / sub).mkdir(parents=True)
+    (home / "siegard.json").write_text(json.dumps(
+        {"specification_root": "siegard/specification", "delivery_root": "siegard/delivery",
+         "work_root": "siegard/work", "telemetry_root": "siegard/telemetry",
+         "targets": {"backend": "backend"}}), encoding="utf-8")
+    (home / "backend" / "src" / "a.ts").write_text("a\n", encoding="utf-8")
+    (home / "siegard" / "specification" / "node.md").write_text("fact\n", encoding="utf-8")
+    (home / ".gitignore").write_text("marks/\n", encoding="utf-8")
+    git_in(home, "init", "-q")
+    git_in(home, "add", "-A")
+    git_in(home, "commit", "-qm", "init")
+    delivery = home / "siegard" / "delivery" / "one"
+    marks = home / "marks"
+    marks.mkdir()
+    step = f"mark=python3 -c \"import uuid,pathlib; pathlib.Path(r'{marks}', uuid.uuid4().hex).touch()\""
+    first = invoke(delivery, "--run", "task-suite", "--cwd", str(home / "backend"),
+                   "--timeout-seconds", "20", "--step", step)
+    assert first.returncode == 0, first.stderr
+    return {"home": home, "delivery": delivery, "step": step, "marks": marks}
+
+
+def reuse(s: dict, *extra: str, step: str | None = None, cwd: str = "backend"):
+    return invoke(s["delivery"], "--run", "review", "--reuse", "--cwd", str(s["home"] / cwd),
+                  "--timeout-seconds", "20", "--step", step or s["step"], *extra)
+
+
+def ran(s: dict) -> int:
+    return len(list(s["marks"].iterdir()))
+
+
+def test_a_review_capture_reuses_a_passed_run_over_the_same_tree(standing):
+    """«A run of the delivery that passed the steps the review would run, in the working directory
+    it would run them in, over a tree whose every path outside the framework's records holds the
+    bytes the tree holds now, is the review's capture, and `bin/run.py --reuse` names it and
+    executes nothing.» (SPEC-004 R33)"""
+    s = standing
+    home = s["home"]
+    (s["delivery"] / "implementation.md").write_text("record\n", encoding="utf-8")
+    (home / "siegard" / "work" / "one" / "plan.md").write_text("plan\n", encoding="utf-8")
+    (home / "siegard" / "telemetry" / "goal.md").write_text("goal\n", encoding="utf-8")
+    (home / "siegard-trace.json").write_text("{}\n", encoding="utf-8")
+    (home / "siegard-reconcile").mkdir()
+    (home / "siegard-reconcile" / "review.md").write_text("judged\n", encoding="utf-8")
+    git_in(home, "add", "-A")
+    git_in(home, "commit", "-qm", "records")
+    done = reuse(s)
+    assert done.returncode == 0, done.stderr
+    assert done.stdout.startswith("standing: run/task-suite"), done.stdout
+    assert ran(s) == 1, "a run that stands is named, and nothing executes"
+    assert not (s["delivery"] / "run" / "review").exists(), "nothing is written under --run"
+    printed = json.loads(done.stdout.split("\n", 1)[1])
+    assert printed["run"] == "run/task-suite"
+
+
+@pytest.mark.parametrize("change", ["source", "specification", "untracked"])
+def test_a_review_capture_runs_where_a_path_outside_the_records_changed(standing, change):
+    s = standing
+    home = s["home"]
+    if change == "source":
+        (home / "backend" / "src" / "a.ts").write_text("b\n", encoding="utf-8")
+    elif change == "specification":
+        (home / "siegard" / "specification" / "node.md").write_text("moved\n", encoding="utf-8")
+        git_in(home, "commit", "-qam", "spec")
+    else:
+        (home / "backend" / "src" / "new.ts").write_text("new\n", encoding="utf-8")
+    done = reuse(s)
+    assert done.returncode == 0, done.stderr
+    assert not done.stdout.startswith("standing:")
+    assert ran(s) == 2
+    assert record_of(s["delivery"], "review")["outcome"] == "passed"
+
+
+def test_a_review_capture_runs_where_the_steps_or_directory_differ(standing):
+    s = standing
+    other = s["step"].replace("mark=", "suite=")
+    assert not reuse(s, step=other).stdout.startswith("standing:")
+    assert ran(s) == 2
+    elsewhere = invoke(s["delivery"], "--run", "review-two", "--reuse", "--cwd",
+                       str(s["home"] / "backend" / "src"), "--timeout-seconds", "20",
+                       "--step", s["step"])
+    assert not elsewhere.stdout.startswith("standing:")
+    assert ran(s) == 3
+
+
+def test_a_review_capture_never_reuses_a_run_that_did_not_pass(standing):
+    s = standing
+    failing = "mark=python3 -c \"raise SystemExit(1)\""
+    first = invoke(s["delivery"], "--run", "red", "--cwd", str(s["home"] / "backend"),
+                   "--timeout-seconds", "20", "--step", failing)
+    assert first.returncode == 1
+    again = invoke(s["delivery"], "--run", "review", "--reuse", "--cwd", str(s["home"] / "backend"),
+                   "--timeout-seconds", "20", "--step", failing)
+    assert again.returncode == 1
+    assert not again.stdout.startswith("standing:")
+    assert record_of(s["delivery"], "review")["outcome"] == "failed"

@@ -44,6 +44,12 @@ is a directory under the delivery root's `run/`.
 - A name the registry already declares is a stop rather than an override: two commands under one
   step name cannot both be the one a rule's outcome is read against.
 - A run named instead of commands is used as it stands, and nothing is executed.
+- **A run that already stands is the capture.** «A run of the delivery that passed the steps the
+  review would run, in the working directory it would run them in, over a tree whose every path
+  outside the framework's records holds the bytes the tree holds now, is the review's capture,
+  and `bin/run.py --reuse` names it and executes nothing.» (SPEC-004 R33) Step 2's `--reuse`
+  finds it; the record names the run its output's record names, and the failures pass reads that
+  run as it would one this review captured.
 
 The failures pass runs where any of the three produced a run, and does not where none did. An
 absent optional input never becomes a default: a review reported as clean over a pass that never

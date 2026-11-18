@@ -27,8 +27,8 @@ its step is reached, before acting on it.
 - [ ] 1 Situate: criteria from the task files; deliver.py --standard --against
       (references/standard.md); trace.py --check (references/trace.md); trace.py --stage --review
       (references/staging.md)
-- [ ] 2 Capture: run.py --run <review-name> --cwd <target-source-root>; the registry's steps,
-      then the invocation's
+- [ ] 2 Capture: run.py --run <review-name> --reuse --cwd <target-source-root>; the registry's
+      steps, then the invocation's
 - [ ] 3 Passes: coverage, conformance by waves, standard, certification, failures:
       references/passes.md
 - [ ] 3b Fold and bind: premise; every return saved verbatim; --fold; --reconciliation;
@@ -197,22 +197,22 @@ Then, in this order:
 ### 2. Capture
 
 Run every step the standard declares but a `fix` — its `review:` line — in its order, followed by
-any the invocation added, once, into a run named for this review:
+any the invocation added, once:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <review-name> --cwd <target-source-root> --timeout-seconds <the largest of the steps'> --step <name>="<command>" [--step ...]
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <review-name> --reuse --cwd <target-source-root> --timeout-seconds <the largest of the steps'> --step <name>="<command>" [--step ...]
 ```
 
-The working directory is the target source root, stated rather than defaulted. Every string is
-the project's — the registry's commands and its per-step bounds; nothing here composes a command,
+The working directory is the target source root, stated, never defaulted. Every string is the
+project's — the registry's commands and its per-step bounds; nothing here composes a command,
 infers one from a tree, or supplies a number.
 
 - Where the registry declares no command for a step one of its rules names, that rule is decided
   by nothing, and the report says so by name.
-- **This runs even where `/implement-task` already ran the same steps green**: two deliveries that
-  each passed alone are not a change that passes together. Every run lands on disk under a name
-  nothing may reuse, before any judgment is made of it.
-- Where the invocation named a run already captured, use it and run nothing. Where the registry
+- **Only a run over this tree as it stands answers it**: two deliveries that each passed alone are
+  not a change that passes together. Output opening `standing: <run>` means nothing ran: the
+  printed record's `run` is the run this review reads and names (`references/standard.md`).
+- An invocation naming a run already captured uses it and runs nothing. Where the registry
   declares no command and the invocation named neither steps nor a run, the failures pass does not
   run and the record says so.
 - A run whose outcome says nothing executed — a command not found, a step terminated — is still

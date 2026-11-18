@@ -20,7 +20,7 @@ preference for a test over a reading wherever a finite test decides a fact, that
 delivery changes goes unnamed by its records, and which halves the validator enforces
 mechanically. It also decides where a proof is cut (R18–R21, R23), when an implementation that stands still stands (R26), who answers a red build or a
 red suite (R24, R25, R32), what a review answers for (R22), and what a run records of the tree it
-ran over (R31).
+ran over (R31), and when a review's capture is a run already captured (R33).
 
 Grounds: measured over 483 proof records and 95 reviews of two consumer projects in September
 2026, the share of criteria a coverage audit found covered rose from 60% at one test per
@@ -377,6 +377,22 @@ left out — so the file set the review that followed was handed never held them
   in substance — a formatter's rewrite a step made — read in more than one of ten refusals, moves
   the comparison to what the run printed rather than the bytes.
 
+- **R33** — A review captures a run only where none stands for it. A run of the delivery that passed the steps the review would run, in the working directory it would run them in, over a tree whose every path outside the framework's records holds the bytes the tree holds now, is the review's capture, and `bin/run.py --reuse` names it and executes nothing. The framework's records are the delivery root, the delivery, work and telemetry roots `siegard.json` declares, `siegard-trace.json` and `siegard-reconcile/`; the specification root is not one of them, since a project's tests may read it.
+
+  Grounds: a review's capture answers whether the delivered tasks pass together, since two
+  deliveries that each passed alone are not a change that passes together; a run that passed
+  over the tree as it stands ran them together. Read on 2026-11-17 by
+  `temp/20261117-goal/c4/scan_review_capture.py` over the sales consumers: of 258 review records,
+  11 captured a run that recorded its tree; 8 followed an earlier passed run of the same steps in
+  the same directory, and in 6 (`productorder` 4, `salese2e` 2) every path outside the
+  framework's records held the same bytes. Each of the six re-ran 268 to 564 seconds of suite,
+  2,310 seconds in all, and passed again; the paths that differed were the delivery's records,
+  the reconciliation's returns and the trace. The other two (`inventory`) had changed test files
+  and ran. A path git does not report, an ignored one, lies outside both trees alike, as it lies
+  outside R31's. Reversal: a run of the same steps that ends red over a tree a reused capture
+  saw, before any path outside the records changed, in more than one of ten reuses, withdraws
+  `--reuse` from the review.
+
 ### When a proof-only re-delivery finds the implementation does not stand
 
 - **R32** — A proof-only re-delivery whose suite is red on a test its own test author wrote, which the diagnosis reads as `code`, has found that the implementation does not stand, and the same invocation goes on as the task's re-delivery, once: the task implementer is handed the failing test and the diagnosis as the red it must answer, writes the source, the build runs, the implementation record is rewritten whole over that build, and the suite runs again. The implementer changes no file the project declares as its tests but those the test-author already wrote, and a declared test changed since the implementer was spawned is put back and ends the invocation: `bin/deliver.py --red-guard` holds the tree before the spawn, checks it after each return, and restores what moved. The test is not edited to answer it, and the proof is written over the suite that passed. A second suite red the diagnosis reads as `code`, or an implementer that returns no mapping, ends the invocation as a red no change to the task's own files can answer.
@@ -510,6 +526,11 @@ left out — so the file set the review that followed was handed never held them
     refuses a declared test changed, added or deleted since the hold — another task's or the
     test author's own — and restores each to its held or `HEAD` state —
     `tests/test_red_guard.py` proves each.
+19. For R33: `bin/run.py --reuse` executes nothing and prints the standing run's record where a
+    passed run of the same steps in the same directory saw the tree as it stands outside the
+    framework's records, and runs where a path outside them changed, the steps or the directory
+    differ, or the earlier run did not pass; `/review-change` captures with `--reuse` and names
+    the run the record says — `tests/test_run.py` and `tests/test_skill_contract.py` prove each.
 
 ## Readings
 
