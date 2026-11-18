@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.129.0 — 2026-11-18
+
+`trace.py --check --reconcile-set` no longer leaves a file "to a delivery" because an undelivered task carrying `stands` implements its node: such a delivery binds nothing, and the file is the reconciliation's (SPEC-004 R34). (`1ac766f`)
+
 ## 5.128.0 — 2026-11-18
 
 `/deliver-scope` takes `/reconcile` once per task for a `stands` that does not stand whether `/implement-task` read it out of date before writing or the record writer refused it, and `stop: stands` is kept for a second refusal after that reconciliation (SPEC-008 R8). (`d24cef8`)
