@@ -28,6 +28,9 @@ You need:
    `plan.py --contract task --without implements`'s output, both pasted whole. Read both before
    writing a single field. The task slice carries no `implements`, because that field is not yours.
 
+Optionally, **the tests red in the tree** — each test the last suite over the tree as it stands
+failed, with what it reported. Given any, the suite every task runs starts red on them.
+
 Optionally, **the absent substrate** — the artifacts the project's standard presupposes and the
 target tree does not hold, each with what the registry says it provides and the rules it carries.
 Given any, they are the one thing you cut a task for that the scope never asked about.
@@ -47,6 +50,12 @@ them is split or merged until it passes:
   task lands. Where it cannot — a constructor gains a required argument, a signature changes — the
   consumers the inventory's `risks` name, and the existing tests that build the interface, belong to
   the same task.
+- **The whole suite, held green.** Every delivery must pass the project's whole suite, not only its
+  own tests, so a task that stays red until a sibling lands stops at that task. A test reported
+  red in the tree before the plan is turned green by one task that holds all the work the test
+  needs, and every other task whose suite would run it depends on that task. An existing test
+  that checks files two tasks would write puts that work in one task, or makes the task that would
+  break it depend on the tasks that keep it green.
 
 And around the tasks:
 

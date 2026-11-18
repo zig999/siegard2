@@ -24,7 +24,8 @@ step is reached, before acting on it.
 - [ ] Specification: spec.py <specification-root> clean, else stop
 - [ ] Tree: git status --porcelain -- <work-root> <specification-root> prints nothing, else stop
 - [ ] 1 Situate: spec.py --digest; grep the scope's terms; every constraints/ node; plan.py --unplanned;
-      spec.py --impact; plan.py --check on a populated root; deliver.py --standard --against
+      spec.py --impact; plan.py --check on a populated root; deliver.py --standard --against;
+      run.py plan-suite
 - [ ] 2 Inventory: scope under intake/ (layout under intake/layout/); spawn siegard:codebase-surveyor
 - [ ] 3 Decompose: spawn siegard:backlog-decomposer; write the epics; hold the skeletons
 - [ ] 4 Implement against: spawn one siegard:execution-contract-binder per skeleton, together;
@@ -216,7 +217,7 @@ colon in a sentence is never read as a second key.
 
 Spawn a `siegard:codebase-surveyor` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/codebase-surveyor.md` — passing the target source root, the scope's
-path under `intake/`, and the `inventory` slice, printed here and pasted whole. Write each
+path under `intake/`, and the `inventory` slice, pasted whole. Write each
 inventory node it returns at the path its identifier computes to, verbatim.
 
 ### 3. Decompose
@@ -229,10 +230,10 @@ Spawn a `siegard:backlog-decomposer` subagent — its judgment lives at
   `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --pack <identity>,<identity>... <specification-root>
   > <file>`;
 - the surveyor's inventory;
-- the `--contract epic` and `--contract task --without implements` slices, printed here and pasted
-  whole;
-- where a standard was named and step 1 found any, the artifacts it presupposes that the tree does
-  not hold, each with what the registry says it provides and the rules it carries.
+- the `--contract epic` and `--contract task --without implements` slices, pasted whole;
+- what step 1 kept from a standard: each artifact it presupposes that the tree does not hold,
+  with what the registry says it provides and the rules it carries, and a red suite run's name and
+  excerpt.
 
 It returns epics, complete, and task skeletons without `implements`, which is the binder's. Write
 the epics at the paths their identifiers compute to. Hold the skeletons: a skeleton touches disk
@@ -307,7 +308,7 @@ is settled only through `references/unstated.md`, never filled in to make a chec
 
 ### 6. Report, and stop
 
-Once `plan.py` derived the plan, commit those roots as the plugin's rules state, one commit,
+Once `plan.py` derived the plan, commit those roots and the suite run, one commit,
 `plan-work <slug>: <mode>` — `plan`, `close` or the increment's name — «A route skill — `/analyse`,
 `/plan-work`, `/implement-task`, `/review-change`, `/reconcile` — commits what its own invocation
 wrote once its validator passes» (SPEC-010 R7).

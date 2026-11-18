@@ -1357,6 +1357,33 @@ def test_the_decomposer_keeps_an_interface_and_its_existing_consumers_in_one_tas
     assert "- **One seam.** A task" not in decomposer, "the unqualified seam rule is gone"
 
 
+def test_a_plan_is_cut_over_the_suite_as_it_stands():
+    """SPEC-004 R35. A suite red before the plan stops every task delivered ahead of the one that
+    turns it green: plan-work runs the review line once before the decomposer, hands it a red run,
+    and the decomposer puts the work that turns the red green in one task the others depend on."""
+    standard = " ".join((REPO / "src/claude/skills/plan-work/references/standard.md")
+                        .read_text(encoding="utf-8").split())
+    assert "«A plan is cut over the suite as it stands.» (SPEC-004 R35)" in standard
+    assert ("bin/run.py <delivery_root>/<slug> --run plan-suite --next --reuse "
+            "--cwd <target-source-root> --excerpt 40 <the review: line the check printed>") in standard
+    assert "mkdir -p <delivery_root>/<slug>" in standard
+    assert "**A red run is no stop.**" in standard
+    assert "step 6 commits its directory with the roots" in standard
+    skill = " ".join((REPO / "src/claude/skills/plan-work/SKILL.md").read_text(encoding="utf-8").split())
+    assert "deliver.py --standard --against; run.py plan-suite" in skill
+    assert "and a red suite run's name and excerpt." in skill
+    assert "commit those roots and the suite run, one commit," in skill
+    decomposer = " ".join((REPO / "src/claude/agents/backlog-decomposer.md")
+                          .read_text(encoding="utf-8").split())
+    assert "Optionally, **the tests red in the tree**" in decomposer
+    assert "**The whole suite, held green.** Every delivery must pass the project's whole suite" in decomposer
+    assert ("A test reported red in the tree before the plan is turned green by one task that holds "
+            "all the work the test needs, and every other task whose suite would run it depends on "
+            "that task.") in decomposer
+    assert ("An existing test that checks files two tasks would write puts that work in one task, or "
+            "makes the task that would break it depend on the tasks that keep it green.") in decomposer
+
+
 def test_a_note_asking_which_value_a_node_leaves_open_is_unstated():
     """SPEC-001 R17's second sentence. The configurator shape of 2026-11-07: "no node says which
     code the 503 of the deadline carries", classed blocking because a node lists the codes, and

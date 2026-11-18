@@ -211,6 +211,24 @@ left out — so the file set the review that followed was handed never held them
   such state, one run read that set, concluded the reconciliation would not clear the refusal,
   and stopped where SPEC-008 R8 takes the door.
 
+### Where a plan is cut over a red suite
+
+- **R35** — A plan is cut over the suite as it stands. Before a planning invocation hands its scope to the decomposer, it runs the target's review phase — every step but one that writes, the suite last — once over the tree as it stands, through `bin/run.py`, and where that run ends red it hands the decomposer the run's name and what it printed. A run that passed and stands for the tree as R33 reads it is that run, and nothing executes. Every delivery runs the whole suite, so a test red before the plan is turned green by one task that holds all the work the test needs, and every other task whose suite would run it depends on that task. A target whose standard names no commands, or whose standard presupposes an artifact the tree does not hold, runs nothing here.
+
+  Grounds: a suite red before the plan stops every task delivered ahead of the one that turns it
+  green, each as a red no change to its own files answers. Read on 2026-11-18 from the sales
+  consumers' orchestration logs since 5.116.0: 9 plans, 67 deliveries, 6 `outside-task` stops, 4
+  of them a red only a sibling of the same plan answers — 2 over a suite already red at `HEAD`
+  from committed partial work (`inventory` `e789ff4`, `salese2e` `a2b93306`), 2 over an existing
+  test coupling files two tasks write (`salese2e`). A lookup of a captured red suite over the
+  tree as it stands found neither red: in `inventory` the specification changed between the run
+  and the plan. A replay of `backlog-decomposer` over the frozen inputs of the `inventory` plan
+  `057c367` (`claude -p --agent`, opus, 3 runs per arm) cut the comparison task first, every other
+  task depending on it, in 3 of 3 runs with this rule and the red handed to it, and in 0 of 3 with
+  the rule alone, the red alone, or neither; over the `salese2e` plan `6349b12f` the rule alone
+  changed nothing (0 of 3), since no input says which existing test checks which file; over the
+  control plan `47e9041` it cut 16 and 19 tasks against 19 and 21.
+
 ### Who answers a red build
 
 - **R24** — A build red whose fix lies only in files the project declares as its tests is answered by the delivery's test author, before the implementation record is written: the implementer writes no test, and the record cites the build that passed once the test author answered. A test the proof of another task names is answered here only where this delivery's files include one that task's implementation record names, or where every plan whose proof names it is closed; otherwise the red is a stop.
@@ -545,6 +563,10 @@ left out — so the file set the review that followed was handed never held them
 20. For R34: `bin/trace.py --check --reconcile-set` keeps in the set a file of a moved node that
     only an undelivered task carrying `stands` implements, and leaves to a delivery one an
     undelivered task writing source implements — `tests/test_trace.py` proves each.
+21. For R35: `/plan-work` runs the review phase through `bin/run.py --reuse` before it spawns the
+    decomposer and hands it a red run's name and excerpt, and the decomposer's text turns a test
+    red in the tree green in one task every other task depends on — `tests/test_skill_contract.py`
+    proves each.
 
 ## Readings
 

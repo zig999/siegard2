@@ -97,10 +97,10 @@ PLAN_AGENTS = ("backlog-decomposer", "codebase-surveyor", "execution-contract-bi
                "unstated-fact-decider")
 PLAN_BASELINE = REPO / "tests/fixtures/benchmarks/plan-work/text-metrics-5.64.0.json"
 PLAN_PINS = {
-    "chars": 77_487,
-    "skill_chars": 19_987,
+    "chars": 79_050,
+    "skill_chars": 19_988,
     "sentence_words_median": 17,
-    "sentence_words_p90": 35,
+    "sentence_words_p90": 36,
     "sentences_over_60_words": 3,
     "prose_lines_over_100": 0,
 }

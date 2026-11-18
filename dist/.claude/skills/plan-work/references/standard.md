@@ -42,3 +42,18 @@ file is reported with both. Below, a standard "named" means resolved by either s
 - **Keep what it printed against the specification**: which constraints a step decides, and which
   none does. The second are held by reading alone, and the report names them beside the tasks that
   implement them.
+
+Then, where the check found every artifact the registry presupposes and the mode spawns the
+decomposer, run the suite as it stands. «A plan is cut over the suite as it stands.»
+(SPEC-004 R35) Paste the check's `review:` line, the suite with no step that writes:
+
+```
+mkdir -p <delivery_root>/<slug>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery_root>/<slug> --run plan-suite --next --reuse --cwd <target-source-root> --excerpt 40 <the review: line the check printed>
+```
+
+- **A red run is no stop.** Keep its name and what it printed for step 3: every delivery runs the
+  whole suite, so the decomposer cuts the work that turns the red green into one task the others
+  depend on.
+- **The run is this invocation's**, and step 6 commits its directory with the roots. A `standing:`
+  line wrote nothing, and there is nothing to commit.
