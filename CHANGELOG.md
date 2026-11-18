@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.128.0 — 2026-11-18
+
+`/deliver-scope` takes `/reconcile` once per task for a `stands` that does not stand whether `/implement-task` read it out of date before writing or the record writer refused it, and `stop: stands` is kept for a second refusal after that reconciliation (SPEC-008 R8). (`d24cef8`)
+
 ## 5.127.0 — 2026-11-17
 
 `/implement-task` hands the test-author the rules of the target's standard whose scope meets the tests `siegard.json` declares, and the artifacts they presuppose, written outside the tree by the new `deliver.py --standard --tests`, never the whole registry (SPEC-007 R8). (`3169e6c`)
