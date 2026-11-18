@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.127.0 — 2026-11-17
+
+`/implement-task` hands the test-author the rules of the target's standard whose scope meets the tests `siegard.json` declares, and the artifacts they presuppose, written outside the tree by the new `deliver.py --standard --tests`, never the whole registry (SPEC-007 R8). (`3169e6c`)
+
 ## 5.126.0 — 2026-11-17
 
 A review's capture runs `bin/run.py --reuse`: where a passed run of the same steps, in the same directory, saw the tree as it stands outside the framework's records, that run is the capture and nothing executes, instead of the suite running again over the same bytes (SPEC-004 R33). (`a0da155`)
