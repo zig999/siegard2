@@ -260,6 +260,13 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         scope reaches at least one named path.
                                                         What a reading judgment is handed in place
                                                         of the whole registry
+        deliver.py --standard <file> --tests <target-source-root>
+                                                        write the rules whose scope meets a test
+                                                        scope siegard.json declares for that
+                                                        target, and the artifacts they presuppose,
+                                                        under the git common directory, and print
+                                                        the path: what the test-author is handed
+                                                        in place of the whole registry
         deliver.py --standard <file> --reach --for <path> [--for <path> ...]
                                                         print, per named path, the rules of this
                                                         registry that reach it — those a reading
@@ -4027,6 +4034,76 @@ def print_reading_rules(named: str, for_paths: list[str]) -> int:
     return 0
 
 
+def write_tests_view(named: str, target: Path) -> int:
+    """`--tests`: the registry as the delivery's test-author reads it — every rule with a scope
+    that meets a test scope the target declares, and every presupposed artifact such a rule rests
+    on or such a scope reaches — written outside the tree, its path printed for the hand-off.
+    «The delivery's test-author is handed the rules of its target's standard whose scope meets a
+    test scope the target declares, never the whole registry» (SPEC-007 R8): it writes nothing
+    but tests, and a rule no test scope meets reaches no file it writes. A target declaring no
+    tests leaves nothing to narrow by, and the registry's own path is printed instead."""
+    try:
+        validator = standard_contract()
+    except (FileNotFoundError, json.JSONDecodeError) as broken:
+        print(f"cannot run: {broken}", file=sys.stderr)
+        return CANNOT_RUN
+    path = Path(named)
+    data, problems = load_standard(path, validator)
+    for problem in problems:
+        print(f"{path.name}: {problem}")
+    if data is None:
+        print(f"\n{len(problems)} problem(s). A test-author is never handed a standard that "
+              f"does not hold together.")
+        return 1
+    roots, trouble = target_roots(target)
+    if trouble is not None:
+        print(f"cannot run: {trouble}", file=sys.stderr)
+        return CANNOT_RUN
+    key = next((k for k, root in roots.items() if root.resolve() == target.resolve()), None)
+    if key is None:
+        print(f"cannot run: {target} is no target siegard.json declares "
+              f"(declared: {', '.join(sorted(roots)) or 'none'})", file=sys.stderr)
+        return CANNOT_RUN
+    home = project.toplevel_of(target)
+    declared = json.loads((home / "siegard.json").read_text(encoding="utf-8"))
+    scopes = [s for s in ((declared.get("tests") or {}).get(key) or []) if isinstance(s, dict)]
+    rules = [r for r in listed(data, "rules") if isinstance(r, dict)]
+    if not scopes:
+        print(f"tests {key}: declared none, so nothing narrows the registry; hand it whole: "
+              f"{path.resolve()}")
+        return 0
+    kept = [r for r in rules
+            if any(project.scopes_meet(s, t) for s in listed(r, "applies_to") for t in scopes)]
+    ids = {r.get("id") for r in kept}
+    presupposed = [a for a in listed(data, "presupposes") if isinstance(a, dict)
+                   and (ids & set(listed(a, "rules"))
+                        or (isinstance(a.get("path"), str)
+                            and any(project.reaches(t, a["path"]) for t in scopes)))]
+    view = {"standard": str(path.resolve()), "pin": pin_of(path), "target": key,
+            "tests": scopes, "rules": kept, "presupposes": presupposed}
+    try:
+        done = subprocess.run(["git", "-C", str(target), "rev-parse", "--path-format=absolute",
+                               "--git-common-dir"], capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired) as broken:
+        print(f"cannot run: git cannot be asked where {target} keeps its repository: {broken}",
+              file=sys.stderr)
+        return CANNOT_RUN
+    if done.returncode != 0 or not done.stdout.strip():
+        print(f"cannot run: {target} is not inside a git repository; the view is written under "
+              f"its git common directory, outside the tree", file=sys.stderr)
+        return CANNOT_RUN
+    out = Path(done.stdout.strip()).joinpath(*STANDARD_VIEW_DIR, f"{key}.tests.json")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(view, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"wrote {out} — {len(kept)} of {len(rules)} rule(s) and {len(presupposed)} of "
+          f"{len(listed(data, 'presupposes'))} presupposed artifact(s) of {path.name}, those "
+          f"meeting the tests {key} declares; hand this path as the standard")
+    return 0
+
+
+STANDARD_VIEW_DIR = ("siegard", "standard")
+
+
 def print_reach(named: str, for_paths: list[str]) -> int:
     """What the registry reaches over a file set, said apart from what it says about it. A rule
     reaches a path when one of its scopes does; a path no rule reaches is a path the review read
@@ -4249,6 +4326,21 @@ def main() -> int:
         args = [a for a in args if a != "--reading"]
         reach = "--reach" in args
         args = [a for a in args if a != "--reach"]
+        tests_of = None
+        if "--tests" in args:
+            at = args.index("--tests")
+            if at + 1 >= len(args) or args[at + 1].startswith("--"):
+                print("cannot run: --tests takes the target source root the test-author writes "
+                      "in", file=sys.stderr)
+                return CANNOT_RUN
+            tests_of = Path(args[at + 1])
+            del args[at:at + 2]
+            if reading or reach or "--for" in args or verify or report or single is not None \
+                    or against is not None or specification is not None or args:
+                print("cannot run: --tests stands with --standard and nothing else",
+                      file=sys.stderr)
+                return CANNOT_RUN
+            return write_tests_view(named, tests_of)
         for_paths: list[str] = []
         while "--for" in args:
             at = args.index("--for")

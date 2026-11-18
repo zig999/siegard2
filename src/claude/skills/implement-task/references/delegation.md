@@ -60,7 +60,8 @@ target source root:    <absolute path>
 proof slice:           <the --contract proof output above, pasted whole>
 nodes:                 <the identity of each specification node the task implements, with the
                         absolute path of the specification root — omit where the task implements none>
-standard:              <absolute path — omit this line where none was named>
+standard:              <the path `deliver.py --standard <the project's registry> --tests
+                        <target-source-root>` printed — omit this line where none was named>
 recurring:             <as step 3 — omit where empty>
 underdetermined:       <every `UNDERDETERMINED, from the specification —` entry of the task's
                         `## Notes`, quoted whole — omit where the task carries none>

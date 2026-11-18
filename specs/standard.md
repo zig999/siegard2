@@ -67,6 +67,7 @@ never a requirement that one does; nothing said which step such a rule may name.
 - **R5** — A step whose role is `fix` rewrites the tree into the form the registry's checks hold: a delivery runs every such step after the install and before every check, in its build and its suite alike, and owes it as it owes a check; it runs neither at setup nor in a review's or a reconciliation's run, it decides no rule, and a file it changes is held to the delivery's records like any other the delivery wrote.
 - **R6** — A delivery's producers read first the rules of their target's standard that the target's past reviews cite. `bin/deliver.py --recurring <delivery-root> <target> <standard>` counts, over every review record of every initiative beside the delivery root whose `target` is the one named, the reviews whose standard findings cite each rule the standard holds, and prints each rule cited at least once, most cited first, with its count, the number of reviews read and the rule's statement. The count orders what a producer reads first and decides nothing else: it makes no rule binding that the standard does not, leaves no rule out of what a producer is given, and prints nothing where no review cites a rule the standard holds.
 - **R7** — The standard findings of a target's past reviews whose quoted source still stands are a report, never a verdict. `bin/deliver.py --standing <delivery-root> <target> <target-source-root>` reads the standard findings of every review record of every initiative beside the delivery root whose `target` is the one named, and holds each to its evidence: a finding whose quoted lines the review's commit held and the file still holds stands; one whose quoted lines the file no longer holds has changed; one whose file is gone is gone; one whose evidence quotes no line the review's commit held is not decidable from it. It prints the findings that stand grouped by file, most first, each with its rule, its review, its first quoted line and its correction, after one line counting the four, and narrows to the rules or files named with `--rule` and `--file`. It refuses nothing and ranks no finding: which to correct, and whether, stays the person's.
+- **R8** — The delivery's test-author is handed the rules of its target's standard whose scope meets a test scope the target declares, never the whole registry. `bin/deliver.py --standard <file> --tests <target-source-root>` writes, under the git common directory and outside the tree, every rule one of whose scopes meets one of the test scopes `siegard.json` declares for that target, and every presupposed artifact such a rule rests on or such a scope reaches, and prints the path written; where the target declares no tests, nothing narrows the registry, and it prints the registry's own path. What the test-author writes is tests alone, and a rule no test scope meets reaches no file it writes; the implementer, the reviews and the recurring count read the registry as before.
 
 ## Validation required before acceptance
 
@@ -108,6 +109,16 @@ never a requirement that one does; nothing said which step such a rule may name.
    `--rule` and `--file`; and exits 0 over any answer — `tests/test_standing.py` proves each. The
    criterion that reverses R7: its report, read against a consumer's reviews, disagreeing with a
    reading of the files on more findings than it agrees.
+8. For R8: `bin/deliver.py --standard --tests` keeps a rule exactly where one of its scopes meets a
+   declared test scope, keeps a presupposed artifact exactly where it rests on a kept rule or a
+   test scope reaches its path, writes outside the tree, and prints the registry's own path for a
+   target declaring no tests — `tests/test_standard.py` proves each; `/implement-task` hands the
+   printed path on the test-author's `standard:` line. Grounds, measured on the consumer
+   transcripts from 2026-11-13 to 2026-11-17: 204 of 210 test-author spawns read the whole
+   registry (40–120 KB, 13.0M characters, about $31 of their context by
+   `temp/20261117b-goal/readcost.py`), while the rules meeting the declared tests were 9–18 of
+   54–132. The criterion that reverses R8: a review over a test-author's files citing, more often
+   than before, a rule the view left out.
 
 ## Readings
 

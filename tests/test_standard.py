@@ -778,3 +778,82 @@ def test_a_project_declaring_no_tests_draws_no_line(tmp_path):
     done = invoke("--standard", str(registry), "--against", str(tmp_path / "backend"))
     assert done.returncode == 0, done.stdout + done.stderr
     assert "a step other than the suite" not in done.stdout
+
+
+# ------------------------------------------------------- what the test author is handed (R8)
+
+
+def make_tests_project(tmp_path: Path, tests: list[dict] | None) -> tuple[Path, Path]:
+    """A one-target git project whose registry holds a rule over tests, one over source, one over
+    both, and three presupposed artifacts: one resting on the tests rule, one on the source rule,
+    and one resting on the source rule whose path a test scope reaches."""
+    home = tmp_path / "project"
+    (home / "backend").mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", str(home)], check=True)
+    rule = base()["rules"][0]
+    rules = [
+        {**rule, "id": "TST-01", "decided_by": "reading",
+         "applies_to": [{"under": "tests", "suffix": ".test.ts", "nested": True}]},
+        {**rule, "id": "SRC-01", "decided_by": "reading",
+         "applies_to": [{"under": "src", "suffix": ".ts", "nested": True}]},
+        {**rule, "id": "ALL-01", "decided_by": "reading",
+         "applies_to": [{"under": ".", "suffix": ".ts", "nested": True}]},
+    ]
+    for r in rules:
+        r.pop("tool", None)
+    presupposes = [
+        {"path": "vitest.config.ts", "provides": "the runner TST-01 names.", "rules": ["TST-01"]},
+        {"path": "tsconfig.json", "provides": "the compiler SRC-01 names.", "rules": ["SRC-01"]},
+        {"path": "tests/support/clock.ts", "provides": "the clock SRC-01 names.", "rules": ["SRC-01"]},
+    ]
+    data = {k: v for k, v in base(rules=rules, presupposes=presupposes).items()
+            if k not in ("commands", "dependencies")}
+    registry = home / "standards" / "backend.json"
+    registry.parent.mkdir()
+    registry.write_text(json.dumps(data), encoding="utf-8")
+    declared = {"targets": {"backend": "backend"}, "standard": {"backend": "standards/backend.json"}}
+    if tests is not None:
+        declared["tests"] = {"backend": tests}
+    (home / "siegard.json").write_text(json.dumps(declared), encoding="utf-8")
+    return home, registry
+
+
+def test_the_test_author_is_handed_the_rules_meeting_the_declared_tests(tmp_path, contract):
+    """«The delivery's test author is handed the rules of its target's standard whose scope meets a
+    test scope the target declares, never the whole registry» (SPEC-007 R8)."""
+    home, registry = make_tests_project(tmp_path, [{"under": "tests", "suffix": ".ts", "nested": True}])
+    assert deliver.load_standard(registry, contract)[0] is not None
+    done = invoke("--standard", str(registry), "--tests", str(home / "backend"))
+    assert done.returncode == 0, done.stdout + done.stderr
+    written = Path(done.stdout.split("wrote ", 1)[1].split(" — ", 1)[0])
+    assert written.is_relative_to(home / ".git"), "the view is written outside the tree"
+    view = json.loads(written.read_text(encoding="utf-8"))
+    assert [r["id"] for r in view["rules"]] == ["TST-01", "ALL-01"]
+    assert [a["path"] for a in view["presupposes"]] == ["vitest.config.ts", "tests/support/clock.ts"]
+    assert view["standard"] == str(registry.resolve()) and view["target"] == "backend"
+    assert "2 of 3 rule(s)" in done.stdout
+    status = subprocess.run(["git", "-C", str(home), "status", "--porcelain"],
+                            capture_output=True, text=True).stdout
+    assert ".git" not in status and "siegard/standard" not in status
+
+
+def test_a_target_declaring_no_tests_is_handed_the_registry_whole(tmp_path):
+    home, registry = make_tests_project(tmp_path, None)
+    done = invoke("--standard", str(registry), "--tests", str(home / "backend"))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert done.stdout.strip().endswith(str(registry.resolve()))
+    assert not (home / ".git" / "siegard" / "standard").exists()
+
+
+def test_the_tests_view_stands_alone_and_names_a_declared_target(tmp_path):
+    home, registry = make_tests_project(tmp_path, [{"under": "tests", "suffix": ".ts", "nested": True}])
+    assert invoke("--standard", str(registry), "--tests", str(home / "backend"),
+                  "--reading").returncode == 2
+    assert invoke("--standard", str(registry), "--tests").returncode == 2
+    assert invoke("--standard", str(registry), "--tests", str(home)).returncode == 2
+
+
+def test_implement_task_hands_the_test_author_the_tests_view():
+    block = (REPO / "src/claude/skills/implement-task/references/delegation.md").read_text()
+    test_author = block.split("## What step 5 hands the test-author", 1)[1]
+    assert "deliver.py --standard <the project's registry> --tests" in test_author

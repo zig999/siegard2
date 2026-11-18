@@ -54,8 +54,9 @@ Optionally:
   against the nodes as they stand now, keeping every condition the entry says it fails when unless
   a node as it stands now states otherwise. It joins your `tests`. A condition a node still states
   is never rewritten away: leave the test, and return it under `contested` quoting the node.
-- **the project's standard** — the path to the rules this project set for itself. Read the rules
-  whose scope reaches the test files you write and follow them: how a test is arranged and named,
+- **the project's standard** — the path to the rules this project set for itself whose scope meets
+  the tests the target declares, and the artifacts they presuppose; read it whole. Follow the
+  rules whose scope reaches the test files you write: how a test is arranged and named,
   what a stand-in may replace, where the file sits, whether cases differing only in data share one
   table-driven test. A rule you cannot satisfy is departed from and disclosed in `divergences`,
   citing the rule's identifier and naming the test file, as the record beside yours does.
