@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.131.0 — 2026-11-19
+
+`handoff.py --render` writes each recommended door's `entry` and `check` as the tree stands, over the slug the record names or the one live initiative, and prints the armed grant's answer over the record on standard error, so a stop's doors reach the grant at the stop (SPEC-006 R9, SPEC-011 R9). (`67c1c53`)
+
 ## 5.130.0 — 2026-11-18
 
 `/plan-work` runs the registry's `review:` line once over the tree as it stands before the decomposer cuts, and hands it a red run's name and excerpt; the decomposer turns a test red before the plan green in one task every other task depends on (SPEC-004 R35). (`4014da0`)
