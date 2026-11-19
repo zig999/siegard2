@@ -71,12 +71,13 @@ WORDS
 ```
 
 The record it writes is held to the contract `${CLAUDE_PLUGIN_ROOT}/schemas/grant.json` before it is
-written. The script refuses a second grant while the first still stands, an invocation that names nothing, a slug that is not a live initiative, an
+written. Arming while a grant stands ends that grant as `replaced` and arms the new one; the person needs no `--clear` first. The script refuses an invocation that names nothing, a slug that is not a live initiative, an
 entry point outside the list, a budget without doors, and an arming with no clause; it prints every
 reason. On success it prints what it recorded — what the grant covers, the doors, the budget, the
 clauses, the words' digest and the grant's mark, the target where it chose one, and the plugin's version — and the report
-quotes those lines. A grant already in place that a plugin update or a closed initiative ended is
-ended by the arming, in one `ended:` line the report quotes as well. The words file is left uncommitted under the telemetry root; the run's measure
+quotes those lines. A grant already in place — one that stands, which the arming replaces, or one a plugin update or
+a closed initiative ended — is ended by the arming, in one `ended:` line the report quotes as well,
+and for a replaced grant the report says what it held, so that a narrower grant is never a surprise. The words file is left uncommitted under the telemetry root; the run's measure
 commits that root.
 
 ## Report, and stop

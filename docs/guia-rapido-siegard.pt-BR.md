@@ -462,8 +462,9 @@ Sem grant, uma decisão *judged* sempre volta para você.
 | `--close` | Autoriza **fechar** a iniciativa quando tudo estiver entregue, provado e revisado (suas palavras são o motivo do fechamento) | Nenhum |
 | frase | Qualquer texto seu | Opcional: as flags já são o grant |
 
-**Só um grant armado por projeto:** para mudar orçamento ou portas, rode `--clear` antes e arme de
-novo.
+**Só um grant armado por projeto:** para mudar orçamento ou portas, arme de novo. O arming
+substitui o grant em pé, que fica registrado como `replaced` (a linha `ended:` diz o que ele
+cobria); não precisa de `--clear` antes.
 
 **O grant nunca toma:** escolha que só você faz, `push`, branch, edição fora de skill,
 `siegard.json`, standard, `CLAUDE.md`, nem nada fora do projeto. Se `--budget` for dado,

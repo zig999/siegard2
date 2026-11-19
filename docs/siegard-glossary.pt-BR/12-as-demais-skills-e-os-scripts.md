@@ -318,7 +318,7 @@ reescrita (abaixo).
 **Quando termina.** Quando você o limpa (`/siegard:siegard-grant <project-root> --clear`), quando a
 versão do plugin deixa de ser a que ele foi armado, e, se nomeia uma iniciativa, quando o `HEAD`
 dessa iniciativa passa a ter `closure.md`. Um grant encerrado vai, com o motivo, para
-`siegard/grants-ended.jsonl`. Armar por cima de um grant que já terminou assim o encerra e arma.
+`siegard/grants-ended.jsonl`. Armar por cima de um grant que já terminou assim o encerra e arma; armar por cima de um grant que ainda vale o encerra como `replaced`, diz o que ele cobria e arma, sem precisar de `--clear` antes.
 O registro armado fica em `siegard/grant.json`, dentro do diretório do git; as palavras ficam na
 raiz de telemetria, e a medição as commita.
 **Não confundir com.** O **goal**, que leva um escopo até o fim e termina sozinho. O grant não leva

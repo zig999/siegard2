@@ -66,8 +66,8 @@ bound a script on disk decides.
 - **R1** — A grant is armed only by the person's own invocation of `/siegard-grant`, a skill closed
   to the model, whose arguments are the person's words. `bin/grant.py --arm` records the words — the
   invocation as typed, with no sentence needed beside its flags — verbatim under their digest,
-  and refuses to arm where the project holds an armed grant that still stands, where the
-  invocation names nothing, where a slug the person names is no live initiative, or where no clause is named.
+  and, where the project holds an armed grant that still stands, ends it and arms the new one (R3);
+  it refuses to arm where the invocation names nothing, where a slug the person names is no live initiative, or where no clause is named.
   No other component runs it. The person ends it with `/siegard-grant --clear`, which runs
   `bin/grant.py --disarm`, and the project then behaves as it did before the grant; where none is
   armed it says so and refuses nothing.
@@ -93,7 +93,10 @@ bound a script on disk decides.
   An ended grant is appended, with its reason, to the
   ended log beside it, and takes nothing. An arming over a grant whose record is still in place but
   that has ended so appends it to that log, says that it ended and why, and arms; nothing is
-  appended where the arming is refused on another ground.
+  appended where the arming is refused on another ground. An arming over a grant that still
+  stands ends it in that log as `replaced`, says what it held — the initiative or the project, the
+  doors, the budget, the clauses and the mark — and arms; the person needs no `--clear` first, and
+  a refused arming leaves the standing grant in place.
 
 ### What it lets a stop do
 
@@ -146,12 +149,13 @@ bound a script on disk decides.
 
 1. Tests hold `grant.py --arm` to R1, R2: a recorded grant carries the words verbatim under a
    digest and a mark that two armings of the same words never share, an invocation recorded with
-   its flags alone arms, and a second arming, an invocation that names nothing, an unknown slug, no clause and an entry point outside the
+   its flags alone arms, and an invocation that names nothing, an unknown slug, no clause and an entry point outside the
    list are each refused, a grant without a slug covers every live initiative, a grant that names
    no door holds all six, `none` holds none, `--disarm` returns the project to no grant and with
    none armed says so, and a plugin version change, or a closure of the initiative a grant names,
-   ends it under R3; an arming over a grant so ended ends it in the log, says so and arms, and an
-   arming refused on another ground leaves it in place.
+   ends it under R3; an arming over a grant so ended ends it in the log, says so and arms, an
+   arming over a grant that still stands ends it in the log as `replaced`, says what it held and
+   arms with a mark of its own, and an arming refused on another ground leaves either in place.
 2. Tests hold `grant.py --decide` to R4 and R5 over handoff records: a `settles` decision is
    `stop`; one door left after a refusal is `take`; a recommended door that is accepted beside an
    open door is `judge` with the budget left, counted over the stopped initiative's log alone; a
@@ -249,6 +253,14 @@ bound a script on disk decides.
   which door, which the reversal R5 reads needs, so each grant is marked with the instant it was
   armed. An invocation with no argument would have armed all six doors with no budget, and is
   refused.
+
+- 2026-11-19 — grounds for arming over a grant that still stands: the person asked that an arming
+  replace the standing grant, as the person's own invocation is the one act that can arm and
+  nothing a `--clear` first protected was anyone's but the person's. The standing grant is kept in
+  `grants-ended.jsonl` as `replaced`, so what it held stays readable; its budget does not carry,
+  the new grant's mark and `HEAD` being its own, which a `--clear` and an arming already did.
+  Reversal: a reading of the sessions that finds replaced grants re-armed within a stop of what
+  they held, a narrowing the person did not mean.
 
 - 2026-11-14 — grounds for arming over a grant R3 has ended: in `configurator` and `salese2e`
   (Siegard 5.100.0), the person armed a grant right after updating from 5.99.1; both were refused

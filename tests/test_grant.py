@@ -87,13 +87,6 @@ def test_arming_records_the_words_verbatim_under_their_digest(project):
     assert held["words"]["sha256"] == hashlib.sha256(WORDS.encode()).hexdigest()[:16]
 
 
-def test_a_second_arming_is_refused_while_one_stands(project):
-    assert arm(project, "--commits").returncode == 0
-    again = arm(project, "--doors", "plan-work")
-    assert again.returncode == 1
-    assert "a grant is armed already in this project" in again.stdout
-
-
 def ended_grants(project: dict) -> list[dict]:
     log = armed(project).parent / "grants-ended.jsonl"
     if not log.is_file():
@@ -115,6 +108,42 @@ def test_arming_over_a_grant_armed_under_another_version_ends_it_and_arms(projec
     [gone] = ended_grants(project)
     assert gone["ended"] == "ended" and gone["version"] == "0.0.1"
     assert "armed under 0.0.1" in gone["reason"]
+
+
+def test_arming_over_a_grant_that_stands_replaces_it_and_says_what_it_held(project):
+    """«An arming over a grant that still stands ends it in that log as `replaced`, says what it
+    held» (SPEC-011 R3): no `--clear` first, the old grant kept in the ended log, the new one its own."""
+    assert arm(project, "--commits", "--budget", "3").returncode == 0
+    old = record_of(project)
+    again = arm(project, "--doors", "plan-work", slug=None)
+    assert again.returncode == 0, again.stdout + again.stderr
+    assert f"ended: the grant armed at {old['armed_at']} is replaced by this arming — it covered " \
+           f"{SLUG}" in again.stdout
+    assert f"mark (grant sha256 {old['mark']})" in again.stdout and "budget 3, commits yes" in again.stdout
+    new = record_of(project)
+    assert new["doors"] == ["plan-work"] and new["slug"] is None and new["commits"] is False
+    assert new["mark"] != old["mark"] and new["budget"] == 0
+    [gone] = ended_grants(project)
+    assert gone["ended"] == "replaced" and gone["reason"] == "replaced by a new arming"
+    assert gone["mark"] == old["mark"] and gone["commits"] is True
+
+
+def test_the_replacing_grant_budget_counts_only_its_own_mark(project):
+    assert arm(project, "--budget", "1").returncode == 0
+    first = record_of(project)["mark"]
+    assert arm(project, "--budget", "2").returncode == 0
+    held = record_of(project)
+    assert held["mark"] != first and held["budget"] == 2
+
+
+def test_a_refused_arming_leaves_a_standing_grant_in_place(project):
+    assert arm(project, "--commits").returncode == 0
+    old = record_of(project)
+    refused = arm(project, "--doors", "close-plan")
+    assert refused.returncode == 1 and "close-plan is outside" in refused.stdout
+    nothing = arm(project, "--doors", "none")
+    assert nothing.returncode == 1 and "no clause is named" in nothing.stdout
+    assert record_of(project) == old and ended_grants(project) == []
 
 
 def close_committed(project: dict) -> None:
@@ -206,7 +235,7 @@ def test_the_mark_is_the_words_digest_taken_with_the_instant_armed(project):
     expected = hashlib.sha256(f"{held['words']['sha256']} {held['armed_at']}".encode()).hexdigest()
     assert held["mark"] == expected[:16] and held["mark"] != held["words"]["sha256"]
     printed = arm(project, "--commits", words=INVOCATION)
-    assert "a grant is armed already" in printed.stdout
+    assert printed.returncode == 0 and "replaced by this arming" in printed.stdout
 
 
 def test_two_grants_armed_with_the_same_invocation_never_share_a_mark(project):
@@ -430,8 +459,6 @@ def test_a_commit_without_the_commits_clause_or_a_path_is_refused(project):
     assert arm(project, "--doors", "plan-work").returncode == 0
     result = commit_check(project, "telemetry/report.json")
     assert "the grant holds no `commits` clause" in result.stdout
-    assert arm(project, "--commits").returncode == 1
-    grant("--disarm", str(project["home"]))
     assert arm(project, "--commits").returncode == 0
     assert "no path is named" in commit_check(project).stdout
 

@@ -180,6 +180,18 @@ def record_words(project_root: Path, text: str) -> tuple[Path, str]:
     return Path(found.group(1)), found.group(2)
 
 
+def replaced_line(held: dict) -> str:
+    """What the arming over a standing grant ended, so that a narrower or wider grant never
+    replaces another unread: «An arming over a grant that still stands ends it in that log as
+    `replaced`, says what it held» (SPEC-011 R3)"""
+    held_doors = ", ".join(held.get("doors") or []) or "none"
+    return (f"the grant armed at {held.get('armed_at', 'unknown')} is replaced by this arming — it "
+            f"covered {held.get('slug') or 'every live initiative of the project'}, doors "
+            f"{held_doors}, budget {held.get('budget', 0)}, commits "
+            f"{'yes' if held.get('commits') else 'no'}, close {'yes' if held.get('close') else 'no'}, "
+            f"mark (grant sha256 {mark_of(held) if held else 'unknown'})")
+
+
 def arm(project_root: Path, slug: str | None, target: str | None, doors: list[str] | None,
         budget: int, commits: bool, close: bool, words: str) -> tuple[list[str], dict | None]:
     doors = list(ALLOWED) if doors is None else doors
@@ -202,17 +214,13 @@ def arm(project_root: Path, slug: str | None, target: str | None, doors: list[st
     path = grant_path(fields["home"])
     held = read_grant(path) if path.exists() else None
     over = no_longer_stands(fields, held) if held is not None else None
-    if path.exists() and over is None:
-        held = held or {}
-        refused.append(f"a grant is armed already in this project — {held.get('slug') or 'every live initiative'}"
-                       f", armed at {held.get('armed_at', 'unknown')}; `grant.py --disarm "
-                       f"{project_root}` ends it")
     if refused:
         return refused, None
-    if over is not None:
-        end_grant(path, held, "ended", over)
-        said = "\n".join(line for line in (said, f"ended: the grant armed at "
-                                            f"{held.get('armed_at', 'unknown')} — {over}") if line)
+    if path.exists():
+        held = held or {}
+        gone = (f"the grant armed at {held.get('armed_at', 'unknown')} — {over}" if over is not None
+                else replaced_line(held))
+        said = "\n".join(line for line in (said, f"ended: {gone}") if line)
     words_path, digest = record_words(project_root, words)
     armed_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     record = {"contract": CONTRACT, "project_root": str(project_root), "slug": slug,
@@ -227,6 +235,9 @@ def arm(project_root: Path, slug: str | None, target: str | None, doors: list[st
     broken = sorted(error.message for error in Draft202012Validator(held_contract).iter_errors(record))
     if broken:
         return [f"the record does not satisfy schemas/grant.json: {reason}" for reason in broken], None
+    if path.exists():
+        end_grant(path, held, "ended" if over is not None else "replaced",
+                  over if over is not None else "replaced by a new arming")
     goal.write_armed(path, record)
     summary = [f"armed: {path}", f"words: {record['words']['path']} (sha256 {digest})",
                f"mark: (grant sha256 {record['mark']}) — the words with the instant armed",
