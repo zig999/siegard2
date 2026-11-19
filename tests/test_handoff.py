@@ -244,6 +244,9 @@ def test_a_rendered_record_is_kept_as_json_beside_the_report_it_names(tmp_path):
     done = run("--render", "-", stdin=json.dumps(data), cwd=FIXTURES)
     assert done.returncode == 0, done.stdout
     kept = json.loads(report.with_suffix(".json").read_text(encoding="utf-8"))
+    chosen = kept["decisions"][0]["recommended"]
+    assert chosen["entry"] == "/plan-work" and chosen["check"]["answer"] == "not checked"
+    del chosen["entry"], chosen["check"]
     assert kept == data
 
 
@@ -1008,3 +1011,160 @@ def test_prepare_prints_the_invocations_that_follow_ready_to_paste(project):
     assert f"--save-report {record['report']}" in nexts[0]
     assert "--render" in nexts[1]
     assert all(str(SCRIPT) in line or "handoff.py" in line for line in nexts)
+
+
+# ------------------------------------------------------- --render writes the check of each door
+
+
+def filled(project: Path, skill: str, recommended: dict, **decision) -> tuple[dict, Path]:
+    """A skeleton filled the way a session fills it, the recommended door written whole and the
+    other doors left as `--prepare` printed them, with the report saved where it names."""
+    prepared = prepare(project, skill, "--slug", SLUG)
+    one = prepared["decisions"][0]
+    one.update(ask="Which step comes next?", if_none="The work waits.", relation="one-of",
+               recommended={"reply_word": "a", "why": "The check accepts the tree as it stands",
+                            "reverses_if": "a file under the delivery changes first",
+                            **recommended}, **decision)
+    for number, other in enumerate(one["others"]):
+        other.update(reply_word=f"x{number}", what_it_does="Another way, leaving this one open")
+    Path(prepared["report"]).write_text("full\n", encoding="utf-8")
+    return prepared, Path(prepared["report"])
+
+
+def render_kept(project: Path, prepared: dict) -> tuple[subprocess.CompletedProcess, dict]:
+    done = run("--render", "-", stdin=json.dumps(prepared), cwd=project)
+    kept = Path(prepared["report"]).with_suffix(".json")
+    return done, json.loads(kept.read_text(encoding="utf-8")) if kept.is_file() else {}
+
+
+def drop(prepared: dict, entry: str) -> None:
+    prepared["decisions"][0]["others"] = [door for door in prepared["decisions"][0]["others"]
+                                          if door["entry"] != entry]
+
+
+def test_a_recommended_door_that_lost_its_entry_takes_the_one_its_invocation_opens_with(project):
+    """«`--render` writes the `entry` and the `check` of the door a record recommends, from the
+    entry the door carries or the one its invocation opens with» (SPEC-006 R9)"""
+    prepared, _ = filled(project, "implement-task", {"door": "Review it now"},
+                         invocation=f"/review-change {project} --slug {SLUG}")
+    drop(prepared, "/review-change")
+    done, kept = render_kept(project, prepared)
+    assert done.returncode == 0, done.stdout
+    chosen = kept["decisions"][0]["recommended"]
+    assert chosen["entry"] == "/review-change" and chosen["check"]["answer"] == "accepts"
+    assert "entry" not in prepared["decisions"][0]["recommended"], "the record came without one"
+
+
+def test_a_recommended_door_with_no_entry_and_no_invocation_is_kept_as_it_came(project):
+    prepared, _ = filled(project, "implement-task", {"door": "Pick the review name yourself"})
+    drop(prepared, "/review-change")
+    done, kept = render_kept(project, prepared)
+    assert done.returncode == 0, done.stdout
+    assert "entry" not in kept["decisions"][0]["recommended"]
+    assert "check" not in kept["decisions"][0]["recommended"]
+
+
+def test_the_check_a_recommended_door_carries_is_run_again_when_the_record_is_rendered(project):
+    """The tree moved between `--prepare` and `--render`: the check the record carries said
+    `accepts`, and the check run now refuses, so the record is refused as `--prepare`'s would be."""
+    prepared, _ = filled(project, "implement-task", {"door": "Review it now"})
+    review = next(door for door in prepared["decisions"][0]["others"]
+                  if door["entry"] == "/review-change")
+    assert review["check"]["answer"] == "accepts"
+    drop(prepared, "/review-change")
+    prepared["decisions"][0]["recommended"].update(entry="/review-change", check=review["check"])
+    (project / "deliveries" / SLUG / "run").mkdir()
+    (project / "deliveries" / SLUG / "run/x.log").write_text("x\n", encoding="utf-8")
+    done, kept = render_kept(project, prepared)
+    assert done.returncode == 1 and "refused by its own entry point" in done.stdout
+    assert kept == {}, "a refused record is not kept"
+
+
+def test_a_door_of_others_with_an_entry_and_no_check_gets_its_check(project):
+    prepared, _ = filled(project, "implement-task", {"door": "Review it now",
+                                                     "entry": "/review-change"})
+    drop(prepared, "/review-change")
+    for other in prepared["decisions"][0]["others"]:
+        other.pop("check")
+    done, kept = render_kept(project, prepared)
+    assert done.returncode == 0, done.stdout
+    answers = {door["entry"]: door["check"]["answer"] for door in kept["decisions"][0]["others"]}
+    assert answers == {"/reconcile": "not checked"}
+
+
+def make_second_initiative(project: Path) -> None:
+    work = project / json.loads((project / "siegard.json").read_text())["work_root"]
+    (work / "another-initiative").mkdir()
+    (work / "another-initiative" / "intake.md").write_text("x\n", encoding="utf-8")
+
+
+def prepared_for_plan_work(project: Path, **decision) -> dict:
+    """A decision recommending `/plan-work` whose `state_from` names no slug, as `--prepare`
+    wrote it where the skill named none."""
+    prepared = prepare(project, "analyse")
+    assert "slug" not in prepared["state_from"]
+    one = prepared["decisions"][0]
+    one.update(ask="Plan the correction next?", if_none="The code stays as it is.",
+               relation="one-of", **decision)
+    one["recommended"] = {"reply_word": "a", "door": "Plan it", "entry": "/plan-work",
+                          "why": "The specification changed and the code did not",
+                          "reverses_if": "you want to read the specification first"}
+    one["others"] = [{"reply_word": "b", "what_it_does": "Leave it", "entry": "/reconcile",
+                      "check": {"answer": "not checked", "why": "no script decides it"}}]
+    Path(prepared["report"]).write_text("full\n", encoding="utf-8")
+    return prepared
+
+
+def test_a_door_that_needs_a_slug_is_checked_over_the_one_live_initiative_and_says_so(project):
+    prepared = prepared_for_plan_work(project)
+    done, kept = render_kept(project, prepared)
+    assert done.returncode == 0, done.stdout
+    check = kept["decisions"][0]["recommended"]["check"]
+    assert check["answer"] == "accepts" and check["inferred_slug"] == SLUG
+
+
+def test_a_slug_the_record_names_is_never_marked_inferred(project):
+    prepared = prepared_for_plan_work(project, invocation=f"/plan-work {project} --slug {SLUG}")
+    done, kept = render_kept(project, prepared)
+    assert done.returncode == 0, done.stdout
+    check = kept["decisions"][0]["recommended"]["check"]
+    assert check["answer"] == "accepts" and "inferred_slug" not in check
+
+
+def test_with_two_live_initiatives_no_slug_is_inferred_and_the_door_stays_unchecked(project):
+    make_second_initiative(project)
+    prepared = prepared_for_plan_work(project)
+    done, kept = render_kept(project, prepared)
+    assert done.returncode == 0, done.stdout
+    check = kept["decisions"][0]["recommended"]["check"]
+    assert check["answer"] == "not checked" and "inferred_slug" not in check
+
+
+def test_a_door_that_takes_no_slug_is_not_given_an_inferred_one(project):
+    prepared, _ = filled(project, "plan-work", {"door": "Deliver it", "entry": "/implement-task"})
+    drop(prepared, "/implement-task")
+    prepared["state_from"].pop("slug", None)
+    done, kept = render_kept(project, prepared)
+    assert "inferred_slug" not in kept["decisions"][0]["recommended"]["check"]
+
+
+def test_a_record_naming_no_project_directory_is_rendered_as_it_came(tmp_path):
+    data = record("record-en-two-decisions.json")
+    data["state"] = CONTRACT["x-labels"]["en"]["quiet"]
+    data["state_from"] = {"script": "progress.py", "project": str(tmp_path / "absent")}
+    assert handoff.completed(data) is data
+
+
+def test_a_check_that_cannot_run_is_not_checked_and_never_breaks_the_render():
+    def broken(*_):
+        raise RuntimeError("no registry")
+    check = handoff.check_as_it_stands("/review-change", Path("."), {}, "", broken)
+    assert check["answer"] == "not checked" and "no registry" in check["why"]
+
+
+def test_the_specification_states_what_render_writes_for_a_door():
+    text = (REPO / "specs/handoff.md").read_text(encoding="utf-8")
+    r9 = re.search(r"^- \*\*R9\*\* — (.*)$", text, re.M).group(1)
+    for words in ("`--render` writes the `entry` and the `check` of the door a record recommends",
+                  "`inferred_slug`"):
+        assert words in r9, words

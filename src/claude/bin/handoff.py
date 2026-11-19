@@ -50,6 +50,18 @@ script printed it, in a fence, and the term list does not read it. `--render` re
 recommended whose `check` says `refuses`, and a recommendation whose `why` or `reverses_if` is
 blank: «without all four, none is named» (SPEC-006 R2).
 
+`--render` writes the check of each door as the tree stands when it renders: «`--render` writes the
+`entry` and the `check` of the door a record recommends, from the entry the door carries or the
+one its invocation opens with, and a door of `others` that carries an `entry` and no `check` gets
+its check» (SPEC-006 R9). A door that takes a slug is checked over the slug `state_from` or the
+invocation names, else the one live initiative, which the check carries as `inferred_slug`. A door
+that carries no entry while a door the skill's report hands is absent from the record is noted on
+standard error where a grant is armed. Where the project holds an armed grant, `--render` also
+prints what `grant.py --decide` answers over the record's decisions on standard error, after the
+message on standard output: «`--render` asks the grant over the doors of the decision it rendered
+and prints its answer on standard error» (SPEC-011 R9); a session takes a `take`, sends a `judge` to
+the door decider and hands a `stop` to the person.
+
 `--check` reads a handoff already written as free text, where no record says what it holds, and
 decides only what the text alone decides: no term of `x-jargon` in its first `x-ceilings.opening`
 characters; and, where it hands a decision — `x-hands-a-decision` — a length within
@@ -92,6 +104,7 @@ Exit:   0 prepared: the skeleton on standard output; rendered: the message; or c
 
 from __future__ import annotations
 
+import copy
 import json
 import re
 import subprocess
@@ -114,6 +127,9 @@ REPORT_HEADING = re.compile(r"^(#{2,3}) (?:\d+\. )?(?:Report\b|The report\b)", r
 REFERENCE_REPORT = re.compile(r"# (?:Report\b|The report\b)")
 NEXT_DOOR = re.compile(r"`/([a-z][\w-]*)` invocation ready to paste")
 STATE_SCRIPTS = ("goal.py", "progress.py")
+INVOCATION_ENTRY = re.compile(r"^[ \t]*`?(/[a-z][\w-]*)(?=[ \t`]|$)")
+INVOCATION_SLUG = re.compile(r"--slug[ \t]+(\S+)")
+REPORT_SKILL = re.compile(r"Z-([a-z][\w-]*)\.md$")
 HANDOFF_DIR = ("siegard", "handoff")
 GIT_TIMEOUT_SECONDS = 5
 
@@ -374,6 +390,113 @@ def check_door(name: str, project: Path, slug: str | None, target: str | None,
     lines = door.check(name, project, args).lines(name)
     return {"answer": lines[0],
             "refused": [line[len("refused: "):] for line in lines if line.startswith("refused: ")]}
+
+
+def live_slug(project: Path) -> str | None:
+    """The one live initiative of the project, read as `progress.py` reads it: a directory under
+    the work root holding no `closure.md`; None where there are none or several."""
+    import door
+    try:
+        declared = json.loads((project / "siegard.json").read_text(encoding="utf-8"))
+        live = door.live_initiatives(project / declared["work_root"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    return live[0] if len(live) == 1 else None
+
+
+def check_as_it_stands(entry: str, project: Path, source: dict, invocation: str,
+                       check_of=check_door) -> dict:
+    """The check of a door named by its entry, run now: over the slug the record's `state_from`
+    names, else the one its invocation names, else the one live initiative, which the check
+    marks `inferred_slug` so that what read it is told it was not named."""
+    import door
+    name = entry.removeprefix("/")
+    slug = source.get("slug") or next(iter(INVOCATION_SLUG.findall(invocation)), None)
+    inferred = None
+    if slug is None and name in door.NAMED_SLUG:
+        slug = inferred = live_slug(project)
+    try:
+        check = check_of(name, project, slug, None, [])
+    except Exception as broken:
+        return {"answer": "not checked", "why": f"the check of /{name} could not run: {broken}"}
+    if inferred and check["answer"] != "not checked":
+        return {**check, "inferred_slug": inferred}
+    return check
+
+
+def completed(record: dict, check_of=check_door) -> dict:
+    """The record with each door's check written by this script as the tree stands now: «`--render`
+    writes the `entry` and the `check` of the door a record recommends, from the entry the door
+    carries or the one its invocation opens with, and a door of `others` that carries an `entry` and
+    no `check` gets its check» (SPEC-006 R9). A record naming no project, or a project that is no
+    directory, is returned as it came."""
+    source = record.get("state_from")
+    project = Path(source["project"]) if isinstance(source, dict) \
+        and isinstance(source.get("project"), str) else None
+    if record.get("kind") != "decision" or project is None or not project.is_dir():
+        return record
+    done = copy.deepcopy(record)
+    for decision in done.get("decisions") or []:
+        if not isinstance(decision, dict):
+            continue
+        invocation = decision.get("invocation") or ""
+        chosen = decision.get("recommended")
+        if isinstance(chosen, dict):
+            opening = INVOCATION_ENTRY.match(invocation)
+            if "entry" not in chosen and opening:
+                chosen["entry"] = opening.group(1)
+            if "entry" in chosen:
+                chosen["check"] = check_as_it_stands(chosen["entry"], project, source,
+                                                     invocation, check_of)
+        for door in decision.get("others") or []:
+            if isinstance(door, dict) and door.get("entry") and "check" not in door:
+                door["check"] = check_as_it_stands(door["entry"], project, source, invocation,
+                                                   check_of)
+    return done
+
+
+def dropped_doors(record: dict) -> list[str]:
+    """Where a door carries no `entry` while a door the skill's own report hands is absent from the
+    record, the doors absent: a door of the skeleton may have lost its entry in being moved."""
+    found = REPORT_SKILL.search(str(record.get("report") or ""))
+    if found is None or not (SKILLS / found.group(1) / "SKILL.md").is_file():
+        return []
+    doors = [door for decision in record.get("decisions") or []
+             for door in ([decision["recommended"]] if isinstance(decision.get("recommended"), dict)
+                          else []) + list(decision.get("others") or [])]
+    if all(door.get("entry") for door in doors):
+        return []
+    present = {door.get("entry") for door in doors}
+    return [f"/{name}" for name in next_doors(found.group(1)) if f"/{name}" not in present]
+
+
+def grant_answer(record: dict) -> list[str]:
+    """What the project's armed grant answers over the decisions of a rendered record, one line
+    each, for standard error: «`--render` asks the grant over the doors of the decision it
+    rendered and prints its answer on standard error» (SPEC-011 R9). Nothing where no grant is
+    armed; a line saying it was not asked where the grant could not be read."""
+    source = record.get("state_from")
+    if record.get("kind") != "decision" or not isinstance(source, dict) \
+            or not isinstance(source.get("project"), str):
+        return []
+    project = Path(source["project"])
+    try:
+        import goal
+        import grant
+    except ImportError as broken:
+        return [f"grant: not asked — {broken}"]
+    try:
+        lines, _ = grant.decide(project, record, source.get("slug") or live_slug(project))
+    except goal.Refused as refusal:
+        return [] if "no grant is armed" in str(refusal) else [f"grant: not asked — {refusal}"]
+    except Exception as broken:
+        return [f"grant: not asked — {broken}"]
+    missing = dropped_doors(record)
+    if missing:
+        lines.append(f"note: a door carries no entry while {', '.join(missing)} of the skeleton "
+                     f"is absent from the record; the grant answers a door by its entry — if "
+                     f"that door is one of them, carry its `entry` and render again")
+    return lines
 
 
 def report_path(project: Path, skill: str) -> Path | None:
@@ -637,6 +760,8 @@ def limits(contract: dict, language: str = "en") -> str:
             f"{ceilings['message']}\n"
             f"limits: a decision carries `recommended` (door, why, reverses_if, reply_word) or "
             f"`settles`; two doors or more carry `relation`: one-of, in-order or independent\n"
+            f"limits: a recommended door carries the `entry` its skeleton door holds, which "
+            f"`--render` checks again as the tree stands\n"
             f"limits: a body that recommends says the fact that would change it after "
             f"'{reverses}'; the record holds the skeleton's fields and no other\n"
             f"limits: no prose field carries " + ", ".join(words) + "\n")
@@ -782,6 +907,8 @@ def main() -> int:
     except json.JSONDecodeError as broken:
         print(f"cannot run: the record is not JSON: {broken}", file=sys.stderr)
         return CANNOT_RUN
+    if isinstance(record, dict):
+        record = completed(record)
     message, problems = render(record, contract, Path.cwd())
     for problem in problems:
         print(problem)
@@ -789,6 +916,9 @@ def main() -> int:
         return 1
     keep_record(record)
     print(message, end="")
+    if isinstance(record, dict):
+        for line in grant_answer(record):
+            print(line, file=sys.stderr)
     return 0
 
 

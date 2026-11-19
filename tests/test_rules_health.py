@@ -24,8 +24,8 @@ RULES = REPO / "src/claude/hooks/rules.md"
 BIN = REPO / "src/claude/bin"
 SCHEMAS = REPO / "src/claude/schemas"
 
-PINNED_LINES = 168
-PINNED_CHARACTERS = 13524
+PINNED_LINES = 169
+PINNED_CHARACTERS = 13617
 GUIDANCE_CEILING_LINES = 200
 
 SCRIPT_SPAN = re.compile(r"`bin/([a-z_]+)\.py([^`]*)`")

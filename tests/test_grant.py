@@ -565,8 +565,11 @@ def test_the_skill_is_closed_to_the_model_and_arms_only_through_the_script():
 
 def test_the_session_rules_send_a_stop_to_the_script_and_never_arm():
     rules = " ".join((REPO / "src/claude/hooks/rules.md").read_text(encoding="utf-8").split())
-    assert "a stop's doors go to the script first" in rules
-    for line in ("`bin/grant.py --decide <project-root> --record <record> --slug <slug>`",
+    assert "a stop's doors are answered when the handoff renders" in rules
+    for line in ("`--render` prints the grant's answer on standard error",
+                 "a `take:` line is taken", "a `judge:` line goes to `siegard:door-decider`",
+                 "a `stop:` line is handed to the person",
+                 "a `note:` line says a door lost its `entry`",
                  "`grant.py --commit <project-root> --file <path>...`",
                  "`grant.py --close <project-root> --slug <slug>`",
                  "Never run `grant.py --arm` outside `/siegard-grant`",
@@ -840,3 +843,96 @@ def test_deliver_scope_asks_the_grant_where_it_answers_a_stop_and_binds_the_same
     assert "no `decided:` line of this run took over the same task" in doors
     assert "## A judged door, under a grant" in doors and "ending `(grant sha256 <mark>)`" in doors
     assert "A goal arms no judged door" in goal_ref and "## A judged choice" not in goal_ref
+
+
+# ------------------------------------------------- the answer at the render of a stop (R9)
+
+HANDOFF = BIN / "handoff.py"
+
+
+def stop_record(project: dict, *, entry: bool = True, slug: str | None = SLUG) -> dict:
+    """A plan-work stop as a session fills `--prepare`'s skeleton: `/implement-task` recommended
+    and the other door `--prepare` printed beside it."""
+    args = ["--prepare", "--skill", "plan-work", "--project", str(project["home"])]
+    prepared = subprocess.run([sys.executable, "-B", str(HANDOFF), *args, *(["--slug", slug] if slug else [])],
+                              capture_output=True, text=True, check=True)
+    data = json.loads(prepared.stdout)
+    one = data["decisions"][0]
+    one.update(ask="Deliver the first task?", if_none="The plan waits.", relation="one-of",
+               recommended={"reply_word": "a", "door": "Deliver it", "why": "The check accepts",
+                            "reverses_if": "the task changes", **({"entry": "/implement-task"} if entry else {})},
+               others=[{"reply_word": "b", "what_it_does": "Replan first", "entry": "/plan-work",
+                        "check": {"answer": "accepts"}}])
+    Path(data["report"]).write_text("full\n", encoding="utf-8")
+    return data
+
+
+def declare_no_standard(project: dict) -> None:
+    """`standard: {app: null}`, as a project with no registry declares it, so that the doors'
+    own checks have every input they take."""
+    path = project["home"] / "siegard.json"
+    declared = json.loads(path.read_text(encoding="utf-8"))
+    path.write_text(json.dumps({**declared, "standard": {"app": None}}), encoding="utf-8")
+    commit(project["home"], "declare that the project holds no standard")
+
+
+def render_stop(project: dict, data: dict) -> subprocess.CompletedProcess:
+    return subprocess.run([sys.executable, "-B", str(HANDOFF), "--render", "-"],
+                          input=json.dumps(data), capture_output=True, text=True,
+                          cwd=project["home"])
+
+
+def test_rendering_a_stop_under_a_grant_prints_what_the_grant_answers_on_standard_error(project):
+    """«`--render` asks the grant over the doors of the decision it rendered and prints its answer
+    on standard error» (SPEC-011 R9): the recommended door is accepted beside an open door, so the
+    answer is `judge` with the budget left, and the message on standard output is the handoff."""
+    declare_no_standard(project)
+    assert arm(project, "--doors", "plan-work,implement-task", "--budget", "2").returncode == 0
+    done = render_stop(project, stop_record(project))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "decision 1: judge: spawn the door decider" in done.stderr
+    assert "budget left 2" in done.stderr
+    assert "door a: /implement-task" in done.stderr and "grant" not in done.stdout
+
+
+def test_rendering_a_stop_with_no_grant_armed_prints_nothing_on_standard_error(project):
+    declare_no_standard(project)
+    done = render_stop(project, stop_record(project))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert done.stderr == ""
+
+
+def test_a_recommended_door_with_no_entry_is_answered_stop_and_the_note_names_the_loss(project):
+    """The recommended door lost its entry in the move: the answer is `stop`, and the note says
+    which door of the skeleton the record no longer holds, so the record is rendered again."""
+    declare_no_standard(project)
+    assert arm(project, "--doors", "plan-work,implement-task", "--budget", "2").returncode == 0
+    done = render_stop(project, stop_record(project, entry=False))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "decision 1: stop: no recommended door is in the grant's doors" in done.stderr
+    assert "note: a door carries no entry while /implement-task" in done.stderr
+
+
+def test_rendering_a_stop_under_a_grant_of_another_version_says_it_ended(project):
+    """The first stop after an update says the grant ended, where it was only found out by a
+    commit or a closing asking."""
+    declare_no_standard(project)
+    assert arm(project, "--doors", "plan-work,implement-task", "--budget", "2").returncode == 0
+    held = record_of(project)
+    armed(project).write_text(json.dumps({**held, "version": "0.0.1"}), encoding="utf-8")
+    done = render_stop(project, stop_record(project))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "stop: the grant ended — the plugin runs" in done.stderr
+    assert not armed(project).exists() and len(ended_grants(project)) == 1
+
+
+def test_a_check_over_an_inferred_initiative_is_told_to_the_door_decider(project):
+    declare_no_standard(project)
+    assert arm(project, "--doors", "plan-work,implement-task", "--budget", "2",
+               slug=None).returncode == 0
+    data = stop_record(project, slug=None)
+    data["decisions"][0]["recommended"].update(entry="/plan-work")
+    data["decisions"][0]["others"][0].update(entry="/implement-task")
+    done = render_stop(project, data)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"(its check ran over {SLUG}, which the record did not name)" in done.stderr

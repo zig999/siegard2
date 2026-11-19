@@ -319,7 +319,10 @@ def decide_one(number: int, decision: dict, held: dict, fields: dict,
     for door in remaining:
         entry = door.get("entry") or "no entry point"
         what = door.get("what_it_does") or door.get("door") or ""
-        lines.append(f"  door {door['reply_word']}: {entry} — {what}")
+        inferred = (door.get("check") or {}).get("inferred_slug")
+        lines.append(f"  door {door['reply_word']}: {entry} — {what}"
+                     + (f" (its check ran over {inferred}, which the record did not name)"
+                        if inferred else ""))
     return lines
 
 

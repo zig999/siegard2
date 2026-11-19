@@ -301,7 +301,7 @@
     "entry": {
       "type": "string",
       "pattern": "^/[a-z][\\w-]*$",
-      "description": "The skill a door invokes, as its slash command — written by `--prepare` and carried unchanged wherever the agent places the door."
+      "description": "The skill a door invokes, as its slash command — written by `--prepare` and carried unchanged wherever the agent places the door; a recommended door that carries none takes the one its `invocation` opens with, where `--render` finds it."
     },
     "check": {
       "type": "object",
@@ -329,9 +329,14 @@
           "type": "string",
           "minLength": 1,
           "description": "For `not checked`: why no check ran."
+        },
+        "inferred_slug": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The initiative `--render` ran the check over where the record named none and the project holds one live initiative; absent where the record named the slug."
         }
       },
-      "description": "What the door's own entry point answered as the tree stood when `--prepare` ran, carried unchanged. A door whose answer is `refuses` is excluded: `--render` refuses it as `recommended`, and a door it accepts is not thereby recommended."
+      "description": "What the door's own entry point answered as the tree stood when `--prepare` ran, carried unchanged, or as it stands when `--render` wrote it. A door whose answer is `refuses` is excluded: `--render` refuses it as `recommended`, and a door it accepts is not thereby recommended."
     }
   },
   "x-ceilings": {

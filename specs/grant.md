@@ -118,8 +118,8 @@ bound a script on disk decides.
 
 ### Where a run meets it
 
-- **R9** — `bin/handoff.py --render` keeps the record it rendered, as JSON beside the report its `report` names, so that the run that receives a stop can ask the grant over the doors it handed. `bin/grant.py --decide --latest <skill> --after <commit>` answers over the newest record kept for that skill after that commit, and refuses where none was, so that a run never answers over the report of an earlier stop.
-- **R10** — Where the project holds an armed grant, the orchestrating entry point asks `bin/grant.py --decide` over the report of a step that stopped, before it ends the run: a `take` or a `judge` it answers is a door the run takes and goes on with, under a goal as without one, and a `stop` leaves the stop as it was. The same door over the same task is taken once in a run. A `decided:` line a grant took ends `(grant sha256 <digest>)`, and the grant's budget counts it. The digest is the grant's mark, and the budget counts only the lines that carry its own.
+- **R9** — `bin/handoff.py --render` keeps the record it rendered, as JSON beside the report its `report` names, so that the run that receives a stop can ask the grant over the doors it handed. `bin/grant.py --decide --latest <skill> --after <commit>` answers over the newest record kept for that skill after that commit, and refuses where none was, so that a run never answers over the report of an earlier stop. `--render` asks the grant over the doors of the decision it rendered and prints its answer on standard error — the `grant:` line and one line per decision, and, where a door carries no `entry` while a door the skill's report hands is absent from the record, a `note:` saying so — so that the answer reaches the session at the stop and not at the memory of a rule; nothing is printed where no grant is armed, and a grant of another version is ended there and the line says so. A `judge` line over a door whose check ran over an `inferred_slug` says so beside the door.
+- **R10** — Where the project holds an armed grant, the orchestrating entry point asks `bin/grant.py --decide` over the report of a step that stopped, before it ends the run: a `take` or a `judge` it answers is a door the run takes and goes on with, under a goal as without one, and a `stop` leaves the stop as it was. A session that rendered a stop's handoff takes the answer `--render` printed as `--decide` would have. The same door over the same task is taken once in a run. A `decided:` line a grant took ends `(grant sha256 <digest>)`, and the grant's budget counts it. The digest is the grant's mark, and the budget counts only the lines that carry its own.
 - **R11** — Where the project holds an armed grant holding `close`, a closing asks `bin/grant.py --close` over the initiative, named by `--slug`, before its marker is written, and a first line `refuses` stops it unless the person's own words in the session name that initiative's closing. The ask a closing persists is words copied whole — the grant's, read from the file the grant names, where the closing is taken under it, or else the person's own — and never a summary the session writes.
 
 ### The gates
@@ -178,6 +178,11 @@ bound a script on disk decides.
    `--slug` before the marker, to `grant.py --commit` before the closing's commit, and to
    persisting the ask copied whole, stated in the words above, and the session rules' invocation
    of `--close` to naming `--slug` — `tests/test_skill_contract.py`.
+8. For R9's answer at the render: a test holds `handoff.py --render` under an armed grant to printing `judge`
+   with the budget left on standard error for a recommended door its check accepts beside an open door, `stop`
+   with the note naming the lost entry where the recommended door carries none, nothing where no grant is armed,
+   the ending of a grant of another version, and the inferred initiative beside a door whose check ran over one —
+   `tests/test_grant.py`.
 
 ## Readings
 
@@ -299,3 +304,25 @@ bound a script on disk decides.
   Reversal: a door taken under a grant that the person reverts in more than one of ten, or a
   later audit that finds an act crossing a bound R7 or R8 names, narrows `doors` to the door R4
   takes without the decider.
+
+- 2026-11-19 — grounds for R9's answer at the render and for SPEC-006 R9's writing of the check,
+  read from the `configurator` and `inventory` sessions of the 24 hours before, with `productorder`
+  holding no decision. Ten decisions of five stops each were rendered; no session ran
+  `grant.py --decide` though the session rules' line stood in every context, and the budget stayed
+  at zero in all three consumers. Replayed over the records kept beside the reports and then run
+  for real over clones at the commit before each stop, with a grant of the plugin's version, all
+  five candidates answered `stop`: seven of the eight recommended doors carried no `entry`, which
+  `--prepare` writes only on the doors it places under `others`, and a `/plan-work` door after
+  `/analyse` was `not checked` because the skeleton was prepared before the plan's slug was named.
+  With the entry carried and the check run at the render, two of five answered `judge`, and four of
+  five with the one live initiative taken for the slug where the record named none; an
+  invocation's `--slug` alone resolved one in eleven of the recommended doors kept in the three
+  consumers. The fifth stayed `stop`: a `/reconcile` door is checked over a file set the record
+  does not carry, which `trace.py --reconcile-set` prints at 59 files in one of the clones, and
+  `door.py --check reconcile` leaves its certifications as `not decided`, so that door is not made
+  checkable here. A decision handing one door, with none excluded, is answered `judge` by the code
+  where R4's words read `take`; the two are not reconciled here. The `inventory` grant had been
+  armed under 5.124.0 and the plugin ran 5.125.0, so every stop of the day found a grant R3 had
+  ended and nothing had asked it. Reversal: a check run over an inferred initiative that a
+  reading of the next commit finds was the wrong one narrows the fallback to the slug the record
+  or its invocation names.
