@@ -118,7 +118,7 @@ bound a script on disk decides.
 
 ### Where a run meets it
 
-- **R9** — `bin/handoff.py --render` keeps the record it rendered, as JSON beside the report its `report` names, so that the run that receives a stop can ask the grant over the doors it handed. `bin/grant.py --decide --latest <skill> --after <commit>` answers over the newest record kept for that skill after that commit, and refuses where none was, so that a run never answers over the report of an earlier stop. `--render` asks the grant over the doors of the decision it rendered and prints its answer on standard error — the `grant:` line and one line per decision, and, where a door carries no `entry` while a door the skill's report hands is absent from the record, a `note:` saying so — so that the answer reaches the session at the stop and not at the memory of a rule; nothing is printed where no grant is armed, and a grant of another version is ended there and the line says so. A `judge` line over a door whose check ran over an `inferred_slug` says so beside the door.
+- **R9** — `bin/handoff.py --render` keeps the record it rendered, as JSON beside the report its `report` names, so that the run that receives a stop can ask the grant over the doors it handed. `bin/grant.py --decide --latest <skill> --after <commit>` answers over the newest record kept for that skill after that commit, and refuses where none was, so that a run never answers over the report of an earlier stop. `--render` asks the grant over the doors of the decision it rendered and prints its answer on standard error — the `grant:` line and one line per decision, and, where a decision's recommended door carries no `entry`, a `note:` saying so — so that the answer reaches the session at the stop and not at the memory of a rule; nothing is printed where no grant is armed, and a grant of another version is ended there and the line says so. A `judge` line over a door whose check ran over an `inferred_slug` says so beside the door.
 - **R10** — Where the project holds an armed grant, the orchestrating entry point asks `bin/grant.py --decide` over the report of a step that stopped, before it ends the run: a `take` or a `judge` it answers is a door the run takes and goes on with, under a goal as without one, and a `stop` leaves the stop as it was. A session that rendered a stop's handoff takes the answer `--render` printed as `--decide` would have. The same door over the same task is taken once in a run. A `decided:` line a grant took ends `(grant sha256 <digest>)`, and the grant's budget counts it. The digest is the grant's mark, and the budget counts only the lines that carry its own.
 - **R11** — Where the project holds an armed grant holding `close`, a closing asks `bin/grant.py --close` over the initiative, named by `--slug`, before its marker is written, and a first line `refuses` stops it unless the person's own words in the session name that initiative's closing. The ask a closing persists is words copied whole — the grant's, read from the file the grant names, where the closing is taken under it, or else the person's own — and never a summary the session writes.
 
@@ -181,7 +181,7 @@ bound a script on disk decides.
 8. For R9's answer at the render: a test holds `handoff.py --render` under an armed grant to printing `judge`
    with the budget left on standard error for a recommended door its check accepts beside an open door, `stop`
    with the note naming the lost entry where the recommended door carries none, nothing where no grant is armed,
-   the ending of a grant of another version, and the inferred initiative beside a door whose check ran over one —
+   the note for a recommended door with no entry, whether or not a door of the skeleton is absent, the ending of a grant of another version, and the inferred initiative beside a door whose check ran over one —
    `tests/test_grant.py`.
 
 ## Readings
@@ -326,3 +326,12 @@ bound a script on disk decides.
   ended and nothing had asked it. Reversal: a check run over an inferred initiative that a
   reading of the next commit finds was the wrong one narrows the fallback to the slug the record
   or its invocation names.
+- 2026-11-19 (later) — the note R9 prints was first written to fire only where a door of the skill's
+  report was absent from the record. Read over the ten records of the day, the configurator's
+  23:01 stop and the inventory's 15:05 stop kept every skeleton door under `others` and wrote the
+  recommended door beside them with no entry, so no door was absent, no note printed, and the
+  recommended door stayed unreadable. The note now fires for any decision whose recommended door
+  carries no entry, and names the skeleton's absent doors only where there are some. A recommended
+  door that is free text by design, 6 of the 18 kept, is noted too; the note is on standard
+  error and only where a grant is armed. Reversal: a reading of the sessions that finds the
+  note ignored as noise on free-text doors narrows it to the doors the skeleton handed.

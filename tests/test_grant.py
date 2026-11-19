@@ -910,7 +910,32 @@ def test_a_recommended_door_with_no_entry_is_answered_stop_and_the_note_names_th
     done = render_stop(project, stop_record(project, entry=False))
     assert done.returncode == 0, done.stdout + done.stderr
     assert "decision 1: stop: no recommended door is in the grant's doors" in done.stderr
-    assert "note: a door carries no entry while /implement-task" in done.stderr
+    assert "note: decision 1: the recommended door carries no entry" in done.stderr
+    assert "(the skeleton hands /implement-task beside the doors left)" in done.stderr
+
+
+def test_the_note_names_a_recommended_door_without_entry_though_every_skeleton_door_is_kept(project):
+    """The shape of two stops of the day before: the skeleton's doors stay under `others` and the
+    recommended door is written beside them with no entry, so no door of the skeleton is absent
+    and the note still says the recommended one cannot be answered."""
+    declare_no_standard(project)
+    assert arm(project, "--doors", "plan-work,implement-task", "--budget", "2").returncode == 0
+    data = stop_record(project, entry=False)
+    data["decisions"][0]["others"].append({"reply_word": "c", "what_it_does": "Deliver, kept as printed",
+                                           "entry": "/implement-task", "check": {"answer": "accepts"}})
+    done = render_stop(project, data)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "note: decision 1: the recommended door carries no entry" in done.stderr
+    assert "skeleton hands" not in done.stderr
+
+
+def test_a_grant_that_ended_at_the_render_adds_no_note(project):
+    declare_no_standard(project)
+    assert arm(project, "--doors", "plan-work,implement-task", "--budget", "2").returncode == 0
+    held = record_of(project)
+    armed(project).write_text(json.dumps({**held, "version": "0.0.1"}), encoding="utf-8")
+    done = render_stop(project, stop_record(project, entry=False))
+    assert "stop: the grant ended" in done.stderr and "note:" not in done.stderr
 
 
 def test_rendering_a_stop_under_a_grant_of_another_version_says_it_ended(project):

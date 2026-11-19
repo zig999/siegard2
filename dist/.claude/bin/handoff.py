@@ -55,8 +55,7 @@ blank: «without all four, none is named» (SPEC-006 R2).
 one its invocation opens with, and a door of `others` that carries an `entry` and no `check` gets
 its check» (SPEC-006 R9). A door that takes a slug is checked over the slug `state_from` or the
 invocation names, else the one live initiative, which the check carries as `inferred_slug`. A door
-that carries no entry while a door the skill's report hands is absent from the record is noted on
-standard error where a grant is armed. Where the project holds an armed grant, `--render` also
+recommended with no entry is noted on standard error where a grant is armed. Where the project holds an armed grant, `--render` also
 prints what `grant.py --decide` answers over the record's decisions on standard error, after the
 message on standard output: «`--render` asks the grant over the doors of the decision it rendered
 and prints its answer on standard error» (SPEC-011 R9); a session takes a `take`, sends a `judge` to
@@ -455,19 +454,26 @@ def completed(record: dict, check_of=check_door) -> dict:
     return done
 
 
-def dropped_doors(record: dict) -> list[str]:
-    """Where a door carries no `entry` while a door the skill's own report hands is absent from the
-    record, the doors absent: a door of the skeleton may have lost its entry in being moved."""
+def unentered_recommendations(record: dict) -> list[str]:
+    """One line per decision whose recommended door carries no `entry`, naming the doors of the
+    skeleton the record no longer holds where the skill's own report hands any: the grant answers
+    a door by its entry, and a door moved out of `others` may have lost it on the way."""
     found = REPORT_SKILL.search(str(record.get("report") or ""))
-    if found is None or not (SKILLS / found.group(1) / "SKILL.md").is_file():
-        return []
-    doors = [door for decision in record.get("decisions") or []
-             for door in ([decision["recommended"]] if isinstance(decision.get("recommended"), dict)
-                          else []) + list(decision.get("others") or [])]
-    if all(door.get("entry") for door in doors):
-        return []
-    present = {door.get("entry") for door in doors}
-    return [f"/{name}" for name in next_doors(found.group(1)) if f"/{name}" not in present]
+    handed = next_doors(found.group(1)) if found and (SKILLS / found.group(1) / "SKILL.md").is_file() \
+        else []
+    lines = []
+    for number, decision in enumerate(record.get("decisions") or [], 1):
+        chosen = decision.get("recommended") if isinstance(decision, dict) else None
+        if not isinstance(chosen, dict) or chosen.get("entry"):
+            continue
+        present = {door.get("entry") for door in decision.get("others") or []}
+        absent = [f"/{name}" for name in handed if f"/{name}" not in present]
+        lines.append(f"note: decision {number}: the recommended door carries no entry, and the "
+                     f"grant answers a door by its entry — if it is a door to a skill, carry the "
+                     f"`entry` its skeleton door holds"
+                     + (f" (the skeleton hands {', '.join(absent)} beside the doors left)"
+                        if absent else "") + " and render again")
+    return lines
 
 
 def grant_answer(record: dict) -> list[str]:
@@ -491,11 +497,8 @@ def grant_answer(record: dict) -> list[str]:
         return [] if "no grant is armed" in str(refusal) else [f"grant: not asked — {refusal}"]
     except Exception as broken:
         return [f"grant: not asked — {broken}"]
-    missing = dropped_doors(record)
-    if missing:
-        lines.append(f"note: a door carries no entry while {', '.join(missing)} of the skeleton "
-                     f"is absent from the record; the grant answers a door by its entry — if "
-                     f"that door is one of them, carry its `entry` and render again")
+    if not lines[0].startswith("stop: the grant ended"):
+        lines.extend(unentered_recommendations(record))
     return lines
 
 
