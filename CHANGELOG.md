@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.133.0 — 2026-11-19
+
+Arming a grant over one that still stands ends it in `grants-ended.jsonl` as `replaced`, says what it held, and arms the new one, so the person needs no `--clear` first; a refused arming leaves the standing grant in place (SPEC-011 R1, R3). (`4b8cccf`)
+
 ## 5.132.0 — 2026-11-19
 
 The note `handoff.py --render` prints on standard error under an armed grant fires for any decision whose recommended door carries no `entry`, and names the skeleton's absent doors only where there are some, so a recommended door written beside the skeleton's kept doors is no longer left unreadable to the grant in silence (SPEC-011 R9). (`193fb20`)
