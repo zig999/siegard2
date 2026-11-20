@@ -2434,7 +2434,9 @@ def stands_reading(nid: str, front: dict, task_file: Path,
     The door is a line of its own, `door: /reconcile …`, so the delivery hands it as printed and
     never composes the file set or the candidates. A refusal naming only a file bound to no node
     the task implements has no door: the file is no `stands` file, and the return that named it
-    answers again without it."""
+    answers again without it. A task that implements no node reads nothing here: «A task that
+    implements no node is held to no binding: its record carries `stands` over the files that hold
+    the fact and no `nodes`, and the writer reads no trace for it» (SPEC-004 R20)."""
     stands = [p for p in listed(front, "stands") if isinstance(p, str)]
     if not stands:
         return [], None
@@ -2447,6 +2449,10 @@ def stands_reading(nid: str, front: dict, task_file: Path,
     task_front = spec.parse_node(task_file)[0]
     implements = [n for n in listed(task_front if isinstance(task_front, dict) else {},
                                     "implements") if isinstance(n, str)]
+    if not implements:
+        return [f"{path} is no file {target} holds; a `stands` file of a task that implements no "
+                f"node is held to the tree alone, and a file that is not there certifies nothing"
+                for path in stands if not Path(path).is_absolute() and not (target / path).is_file()], None
     import trace
     home = project.toplevel_of(target)
     offset = PurePosixPath(trace.offset_of(target, home))

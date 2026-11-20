@@ -702,6 +702,60 @@ def doors_of(prepared: dict) -> dict[str, dict]:
             for door in decision["others"]}
 
 
+def two_targets(home: Path) -> None:
+    from test_door import declare
+    (home / "web").mkdir()
+    (home / "web/.keep").write_text("", encoding="utf-8")
+    declare(home, targets={"app": "target", "web": "web"}, standard={"app": None, "web": None})
+    commit(home)
+
+
+def refused_of(prepared: dict, entry: str) -> list[str]:
+    return doors_of(prepared)[entry].get("refused", [])
+
+
+def test_a_door_is_checked_over_the_target_the_armed_goal_names(project):
+    """«A door that takes a target and is checked with none named is checked over the target the
+    armed goal names, where the check runs over that goal's own initiative» (SPEC-006 R9)"""
+    two_targets(project)
+    arm(project)
+    prepared = prepare(project, "analyse", "--slug", SLUG)
+    check = doors_of(prepared)["/plan-work"]
+    assert not any("no target named" in line for line in check.get("refused", [])), check
+
+
+def test_with_no_goal_armed_a_project_of_two_targets_still_refuses_for_want_of_one(project):
+    two_targets(project)
+    prepared = prepare(project, "analyse", "--slug", SLUG)
+    assert any("no target named" in line for line in refused_of(prepared, "/plan-work"))
+
+
+def test_a_goal_over_another_initiative_names_no_target_for_this_one(project):
+    two_targets(project)
+    arm(project)
+    prepared = prepare(project, "analyse", "--slug", "another-initiative")
+    assert any("no target named" in line for line in refused_of(prepared, "/plan-work"))
+
+
+def test_a_target_named_wins_over_the_goal_s(project):
+    two_targets(project)
+    arm(project)
+    prepared = prepare(project, "analyse", "--slug", SLUG, "--target", "web")
+    assert not any("no target named" in line for line in refused_of(prepared, "/plan-work"))
+
+
+def test_render_checks_the_recommended_door_over_the_armed_goal_s_target(project):
+    two_targets(project)
+    arm(project)
+    record = {"entry": "/plan-work"}
+    done = handoff.completed({"kind": "decision", "state_from": {"script": "goal.py",
+                                                                  "project": str(project)},
+                              "decisions": [{"invocation": f"/siegard:plan-work --slug {SLUG}",
+                                             "recommended": record, "others": []}]})
+    check = done["decisions"][0]["recommended"]["check"]
+    assert not any("no target named" in line for line in check.get("refused", [])), check
+
+
 def test_every_door_a_report_hands_ready_to_paste_is_named_from_its_own_file():
     assert handoff.next_doors("plan-work") == ["implement-task"]
     assert sorted(handoff.next_doors("implement-task")) == ["reconcile", "review-change"]

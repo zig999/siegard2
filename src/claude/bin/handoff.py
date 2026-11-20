@@ -55,6 +55,10 @@ blank: «without all four, none is named» (SPEC-006 R2).
 one its invocation opens with, and a door of `others` that carries an `entry` and no `check` gets
 its check» (SPEC-006 R9). A door that takes a slug is checked over the slug `state_from` or the
 invocation names, else the one live initiative, which the check carries as `inferred_slug`. A door
+that takes a target is checked over the one the armed goal names where none is named and the check
+runs over the goal's own initiative: «A door that takes a target and is checked with none named is
+checked over the target the armed goal names, where the check runs over that goal's own
+initiative» (SPEC-006 R9). A door
 recommended with no entry is noted on standard error where a grant is armed. Where the project holds an armed grant, `--render` also
 prints what `grant.py --decide` answers over the record's decisions on standard error, after the
 message on standard output: «`--render` asks the grant over the doors of the decision it rendered
@@ -370,6 +374,17 @@ def next_doors(skill: str) -> list[str]:
     return doors
 
 
+def goal_target(project: Path, slug: str | None) -> str | None:
+    """The target the armed goal names, for a check that names none: «A door that takes a target
+    and is checked with none named is checked over the target the armed goal names, where the check
+    runs over that goal's own initiative» (SPEC-006 R9). A check over another initiative, or over
+    none, takes nothing from the goal."""
+    record = armed_goal(project)
+    if record is None or not isinstance(record.get("target"), str):
+        return None
+    return record["target"] if slug is None or slug == record.get("slug") else None
+
+
 def check_door(name: str, project: Path, slug: str | None, target: str | None,
                files: list[str]) -> dict:
     """`door.py --check`'s first line and `refused:` facts for the door, or `not checked` and
@@ -384,6 +399,7 @@ def check_door(name: str, project: Path, slug: str | None, target: str | None,
                        "prints, and no script here decides what it refuses"}
     if name in door.NAMED_SLUG and not slug:
         return {"answer": "not checked", "why": f"/{name} takes a slug, and none was named"}
+    target = target or goal_target(project, slug)
     args = {"target": target, "slug": slug, "task": [], "name": None, "scope": [], "file": files,
             "standard": None}
     lines = door.check(name, project, args).lines(name)

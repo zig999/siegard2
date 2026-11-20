@@ -176,10 +176,11 @@ a change to have a record is the failure: «A delivery whose implementer finds e
 the task already met by source the tree holds writes no source: its implementation record carries
 `stands` over the files that hold the fact» (SPEC-004 R20). Return the mapping with `stands`
 listing those files, spelled from the target source root, and `files: []` — the one empty list a
-return carries; each criterion `met: true`, its `how` naming the file that holds it; each node its
-`how` saying where its fact is held, and never `encoded_at`. A criterion you cannot place in a
-file is not met. The record writer holds `stands` to the trace and may refuse it; asked again with
-its refusal, drop a file it names as bound to no node the task implements, and keep the rest.
+return carries; each criterion `met: true`, its `how` naming the holding file; each node its
+`how` saying where its fact is held, never `encoded_at`, and no `nodes` for a task with
+none. A criterion you cannot place in a file is not met. The record writer holds `stands` to the
+trace and may refuse it; asked again, drop a file it names as bound to no node of
+the task, keep the rest.
 
 **On a re-delivery, where every file that holds the fact is one the earlier record names**, keep
 `files`: «A re-delivery of a task whose own earlier implementation record names every file that

@@ -819,6 +819,62 @@ def test_a_task_that_binds_nothing_can_be_delivered(delivery, work, root, target
     assert problems_of(delivery, work, target, root) == []
 
 
+def scaffold_task(work, write_plan) -> None:
+    write_plan("task/checkout/scaffold", {
+        "title": "Scaffold", "summary": "Set the toolchain up.",
+        "objective": "The project builds and its suite runs.",
+        "criteria": ["The suite runs and reports."],
+        "rationale": "No base node governs the toolchain; the plan decided this cut itself."})
+
+
+def scaffold_record(work, **changed) -> dict:
+    return {"title": "Scaffold", "summary": "The toolchain this project builds with.",
+            "task": task_pin_of(work, "task/checkout/scaffold"),
+            "files": [], "stands": ["package.json"],
+            "criteria": [{"criterion": "The suite runs and reports.", "met": True,
+                          "how": "package.json declares the script that runs the runner"}],
+            **changed}
+
+
+def test_a_task_that_implements_no_node_is_delivered_by_a_record_that_stands(
+        delivery, work, root, target, sound_delivery, write_plan, write_delivery):
+    """«A task that implements no node is held to no binding: its record carries `stands` over the
+    files that hold the fact and no `nodes`» (SPEC-004 R20). Before this the contract made that
+    record impossible: `stands` required `nodes`, and a task with no node has none to give."""
+    scaffold_task(work, write_plan)
+    (target / "package.json").write_text("{}\n", encoding="utf-8")
+    write_delivery("implementation/checkout/scaffold", scaffold_record(work))
+    assert problems_of(delivery, work, target, root) == []
+
+
+def test_a_task_that_implements_no_node_still_stands_only_where_the_tree_holds_the_file(
+        delivery, work, root, target, sound_delivery, write_plan, write_delivery):
+    scaffold_task(work, write_plan)
+    write_delivery("implementation/checkout/scaffold", scaffold_record(work))
+    said(problems_of(delivery, work, target, root),
+         "says the implementation stands at package.json, and")
+
+
+def test_a_task_that_implements_no_node_and_stands_writes_no_file(
+        delivery, work, root, target, sound_delivery, write_plan, write_delivery):
+    scaffold_task(work, write_plan)
+    (target / "package.json").write_text("{}\n", encoding="utf-8")
+    write_delivery("implementation/checkout/scaffold", scaffold_record(
+        work, files=[{"path": "package.json", "effect": "rewrote it"}]))
+    said(problems_of(delivery, work, target, root), "files")
+
+
+def test_a_task_that_implements_a_node_still_owes_its_nodes_where_it_stands(
+        delivery, work, root, target, sound_delivery, write_plan, write_delivery):
+    """The exemption is the task's, not the record's: leaving `nodes` out over a task that
+    implements one is a node the specification goes unanswered for."""
+    stand(work, delivery, target, write_plan, write_delivery, ["src/orders/place.ts"])
+    record = json_front(delivery, "implementation/checkout/record-order")
+    record.pop("nodes")
+    write_delivery("implementation/checkout/record-order", record)
+    said(problems_of(delivery, work, target, root), "does not say how the source answers to it")
+
+
 # ---------------------------------------------------- the proof and its subject
 
 
@@ -3179,6 +3235,48 @@ def standing(tmp_path, target) -> Path:
 def write_standing(delivery, planned, standing) -> "subprocess.CompletedProcess":
     return writer("--write-implementation", delivery, TASK, "--target", "app",
                   "--task-file", planned, "--from-text", standing)
+
+
+def test_a_record_that_stands_over_a_task_implementing_no_node_names_a_file_the_tree_lacks(
+        planned, delivery, work, root, target, standing, write_plan):
+    front = json_front(work, "task/checkout/record-order")
+    front.pop("implements")
+    front["rationale"] = "No base node governs this file; the plan decided this cut itself."
+    write_plan("task/checkout/record-order", front)
+    other = json_front(work, "task/checkout/bill-order")
+    other["implements"] = sorted({*other["implements"], "domain/sales/order"})
+    write_plan("task/checkout/bill-order", other)
+    derive_plan(work, root)
+    mapping = yaml.safe_load(standing.read_text(encoding="utf-8"))
+    mapping.pop("nodes")
+    mapping["stands"] = ["src/orders/nowhere.ts"]
+    standing.write_text(yaml.safe_dump(mapping, sort_keys=False), encoding="utf-8")
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 1 and "src/orders/nowhere.ts is no file" in done.stdout
+    assert not (delivery / "implementation/checkout/record-order.md").exists()
+
+
+def test_a_record_that_stands_over_a_task_implementing_no_node_is_written_without_reading_the_trace(
+        planned, delivery, work, root, target, standing, write_plan):
+    """«A task that implements no node is held to no binding: its record carries `stands` over the
+    files that hold the fact and no `nodes`, and the writer reads no trace for it» (SPEC-004 R20):
+    no binding was written for the file, and none is asked for."""
+    front = json_front(work, "task/checkout/record-order")
+    front.pop("implements")
+    front["rationale"] = "No base node governs this file; the plan decided this cut itself."
+    write_plan("task/checkout/record-order", front)
+    other = json_front(work, "task/checkout/bill-order")
+    other["implements"] = sorted({*other["implements"], "domain/sales/order"})
+    write_plan("task/checkout/bill-order", other)
+    derive_plan(work, root)
+    mapping = yaml.safe_load(standing.read_text(encoding="utf-8"))
+    mapping.pop("nodes")
+    standing.write_text(yaml.safe_dump(mapping, sort_keys=False), encoding="utf-8")
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 0, done.stdout + done.stderr
+    written = json_front(delivery, "implementation/checkout/record-order")
+    assert written["stands"] == [STANDING_FILE] and written["files"] == []
+    assert "nodes" not in written
 
 
 def test_a_record_that_stands_keeps_the_empty_file_list_its_contract_requires(
