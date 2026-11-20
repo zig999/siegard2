@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.133.3 — 2026-11-20
+
+The specification-conformance reviewer files a development tool's defaults, flags and exit codes, and how a test is arranged, in `looked_past` and not as facts the specification does not hold: «The stack is never a node» (SPEC-003 §Rule). (`5853506`)
+
 ## 5.133.2 — 2026-11-20
 
 A door `handoff.py` checks with no target named is checked over the target the armed goal names, where the check runs over that goal's own initiative (SPEC-006 R9); a task that implements no node is delivered by a record that carries `stands` and no `nodes`, which the writer holds to the tree alone (SPEC-004 R20, R26). (`aedc207`)
