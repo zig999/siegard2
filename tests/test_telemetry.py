@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -611,6 +612,51 @@ def test_a_transcript_whose_entries_carry_other_keys_is_unreadable_not_zero(cons
     assert report["harness"]["readable"] is False
     unavailable = {p["section"]: p["unavailable"] for p in report["provenance"]}
     assert "no entry carries the keys" in unavailable["agents"]
+
+
+def test_a_session_holding_only_its_metadata_does_not_hide_the_conversations_before_it(consumer):
+    """A session opened and closed without a turn writes metadata entries and nothing else. Being
+    the newest file, it must not decide whether the directory's conversations can be counted."""
+    mixed = consumer["tmp"] / "mixed"
+    mixed.mkdir()
+    shutil.copy(next(Path(consumer["transcripts"]).glob("*.jsonl")), mixed / "s1.jsonl")
+    metadata = mixed / "s2.jsonl"
+    metadata.write_text(line(type="custom-title", customTitle="x", sessionId="s2")
+                        + line(type="mode", mode="normal", sessionId="s2"), encoding="utf-8")
+    later = (mixed / "s1.jsonl").stat().st_mtime + 100
+    os.utime(metadata, (later, later))
+    probe = run("--probe", consumer["home"], "--since", SINCE, "--until", UNTIL,
+                "--transcripts", mixed)
+    assert f"transcripts: {mixed} — readable" in probe.stdout, probe.stdout
+    assert "sessions overlapping the window: 1" in probe.stdout
+
+
+def test_a_directory_holding_only_metadata_sessions_stays_unavailable(consumer):
+    only = consumer["tmp"] / "only-metadata"
+    only.mkdir()
+    (only / "s2.jsonl").write_text(line(type="mode", mode="normal", sessionId="s2"),
+                                   encoding="utf-8")
+    probe = run("--probe", consumer["home"], "--since", SINCE, "--until", UNTIL,
+                "--transcripts", only)
+    assert "no entry carries the keys this reader counts" in probe.stdout
+
+
+def test_a_newest_conversation_in_a_renamed_shape_is_unreadable_though_an_older_one_is_not(consumer):
+    """The metadata pass-over is for sessions with no conversation, never for one whose
+    conversation the reader cannot count: a harness that renamed a key mid-way would otherwise be
+    read as the older shape and undercount silently."""
+    mixed = consumer["tmp"] / "renamed-newest"
+    mixed.mkdir()
+    shutil.copy(next(Path(consumer["transcripts"]).glob("*.jsonl")), mixed / "s1.jsonl")
+    newer = mixed / "s3.jsonl"
+    newer.write_text(line(type="user", time="2026-08-20T10:05:00.000Z", sessionId="s3",
+                          body={"role": "user", "content": "go on"}), encoding="utf-8")
+    later = (mixed / "s1.jsonl").stat().st_mtime + 100
+    os.utime(newer, (later, later))
+    probe = run("--probe", consumer["home"], "--since", SINCE, "--until", UNTIL,
+                "--transcripts", mixed)
+    assert "no entry carries the keys this reader counts" in probe.stdout
+    assert "s3.jsonl" in probe.stdout
 
 
 def test_the_probe_announces_a_worktree_sited_outside_the_tree(consumer):

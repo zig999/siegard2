@@ -538,28 +538,40 @@ def session_files(root: Path, main: Path, worktree: str | None) -> list[tuple[Pa
 
 
 TRANSCRIPT_KEYS = ("type", "timestamp", "message")
+CONVERSATION_TYPES = ("user", "assistant")
 
 
 def probe_transcripts(root: Path) -> tuple[bool, str | None]:
     """Whether the root can be read, and whether what it holds is the shape this reader counts.
     The format is the harness's and undocumented: a transcript whose entries carry other keys
     parses cleanly and counts as nothing, and a report over it would read as zero sessions and
-    complete. So the newest transcript must hold at least one entry carrying every key the
-    counting reads; a root holding no transcript at all is an honest zero."""
+    complete. So the newest transcript that holds a conversation — an entry typed `user` or
+    `assistant` — must hold at least one entry carrying every key the counting reads. A
+    transcript holding no conversation, a session opened and closed with only its metadata
+    written, says nothing about the shape and is passed over; where every transcript is of that
+    kind the newest is the one reported. A root holding no transcript at all is an honest zero."""
     if not root.is_dir():
         return False, f"{root} is not a directory"
     if not os.access(root, os.R_OK | os.X_OK):
         return False, f"{root} is not readable"
     try:
-        newest = max(root.rglob("*.jsonl"), key=lambda path: path.stat().st_mtime, default=None)
+        newest_first = sorted(root.rglob("*.jsonl"), key=lambda path: path.stat().st_mtime,
+                              reverse=True)
     except OSError as broken:
         return False, f"{root} cannot be listed: {broken}"
-    if newest is None:
+    if not newest_first:
         return True, None
-    if not any(all(key in entry for key in TRANSCRIPT_KEYS) for entry in entries_of(newest)):
-        return False, (f"{newest}: no entry carries the keys this reader counts: "
+    def unreadable(path: Path) -> tuple[bool, str]:
+        return False, (f"{path}: no entry carries the keys this reader counts: "
                        f"{', '.join(TRANSCRIPT_KEYS)}")
-    return True, None
+
+    for path in newest_first:
+        entries = list(entries_of(path))
+        if any(all(key in entry for key in TRANSCRIPT_KEYS) for entry in entries):
+            return True, None
+        if any(entry.get("type") in CONVERSATION_TYPES for entry in entries):
+            return unreadable(path)
+    return unreadable(newest_first[0])
 
 
 def entries_of(path: Path):
