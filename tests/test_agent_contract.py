@@ -195,3 +195,14 @@ def test_a_stack_fact_has_a_home_outside_the_specification_wherever_nodes_are_wr
     assert "outcome: <stated | decided | contradicted | standard>" in decider
     assert "rule: <one sentence the person could add to the standard" in decider
     assert "**`standard`**" in routing and "the task is not stopped" in routing
+
+
+def test_the_conformance_reviewer_leaves_the_stack_to_the_standard():
+    """«The stack is never a node» (SPEC-003 §Rule), so a default, a flag, an exit code or a message
+    of a development tool, and how a test is arranged, are no finding of the specification pass: the
+    reviewer names them in `looked_past`. Without the line a reviewer reads a tool's defaults as
+    facts the business never stated, over a plan that already routed them to the standard."""
+    text = " ".join((AGENTS_DIR / "specification-conformance-reviewer.md")
+                    .read_text(encoding="utf-8").split())
+    assert "«The stack is never a node» (SPEC-003 §Rule)" in text
+    assert "how a test is arranged, are no finding: `looked_past`" in text

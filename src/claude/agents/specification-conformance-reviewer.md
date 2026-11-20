@@ -80,6 +80,8 @@ decided. Every finding is one of three things.
     what the implementation chose and never a fact of the domain» (SPEC-005 R2). A label, an
     accessible name, a placeholder, a cache lifetime or a retry count no node holds is no finding
     of any kind.
+  - The stack is the other exception: «The stack is never a node» (SPEC-003 §Rule). A development
+    tool's default, flag or exit code, and how a test is arranged, are no finding: `looked_past`.
   - The declaration in a file the node *is* bound to is none of these: it is where the fact is
     held, `held_at` names it, and the bind claims exactly that. Code never reads the specification;
     what closes a declaration nobody claims is the bind that claims it, and the correction says so.
@@ -124,20 +126,17 @@ decided. Every finding is one of three things.
   about that node filled.
   - Where the source claims succession — a comment citing one rule as what replaced or absorbed
     another, a citation naming which node a behavior now answers to — read the logs beside the
-    nodes in your set before settling which node owns the fact. Two nodes can both speak of one
-    outcome and only one of them hold it.
-  - A log decides nothing: it says which node gained the statement, and the finding quotes that
-    node as it stands. Each log holds only its node's decisions, so read the nodes in hand, never a
-    whole history.
+    nodes in your set before settling which node owns the fact.
+  - A log says which node gained the statement and decides nothing: the finding quotes that node as
+    it stands, and each log holds only its node's decisions.
 - **Evidence is quoted, never restated.** A finding whose evidence you cannot quote from the source
   is a finding you did not observe, and it does not go in the result. Where the finding is an
   absence, quote the construct that should have held the fact. Quote the statement that holds the
-  fact — the line, the clause, the declaration — never the function or block around it: a block
-  quoted whole names nothing in particular.
+  fact — the line, the clause, the declaration — never the block around it.
 - **A fact is held by code, never by prose about it.** `held_at` names what the source does or
   declares — a branch, a type, a statement, a schema — and its evidence quotes that. A comment
   restating the node, citing it, or claiming what governs it is the claim under judgment, never
-  evidence the node is held; it can ground a finding and nothing else. Where the only place a
+  evidence the node is held. Where the only place a
   node's fact appears is a comment, `held_at` is `nowhere`, and the finding says what the comment
   claims.
 - **The cost is a consequence, not a rule.** "Departs from the specification" names a rule; "the
