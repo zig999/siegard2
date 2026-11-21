@@ -1,0 +1,3 @@
+{"contract_version":"siegard-handoff/1","kind":"decision","language":"pt-BR","state":"lending · task 0/1 delivered · phase delivery","state_from":{"script":"progress.py","project":"<project>","slug":"lending"},
+"decisions":[{"ask":"O plano da multa por atraso está pronto, com uma tarefa. Entrego a tarefa agora?","recommended":{"door":"/implement-task <project> lending app task/fees/compute-late-fee","why":"É a única tarefa do plano e nada a bloqueia.","reverses_if":"você quiser mudar o plano antes.","reply_word":"entregar","entry":"/implement-task"},"others":[],"if_none":"A tarefa fica sem entrega.","relation":"one-of"}],
+"report":""}

@@ -126,6 +126,9 @@ bound a script on disk decides.
 - **R10** — Where the project holds an armed grant, the orchestrating entry point asks `bin/grant.py --decide` over the report of a step that stopped, before it ends the run: a `take` or a `judge` it answers is a door the run takes and goes on with, under a goal as without one, and a `stop` leaves the stop as it was. A session that rendered a stop's handoff takes the answer `--render` printed as `--decide` would have. The same door over the same task is taken once in a run. A `decided:` line a grant took ends `(grant sha256 <digest>)`, and the grant's budget counts it. The digest is the grant's mark, and the budget counts only the lines that carry its own.
 - **R11** — Where the project holds an armed grant holding `close`, a closing asks `bin/grant.py --close` over the initiative, named by `--slug`, before its marker is written, and a first line `refuses` stops it unless the person's own words in the session name that initiative's closing. The ask a closing persists is words copied whole — the grant's, read from the file the grant names, where the closing is taken under it, or else the person's own — and never a summary the session writes.
 
+- **R12** — Where the project holds a grant armed under the plugin's version, each `take` and `judge` a command prints — `bin/handoff.py --render` or `bin/grant.py --decide` — is an obligation of the session that ran it, which the plugin's `PostToolUse` hook records under the repository's git directory, never in the tree, from the command's own output and never from the session's transcript; a new answer replaces the obligations an earlier one left. A `take` is carried out by a `Skill` invocation of the door it named, a `judge` by an `Agent` spawn of `siegard:door-decider`. A stop of a session whose obligation is not carried out is blocked once by the plugin's `Stop` hook, its reason the grant's line and what carries it out, and the session's next stop is allowed whatever it holds. Each recording, carrying out, block and release is one line of `grant-checks.jsonl` beside the grant. `SIEGARD_GRANT_STOP` set to `measure` logs a stop's block without blocking; an armed goal's `not yet` answers its stop first, and a stop the grant blocks is not read by the handoff check.
+- **R13** — Under the same grant, a stop whose message `bin/handoff.py`'s reading says hands the person a decision, and which names a door of the six, with no answer printed since the session's last stop, is one line of `grant-checks.jsonl`: it is logged and never blocked.
+
 ### The gates
 
 - **R7** — `bin/grant.py --commit`, over the paths a commit names, answers `accepts` only where the
@@ -188,6 +191,7 @@ bound a script on disk decides.
    with the note naming the lost entry where the recommended door carries none, nothing where no grant is armed,
    the note for a recommended door with no entry, whether or not a door of the skeleton is absent, the ending of a grant of another version, and the inferred initiative beside a door whose check ran over one —
    `tests/test_grant.py`.
+9. For R12 and R13: tests hold `grant.py`'s reading of a render's output to one obligation per `take` and `judge` with the grant's mark and none for `stop`, the obligation to being carried out by the door's `Skill` and the decider's `Agent` and by nothing else, a stop with an obligation pending to one block and then a release, `measure` to never blocking, a stop that hands an unrendered decision naming a door to one logged line and no block, and a grant of another version or none to silence — `tests/test_grant.py`; and the hooks to the declaration, to the goal's `not yet` answering first and to every failure allowing the stop — `tests/test_hooks.py`.
 
 ## Readings
 
@@ -365,3 +369,23 @@ bound a script on disk decides.
   unanswered `judge` over two or more doors is not built: two stops in seven days. Reversal: a lone
   door taken under this reading that the person reverts in more than one of ten returns it to the
   stop.
+- 2026-11-21 (later) — grounds for R12 and R13, read from the same three consumers. A session that
+  meets a grant's answer at a short or a resumed context carries it out: a headless run of the
+  plugin (`tools/bench_grant_gate.py`, `claude-sonnet-5-5`, the implement-task fixture with a
+  grant armed, every `Skill` and `Agent` call recorded and denied) spawned the decider over a
+  `judge` 15 of 15 times and invoked the door of a `take` 15 of 15, under 5.133.4 with no gate.
+  The failure lives in the consumers' own long contexts, so it was replayed there: each of the
+  seven real stops whose render printed `judge` was resumed from its own session transcript, cut
+  right after that render, in a clone at the commit before the stop with every path rewritten to
+  the clone, and continued by a background-task notification and nothing else. Under 5.133.4 the
+  session carried the answer out 2 times of 14, as it had 0 of 7 times live; under the gate of
+  R12 it did 13 of 14, the one miss a session that read `door.py --check` refuse the door in the
+  clone; the gate cost 15% more per replay ($10.78 against $9.41 over fourteen). R13 was replayed
+  over four real stops that named a door with no render in their turn: the gate blocked 4 of 8,
+  every block was rendered, and the grant answered each with `stop` — a door not checked, or the
+  person's choice — so none became a door taken; a block that converts nothing is a turn spent,
+  and R13 logs instead. Estimator: the first `Skill` or `Agent` call after the render, read from
+  the benchmark hook's log; two runs per stop and arm. Reversal: `grant-checks.jsonl` showing
+  `released` on more than one in three of its blocks over a week of consumers narrows R12 back to
+  logging; R13 logging lines that a later render of the same stop answers `take` or `judge` on
+  more than half of them makes R13 block.

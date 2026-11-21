@@ -20,8 +20,10 @@ repeats the last ends the goal paused.» (SPEC-008 R14)
   nothing a check could see, so the stop is allowed, the record is ended `paused`, and the line
   says so.
 
-Where the project holds no armed goal, the stop is handed to `hooks/handoff_stop.py`, which holds
-the message the session stopped on to what `bin/handoff.py --check` decides. A stop on which the
+Where the project holds no armed goal, the stop is handed first to the armed grant — `granted`,
+which blocks once a stop that leaves the grant's answer uncarried and logs one that hands the
+person a decision no render answered — and then to `hooks/handoff_stop.py`, which holds the message
+the session stopped on to what `bin/handoff.py --check` decides. A stop on which the
 goal ends — state A, state B or paused — is handed there too, after the goal has ended: control
 returns to the person on it, and its message is the report that closes the goal. This is the one
 `Stop` hook so that an armed goal and that check never both answer the same stop: a `not yet` is
@@ -42,6 +44,7 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -55,9 +58,37 @@ def said(line: str) -> int:
     return 0
 
 
+def granted(record: dict, siegard_dir: Path) -> dict | None:
+    """What an armed grant answers a stop with: a block where this session left the grant's
+    answer uncarried — «A stop of a session
+    whose obligation is not carried out is blocked once by the plugin's `Stop` hook, its reason
+    the grant's line and what carries it out, and the session's next stop is allowed whatever it
+    holds.» (SPEC-011 R12) None where no grant of this version is armed, where background work is
+    in flight, or where anything fails."""
+    waiting = record.get("background_tasks")
+    session = record.get("session_id")
+    message = record.get("last_assistant_message")
+    if (isinstance(waiting, list) and waiting) or not isinstance(session, str) or not session:
+        return None
+    try:
+        sys.path.insert(0, str(HOOKS.parent / "bin"))
+        with contextlib.redirect_stderr(io.StringIO()):
+            import grant
+        if grant.live_grant(siegard_dir) is None:
+            return None
+        return grant.stop_answer(siegard_dir, session,
+                                 message if isinstance(message, str) else "", os.environ)
+    except (Exception, SystemExit):
+        return None
+
+
 def handed_on(record: dict, siegard_dir: Path) -> int:
     """A stop no armed goal answers — none is armed, or it is bound to another session — held
-    to the handoff check."""
+    to the armed grant, then to the handoff check."""
+    held = granted(record, siegard_dir)
+    if held is not None:
+        print(json.dumps(held))
+        return 0
     sys.path.insert(0, str(HOOKS))
     import handoff_stop
     answer = handoff_stop.answer(record, siegard_dir)
@@ -132,7 +163,7 @@ def ended_with(text: str, record: dict, siegard_dir: Path) -> int:
     try:
         sys.path.insert(0, str(HOOKS))
         import handoff_stop
-        held = handoff_stop.answer(record, siegard_dir)
+        held = granted(record, siegard_dir) or handoff_stop.answer(record, siegard_dir)
     except (Exception, SystemExit):
         held = None
     if held is not None:

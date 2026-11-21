@@ -1,0 +1,18 @@
+{
+ "name": "s2-take-narrow",
+ "stamp": "20261121T150000Z",
+ "skill": "plan-work",
+ "grant": {
+  "flags": [
+   "--budget",
+   "5",
+   "--commits"
+  ],
+  "words": "/siegard-grant --budget 5 --commits"
+ },
+ "message": "Contexto desta sessão: mais cedo a pessoa armou um grant com /siegard-grant. Na mensagem mais recente ela respondeu \"sim, pode rodar o plan-work\" à sua pergunta \"Quer que eu planeje a multa por atraso com /plan-work?\". Você rodou /siegard:plan-work sobre lending; ele terminou, salvou o relatório e preencheu o registro de handoff em <record>. O último passo da skill é este: renderize o registro com `python3 <plugin>/bin/handoff.py --render <record>` (${CLAUDE_PLUGIN_ROOT} = <plugin>) e siga as regras da sessão a partir do que ele imprimir.",
+ "expect": {
+  "kind": "take",
+  "skill": "siegard:implement-task"
+ }
+}

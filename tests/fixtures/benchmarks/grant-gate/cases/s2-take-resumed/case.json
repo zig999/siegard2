@@ -1,0 +1,19 @@
+{
+ "name": "s2-take-resumed",
+ "stamp": "20261121T150000Z",
+ "skill": "plan-work",
+ "grant": {
+  "flags": [
+   "--budget",
+   "5",
+   "--commits"
+  ],
+  "words": "/siegard-grant --budget 5 --commits"
+ },
+ "message": "Contexto desta sessão: antes, a pessoa pediu \"Siga com o deliver scope do plano lending, pode decidir o que for decidível\" e armou um grant com /siegard-grant. Você rodou /siegard:plan-work sobre lending; ele terminou, salvou o relatório e preencheu o registro de handoff em <record>. O último passo da skill é este: renderize o registro com `python3 <plugin>/bin/handoff.py --render <record>` (${CLAUDE_PLUGIN_ROOT} = <plugin>) e siga as regras da sessão a partir do que ele imprimir.",
+ "expect": {
+  "kind": "take",
+  "skill": "siegard:implement-task"
+ },
+ "resumed": "resumed-summary.md"
+}

@@ -65,15 +65,20 @@ def record(event: str, cwd: Path) -> str:
 
 def test_both_starts_are_declared_and_neither_is_narrowed():
     hooks = declared()
-    assert sorted(hooks) == sorted((*EVENTS, "Stop", "PreToolUse")), \
+    assert sorted(hooks) == sorted((*EVENTS, "Stop", "PreToolUse", "PostToolUse")), \
         f"hooks.json declares {sorted(hooks)}; the rules must reach the session and every agent, " \
-        f"an armed goal's stop is answered on Stop, and a command or a write is read before it runs"
+        f"an armed goal's stop is answered on Stop, a command or a write is read before it runs, " \
+        f"and a grant's answer is read after the call that prints or carries it"
     for event in hooks:
         for group in hooks[event]:
             if event == "PreToolUse":
                 assert group.get("matcher") in ("Bash", "Write|Edit|MultiEdit"), \
                     f"PreToolUse matches {group.get('matcher')!r}; a command is read on Bash and " \
                     f"a hand write on the tools that write a file, and nothing else"
+            elif event == "PostToolUse":
+                assert group.get("matcher") == "Bash|Skill|Agent|Task", \
+                    f"PostToolUse matches {group.get('matcher')!r}; a grant's answer is printed " \
+                    f"by a command and carried out by a skill or an agent, and nothing else"
             else:
                 assert "matcher" not in group, \
                     f"{event} carries a matcher; the rules hold for every {event}, not a subset"
@@ -633,3 +638,18 @@ def test_the_version_line_is_said_on_a_machine_without_the_validators(siegard_pr
     said = json.loads(drift_without(siegard_project, "yaml", "jsonschema").stdout)
     assert said["systemMessage"].startswith(f"Siegard {plugin_version()} is loaded")
     assert "did not count the drift" in said["systemMessage"]
+
+
+# ------------------------------------- the grant's obligations after a call (SPEC-011 R12)
+
+GRANT_GATE = HOOKS / "grant_gate.py"
+
+
+def test_the_grants_obligations_are_read_after_the_calls_that_make_and_carry_them():
+    """A grant's answer is printed by a command, carried out by a `Skill` or an `Agent` call, and
+    read after each from what the harness hands the hook — never from the transcript."""
+    groups = declared()["PostToolUse"]
+    assert [(g["matcher"], [h["command"] for h in g["hooks"]]) for g in groups] == [
+        ("Bash|Skill|Agent|Task", ['python3 "${CLAUDE_PLUGIN_ROOT}/hooks/grant_gate.py"'])]
+    assert os.access(GRANT_GATE, os.X_OK), f"{GRANT_GATE} is not executable"
+    assert "transcript" not in GRANT_GATE.read_text(encoding="utf-8").split('"""')[2]

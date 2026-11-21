@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -1023,3 +1024,182 @@ def test_a_check_over_an_inferred_initiative_is_told_to_the_door_decider(project
     done = render_stop(project, data)
     assert done.returncode == 0, done.stdout + done.stderr
     assert f"(its check ran over {SLUG}, which the record did not name)" in done.stderr
+
+
+# ------------------------------------------------- obligations at the stop (R12, R13)
+
+HOOKS = REPO / "src/claude/hooks"
+TAKE_RECORD = {"ask": "what next?", "recommended": {"door": "runs /plan-work", "why": "w",
+               "reverses_if": "r", "reply_word": "plan", "entry": "/plan-work",
+               "check": {"answer": "accepts"}}, "others": [], "if_none": "nothing runs"}
+
+
+def answer_printed(project: dict, decision: dict, tmp_path: Path) -> str:
+    done = decide(project, handoff(decision), tmp_path)
+    assert done.returncode == 0, done.stdout + done.stderr
+    return done.stdout
+
+
+def gate_dir(project: dict) -> Path:
+    return project["home"] / ".git" / "siegard"
+
+
+def post_tool(project: dict, tool: str, given: dict, output: str = "",
+              session: str = "s1") -> subprocess.CompletedProcess:
+    event = {"hook_event_name": "PostToolUse", "session_id": session,
+             "cwd": str(project["home"]), "tool_name": tool, "tool_input": given,
+             "tool_response": {"stdout": "", "stderr": output}}
+    return subprocess.run([sys.executable, "-B", str(HOOKS / "grant_gate.py")],
+                          input=json.dumps(event), capture_output=True, text=True)
+
+
+def rendered(project: dict, output: str, session: str = "s1") -> None:
+    done = post_tool(project, "Bash", {"command": "python3 -B /p/bin/handoff.py --render r.json"},
+                     output, session)
+    assert done.returncode == 0 and done.stdout == "", done
+
+
+def stop_hook(project: dict, message: str = "Done.", session: str = "s1",
+              env: dict | None = None) -> subprocess.CompletedProcess:
+    event = {"hook_event_name": "Stop", "session_id": session, "cwd": str(project["home"]),
+             "stop_hook_active": False, "last_assistant_message": message}
+    return subprocess.run([sys.executable, "-B", str(HOOKS / "goal_stop.py")],
+                          input=json.dumps(event), capture_output=True, text=True,
+                          env={**os.environ, **(env or {})})
+
+
+def gate_events(project: dict) -> list[str]:
+    path = gate_dir(project) / "grant-checks.jsonl"
+    return [json.loads(line)["event"] for line in path.read_text(encoding="utf-8").splitlines()] \
+        if path.is_file() else []
+
+
+def test_a_renders_output_binds_one_obligation_per_take_and_judge_with_the_grants_mark(
+        project, tmp_path):
+    import grant as granting
+    assert arm(project, "--doors", "plan-work,reconcile", "--budget", "2").returncode == 0
+    digest = record_of(project)["mark"]
+    took = granting.obligations_from(answer_printed(project, TAKE_RECORD, tmp_path))
+    assert [(o["kind"], o["entry"], o["mark"]) for o in took] == [("take", "plan-work", digest)]
+    assert took[0]["decided"].startswith("decided: /plan-work — precondition unmet")
+    judged = granting.obligations_from(answer_printed(
+        project, with_recommended("/plan-work", "accepts", door("b", "/reconcile", "accepts")),
+        tmp_path))
+    assert judged[0]["kind"] == "judge" and judged[0]["mark"] == digest
+    assert [d["entry"] for d in judged[0]["doors"]] == ["/plan-work", "/reconcile"]
+    stopped = answer_printed(project, with_recommended("/analyse", "accepts"), tmp_path)
+    assert "stop:" in stopped and granting.obligations_from(stopped) == []
+
+
+def test_a_take_left_uncarried_blocks_the_stop_once_and_the_next_stop_is_released(
+        project, tmp_path):
+    assert arm(project, "--doors", "plan-work").returncode == 0
+    rendered(project, answer_printed(project, TAKE_RECORD, tmp_path))
+    first = stop_hook(project, "O plano está pronto. Quer que eu siga?")
+    held = json.loads(first.stdout)
+    assert held["decision"] == "block"
+    assert "decision 1: take: plan /plan-work" in held["reason"]
+    assert "/siegard:plan-work" in held["reason"]
+    second = stop_hook(project, "O plano está pronto. Quer que eu siga?")
+    assert second.returncode == 0 and "block" not in second.stdout
+    assert gate_events(project) == ["recorded", "blocked", "released"]
+
+
+def test_the_doors_skill_carries_a_take_out_and_another_skill_does_not(project, tmp_path):
+    assert arm(project, "--doors", "plan-work").returncode == 0
+    rendered(project, answer_printed(project, TAKE_RECORD, tmp_path))
+    post_tool(project, "Skill", {"skill": "siegard:review-change"})
+    assert "block" in stop_hook(project).stdout
+    rendered(project, answer_printed(project, TAKE_RECORD, tmp_path))
+    post_tool(project, "Skill", {"skill": "siegard:plan-work", "args": "x"})
+    done = stop_hook(project)
+    assert done.returncode == 0 and "block" not in done.stdout
+    assert "fulfilled" in gate_events(project)
+
+
+def test_the_door_decider_carries_a_judge_out_and_another_agent_does_not(project, tmp_path):
+    assert arm(project, "--doors", "plan-work,reconcile", "--budget", "2").returncode == 0
+    judged = answer_printed(project, with_recommended(
+        "/plan-work", "accepts", door("b", "/reconcile", "accepts")), tmp_path)
+    rendered(project, judged)
+    post_tool(project, "Agent", {"subagent_type": "siegard:task-implementer", "prompt": "p"})
+    held = json.loads(stop_hook(project).stdout)
+    assert held["decision"] == "block" and "siegard:door-decider" in held["reason"]
+    assert f"(grant sha256 {record_of(project)['mark']})" in held["reason"]
+    rendered(project, judged)
+    post_tool(project, "Agent", {"subagent_type": "siegard:door-decider", "prompt": "p"})
+    assert "block" not in stop_hook(project).stdout
+
+
+def test_measure_logs_the_stop_and_never_blocks(project, tmp_path):
+    assert arm(project, "--doors", "plan-work").returncode == 0
+    rendered(project, answer_printed(project, TAKE_RECORD, tmp_path))
+    done = stop_hook(project, env={"SIEGARD_GRANT_STOP": "measure"})
+    assert done.returncode == 0 and "block" not in done.stdout
+    assert gate_events(project) == ["recorded", "measured"]
+
+
+DECISION_NAMING_A_DOOR = (
+    "The plan is ready and its one task waits.\n\n"
+    "- **Recommended** `deliver`: /implement-task over the late fee. It is the only task. "
+    "It would change if you want the plan changed first.\n\nReply with the word.")
+
+
+def test_an_unrendered_decision_naming_a_door_is_logged_and_never_blocked(project):
+    assert arm(project, "--doors", "implement-task").returncode == 0
+    done = stop_hook(project, DECISION_NAMING_A_DOOR)
+    assert done.returncode == 0 and "block" not in done.stdout
+    path = gate_dir(project) / "grant-checks.jsonl"
+    lines = [json.loads(x) for x in path.read_text(encoding="utf-8").splitlines()]
+    assert [(x["event"], x["kind"]) for x in lines] == [("measured", "unrendered")]
+
+
+def test_a_stop_after_a_render_or_naming_no_door_is_not_blocked(project, tmp_path):
+    assert arm(project, "--doors", "plan-work").returncode == 0
+    stopped = answer_printed(project, with_recommended("/analyse", "accepts"), tmp_path)
+    rendered(project, stopped)
+    assert "block" not in stop_hook(project, DECISION_NAMING_A_DOOR).stdout
+    assert "block" not in stop_hook(project, "The tests pass. Shall I push the branch?").stdout
+    assert gate_events(project) == []
+
+
+def test_no_grant_or_a_grant_of_another_version_leaves_the_stop_alone(project, tmp_path):
+    rendered(project, "grant: x (sha256 0123456789abcdef)\ndecision 1: take: plan /plan-work\n")
+    assert "block" not in stop_hook(project, DECISION_NAMING_A_DOOR).stdout
+    assert arm(project, "--doors", "plan-work").returncode == 0
+    printed = answer_printed(project, TAKE_RECORD, tmp_path)
+    held = record_of(project)
+    held["version"] = "0.0.1"
+    armed(project).write_text(json.dumps(held), encoding="utf-8")
+    rendered(project, printed)
+    assert "block" not in stop_hook(project, DECISION_NAMING_A_DOOR).stdout
+    assert gate_events(project) == []
+
+
+def test_another_sessions_obligation_is_not_this_sessions(project, tmp_path):
+    assert arm(project, "--doors", "plan-work").returncode == 0
+    rendered(project, answer_printed(project, TAKE_RECORD, tmp_path), session="other")
+    assert "block" not in stop_hook(project, session="s1").stdout
+    assert "block" in stop_hook(project, session="other").stdout
+
+
+def test_a_stop_awaiting_background_work_is_not_read(project, tmp_path):
+    assert arm(project, "--doors", "plan-work").returncode == 0
+    rendered(project, answer_printed(project, TAKE_RECORD, tmp_path))
+    event = {"hook_event_name": "Stop", "session_id": "s1", "cwd": str(project["home"]),
+             "last_assistant_message": "waiting", "background_tasks": [{"id": "b"}]}
+    done = subprocess.run([sys.executable, "-B", str(HOOKS / "goal_stop.py")],
+                          input=json.dumps(event), capture_output=True, text=True)
+    assert "block" not in done.stdout
+    assert "block" in stop_hook(project).stdout
+
+
+@pytest.mark.parametrize("stdin", ["", "not json", "[1]", json.dumps({"tool_name": "Bash"}),
+                                   json.dumps({"hook_event_name": "PostToolUse",
+                                               "tool_name": "Bash", "session_id": "s",
+                                               "cwd": "/gone", "tool_input": {
+                                                   "command": "handoff.py --render x"}})])
+def test_the_post_tool_hook_never_fails_and_prints_nothing(stdin):
+    done = subprocess.run([sys.executable, "-B", str(HOOKS / "grant_gate.py")], input=stdin,
+                          capture_output=True, text=True)
+    assert done.returncode == 0 and done.stdout == "" and done.stderr == ""
