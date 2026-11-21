@@ -202,6 +202,15 @@
           "$ref": "#/$defs/line",
           "description": "Where the choice is the person's own: what each door assumes is true and what on disk or in the person's own answer would settle it."
         },
+        "settles_by": {
+          "enum": [
+            "contradiction",
+            "two-readings",
+            "finding-worth",
+            "all-excluded"
+          ],
+          "description": "Why the choice is the person's own, required with `settles` and never without it: `contradiction` — the scope and the specification state opposite facts; `two-readings` — one piece of evidence reads two ways; `finding-worth` — whether a finding matters or what route it deserves; `all-excluded` — every door the handoff hands is excluded. A choice of cost, of order or of reading the ask is none of the four: its door is recommended as a judgment."
+        },
         "relation": {
           "enum": [
             "one-of",
@@ -276,14 +285,24 @@
             "recommended"
           ],
           "not": {
-            "required": [
-              "settles"
+            "anyOf": [
+              {
+                "required": [
+                  "settles"
+                ]
+              },
+              {
+                "required": [
+                  "settles_by"
+                ]
+              }
             ]
           }
         },
         {
           "required": [
-            "settles"
+            "settles",
+            "settles_by"
           ],
           "not": {
             "required": [

@@ -132,6 +132,7 @@ NEXT_DOOR = re.compile(r"`/([a-z][\w-]*)` invocation ready to paste")
 STATE_SCRIPTS = ("goal.py", "progress.py")
 INVOCATION_ENTRY = re.compile(r"^[ \t]*`?(/[a-z][\w-]*)(?=[ \t`]|$)")
 INVOCATION_SLUG = re.compile(r"--slug[ \t]+(\S+)")
+UNNAMED_SLUG = "takes a slug, and none was named"
 REPORT_SKILL = re.compile(r"Z-([a-z][\w-]*)\.md$")
 HANDOFF_DIR = ("siegard", "handoff")
 GIT_TIMEOUT_SECONDS = 5
@@ -398,7 +399,7 @@ def check_door(name: str, project: Path, slug: str | None, target: str | None,
                 "why": "/reconcile reads the file set and free slug `trace.py --reconcile-set` "
                        "prints, and no script here decides what it refuses"}
     if name in door.NAMED_SLUG and not slug:
-        return {"answer": "not checked", "why": f"/{name} takes a slug, and none was named"}
+        return {"answer": "not checked", "why": f"/{name} {UNNAMED_SLUG}"}
     target = target or goal_target(project, slug)
     args = {"target": target, "slug": slug, "task": [], "name": None, "scope": [], "file": files,
             "standard": None}
@@ -492,6 +493,23 @@ def unentered_recommendations(record: dict) -> list[str]:
     return lines
 
 
+def unslugged_recommendations(record: dict) -> list[str]:
+    """One line per decision whose recommended door went unchecked because it takes a slug and
+    none was named: the grant answers only a door its check accepted, and a slug written in the
+    prose of the record is not one the check reads."""
+    lines = []
+    for number, decision in enumerate(record.get("decisions") or [], 1):
+        chosen = decision.get("recommended") if isinstance(decision, dict) else None
+        check = chosen.get("check") if isinstance(chosen, dict) else None
+        if not isinstance(check, dict) or check.get("answer") != "not checked" \
+                or not str(check.get("why", "")).endswith(UNNAMED_SLUG):
+            continue
+        lines.append(f"note: decision {number}: the recommended door {chosen.get('entry')} was not "
+                     f"checked because it takes a slug and none was named — carry `--slug "
+                     f"<slug>` in the decision's `invocation` and render again")
+    return lines
+
+
 def grant_answer(record: dict) -> list[str]:
     """What the project's armed grant answers over the decisions of a rendered record, one line
     each, for standard error: «`--render` asks the grant over the doors of the decision it
@@ -514,7 +532,7 @@ def grant_answer(record: dict) -> list[str]:
     except Exception as broken:
         return [f"grant: not asked — {broken}"]
     if not lines[0].startswith("stop: the grant ended"):
-        lines.extend(unentered_recommendations(record))
+        lines.extend(unentered_recommendations(record) + unslugged_recommendations(record))
     return lines
 
 
@@ -664,15 +682,41 @@ def unrelated_doors(record: object, contract: dict) -> list[str]:
     return problems
 
 
+def unclassed_choices(record: object, contract: dict) -> list[str]:
+    """A decision left to the person whose `settles_by` is missing or is none of the four, named
+    before the schema speaks: «No recommendation is made over a scope and a specification that
+    contradict, over two readings of one piece of evidence, or over whether a finding matters or
+    what route it deserves.» (SPEC-006 R3) Any other choice is one of cost, of order or of reading
+    the ask, and its door is recommended as a judgment."""
+    problems = []
+    values = contract["$defs"]["decision"]["properties"]["settles_by"]["enum"]
+    decisions = record.get("decisions") if isinstance(record, dict) else None
+    for at, decision in enumerate(decisions if isinstance(decisions, list) else []):
+        if not isinstance(decision, dict) or "settles" not in decision \
+                or decision.get("settles_by") in values:
+            continue
+        problems.append(f"decisions/{at}/settles_by: {decision.get('settles_by')!r} — a choice is "
+                        f"the person's own only as one of {len(values)}: "
+                        "contradiction, the scope and the specification state opposite facts; "
+                        "two-readings, one piece of evidence reads two ways; finding-worth, "
+                        "whether a finding matters or what route it deserves; all-excluded, every "
+                        "door is excluded. A choice of cost, of order or of reading the ask is "
+                        "none of them: drop `settles` and recommend its door as a judgment, with "
+                        "`why` saying it is one")
+    return problems
+
+
 def render(record: object, contract: dict, base: Path, state_of=state_now
            ) -> tuple[str | None, list[str]]:
     """The message the record renders to, or None and the problems that refuse it. `state_of`
     reads a `state_from` as its script prints it now."""
-    problems = unfilled_recommendations(record) + unrelated_doors(record, contract)
+    problems = unfilled_recommendations(record) + unrelated_doors(record, contract) \
+        + unclassed_choices(record, contract)
     said = {line.split(":", 1)[0] for line in problems}
     for error in sorted(Draft202012Validator(contract).iter_errors(record), key=str):
         where = "/".join(str(part) for part in error.absolute_path) or "(record)"
-        if where in said or (f"{where}/relation" in said and "'relation'" in error.message):
+        if where in said or (f"{where}/relation" in said and "'relation'" in error.message) \
+                or (f"{where}/settles_by" in said and "settles" in error.message):
             continue
         problems.append(f"{where}: {error.message}")
     if problems:
@@ -778,7 +822,9 @@ def limits(contract: dict, language: str = "en") -> str:
             f"{ceilings['block']}, its line ready to paste aside; the message <= "
             f"{ceilings['message']}\n"
             f"limits: a decision carries `recommended` (door, why, reverses_if, reply_word) or "
-            f"`settles`; two doors or more carry `relation`: one-of, in-order or independent\n"
+            f"`settles` with `settles_by`: contradiction, two-readings, finding-worth or "
+            f"all-excluded, and a choice of cost, order or reading the ask is recommended; two "
+            f"doors or more carry `relation`: one-of, in-order or independent\n"
             f"limits: a recommended door carries the `entry` its skeleton door holds, which "
             f"`--render` checks again as the tree stands\n"
             f"limits: a body that recommends says the fact that would change it after "

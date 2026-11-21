@@ -8,6 +8,7 @@
     {
       "ask": "Which of the three findings should be acted on?",
       "settles": "Each finding sits on its own file; reading them settles which matter.",
+      "settles_by": "finding-worth",
       "relation": "independent",
       "others": [
         {"reply_word": "a", "what_it_does": "Correct the rounding in the total; the others stay open"},

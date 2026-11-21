@@ -280,6 +280,70 @@ def test_a_recommendation_and_a_person_s_own_choice_are_never_both_handed():
     assert any(p.startswith("decisions/0") for p in problems)
 
 
+def own_choice(settles_by=None) -> dict:
+    data = copy.deepcopy(record("record-en-two-decisions.json"))
+    decision = data["decisions"][0]
+    decision.pop("recommended")
+    decision["settles"] = "The first assumes the rule holds, the second that it does not."
+    if settles_by is not None:
+        decision["settles_by"] = settles_by
+    decision["relation"] = "one-of"
+    decision["others"].insert(0, {"reply_word": "z", "what_it_does": "Refuse it"})
+    return data
+
+
+def test_a_choice_left_to_the_person_without_its_class_is_refused_and_told_to_recommend():
+    """«No recommendation is made over a scope and a specification that contradict, over two
+    readings of one piece of evidence, or over whether a finding matters or what route it
+    deserves.» (SPEC-006 R3) Any other choice is recommended, so `settles` names which it is."""
+    for given in (None, "cost"):
+        message, problems = rendered(own_choice(given))
+        assert message is None
+        said = [p for p in problems if p.startswith("decisions/0/settles_by:")]
+        assert len(said) == 1 and len(problems) == 1, problems
+        for value in CONTRACT["$defs"]["decision"]["properties"]["settles_by"]["enum"]:
+            assert value in said[0]
+        assert "recommend its door as a judgment" in said[0]
+
+
+@pytest.mark.parametrize("value", ["contradiction", "two-readings", "finding-worth",
+                                   "all-excluded"])
+def test_a_choice_left_to_the_person_under_one_of_the_four_renders(value):
+    message, problems = rendered(own_choice(value))
+    assert message is not None, problems
+
+
+def test_a_recommendation_never_carries_the_class_of_a_choice_left_to_the_person():
+    problems = refusal(lambda d: d["decisions"][0].update(settles_by="contradiction"))
+    assert any(p.startswith("decisions/0") for p in problems)
+
+
+def test_the_note_asks_for_the_slug_a_recommended_door_went_unchecked_without():
+    data = {"decisions": [
+        {"recommended": {"entry": "/plan-work", "check": {
+            "answer": "not checked", "why": f"/plan-work {handoff.UNNAMED_SLUG}"}}},
+        {"recommended": {"entry": "/reconcile", "check": {
+            "answer": "not checked", "why": "no script decides it"}}},
+        {"recommended": {"entry": "/plan-work", "check": {"answer": "accepts"}}}]}
+    assert handoff.unslugged_recommendations(data) == [
+        "note: decision 1: the recommended door /plan-work was not checked because it takes a "
+        "slug and none was named — carry `--slug <slug>` in the decision's `invocation` and "
+        "render again"]
+
+
+def test_with_two_live_initiatives_the_unchecked_door_is_noted_under_a_grant(project, monkeypatch):
+    make_second_initiative(project)
+    prepared = prepared_for_plan_work(project)
+    done = handoff.completed(prepared)
+    import grant
+    monkeypatch.setattr(grant, "decide", lambda *_: (
+        ["grant: every live initiative (sha256 0000000000000000)",
+         "decision 1: stop: the one door left was not checked by `door.py --check`"], 0))
+    lines = handoff.grant_answer(done)
+    assert any(line.startswith("note: decision 1: the recommended door /plan-work was not "
+                               "checked") for line in lines)
+
+
 def test_a_state_over_its_ceiling_is_refused():
     problems = refusal(lambda d: d.update(state="x" * (CONTRACT["x-ceilings"]["state"] + 1)))
     assert any(p.startswith("state:") and "over the ceiling" in p for p in problems)
@@ -550,6 +614,7 @@ def with_two_doors(language: str, relation: str, own: bool) -> dict:
         decision = data["decisions"][0]
         decision.pop("recommended")
         decision["settles"] = "The first assumes the rule holds, the second that it does not."
+        decision["settles_by"] = "two-readings"
         decision["others"].insert(0, {"reply_word": "a", "what_it_does": "Refuse it"})
     return data
 
@@ -1045,7 +1110,7 @@ def test_prepare_prints_the_limits_beside_the_skeleton_on_standard_error(project
     ceilings, jargon = CONTRACT["x-ceilings"], CONTRACT["x-jargon"]
     for key in ("state", "block", "message"):
         assert str(ceilings[key]) in done.stderr
-    for field in ("recommended", "settles", "relation", "reverses_if"):
+    for field in ("recommended", "settles", "settles_by", "relation", "reverses_if"):
         assert field in done.stderr
     for word in (*jargon["terms"], *jargon["english_terms"], *jargon["phrases"],
                  *jargon["patterns"]):

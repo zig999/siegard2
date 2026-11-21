@@ -122,7 +122,7 @@ bound a script on disk decides.
 
 ### Where a run meets it
 
-- **R9** — `bin/handoff.py --render` keeps the record it rendered, as JSON beside the report its `report` names, so that the run that receives a stop can ask the grant over the doors it handed. `bin/grant.py --decide --latest <skill> --after <commit>` answers over the newest record kept for that skill after that commit, and refuses where none was, so that a run never answers over the report of an earlier stop. `--render` asks the grant over the doors of the decision it rendered and prints its answer on standard error — the `grant:` line and one line per decision, and, where a decision's recommended door carries no `entry`, a `note:` saying so — so that the answer reaches the session at the stop and not at the memory of a rule; nothing is printed where no grant is armed, and a grant of another version is ended there and the line says so. A `judge` line over a door whose check ran over an `inferred_slug` says so beside the door.
+- **R9** — `bin/handoff.py --render` keeps the record it rendered, as JSON beside the report its `report` names, so that the run that receives a stop can ask the grant over the doors it handed. `bin/grant.py --decide --latest <skill> --after <commit>` answers over the newest record kept for that skill after that commit, and refuses where none was, so that a run never answers over the report of an earlier stop. `--render` asks the grant over the doors of the decision it rendered and prints its answer on standard error — the `grant:` line and one line per decision, and, where a decision's recommended door carries no `entry`, or went unchecked because it takes a slug and none was named, a `note:` saying so — so that the answer reaches the session at the stop and not at the memory of a rule; nothing is printed where no grant is armed, and a grant of another version is ended there and the line says so. A `judge` line over a door whose check ran over an `inferred_slug` says so beside the door.
 - **R10** — Where the project holds an armed grant, the orchestrating entry point asks `bin/grant.py --decide` over the report of a step that stopped, before it ends the run: a `take` or a `judge` it answers is a door the run takes and goes on with, under a goal as without one, and a `stop` leaves the stop as it was. A session that rendered a stop's handoff takes the answer `--render` printed as `--decide` would have. The same door over the same task is taken once in a run. A `decided:` line a grant took ends `(grant sha256 <digest>)`, and the grant's budget counts it. The digest is the grant's mark, and the budget counts only the lines that carry its own.
 - **R11** — Where the project holds an armed grant holding `close`, a closing asks `bin/grant.py --close` over the initiative, named by `--slug`, before its marker is written, and a first line `refuses` stops it unless the person's own words in the session name that initiative's closing. The ask a closing persists is words copied whole — the grant's, read from the file the grant names, where the closing is taken under it, or else the person's own — and never a summary the session writes.
 
@@ -190,7 +190,8 @@ bound a script on disk decides.
    with the budget left on standard error for a recommended door its check accepts beside an open door, `stop`
    with the note naming the lost entry where the recommended door carries none, nothing where no grant is armed,
    the note for a recommended door with no entry, whether or not a door of the skeleton is absent, the ending of a grant of another version, and the inferred initiative beside a door whose check ran over one —
-   `tests/test_grant.py`.
+   `tests/test_grant.py`; and the note for a recommended door left unchecked for want of a slug, and for no
+   other unchecked door — `tests/test_handoff.py`.
 9. For R12 and R13: tests hold `grant.py`'s reading of a render's output to one obligation per `take` and `judge` with the grant's mark and none for `stop`, the obligation to being carried out by the door's `Skill` and the decider's `Agent` and by nothing else, a stop with an obligation pending to one block and then a release, `measure` to never blocking, a stop that hands an unrendered decision naming a door to one logged line and no block, and a grant of another version or none to silence — `tests/test_grant.py`; and the hooks to the declaration, to the goal's `not yet` answering first and to every failure allowing the stop — `tests/test_hooks.py`.
 
 ## Readings
@@ -389,3 +390,11 @@ bound a script on disk decides.
   `released` on more than one in three of its blocks over a week of consumers narrows R12 back to
   logging; R13 logging lines that a later render of the same stop answers `take` or `judge` on
   more than half of them makes R13 block.
+- 2026-11-21 (last) — grounds for R9's note on a slug, read from the replay of 48 stops under a
+  live grant recorded in SPEC-006's readings of the same day. Four answered `stop` because the
+  recommended door was not checked: one a `/reconcile` door, which no script checks, and three a
+  `/plan-work` door for an initiative not yet planned, whose slug the session had written only in
+  the prose of its own `check` and in no `invocation`, so the check at the render ran over none.
+  The note names the field the slug goes in. Reversal: renders under a grant that print the note
+  and are not rendered again with a slug, in more than half of a week of consumers, say the note
+  is not read, and it is weighed for removal.
