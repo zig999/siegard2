@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.135.0 — 2026-11-21
+
+A choice a handoff leaves to the person names which of SPEC-006 R3's questions it is, in `settles_by` — `contradiction`, `two-readings`, `finding-worth` or `all-excluded` — and `--render` refuses one that names none, so a choice of cost or of route is recommended and, under a grant, reaches it. Under a grant, `--render` notes a recommended door left unchecked for want of a slug (SPEC-011 R9). (`f2c5945`)
+
 ## 5.134.0 — 2026-11-21
 
 A grant's `take` or `judge` printed at a render becomes the session's obligation, recorded by a `PostToolUse` hook from the command's own output; a stop that leaves it uncarried is blocked once, and the next stop is allowed (SPEC-011 R12). A stop that hands an unrendered decision naming a door is logged and never blocked (R13). (`905a598`)
