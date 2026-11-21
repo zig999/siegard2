@@ -398,3 +398,8 @@ bound a script on disk decides.
   The note names the field the slug goes in. Reversal: renders under a grant that print the note
   and are not rendered again with a slug, in more than half of a week of consumers, say the note
   is not read, and it is weighed for removal.
+- 2026-11-21 (after 5.135.0) — the `/reconcile` door the 2026-11-19 reading left uncheckable is
+  checked at the render over the set `trace.py --reconcile-set` prints, as SPEC-006 R9 now states:
+  `door.py --check reconcile` decides the plain reconciliation, and what it leaves not decided — a
+  certification, a rewrite — are modes the person names and a grant never takes. Grounds and
+  reversal in SPEC-006's reading of the same day.

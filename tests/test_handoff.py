@@ -1267,6 +1267,79 @@ def test_a_door_that_takes_no_slug_is_not_given_an_inferred_one(project):
     assert "inferred_slug" not in kept["decisions"][0]["recommended"]["check"]
 
 
+def test_an_invocation_naming_the_plugin_gives_the_recommended_door_its_entry(project):
+    prepared = prepared_for_plan_work(project, invocation=f"/siegard:plan-work {project} --slug {SLUG}")
+    prepared["decisions"][0]["recommended"].pop("entry")
+    done = handoff.completed(prepared)
+    chosen = done["decisions"][0]["recommended"]
+    assert chosen["entry"] == "/plan-work" and chosen["check"]["answer"] == "accepts"
+
+
+def test_a_recommended_door_naming_one_door_of_the_route_in_its_words_takes_it():
+    assert handoff.named_door({"door": "Run /siegard:review-change over it", "why": "x"}) \
+        == "/review-change"
+    assert handoff.named_door({"door": "Plan it", "why": "/plan-work reads the scope"}) \
+        == "/plan-work"
+    assert handoff.named_door({"door": "Plan with /plan-work or /reconcile first"}) is None
+    assert handoff.named_door({"door": "Move src/plan-work to /tmp"}) is None
+    assert handoff.named_door({"door": "Write the change request"}) is None
+
+
+RECONCILE_OUTPUT = """trace: x
+reconcile set over target backend (backend), spelled from the target source root — one /reconcile invocation reads it whole:
+  src/a.ts  (code)
+  src/b.ts  (moved: rules/x)
+  2 file(s)
+  free slug: reconcile-20261121-backend
+left to a delivery — a live task not yet delivered implements the node:
+  src/c.ts  (rules/y)
+"""
+
+
+def test_the_reconcile_set_is_read_from_what_trace_prints(monkeypatch, tmp_path):
+    import door
+    monkeypatch.setattr(door, "script", lambda *_: (0, RECONCILE_OUTPUT))
+    assert handoff.reconcile_set(tmp_path, tmp_path) == (["src/a.ts", "src/b.ts"],
+                                                          "reconcile-20261121-backend")
+    monkeypatch.setattr(door, "script", lambda *_: (0, "reconcile set over target backend (b):\n"
+                                                       "  nothing: no drift this target holds"))
+    assert handoff.reconcile_set(tmp_path, tmp_path) == ([], None)
+    monkeypatch.setattr(door, "script", lambda *_: (1, "no trace file"))
+    assert handoff.reconcile_set(tmp_path, tmp_path) is None
+
+
+def test_a_reconcile_door_is_checked_over_the_set_and_slug_its_trace_prints(monkeypatch, tmp_path):
+    import door
+    (tmp_path / "siegard.json").write_text(json.dumps({"targets": {"backend": "backend"}}))
+    asked = {}
+
+    class Said:
+        def lines(self, _):
+            return ["accepts", "checked: the record is free"]
+
+    def check(name, project, args):
+        asked.update(args)
+        return Said()
+
+    monkeypatch.setattr(door, "check", check)
+    monkeypatch.setattr(handoff, "reconcile_set", lambda *_: (["src/a.ts"], "reconcile-x"))
+    got = handoff.check_door("reconcile", tmp_path, None, None, [])
+    assert got["answer"] == "accepts" and "reconcile-x" in got["why"]
+    assert asked["file"] == ["src/a.ts"] and asked["slug"] == "reconcile-x" \
+        and asked["target"] == "backend"
+    monkeypatch.setattr(handoff, "reconcile_set", lambda *_: ([], None))
+    assert handoff.check_door("reconcile", tmp_path, None, None, [])["answer"] == "refuses"
+    monkeypatch.setattr(handoff, "reconcile_set", lambda *_: None)
+    assert handoff.check_door("reconcile", tmp_path, None, None, [])["answer"] == "not checked"
+
+
+def test_a_reconcile_door_with_several_targets_and_none_named_is_not_checked(monkeypatch, tmp_path):
+    (tmp_path / "siegard.json").write_text(json.dumps({"targets": {"a": "a", "b": "b"}}))
+    monkeypatch.setattr(handoff, "goal_target", lambda *_: None)
+    got = handoff.check_door("reconcile", tmp_path, None, None, [])
+    assert got["answer"] == "not checked" and "no target was named" in got["why"]
+
+
 def test_a_record_naming_no_project_directory_is_rendered_as_it_came(tmp_path):
     data = record("record-en-two-decisions.json")
     data["state"] = CONTRACT["x-labels"]["en"]["quiet"]

@@ -130,9 +130,10 @@ REPORT_HEADING = re.compile(r"^(#{2,3}) (?:\d+\. )?(?:Report\b|The report\b)", r
 REFERENCE_REPORT = re.compile(r"# (?:Report\b|The report\b)")
 NEXT_DOOR = re.compile(r"`/([a-z][\w-]*)` invocation ready to paste")
 STATE_SCRIPTS = ("goal.py", "progress.py")
-INVOCATION_ENTRY = re.compile(r"^[ \t]*`?(/[a-z][\w-]*)(?=[ \t`]|$)")
+INVOCATION_ENTRY = re.compile(r"^[ \t]*`?/(?:siegard:)?([a-z][\w-]*)(?=[ \t`]|$)")
 INVOCATION_SLUG = re.compile(r"--slug[ \t]+(\S+)")
 UNNAMED_SLUG = "takes a slug, and none was named"
+NAMED_ENTRY = re.compile(r"(?<![\w/])/(?:siegard:)?([a-z][\w-]*)(?![\w/-])")
 REPORT_SKILL = re.compile(r"Z-([a-z][\w-]*)\.md$")
 HANDOFF_DIR = ("siegard", "handoff")
 GIT_TIMEOUT_SECONDS = 5
@@ -395,9 +396,7 @@ def check_door(name: str, project: Path, slug: str | None, target: str | None,
         return {"answer": "not checked",
                 "why": f"no script decides what /{name} refuses; its own file states it"}
     if name == "reconcile":
-        return {"answer": "not checked",
-                "why": "/reconcile reads the file set and free slug `trace.py --reconcile-set` "
-                       "prints, and no script here decides what it refuses"}
+        return check_reconcile(project, target or goal_target(project, slug))
     if name in door.NAMED_SLUG and not slug:
         return {"answer": "not checked", "why": f"/{name} {UNNAMED_SLUG}"}
     target = target or goal_target(project, slug)
@@ -405,6 +404,63 @@ def check_door(name: str, project: Path, slug: str | None, target: str | None,
             "standard": None}
     lines = door.check(name, project, args).lines(name)
     return {"answer": lines[0],
+            "refused": [line[len("refused: "):] for line in lines if line.startswith("refused: ")]}
+
+
+def reconcile_set(project: Path, root: Path) -> tuple[list[str], str | None] | None:
+    """The file set and the free slug `trace.py --check <target-root> --reconcile-set` prints for
+    the target, or None where it printed no set."""
+    import door
+    code, out = door.script("trace.py", "--check", str(root), "--reconcile-set")
+    lines = out.splitlines()
+    start = next((at for at, line in enumerate(lines) if line.startswith("reconcile set over ")),
+                 None)
+    if start is None:
+        return None
+    files, slug = [], None
+    for line in lines[start + 1:]:
+        if not line.startswith("  "):
+            break
+        text = line.strip()
+        if text.startswith("free slug: "):
+            slug = text.removeprefix("free slug: ")
+        elif text.startswith("nothing:"):
+            return [], None
+        elif not re.fullmatch(r"\d+ file\(s\)", text):
+            files.append(text.split("  (", 1)[0])
+    return files, slug
+
+
+def check_reconcile(project: Path, target: str | None) -> dict:
+    """`/reconcile`'s check over the file set and the free slug its trace prints for the target:
+    the target named, else the armed goal's, else the project's one target. A certification and a
+    rewrite are the person's to name, so the check is of the reconciliation that reads alone."""
+    import door
+    try:
+        declared = json.loads((project / "siegard.json").read_text(encoding="utf-8"))
+        targets = declared["targets"]
+    except (OSError, ValueError, KeyError, TypeError):
+        return {"answer": "not checked", "why": "siegard.json names no targets"}
+    if target is None and isinstance(targets, dict) and len(targets) == 1:
+        target = next(iter(targets))
+    if not isinstance(targets, dict) or target not in targets:
+        return {"answer": "not checked",
+                "why": "/reconcile reads one target's set, and no target was named"}
+    found = reconcile_set(project, project / targets[target])
+    if found is None:
+        return {"answer": "not checked",
+                "why": f"trace.py --reconcile-set printed no set for target {target}"}
+    files, slug = found
+    if not files:
+        return {"answer": "refuses",
+                "refused": [f"the reconcile set of target {target} is empty: no drift it holds "
+                            f"is a reconciliation's to read"]}
+    args = {"target": target, "slug": slug, "task": [], "name": None, "scope": [], "file": files,
+            "standard": None}
+    lines = door.check("reconcile", project, args).lines("reconcile")
+    return {"answer": lines[0],
+            "why": f"over the {len(files)} file(s) `trace.py --reconcile-set` prints for target "
+                   f"{target}, under the free slug {slug}",
             "refused": [line[len("refused: "):] for line in lines if line.startswith("refused: ")]}
 
 
@@ -440,6 +496,15 @@ def check_as_it_stands(entry: str, project: Path, source: dict, invocation: str,
     return check
 
 
+def named_door(chosen: dict) -> str | None:
+    """The one door of the route a recommended door with no entry names in its own words, as
+    `/<skill>` or `/siegard:<skill>`; None where its words name none or more than one."""
+    import door
+    words = " ".join(str(chosen.get(key) or "") for key in ("door", "why"))
+    named = {found for found in NAMED_ENTRY.findall(words) if found in door.DOORS}
+    return f"/{named.pop()}" if len(named) == 1 else None
+
+
 def completed(record: dict, check_of=check_door) -> dict:
     """The record with each door's check written by this script as the tree stands now: «`--render`
     writes the `entry` and the `check` of the door a record recommends, from the entry the door
@@ -460,7 +525,11 @@ def completed(record: dict, check_of=check_door) -> dict:
         if isinstance(chosen, dict):
             opening = INVOCATION_ENTRY.match(invocation)
             if "entry" not in chosen and opening:
-                chosen["entry"] = opening.group(1)
+                chosen["entry"] = f"/{opening.group(1)}"
+            if "entry" not in chosen:
+                named = named_door(chosen)
+                if named:
+                    chosen["entry"] = named
             if "entry" in chosen:
                 chosen["check"] = check_as_it_stands(chosen["entry"], project, source,
                                                      invocation, check_of)
