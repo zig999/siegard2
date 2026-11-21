@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.133.4 — 2026-11-21
+
+A handoff that hands one door, with none excluded, is answered `take` by the grant and not `judge`, so the door decider is asked only over a choice between doors, and no budget is spent on a door nothing separates from itself (SPEC-011 R4). (`1aafa3d`)
+
 ## 5.133.3 — 2026-11-20
 
 The specification-conformance reviewer files a development tool's defaults, flags and exit codes, and how a test is arranged, in `looked_past` and not as facts the specification does not hold: «The stack is never a node» (SPEC-003 §Rule). (`5853506`)
