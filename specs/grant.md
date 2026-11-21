@@ -103,8 +103,9 @@ bound a script on disk decides.
 - **R4** — `bin/grant.py --decide`, over the record a stop's handoff was rendered from, answers
   each decision with one of three lines: `stop`, `take` or `judge`. A decision that carries
   `settles` is `stop`: the choice is the person's. Of the doors a decision hands, the ones whose
-  check answered `refuses` are excluded; where exactly one door remains and its entry point is in
-  the grant's `doors` the answer is `take`, the criterion `precondition unmet`; where the
+  check answered `refuses` are excluded; where exactly one door remains — the only door a decision hands, with none excluded,
+  included — and its entry point is in the grant's `doors` the answer is `take`, the criterion
+  `precondition unmet`; where the
   recommended door's check accepted and its entry point is in the grant's `doors` the answer is
   `judge`, with the doors, the budget left and the facts the decider reads, and where no door
   qualifies it is `stop`. A door whose check was not run is never taken.
@@ -157,7 +158,7 @@ bound a script on disk decides.
    arming over a grant that still stands ends it in the log as `replaced`, says what it held and
    arms with a mark of its own, and an arming refused on another ground leaves either in place.
 2. Tests hold `grant.py --decide` to R4 and R5 over handoff records: a `settles` decision is
-   `stop`; one door left after a refusal is `take`; a recommended door that is accepted beside an
+   `stop`; one door left after a refusal, and the only door a decision hands, are `take`; a recommended door that is accepted beside an
    open door is `judge` with the budget left, counted over the stopped initiative's log alone; a
    spent budget, a door outside the list and an unchecked door are `stop`; and a report whose
    recommended door is a proof-only re-delivery after a certification refused again is `judge`.
@@ -333,9 +334,9 @@ bound a script on disk decides.
   does not carry, which `trace.py --reconcile-set` prints at 59 files in one of the clones, and
   `door.py --check reconcile` leaves its certifications as `not decided`, so that door is not made
   checkable here. A decision handing one door, with none excluded, is answered `judge` by the code
-  where R4's words read `take`; the two are not reconciled here. The `inventory` grant had been
-  armed under 5.124.0 and the plugin ran 5.125.0, so every stop of the day found a grant R3 had
-  ended and nothing had asked it. Reversal: a check run over an inferred initiative that a
+  where R4's words read `take`; the two are reconciled on 2026-11-21 below. The `inventory` grant
+  had been armed under 5.124.0 and the plugin ran 5.125.0, so every stop of the day found a grant
+  R3 had ended and nothing had asked it. Reversal: a check run over an inferred initiative that a
   reading of the next commit finds was the wrong one narrows the fallback to the slug the record
   or its invocation names.
 - 2026-11-19 (later) — the note R9 prints was first written to fire only where a door of the skill's
@@ -347,3 +348,20 @@ bound a script on disk decides.
   door that is free text by design, 6 of the 18 kept, is noted too; the note is on standard
   error and only where a grant is armed. Reversal: a reading of the sessions that finds the
   note ignored as noise on free-text doors narrows it to the doors the skeleton handed.
+- 2026-11-21 — grounds for R4's lone door, read from every transcript of the `configurator`,
+  `inventory` and `productorder` sessions under `sales/` and the handoff records kept beside their
+  reports. Seven `judge` lines had been printed in the grants' life, and the door decider was spawned
+  after none; five listed one door, and only two (configurator 11:33, inventory 20:17 UTC) were a
+  choice. The code answered `judge` over a lone door with none excluded where R4 reads `take`, so a
+  decider and a unit of budget were asked for a choice the decider's own definition calls never a
+  judgment; the code now follows R4. The line it writes states the fact as it is — the handoff
+  hands no other door and its own check accepted — and the criterion stays R4's, `precondition
+  unmet`, with no other door left to refuse; being derived, it is not counted by the budget. The two real choices were replayed through the door decider, blind, over clones at the
+  commit before each stop: both returned `planejar` (`/plan-work`) on the rung `keeps the route`,
+  the door the person then took; the configurator's stopped report carried the stopping step's own
+  recommendation, so that agreement is partly circular. Estimator: `judge:` lines read from tool
+  results in the session transcripts, spawns from `door-decider` in the Agent inputs; one replay per
+  stop. Whether the remaining `judge` is answered is open, and a check holding a stop with an
+  unanswered `judge` over two or more doors is not built: two stops in seven days. Reversal: a lone
+  door taken under this reading that the person reverts in more than one of ten returns it to the
+  stop.

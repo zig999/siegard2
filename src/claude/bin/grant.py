@@ -29,8 +29,8 @@ other text is.
 — precondition unmet — <fact>`, or `judge:` followed by the doors, the budget left and the
 record's report, which the door decider reads. «A decision that carries `settles` is `stop`: the
 choice is the person's.» (SPEC-011 R4) A door whose check answered `refuses` is excluded, and where
-exactly one door remains, its entry point is in the grant's `doors` and its check accepted, it is
-taken; where the recommended door's check accepted beside an open door, the decider chooses, within
+exactly one door remains, the only one a handoff hands included, its entry point is in the grant's
+`doors` and its check accepted, it is taken; where the recommended door's check accepted beside an open door, the decider chooses, within
 the budget of the stopped initiative: «The budget left is the grant's budget less the judged
 `decided:` lines the stopped initiative's log gained since the grant armed, each covered
 initiative counted apart, and a judged choice met with it spent is `stop`.» (SPEC-011 R5)
@@ -300,7 +300,7 @@ def decide_one(number: int, decision: dict, held: dict, fields: dict,
     remaining = [door for door in offered if door not in excluded]
     if not remaining:
         return [f"{head} stop: every door the handoff hands is excluded"]
-    if len(remaining) == 1 and excluded:
+    if len(remaining) == 1:
         door = remaining[0]
         skill = skill_of(door)
         answer = (door.get("check") or {}).get("answer")
@@ -309,6 +309,10 @@ def decide_one(number: int, decision: dict, held: dict, fields: dict,
                     f"the grant's doors"]
         if answer != "accepts":
             return [f"{head} stop: the one door left was not checked by `door.py --check`"]
+        if not excluded:
+            return [f"{head} take: {door['reply_word']} /{skill}",
+                    f"  decided: /{skill} — precondition unmet — the handoff hands no other door "
+                    f"and its own check accepted (grant sha256 {mark_of(held)})"]
         facts = "; ".join(f"{item}" for item in
                           (fact for gone in excluded for fact in
                            (gone.get("check") or {}).get("refused", [])))[:300]

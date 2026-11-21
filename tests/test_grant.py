@@ -17,6 +17,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+import goal
 from conftest import derive_plan
 from test_goal import (SLUG, VERSION, commit, deliver, git, measure, project,  # noqa: F401
                        review)
@@ -356,6 +357,40 @@ def test_the_one_door_left_is_not_taken_outside_the_list_or_unchecked(project, t
     decision = with_recommended(entry, answer, door("b", "/plan-work", "refuses"))
     out = decide(project, handoff(decision), tmp_path).stdout
     assert "stop:" in out and why in out and "take:" not in out
+
+
+def test_the_only_door_a_handoff_hands_is_taken_without_the_decider_and_spends_no_budget(
+        project, tmp_path):
+    assert arm(project, "--doors", "plan-work", "--budget", "1").returncode == 0
+    out = decide(project, handoff(with_recommended("/plan-work", "accepts")), tmp_path).stdout
+    digest = record_of(project)["mark"]
+    lines = out.splitlines()
+    assert "decision 1: take: a /plan-work" in lines
+    assert ("  decided: /plan-work — precondition unmet — the handoff hands no other door and its "
+            f"own check accepted (grant sha256 {digest})") in lines
+    assert "judge:" not in out and "budget left" not in out
+    assert goal.DOOR_LINE.match(lines[lines.index("decision 1: take: a /plan-work") + 1].strip())
+    assert not goal.TAKEN_JUDGED.match(lines[lines.index("decision 1: take: a /plan-work") + 1])
+
+
+@pytest.mark.parametrize("entry,answer,why", [
+    ("/analyse", "accepts", "not in the grant's doors"),
+    ("/plan-work", "not checked", "was not checked by `door.py --check`"),
+    ("/plan-work", "refuses", "every door the handoff hands is excluded"),
+])
+def test_the_only_door_a_handoff_hands_is_not_taken_outside_the_list_or_unchecked(
+        project, tmp_path, entry, answer, why):
+    assert arm(project, "--doors", "plan-work").returncode == 0
+    out = decide(project, handoff(with_recommended(entry, answer)), tmp_path).stdout
+    assert "stop:" in out and why in out and "take:" not in out and "judge:" not in out
+
+
+def test_the_only_door_with_no_entry_point_is_a_stop(project, tmp_path):
+    assert arm(project, "--doors", "plan-work").returncode == 0
+    decision = with_recommended("/plan-work", "accepts")
+    del decision["recommended"]["entry"]
+    out = decide(project, handoff(decision), tmp_path).stdout
+    assert "stop:" in out and "with no entry point" in out and "take:" not in out
 
 
 def test_every_door_excluded_is_a_stop(project, tmp_path):
