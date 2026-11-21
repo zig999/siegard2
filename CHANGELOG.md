@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.136.0 — 2026-11-21
+
+`--render` checks a `/reconcile` door over the file set and free slug `trace.py --reconcile-set` prints for its target, reads an invocation opening `/siegard:<skill>` as that skill's entry, and gives a recommended door with no entry the one route door its own words name, so a grant can answer doors a session left unreadable (SPEC-006 R9). (`ff7b3fe`)
+
 ## 5.135.0 — 2026-11-21
 
 A choice a handoff leaves to the person names which of SPEC-006 R3's questions it is, in `settles_by` — `contradiction`, `two-readings`, `finding-worth` or `all-excluded` — and `--render` refuses one that names none, so a choice of cost or of route is recommended and, under a grant, reaches it. Under a grant, `--render` notes a recommended door left unchecked for want of a slug (SPEC-011 R9). (`f2c5945`)
