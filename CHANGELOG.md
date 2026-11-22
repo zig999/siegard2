@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.136.1 — 2026-11-22
+
+`goal.py --state` reads a task whose proof record is not yet written as answering no criterion, so a stop with an implementation record and no proof keeps its state line and `--render` can read it (SPEC-008 R12). (`5d5b3ce`)
+
 ## 5.136.0 — 2026-11-21
 
 `--render` checks a `/reconcile` door over the file set and free slug `trace.py --reconcile-set` prints for its target, reads an invocation opening `/siegard:<skill>` as that skill's entry, and gives a recommended door with no entry the one route door its own words name, so a grant can answer doors a session left unreadable (SPEC-006 R9). (`ff7b3fe`)
