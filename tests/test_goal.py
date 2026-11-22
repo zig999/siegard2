@@ -408,6 +408,24 @@ def test_a_criterion_recorded_unmet_with_no_review_since_the_goal_began_is_answe
     assert "answered by" not in result.stdout
 
 
+def test_a_criterion_recorded_unmet_of_a_task_with_no_proof_record_yet_is_unmet_not_a_crash(project):
+    """«A criterion recorded `met: false` is answered, and no longer one recorded unmet, where a
+    review committed since the goal began names the criterion's task and gives the criterion
+    `covered` by a test in a file the task's own proof record names» (SPEC-008 R12). A task whose
+    proof is not yet written names no file, so nothing answers its criterion."""
+    unmet(project)
+    deliver(project)
+    review(project)
+    (project["home"] / "deliveries" / SLUG / "proof" / "checkout" / "record-order.md").unlink()
+    measure(project)
+    result = state(project)
+    assert "Traceback" not in result.stderr, result.stderr
+    assert first(result).startswith("not yet"), result.stdout
+    assert "criteria" in failing(result), result.stdout
+    assert f"    {TASK}: Submitting a valid order returns its order_number." in result.stdout.splitlines()
+    assert "answered by" not in result.stdout
+
+
 def test_a_criterion_recorded_unmet_with_work_left_is_not_yet(project):
     unmet(project)
     deliver(project)

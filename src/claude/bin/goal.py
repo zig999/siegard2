@@ -353,7 +353,10 @@ def answering_tests(fields: dict, since: str, delivery: Path, tid: str, criterio
     the criterion's task and gives the criterion `covered` by a test in a file the task's own proof
     record names» (SPEC-008 R12). A review and a proof quote one test by different names where it
     is parametrized, so the file is what they share."""
-    proof = front_of(delivery / "proof" / f"{tid[len('task/'):]}.md")
+    record = delivery / "proof" / f"{tid[len('task/'):]}.md"
+    if not record.is_file():
+        return []
+    proof = front_of(record)
     held = {t.get("file") for t in (proof.get("tests") or []) if isinstance(t, dict)}
     found: list[str] = []
     for path in sorted(named):
