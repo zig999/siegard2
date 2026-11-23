@@ -143,6 +143,23 @@ def test_a_clone_is_cut_at_the_stop_s_second_and_holds_no_goal_armed_later(tmp_p
     assert f"{(tmp_path / 'run').resolve()}/scratch/pd/r" in written
 
 
+def test_the_turn_record_is_seeded_from_the_last_rendering_skill_of_the_cut_turn():
+    skill = lambda name: [{"type": "tool_use", "id": name, "name": "Skill",
+                           "input": {"skill": name}}]
+    events = [
+        event("assistant", "2026-11-21T09:59:00Z", content=skill("siegard:review-change")),
+        event("user", "2026-11-21T10:00:00Z", content="Siga"),
+        event("assistant", "2026-11-21T10:00:05Z", content=skill("siegard:siegard-progress")),
+        event("assistant", "2026-11-21T10:00:07Z", content=skill("siegard:plan-work")),
+        event("user", "2026-11-21T10:00:08Z", content=[{"type": "tool_result", "tool_use_id": "p"}]),
+        event("assistant", "2026-11-21T10:00:09Z", content=[{"type": "text", "text": "Done."}]),
+    ]
+    from datetime import datetime
+    assert replay.route_at(events, 4) == datetime.fromisoformat("2026-11-21T10:00:07+00:00").timestamp()
+    assert replay.route_at(events[:3], 2) is None, "a route of an earlier turn is not this turn's"
+    assert "plan-work" in replay.rendering_skills()
+    assert "siegard-progress" not in replay.rendering_skills()
+
 def facts(**given) -> dict:
     return {"renders": 1, "answers": [], "limit_hit": False, **given}
 

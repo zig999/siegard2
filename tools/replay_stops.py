@@ -42,6 +42,7 @@ import shutil
 import subprocess
 import sys
 import uuid
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -252,6 +253,36 @@ def rewrite(line: str, real: Path, clone: Path, tree: Path, old: str, new: str,
     return CACHE.sub(str(tree), line).replace(old, new)
 
 
+RENDERING_SOURCE = REPO / "src/claude/hooks/turn.py"
+
+
+def rendering_skills() -> tuple[str, ...]:
+    """The skills whose run ends on a render, as the plugin's turn record reads them."""
+    found = re.search(r"RENDERING = \(([^)]*)\)", RENDERING_SOURCE.read_text(encoding="utf-8"))
+    return tuple(re.findall(r'"([\w-]+)"', found.group(1))) if found else ()
+
+
+def route_at(events: list[dict], cut: int) -> float | None:
+    """The instant of the last `Skill` call to a skill whose run ends on a render, in the turn the
+    cut ends: the call happened before the cut, so the replayed session's `PostToolUse` hook never
+    sees it, and the turn record is seeded with it instead."""
+    rendering = rendering_skills()
+    for event in reversed(events[:cut + 1]):
+        content = (event.get("message") or {}).get("content")
+        if event.get("type") == "user" and (is_person(event) or "<command-name>" in text_of(content)[:200]):
+            return None
+        if event.get("type") != "assistant" or not isinstance(content, list):
+            continue
+        for block in reversed(content):
+            if isinstance(block, dict) and block.get("type") == "tool_use" \
+                    and block.get("name") == "Skill":
+                name = str((block.get("input") or {}).get("skill") or "").split(":")[-1].lstrip("/")
+                if name in rendering:
+                    stamp = event.get("timestamp", "").replace("Z", "+00:00")
+                    return datetime.fromisoformat(stamp).timestamp() if stamp else None
+    return None
+
+
 def build(point: dict, tree: Path, run_dir: Path, mode: str) -> dict:
     real = Path(point["consumer"])
     if run_dir.exists():
@@ -292,8 +323,15 @@ def build(point: dict, tree: Path, run_dir: Path, mode: str) -> dict:
     where = transcript_dir(clone)
     where.mkdir(parents=True, exist_ok=True)
     (where / f"{session}.jsonl").write_text("\n".join(out) + "\n", encoding="utf-8")
+    seeded = route_at(events, cut)
+    if seeded is not None:
+        record = clone / ".git/siegard/turn" / f"{session}.json"
+        record.parent.mkdir(parents=True, exist_ok=True)
+        record.write_text(json.dumps({"session_id": session, "route_at": seeded,
+                                      "obligations": [], "blocked": []}), encoding="utf-8")
     meta = {"point": point, "clone": str(clone), "session": session, "commit": commit,
-            "cut": cut, "mode": mode, "tree": str(tree), "transcript": str(where)}
+            "cut": cut, "mode": mode, "tree": str(tree), "transcript": str(where),
+            "route_at": seeded}
     (run_dir / "meta.json").write_text(json.dumps(meta, indent=1, ensure_ascii=False),
                                        encoding="utf-8")
     return meta
