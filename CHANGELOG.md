@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.138.0 — 2026-11-23
+
+A change of the plugin's version ends no grant: a grant holds under every version that reads its record, its words, budget and mark carried over, so an update no longer asks the person to arm it again (SPEC-011 R3). (`471e2cb`)
+
 ## 5.137.1 — 2026-11-23
 
 `goal.py --state` reads a `deliver-scope <slug>: prove <task>` commit whose task is named by its bare name, where one task of the scope alone carries it, so a goal no longer stays `not yet` over a proof-only re-delivery it made (SPEC-008 R2). (`9e4e2aa`)
