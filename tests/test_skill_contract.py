@@ -145,7 +145,9 @@ MODEL_MAY_REACH = {
     # It shapes what every later review holds the project to, the same standing /siegard-config
     # already holds over the project's structural roots — a session drafting its own future
     # judge, unasked, is deciding an input that was never its to assert either.
-    "siegard-standard": False,
+    # Reachable because its gate is inside it: a session-invoked run writes only what a recorded
+    # ask names, read back verbatim by ask.py, so the words stay the person's (SPEC-010 R10).
+    "siegard-standard": True,
     # The file set is the human's to assert and the reading writes no source — the same shape
     # that leaves /reconcile reachable. A session asked to check some files may reach for it.
     "check-source": True,

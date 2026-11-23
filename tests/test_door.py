@@ -584,6 +584,29 @@ def test_commit_refuses_a_red_run_uncommitted_and_named_by_no_record(project):
     assert f"run/{RED_RUN}: ended `failed` at the step `test`" in out
 
 
+def test_a_work_in_progress_commit_accepts_and_lists_a_red_run_no_record_names(project):
+    """«A delivery that stops commits what its own invocation wrote before its stop line is
+    written, once, as work in progress» (SPEC-008 R18), the red runs among them named in its
+    message: `--wip` accepts them and lists each, the message's to name."""
+    red_run(project)
+    result = door(project, "commit", "--slug", SLUG, "--wip")
+    accepts(result)
+    out = result.stdout
+    assert "ride with this work-in-progress commit" in out
+    assert f"run/{RED_RUN}: ended `failed` at the step `test`" in out
+
+
+def test_a_work_in_progress_commit_after_the_stop_line_is_still_refused(project):
+    stop_the_log(project)
+    refuses(door(project, "commit", "--slug", SLUG, "--wip", "--file",
+                 f"deliveries/{SLUG}/implementation"), "names paths outside the telemetry root")
+
+
+def test_wip_is_the_commit_check_s_alone(project):
+    done = door(project, "implement-task", "--wip")
+    assert done.returncode == 2 and "takes no --wip" in done.stderr
+
+
 def test_commit_accepts_a_red_run_a_record_names(project):
     red_run(project)
     review = project / "deliveries" / SLUG / "review" / "r.md"

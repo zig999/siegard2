@@ -359,11 +359,13 @@ Escreve ou atualiza o `siegard.json` a partir do que a pessoa diz. É o único q
 arquivo (§4). Também liga ou desliga a linha de progresso na barra de status, quando a pessoa pede
 (`progress.py --install`, abaixo).
 
-**Skills fechadas ao modelo.** `/siegard-config`, `/siegard-standard`, `/siegard-archive`,
-`/clarify-request`, `/siegard-goal` e `/siegard-grant` só podem ser invocadas por uma pessoa
+**Skills fechadas ao modelo.** `/siegard-config`, `/siegard-archive`, `/clarify-request`,
+`/siegard-goal` e `/siegard-grant` só podem ser invocadas por uma pessoa
 (`disable-model-invocation: true`): o modelo não as dispara por conta própria, nem de dentro de
 outra skill. Quando uma skill precisa de uma delas, entrega a invocação pronta para a pessoa colar.
-O critério é quem consegue declarar a entrada: em todas as seis, só a pessoa. No `/siegard-goal` e
+O critério é quem consegue declarar a entrada: em todas as cinco, só a pessoa. O
+`/siegard-standard` é aberto à sessão com a trava dentro: invocado por ela, só escreve o que um
+pedido gravado com `ask.py --record` nomeia. No `/siegard-goal` e
 no `/siegard-grant`, as palavras digitadas são a própria autorização.
 
 ### `/clarify-request` — reescrever um pedido como uma instrução validada

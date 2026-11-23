@@ -141,6 +141,11 @@ the person can move it. Then, each in its own fenced block: the line that follow
 `/siegard:siegard-progress <project-root> <slug>`, and the line that ends it,
 `! python3 -B <the resolved plugin root>/bin/goal.py --disarm <project-root>`.
 
+Armed or composed, a goal taken without `--correct` says so in one sentence of `body`: every finding
+is reported and none corrected, and the run decides on its own only what the objective's words
+decide — how a difference from an external contract is settled, for one — so a policy the person
+wants is written in the objective or passed as `--correct contradicts`.
+
 **Composed.** `body`: the goal is composed and not armed yet, and nothing was written but the
 objective's file. Then, in its own fenced block, whole, so that copying the block arms it, the line
 that arms it through the framework — the end is the state command's answer at every stop:

@@ -73,8 +73,8 @@ test, which you know and it is not told. Every rerun is the same command; `--nex
   - **`rewrite`** — every live owner shares a file with this task, which moved what it bound.
   - **`re-deliver`** — a live owner shares no file. Do not edit that test: stop, and hand the
     proof-only re-delivery `references/redelivery.md` names over each owner listed, ready to paste:
-    the task, the assertion the run named, the file this delivery added. It runs once the person
-    commits this delivery: its clean-tree stop refuses the pending state.
+    the task, the assertion the run named, the file this delivery added. It runs once this
+    delivery's work-in-progress commit (`references/finish.md`) has left the tree clean.
 
   On `adopt` and `rewrite`, the `test-author`, re-entered with the run, the diagnosis and each
   owning proof's entry, rewrites the test whole — never trimmed, never narrowed. It joins this

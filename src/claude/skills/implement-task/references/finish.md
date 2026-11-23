@@ -76,5 +76,16 @@ whether this code and the specification it followed have since moved apart.
 
 Once the bind has run, commit the delivery root, the target source root and the trace as the
 plugin's rules state, `door.py --check commit --project <root> --slug <slug> --file <path>...`
-first: `implement-task <slug>: deliver <task>`. A stop commits nothing; its runs stay for whoever
-takes its door.
+first: `implement-task <slug>: deliver <task>`.
+
+## The work-in-progress commit of a stop
+
+A stop after you wrote commits what you wrote, once, before the report: «A delivery that stops
+commits what its own invocation wrote before its stop line is written, once, as work in progress»
+(SPEC-008 R18). You began on a clean tree, so what `git status --porcelain` lists under the
+delivery root, the target source root and the trace is exactly what you wrote. Run
+`door.py --check commit --project <root> --slug <slug> --wip --file <path>...` over those paths,
+then commit them alone, pathspec-scoped, as `implement-task <slug>: wip <task>`, the message naming
+every red run the check listed. The task's next delivery builds on it: its record is a
+re-delivery's, and its red runs are the stop's evidence. A refused check commits nothing, and the
+report says what it refused. A stop before anything was written has nothing to commit.

@@ -173,10 +173,10 @@ them itself, as `implement-task <slug>: deliver <task>`; append the step's line 
 
 A delivery that ends in a stop instead of records ends the loop, unless `references/doors.md` or,
 under a goal, `references/goal.md` answers it. Read `references/stops.md`: relay that report's own
-doors whole, commit nothing further but the measure, and go to step 6. A delivery that stopped is
-never committed but for runs `references/doors.md` and `references/stops.md` name: what it wrote
-is the person's to read, keep or discard. A task whose delivery gave up is not re-attempted in this
-run: the same invocation again is the person's cost decision.
+doors whole, commit nothing further but the measure, and go to step 6. A delivery that stopped
+committed what it wrote as work in progress before this run's stop line; what the tree still holds
+beyond it is the person's to read, keep or discard. A task whose delivery gave up is not
+re-attempted in this run: the same invocation again is the person's cost decision.
 
 ### 4. Review
 

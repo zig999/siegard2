@@ -74,7 +74,7 @@ project, and a ready command saved under `/tmp` was gone when it was needed.
 
 ### Who commits what a skill wrote
 
-- **R7** — A route skill — `/analyse`, `/plan-work`, `/implement-task`, `/review-change`, `/reconcile` — commits what its own invocation wrote once its validator passes: one commit, pathspec-scoped to the roots it held clean before its first write, under the message `<skill> <slug>: <step>`, and never a push, a branch, a stash or a rewrite. A root it would commit that holds a change it did not make is a stop, and the commit is never widened to take it. Invoked by an orchestrating entry point, it commits the same way, and the orchestrator commits its own log, measure and captured runs. A session commits anything else only under the person's own words.
+- **R7** — A route skill — `/analyse`, `/plan-work`, `/implement-task`, `/review-change`, `/reconcile` — commits what its own invocation wrote once its validator passes: one commit, pathspec-scoped to the roots it held clean before its first write, under the message `<skill> <slug>: <step>`, and never a push, a branch, a stash or a rewrite. A root it would commit that holds a change it did not make is a stop, and the commit is never widened to take it. Invoked by an orchestrating entry point, it commits the same way, and the orchestrator commits its own log, measure and captured runs. A delivery that stops before its validator passes commits what it wrote once, as work in progress, under SPEC-008 R18. A session commits anything else only under the person's own words.
 
   Grounds, read on 2026-11-09 from the transcripts of five sales consumers between 2026-11-02 and
   2026-11-09: 92 of the person's messages authorized a commit — 48 with nothing beside the commit,
@@ -121,6 +121,19 @@ project, and a ready command saved under `/tmp` was gone when it was needed.
   `run.json` they could write is the one way an agent could make `bin/deliver.py` read a run that
   never happened. A shell command that writes the same files is not refused here; the session
   rules state the writers.
+
+- **R10** — `/siegard-standard` invoked by a session, rather than typed by the person, writes only the rules, packages or steps a recorded ask names: the invocation names the ask by its path and digest, `ask.py --read` prints the words it transcribes, and an invocation naming no ask, or an ask naming no entry, is a stop that asks for the words. It writes nothing the tree's tooling alone would show, and commits the standard's file alone, pathspec-scoped, under a message citing the ask's digest, once `bin/deliver.py --standard` accepts it.
+
+  Grounds, read on 2026-11-23 from a week of the sales consumers' transcripts (2026-11-16 to
+  2026-11-23): seven times the person's own words named a change to a standard. Three times the
+  session refused, because `/siegard-standard` was closed to it and the project's own rules
+  forbid editing a standard outside a route, and the person typed the skill — three to five of
+  their turns each, the last after "eu aceito as três regras do standards, pode implementar elas
+  no arquivo". Four times the session wrote `standards/backend.json` by hand, outside the route
+  and with no ask recorded — once in inventory two hours after refusing the same kind of change.
+  Opened behind a recorded ask, the skill is the one way a standard changes in a session, its
+  words the person's and its result validated. Reversal: an entry written by a session-invoked
+  run that no recorded ask names, or one the person reverts as not what they said.
 
 ## Validation required before acceptance
 

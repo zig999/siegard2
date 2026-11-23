@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.138.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.139.0. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -100,11 +100,10 @@ not. Three things hold that route:
   whose orchestration log closes on a stop line commits nothing after it but the measure: the
   telemetry root, the log that carries the stop line, and the captured runs of the initiative that
   ended `passed`.» (SPEC-008 R18)
-- **Write the project's standard only where the person's own words name the entry.** Record
-  those words with `bin/ask.py --record` first, then write the package or the step they name, by
-  name, into the registry `siegard.json` declares, and commit that file alone, pathspec-scoped,
-  under a message citing the digest the record printed. Words naming no entry get a question back,
-  never an edit.
+- **Change the project's standard only through `/siegard-standard`, over the person's own words.**
+  Record the message naming the rules, packages or steps with `bin/ask.py --record`, then invoke
+  `/siegard-standard` naming that ask's path and digest; never edit the registry by hand. Words
+  naming no entry get a question back, never an edit.
 - **Write to the person in the language of their own messages, after every compaction too.**
   Every message, report and handoff the person reads is in that language; a skill's text, a
   record, an agent's return or a summary written in English changes nothing.

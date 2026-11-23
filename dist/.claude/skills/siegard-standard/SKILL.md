@@ -1,7 +1,6 @@
 ---
 name: siegard-standard
-description: Reads what a project's own tooling already decides — its linter, compiler, style checker, secret scanner — and what a person states in prose, and transcribes both into a project's own standard registry, held to schemas/standard.json. Writes a rule only where evidence already stands — a configured tool, or the person's own words. Never invents a rule the tree does not already enforce and nobody stated. Use when a project has no standard yet, or needs its standard drafted from what its tooling and its team already do. Not for deciding what a project's conventions should be — that is the project's, never this skill's — and not for reviewing code against a standard (that is /review-change).
-disable-model-invocation: true
+description: Reads what a project's own tooling already decides — its linter, compiler, style checker, secret scanner — and what a person states in prose, and transcribes both into a project's own standard registry, held to schemas/standard.json. Writes a rule only where evidence already stands — a configured tool, or the person's own words. Never invents a rule the tree does not already enforce and nobody stated. Use when a project has no standard yet, or needs its standard drafted from what its tooling and its team already do, or when the person's own words in a session name rules, packages or steps to add — recorded first with bin/ask.py --record. Not for deciding what a project's conventions should be — that is the project's, never this skill's — and not for reviewing code against a standard (that is /review-change).
 effort: medium
 ---
 
@@ -37,6 +36,19 @@ proves.
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
 `targets` answers only from here. From here on, "the target source root" means `targets[<the
 target>]`.
+
+## Invoked by a session
+
+«`/siegard-standard` invoked by a session, rather than typed by the person, writes only the rules,
+packages or steps a recorded ask names» (SPEC-010 R10). The invocation names the ask by its path
+and digest, which `bin/ask.py --record` printed over the person's message, whole; run `python3 -B
+${CLAUDE_PLUGIN_ROOT}/bin/ask.py --read <project-root> --path <path> --sha256 <digest>` and
+transcribe what it prints, never a summary of it. Words you wrote are no person's words:
+an invocation naming no ask, or an ask that names no rule, package or step, is a stop that asks the
+person for the words. The standard's path is the one `siegard.json` declares for the target; none
+declared is a stop. Step 1 does not run: only what the words name is written. Once `bin/deliver.py
+--standard` accepts the file, commit it alone, pathspec-scoped, under `siegard-standard: <the
+ask's digest>`.
 
 ## Before anything: the tree
 

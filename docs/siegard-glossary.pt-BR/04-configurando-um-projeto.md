@@ -160,12 +160,12 @@ um target**: um projeto com dois stacks tem um registro por target, declarado po
 nenhuma regra de código embutida. Ele entrega apenas o **contrato** do standard
 (`schemas/standard.json`). Cada projeto declara as próprias regras e os próprios comandos; o
 Siegard só executa o que o projeto declarou.
-**Quem escreve.** O `/siegard-standard` (fechado ao modelo) faz um rascunho transcrevendo só o que
-já tem evidência — uma ferramenta configurada na árvore ou as palavras da própria pessoa — e
-nunca commita. Fora dele, a pessoa edita o próprio arquivo; uma sessão só acrescenta uma entrada
-(um pacote, um step) que as palavras da pessoa nomeiam, depois de gravá-las com
-`ask.py --record` (§12), e commita o arquivo sozinho, com uma mensagem que cita o digest do pedido.
-Palavras que não nomeiam entrada nenhuma recebem uma pergunta de volta, nunca uma edição.
+**Quem escreve.** O `/siegard-standard` transcreve só o que já tem evidência — uma ferramenta
+configurada na árvore ou as palavras da própria pessoa. Digitado pela pessoa, faz um rascunho e
+não commita. Invocado por uma sessão, só escreve as regras, os pacotes ou os steps que um pedido
+gravado com `ask.py --record` (§12) nomeia, e commita o arquivo sozinho, com uma mensagem que cita
+o digest do pedido. A sessão nunca edita o arquivo à mão; palavras que não nomeiam entrada nenhuma
+recebem uma pergunta de volta, nunca uma edição. A pessoa continua podendo editar o próprio arquivo.
 **Quando aparece.** O `/implement-task` executa os comandos dele e entrega as regras aos agentes
 produtores; o `/review-change` e o `/check-source` julgam o código contra as regras de leitura.
 **Exemplo.**

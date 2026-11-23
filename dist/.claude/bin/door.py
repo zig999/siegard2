@@ -85,11 +85,14 @@ Usage:  door.py --check <skill> [--project <dir>] [--target <key>] [--slug <slug
                                     at least one is required. --standard names the registry where
                                     the invocation would, and wins over siegard.json as it does
                                     there
-        door.py --check commit [--project <dir>] [--slug <slug>] [--file <path>]...
+        door.py --check commit [--project <dir>] [--slug <slug>] [--file <path>]... [--wip]
                                     decide whether a commit of the slug's delivery is refused as
                                     the tree stands: a log closing on a stop line, or a red run no
                                     record names. --slug is inferred where one initiative is live.
-                                    --file is the commit's pathspec, spelled from the project root
+                                    --file is the commit's pathspec, spelled from the project root.
+                                    --wip is a stopped delivery's work-in-progress commit, made
+                                    before its stop line: a red run is accepted and listed, for
+                                    the commit's message to name
         door.py --help              print this text and stop
 Exit:   0 accepts
         1 refuses, with every refusal
@@ -656,7 +659,11 @@ def door_commit(fields: dict, slug: str, args: dict, answer: Answer) -> None:
                 and not answered_by_a_later_attempt(runs, directory.name):
             red.append(f"{RUN_DIR}/{directory.name}: " + (
                 unreadable or f"ended `{outcome}` at the step `{captured.get('failed_step')}`"))
-    if red:
+    if red and args.get("wip"):
+        answer.checked.append(f"{len(red)} red run(s) under {runs} ride with this work-in-progress "
+                              f"commit, named in its message: «its message naming every run "
+                              f"among them that ended red» (SPEC-008 R18)\n" + "\n".join(red))
+    elif red:
         answer.refuse(f"{runs} holds a red run git does not hold and no record under {delivery} "
                       f"names — the delivery did not answer it, and committing it commits a red "
                       f"as delivered", "\n".join(red))
@@ -741,6 +748,13 @@ def take(args: list[str], flag: str, many: bool = False):
     return values if many else (values[0] if values else None)
 
 
+def flag(args: list[str], name: str) -> bool:
+    if name in args:
+        args.remove(name)
+        return True
+    return False
+
+
 def main() -> int:
     args = sys.argv[1:]
     if "--help" in args:
@@ -759,6 +773,7 @@ def main() -> int:
             "scope": take(args, "--scope", many=True),
             "file": take(args, "--file", many=True),
             "standard": take(args, "--standard"),
+            "wip": flag(args, "--wip"),
         }
     except CannotRun as refusal:
         print(f"cannot run: {refusal}", file=sys.stderr)
@@ -782,6 +797,7 @@ def main() -> int:
                                        ("name", ("review-change",)),
                                        ("scope", ("deliver-scope",)),
                                        ("file", ("reconcile", "commit")),
+                                       ("wip", ("commit",)),
                                        ("target", DOORS[:-1]),
                                        ("standard", DOORS[:-1]))
               if given[flag] and door not in doors]

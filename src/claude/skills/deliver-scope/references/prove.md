@@ -14,8 +14,8 @@ decision, wherever one exists» (SPEC-004 R10).
    by side over one tree, and never one suite run standing for several tasks.
 2. A suite is one run over the whole tree, so a red re-delivery beside green ones holds them all,
    and the clean-tree stop each invocation opens with keeps them apart. A re-delivery that stops red
-   leaves its files for the person, every one already committed stands, and those not yet begun are
-   relayed as not reached.
+   commits its files as work in progress, every one already committed stands, and those not yet
+   begun are relayed as not reached.
    A re-delivery whose red the diagnosis read as `code` on its own new test went on inside
    `/implement-task`: «the same invocation goes on as the task's re-delivery, once» (SPEC-004 R32),
    and its commit carries the source and both records it rewrote, under the same `prove` message.

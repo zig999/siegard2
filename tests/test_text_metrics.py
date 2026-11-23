@@ -28,8 +28,8 @@ BASELINE = REPO / "tests/fixtures/benchmarks/implement-task/text-metrics-5.61.0.
 AGENTS = ("task-implementer", "test-author", "failure-diagnostician")
 
 PINS = {
-    "chars": 106_118,
-    "skill_chars": 19_900,
+    "chars": 107_039,
+    "skill_chars": 19_976,
     "sentence_words_median": 18,
     "sentence_words_p90": 35,
     "sentences_over_60_words": 3,
@@ -280,8 +280,8 @@ def test_the_reconcile_terms_are_schemas_terms_json_s_and_each_is_used_outside_i
 DELIVER_AGENTS = ("door-decider",)
 DELIVER_BASELINE = REPO / "tests/fixtures/benchmarks/deliver-scope/text-metrics-5.67.0.json"
 DELIVER_PINS = {
-    "chars": 34_705,
-    "skill_chars": 16_966,
+    "chars": 34_720,
+    "skill_chars": 16_975,
     "sentence_words_median": 19,
     "sentence_words_p90": 35,
     "sentences_over_60_words": 3,
@@ -360,8 +360,8 @@ def test_the_deliver_scope_terms_are_schemas_terms_json_s_and_each_is_used_outsi
 # in no other measure.
 IMPLEMENT_B_BASELINE = REPO / "tests/fixtures/benchmarks/implement-task/text-metrics-5.68.0.json"
 IMPLEMENT_B_PINS = {
-    "chars": 106_118,
-    "skill_chars": 19_900,
+    "chars": 107_039,
+    "skill_chars": 19_976,
     "sentence_words_median": 18,
     "sentence_words_p90": 35,
     "sentences_over_60_words": 3,
