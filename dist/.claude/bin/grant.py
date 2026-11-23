@@ -263,12 +263,9 @@ def standing(project_root: Path) -> tuple[dict, dict, Path, str | None]:
 
 def no_longer_stands(fields: dict, held: dict) -> str | None:
     """Why an armed grant has ended though its record is still in place, or None where it
-    stands: «A grant ends when the person clears it, when the plugin's version is not the one it
-    was armed under — the rules a grant took are those of its version — and, where it names an
-    initiative, when that initiative holds a `closure.md`.» (SPEC-011 R3)"""
-    if held.get("version") != goal.plugin_version():
-        return (f"the plugin runs {goal.plugin_version()}; the grant was armed under "
-                f"{held.get('version')}")
+    stands: «A grant ends when the person clears it and, where it names an initiative, when that
+    initiative holds a `closure.md`. A change of the plugin's version ends no grant»
+    (SPEC-011 R3)."""
     if held.get("slug") and closed(fields, held["slug"]):
         return f"{held['slug']} holds a closure.md"
     return None
@@ -529,14 +526,11 @@ def obligations_from(text: str) -> list[dict]:
 
 
 def live_grant(siegard_dir: Path) -> dict | None:
-    """The grant armed beside the goal record, where it still holds under this plugin's version;
-    None where none is armed or it was armed under another version. Nothing is written: ending a
-    grant is `--decide`'s, at the render."""
+    """The grant armed beside the goal record, under whatever version it was armed: «A change of
+    the plugin's version ends no grant» (SPEC-011 R3). None where none is armed. Nothing is
+    written: ending a grant is `--decide`'s, at the render."""
     path = siegard_dir / ARMED_FILE
-    held = read_grant(path) if path.is_file() else None
-    if held is None or held.get("version") != goal.plugin_version():
-        return None
-    return held
+    return read_grant(path) if path.is_file() else None
 
 
 def gate_mode(environment: dict) -> str:

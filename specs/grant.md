@@ -85,9 +85,9 @@ bound a script on disk decides.
 
 ### What ends it
 
-- **R3** — A grant ends when the person clears it, when the plugin's version is not the one it was
-  armed under — the rules a grant took are those of its version — and, where it names an initiative,
-  when that initiative holds a `closure.md`. An initiative holds its `closure.md` once `HEAD`
+- **R3** — A grant ends when the person clears it and, where it names an initiative, when that
+  initiative holds a `closure.md`. A change of the plugin's version ends no grant: a grant holds
+  under every version that reads its record, and its words, budget and mark carry over. An initiative holds its `closure.md` once `HEAD`
   holds it: a closure written and not yet committed is the commit its closing still owes, and
   until that commit lands the initiative is one the grant covers and a grant naming it stands.
   An ended grant is appended, with its reason, to the
@@ -195,6 +195,17 @@ bound a script on disk decides.
 9. For R12 and R13: tests hold `grant.py`'s reading of a render's output to one obligation per `take` and `judge` with the grant's mark and none for `stop`, the obligation to being carried out by the door's `Skill` and the decider's `Agent` and by nothing else, a stop with an obligation pending to one block and then a release, `measure` to never blocking, each line carrying its `mode`, a stop that hands an unrendered decision naming a door to no line of the grant's, and a grant of another version or none to silence — `tests/test_grant.py`; and the hooks to the declaration, to the goal's `not yet` answering first and to every failure allowing the stop — `tests/test_hooks.py`.
 
 ## Readings
+
+- 2026-11-23 — grounds for R3 holding a grant across versions, decided by the person. A version
+  change ended every grant: in the 48 hours to 2026-11-23 12:30, five releases shipped, and the
+  person re-armed a grant eight times across inventory, productorder, configurator and salese2e,
+  each time with the same words (`--budget 10 --commits --close`, words digest 19321f163ad61892),
+  inside a ritual of updating, leaving and re-opening the session that was 20 of their 75 turns.
+  The earlier clause read a grant as taking the rules of its version; the person decided the
+  grant is theirs, not the version's: what it lets a stop do is read under the rules the plugin
+  runs now. A record no version reads — a contract other than the one `bin/grant.py` holds — is
+  no grant, as before. Reversal: judged doors taken under a grant armed before the version that
+  took them read as reverted more often than those taken under the version it was armed in.
 
 - 2026-11-23 — grounds for R12's `mode` and for R13 holding no rule. In `grant-checks.jsonl`
   the event `measured` meant two things — R13's unrendered stop, which never blocks under any

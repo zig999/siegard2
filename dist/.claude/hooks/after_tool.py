@@ -9,7 +9,7 @@ session's turn record under the repository's git directory (`hooks/turn.py`):
   route, at that instant: «The turn record is what the plugin's `PostToolUse` hook wrote since the
   session's last allowed stop, from the calls the harness hands it and never from the transcript»
   (SPEC-008 R15). It is recorded in every project that declares `siegard.json`, grant or none.
-- where the project holds a grant armed by `bin/grant.py --arm` under this plugin's version,
+- where the project holds a grant armed by `bin/grant.py --arm`, under any version of the plugin,
   `bin/grant.py`'s `after_tool` reads the call: a command that printed a grant's answer —
   `bin/handoff.py --render` or `bin/grant.py --decide` — records each `take:` and `judge:` as an
   obligation of the session; a `Skill` invocation of the door a `take:` named, or an `Agent` spawn

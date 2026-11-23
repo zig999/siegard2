@@ -112,20 +112,18 @@ def ended_grants(project: dict) -> list[dict]:
     return [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines()]
 
 
-def test_arming_over_a_grant_armed_under_another_version_ends_it_and_arms(project):
-    """«A grant ends when ... the plugin's version is not the one it was armed under» (SPEC-011
-    R3): its record still in place is no grant that stands, so arming does not refuse over it."""
+def test_arming_over_a_grant_armed_under_another_version_replaces_a_grant_that_stands(project):
+    """«A change of the plugin's version ends no grant» (SPEC-011 R3): a grant armed under
+    another version still stands, so arming over it replaces it."""
     assert arm(project, "--commits").returncode == 0
     old = record_of(project)
     armed(project).write_text(json.dumps({**old, "version": "0.0.1"}), encoding="utf-8")
     again = arm(project, "--doors", "plan-work")
     assert again.returncode == 0, again.stdout + again.stderr
-    assert f"ended: the grant armed at {old['armed_at']} — the plugin runs {VERSION}; the " \
-           f"grant was armed under 0.0.1" in again.stdout
+    assert f"ended: the grant armed at {old['armed_at']} is replaced by this arming" in again.stdout
     assert record_of(project)["doors"] == ["plan-work"]
     [gone] = ended_grants(project)
-    assert gone["ended"] == "ended" and gone["version"] == "0.0.1"
-    assert "armed under 0.0.1" in gone["reason"]
+    assert gone["ended"] == "replaced" and gone["version"] == "0.0.1"
 
 
 def test_arming_over_a_grant_that_stands_replaces_it_and_says_what_it_held(project):
@@ -180,7 +178,7 @@ def test_arming_over_a_grant_whose_initiative_closed_ends_it_and_arms(project):
     assert [g["ended"] for g in ended_grants(project)] == ["ended"]
 
 
-def test_a_refused_arming_leaves_an_ended_grant_in_place(project):
+def test_a_refused_arming_leaves_a_grant_of_another_version_in_place(project):
     """Nothing is written on a refusal: the old record is moved only where the new one is armed."""
     assert arm(project, "--commits").returncode == 0
     old = {**record_of(project), "version": "0.0.1"}
@@ -313,16 +311,17 @@ def test_the_skill_records_the_invocation_as_typed_and_reads_on_no_argument():
 # ------------------------------------------------------------------------ what ends it (R3)
 
 
-def test_a_plugin_version_change_ends_the_grant_and_it_takes_nothing(project):
+def test_a_plugin_version_change_ends_no_grant(project):
+    """«A change of the plugin's version ends no grant: a grant holds under every version that
+    reads its record, and its words, budget and mark carry over.» (SPEC-011 R3)"""
     assert arm(project, "--commits").returncode == 0
     held = record_of(project)
     held["version"] = "0.0.1"
     armed(project).write_text(json.dumps(held), encoding="utf-8")
     result = grant("--commit", str(project["home"]), "--file", "telemetry/x.json")
-    assert result.returncode == 1 and "the grant ended" in result.stdout
-    assert not armed(project).exists()
-    ended = (armed(project).parent / "grants-ended.jsonl").read_text(encoding="utf-8")
-    assert json.loads(ended.splitlines()[-1])["ended"] == "ended"
+    assert "the grant ended" not in result.stdout, result.stdout
+    assert record_of(project) == held
+    assert not (armed(project).parent / "grants-ended.jsonl").exists()
 
 
 def test_a_closure_ends_the_grant(project, tmp_path):
@@ -1012,23 +1011,21 @@ def test_the_note_names_a_recommended_door_without_entry_though_every_skeleton_d
 def test_a_grant_that_ended_at_the_render_adds_no_note(project):
     declare_no_standard(project)
     assert arm(project, "--doors", "plan-work,implement-task", "--budget", "2").returncode == 0
-    held = record_of(project)
-    armed(project).write_text(json.dumps({**held, "version": "0.0.1"}), encoding="utf-8")
+    close_committed(project)
     done = render_stop(project, stop_record(project, entry=False))
     assert "stop: the grant ended" in done.stderr and "note:" not in done.stderr
 
 
-def test_rendering_a_stop_under_a_grant_of_another_version_says_it_ended(project):
-    """The first stop after an update says the grant ended, where it was only found out by a
-    commit or a closing asking."""
+def test_rendering_a_stop_under_a_grant_of_another_version_is_answered_by_it(project):
+    """The first stop after an update is answered by the grant armed before it."""
     declare_no_standard(project)
     assert arm(project, "--doors", "plan-work,implement-task", "--budget", "2").returncode == 0
     held = record_of(project)
     armed(project).write_text(json.dumps({**held, "version": "0.0.1"}), encoding="utf-8")
     done = render_stop(project, stop_record(project))
     assert done.returncode == 0, done.stdout + done.stderr
-    assert "stop: the grant ended — the plugin runs" in done.stderr
-    assert not armed(project).exists() and len(ended_grants(project)) == 1
+    assert "the grant ended" not in done.stderr and f"(sha256 {held['mark']})" in done.stderr
+    assert armed(project).exists() and ended_grants(project) == []
 
 
 def test_a_check_over_an_inferred_initiative_is_told_to_the_door_decider(project):
@@ -1197,7 +1194,8 @@ def test_a_stop_after_a_render_or_naming_no_door_is_not_blocked(project, tmp_pat
     assert gate_events(project) == []
 
 
-def test_no_grant_or_a_grant_of_another_version_leaves_the_stop_alone(project, tmp_path):
+def test_no_grant_leaves_the_stop_alone_and_a_grant_of_another_version_holds_it(project,
+                                                                                tmp_path):
     rendered(project, "grant: x (sha256 0123456789abcdef)\ndecision 1: take: plan /plan-work\n")
     assert "block" not in stop_hook(project, DECISION_NAMING_A_DOOR).stdout
     assert arm(project, "--doors", "plan-work").returncode == 0
@@ -1206,8 +1204,8 @@ def test_no_grant_or_a_grant_of_another_version_leaves_the_stop_alone(project, t
     held["version"] = "0.0.1"
     armed(project).write_text(json.dumps(held), encoding="utf-8")
     rendered(project, printed)
-    assert "block" not in stop_hook(project, DECISION_NAMING_A_DOOR).stdout
-    assert gate_events(project) == []
+    assert "block" in stop_hook(project, DECISION_NAMING_A_DOOR).stdout
+    assert gate_events(project) == ["recorded", "blocked"]
 
 
 def test_another_sessions_obligation_is_not_this_sessions(project, tmp_path):
