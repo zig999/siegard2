@@ -13,6 +13,8 @@ import os
 import shutil
 import subprocess
 import sys
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -33,8 +35,22 @@ def grant(*args: str, stdin: str | None = None) -> subprocess.CompletedProcess:
                           input=stdin, capture_output=True, text=True)
 
 
+def next_free_second(home: Path) -> None:
+    """An ask is recorded once per second and never overwritten, so a test arming twice waits
+    out a second whose ask is already recorded rather than meet that refusal."""
+    sys.path.insert(0, str(BIN))
+    import ask
+    try:
+        root = ask.telemetry_root(home)
+    except Exception:
+        return
+    while (root / f"ask-{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.md").exists():
+        time.sleep(0.05)
+
+
 def arm(project: dict, *flags: str, words: str = WORDS, slug: str | None = SLUG):
     named = ["--slug", slug] if slug else []
+    next_free_second(project["home"])
     return grant("--arm", str(project["home"]), *named, *flags, "--words-file", "-", stdin=words)
 
 
@@ -156,6 +172,7 @@ def close_committed(project: dict) -> None:
 def test_arming_over_a_grant_whose_initiative_closed_ends_it_and_arms(project):
     assert arm(project, "--commits").returncode == 0
     close_committed(project)
+    next_free_second(project["home"])
     words_only = grant("--arm", str(project["home"]), "--commits", "--words-file", "-",
                        stdin=WORDS)
     assert words_only.returncode == 0, words_only.stdout + words_only.stderr

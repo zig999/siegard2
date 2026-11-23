@@ -68,6 +68,11 @@ A change that alters what ships — anything under `src/` — is a release:
 A major is a version whose contract a persisted record no longer satisfies; it ships with the
 rewrite a consumer runs once, under `tools/`.
 
+A change meant to alter what sessions do at a stop — a hook, a refusal of `--render`, a grant
+answer — can be measured against the stops consumer sessions really made before it ships:
+`tools/replay_stops.py` replays them under a plugin tree of your choice, and
+`docs/replay-stops.md` says how.
+
 ## Licensing
 
 Contributions are made under the repository's MIT license.
