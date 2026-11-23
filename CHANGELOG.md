@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.137.0 — 2026-11-23
+
+A turn that ran a skill ending on a render owes that render: `hooks/after_tool.py` (was `hooks/grant_gate.py`) keeps a turn record of the instant such a skill was invoked, and under `SIEGARD_HANDOFF_STOP=enforce` the `Stop` hook blocks once a route left unrendered, never the form of a message; `handoff-checks.jsonl` lines gain `route` and `rendered`, every `grant-checks.jsonl` line its `mode`, and SPEC-011 R13 holds no rule (SPEC-008 R15, SPEC-011 R12). (`8018d06`)
+
 ## 5.136.1 — 2026-11-22
 
 `goal.py --state` reads a task whose proof record is not yet written as answering no criterion, so a stop with an implementation record and no proof keeps its state line and `--render` can read it (SPEC-008 R12). (`5d5b3ce`)
