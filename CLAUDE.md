@@ -226,6 +226,10 @@ Five bounds hold it, and giving up any of them is a proposal, never a change:
   registry entry the bound above admits. A push, a branch or a history rewrite is never a skill's,
   a goal's or a grant's: where a goal or a grant is armed, the plugin's `PreToolUse` hook refuses
   it; outside them, a session runs one only where the person's own words in that session name it.
+  A route that stops commits what its own invocation wrote before the stop as work in progress —
+  pathspec-scoped to those files, one commit, under `<skill> <slug>: wip <task>`, naming any run
+  that ended red — so the next route opens on a clean tree and nothing the stop left is lost; the
+  task's next delivery builds on it.
 - **Only what a delivery is made of holds a write.** `task-implementer` and `test-author` grant
   `Write` and `Edit`; every other agent returns content and the caller writes it, and
   `tests/test_agent_contract.py` is what enforces it. The grant cannot be scoped to a path —
