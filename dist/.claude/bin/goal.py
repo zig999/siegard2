@@ -277,7 +277,8 @@ def proof_answer(fields: dict, slug: str, since: str, delivery: Path,
     tasks it owes are those whose proof records name them, and one re-delivery among them closes
     it. The review is the first whose reconciliation record, beside the trace under the review's
     name, holds such a certification; a later review's remainder is relayed, as the step runs
-    once."""
+    once. A `deliver-scope <slug>: prove <task>` commit names its task by its id, or by its bare
+    name where one task of the scope alone carries it."""
     proving: dict[str, str] = {}
     for tid in tasks:
         record = delivery / "proof" / f"{tid[len('task/'):]}.md"
@@ -310,9 +311,19 @@ def proof_answer(fields: dict, slug: str, since: str, delivery: Path,
         return True, ("no review committed since the goal began left a testable remainder over "
                       "the proof of a task of the scope")
     proved = git(fields["home"], "log", "--format=%H %s", f"{stamp}..HEAD")
-    done = {f"task/{m.group(1)}" for line in proved.splitlines()
-            if (m := re.match(rf"^\S+ deliver-scope {re.escape(slug)}: prove (?:task/)?(\S+)$",
-                              line))}
+    by_name: dict[str, list[str]] = {}
+    for tid in tasks:
+        by_name.setdefault(tid.rsplit("/", 1)[-1], []).append(tid)
+    done: set[str] = set()
+    for line in proved.splitlines():
+        m = re.match(rf"^\S+ deliver-scope {re.escape(slug)}: prove (?:task/)?(\S+)$", line)
+        if not m:
+            continue
+        named = m.group(1)
+        if f"task/{named}" in tasks:
+            done.add(f"task/{named}")
+        elif "/" not in named and len(by_name.get(named, [])) == 1:
+            done.add(by_name[named][0])
     open_ = [node for node, held in owed.items() if not done & set(held)]
     lines = [f"{review} left {len(owed)} certification(s) with a testable remainder over the "
              f"proof of a task of the scope"]

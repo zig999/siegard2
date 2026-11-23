@@ -213,8 +213,10 @@ session that stopped while its subagents were still running. The harness refuses
    `tests/test_deliver_scope.py` proves each.
 13. Tests hold `goal.py --state` to R2's proof clause: a certification the first review left
    with a testable remainder over the proof of a task of the scope is `not yet` under `prove`
-   until a `deliver-scope <slug>: prove <task>` commit of one such task follows the review, and
-   a remainder over a proof no task of the scope holds owes nothing — `tests/test_goal.py`.
+   until a `deliver-scope <slug>: prove <task>` commit of one such task follows the review — the
+   task named by its id, or by its bare name where one task of the scope alone carries it, a bare
+   name none carries answering nothing — and a remainder over a proof no task of the scope holds
+   owes nothing — `tests/test_goal.py`.
 14. Tests hold the commit hook to R19 over fixture repositories: a commit adding a stop line and
    carrying a run directory refused, and the same with a commit of all that is tracked; a commit
    of the log alone, of the log and the measure, and of a log whose added line names no stop
@@ -223,6 +225,17 @@ session that stopped while its subagents were still running. The harness refuses
    cannot be read, going ahead.
 
 ## Readings
+
+- 2026-11-23 — grounds for validation 13's bare name. `references/prove.md` of `/deliver-scope`
+  says to commit `deliver-scope <slug>: prove <task>`, and `goal.py` read only `<epic>/<task>`
+  there. inventory's `party-ref-published` committed `prove
+  characteristic-received-with-null-value-held-without-a-value` (`9763282`), the task's own name
+  as the reference wrote it, and the goal stayed `not yet — failing: prove` over a re-delivery it
+  had made; the session asked the person seven times, over 15 hours, whether to add an empty
+  commit carrying the epic. A task's name is unique within an epic, not across a plan, so the
+  bare name answers only where one task of the scope carries it. Reversal: two tasks of one scope
+  sharing a name and a run proving one of them under it, which reads as no answer and names the
+  id form in the stop.
 
 - 2026-11-23 — grounds for R15's turn record and for what `enforce` blocks. Read from the
   inventory, productorder and configurator transcripts and their `handoff-checks.jsonl` under

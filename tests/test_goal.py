@@ -229,6 +229,38 @@ def test_a_testable_remainder_over_a_scope_task_is_owed_its_proof_only_re_delive
     assert f"answered by the proof-only re-delivery of {TASK}" in result.stdout
 
 
+@pytest.mark.parametrize("named", ["checkout/record-order", "record-order"])
+def test_a_proof_only_re_delivery_is_read_from_its_subject_by_its_id_or_its_bare_name(project,
+                                                                                      named):
+    """`deliver-scope <slug>: prove <task>` names the task by its id or by its own name; the
+    bare name answers where exactly one task of the scope carries it."""
+    deliver(project)
+    remainder(project, "domain/sales/order")
+    review(project)
+    commit(project["home"], f"review-change {SLUG}: reconciliation", "siegard-reconcile")
+    proof = project["home"] / "deliveries" / SLUG / "proof" / "checkout" / "record-order.md"
+    proof.write_text(proof.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    commit(project["home"], f"deliver-scope {SLUG}: prove {named}", "deliveries")
+    measure(project)
+    result = state(project)
+    assert "check prove: pass" in result.stdout, result.stdout
+    assert f"answered by the proof-only re-delivery of {TASK}" in result.stdout
+
+
+def test_a_bare_name_no_task_of_the_scope_carries_answers_nothing(project):
+    deliver(project)
+    remainder(project, "domain/sales/order")
+    review(project)
+    commit(project["home"], f"review-change {SLUG}: reconciliation", "siegard-reconcile")
+    proof = project["home"] / "deliveries" / SLUG / "proof" / "checkout" / "record-order.md"
+    proof.write_text(proof.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    commit(project["home"], f"deliver-scope {SLUG}: prove record-invoice", "deliveries")
+    measure(project)
+    result = state(project)
+    assert "prove" in failing(result), result.stdout
+    assert "answered by" not in result.stdout
+
+
 def test_a_testable_remainder_over_a_proof_no_scope_task_holds_is_not_owed(project):
     deliver(project)
     remainder(project, "domain/sales/invoice", proof="tests/bill.spec.ts")
