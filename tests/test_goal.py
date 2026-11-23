@@ -1153,8 +1153,8 @@ def test_no_other_shipped_skill_nor_the_session_rules_runs_goal_arm():
 #
 # The message a session stops on when its goal ends is the report that closes the goal, and
 # control returns to the person on it. It is read as a stop no goal answers is read, so a closing
-# report written as free text that breaks what `handoff.py --check` decides is measured, and
-# under `enforce` sent back once, instead of escaping every check because a goal was armed.
+# report is measured against what `handoff.py --check` decides, and under `enforce` a turn that
+# ran a route and kept no render is sent back once, instead of escaping because a goal was armed.
 
 CLOSING = (REPO / "tests/fixtures/handoff/pt-long-jargon-late-decision.md").read_text(
     encoding="utf-8")
@@ -1166,6 +1166,16 @@ def checks(project: dict) -> list[dict]:
     if not log.is_file():
         return []
     return [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines()]
+
+
+def routed(project: dict, session: str = "one") -> None:
+    """The `PostToolUse` call the harness makes after `/deliver-scope` is invoked as a skill."""
+    event = {"hook_event_name": "PostToolUse", "session_id": session,
+             "cwd": str(project["home"]), "tool_name": "Skill",
+             "tool_input": {"skill": "siegard:deliver-scope"}, "tool_response": {}}
+    done = subprocess.run([sys.executable, "-B", str(REPO / "src/claude/hooks/after_tool.py")],
+                          input=json.dumps(event), capture_output=True, text=True)
+    assert done.returncode == 0 and done.stdout == "", done
 
 
 def to_state_a(project: dict) -> None:
@@ -1194,11 +1204,12 @@ def test_the_report_closing_a_goal_in_state_a_is_measured_and_the_goal_still_end
 
 
 @pytest.mark.parametrize("reach", [to_state_a, to_state_b])
-def test_enforce_sends_a_violating_closing_report_back_once_and_keeps_the_ending_said(project,
-                                                                                      reach):
+def test_enforce_sends_an_unrendered_closing_report_back_once_and_keeps_the_ending_said(project,
+                                                                                         reach):
     reach(project)
+    routed(project)
     first = json.loads(stop(project, mode="enforce", last_assistant_message=CLOSING).stdout)
-    assert first["decision"] == "block" and "length: " in first["reason"]
+    assert first["decision"] == "block" and "bin/handoff.py --render" in first["reason"]
     assert first["systemMessage"].startswith(f"Siegard ended the armed goal {SLUG}: state ")
     assert not armed(project).exists(), "the goal ended; the block asks for the report alone"
     second = stop(project, mode="enforce", last_assistant_message=CLOSING)
@@ -1224,7 +1235,7 @@ def test_the_report_closing_a_paused_goal_is_read_too(project):
     assert checks(project) == [], "a not yet is the goal's alone"
     said = json.loads(stop(project, mode="enforce", last_assistant_message=CLOSING).stdout)
     assert said["systemMessage"].startswith(f"Siegard paused the armed goal {SLUG}")
-    assert said["decision"] == "block" and len(checks(project)) == 1
+    assert "decision" not in said and len(checks(project)) == 1, "no route ran in this turn"
 
 
 def test_a_not_yet_never_reaches_the_handoff_check(project):

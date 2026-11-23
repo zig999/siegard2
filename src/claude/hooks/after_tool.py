@@ -1,27 +1,32 @@
 #!/usr/bin/env python3
-"""Keeps what an armed grant answered at a stop as the session's obligation until it is carried
-out, in a Siegard project.
+"""Records what a tool call did to the session's turn, in a Siegard project.
 
 The harness runs this on `PostToolUse` over `Bash`, `Skill` and `Agent`, as `hooks/hooks.json`
-declares. Where the project declares `siegard.json` and holds a grant armed by `bin/grant.py
---arm` under this plugin's version, `bin/grant.py`'s `after_tool` reads the call: a command that
-printed a grant's answer — `bin/handoff.py --render` or `bin/grant.py --decide` — records each
-`take:` and `judge:` decision as an obligation of the session, under the repository's git
-directory; a `Skill` invocation of the door a `take:` named, or an `Agent` spawn of
-`siegard:door-decider` over a `judge:`, carries it out. The stop is answered from those
-obligations by `hooks/goal_stop.py`, the one `Stop` hook: «A stop of a session whose obligation
-is not carried out is blocked once by the plugin's `Stop` hook, its reason the grant's line and
-what carries it out, and the session's next stop is allowed whatever it holds.» (SPEC-011 R12)
+declares, and the one `Stop` hook reads what it wrote. Two things are recorded, each in the
+session's turn record under the repository's git directory (`hooks/turn.py`):
+
+- a `Skill` invocation of a skill whose run ends on `bin/handoff.py --render` marks the turn a
+  route, at that instant: «The turn record is what the plugin's `PostToolUse` hook wrote since the
+  session's last allowed stop, from the calls the harness hands it and never from the transcript»
+  (SPEC-008 R15). It is recorded in every project that declares `siegard.json`, grant or none.
+- where the project holds a grant armed by `bin/grant.py --arm` under this plugin's version,
+  `bin/grant.py`'s `after_tool` reads the call: a command that printed a grant's answer —
+  `bin/handoff.py --render` or `bin/grant.py --decide` — records each `take:` and `judge:` as an
+  obligation of the session; a `Skill` invocation of the door a `take:` named, or an `Agent` spawn
+  of `siegard:door-decider` over a `judge:`, carries it out: «A stop of a session whose obligation
+  is not carried out is blocked once by the plugin's `Stop` hook, its reason the grant's line and
+  what carries it out, and the session's next stop is allowed whatever it holds.» (SPEC-011 R12)
 
 It reads only what the harness hands a hook — the call's input and its response — and never the
 session's transcript. It never fails a session and prints nothing: every path out exits 0, and
-every failure leaves the obligations as they were.
+every failure leaves the record as it was.
 """
 from __future__ import annotations
 
 import contextlib
 import io
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -64,6 +69,7 @@ def main() -> int:
         where = record.get("cwd")
         start = Path(where) if isinstance(where, str) and where else Path.cwd()
         sys.path.insert(0, str(HOOKS.parent / "bin"))
+        sys.path.insert(0, str(HOOKS))
         from project import PROJECT_FILE, toplevel_of
         home = toplevel_of(start, timeout=GIT_TIMEOUT_SECONDS)
         if not (home / PROJECT_FILE).is_file():
@@ -71,10 +77,14 @@ def main() -> int:
         with contextlib.redirect_stderr(io.StringIO()):
             import goal
             import grant
+            import turn
         siegard_dir = goal.armed_path(home).parent
+        if tool == "Skill":
+            turn.after_skill(siegard_dir, session, given)
         if grant.live_grant(siegard_dir) is None:
             return 0
-        grant.after_tool(siegard_dir, session, tool, given, output_of(record.get("tool_response")))
+        grant.after_tool(siegard_dir, session, tool, given, output_of(record.get("tool_response")),
+                         grant.gate_mode(os.environ))
     except (Exception, SystemExit):
         return 0
     return 0

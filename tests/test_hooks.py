@@ -445,6 +445,25 @@ def stopped(project: Path, message: str, session: str = "s1", mode: str | None =
                           capture_output=True, text=True, env=env)
 
 
+AFTER_TOOL = HOOKS / "after_tool.py"
+
+
+def routed(project: Path, skill: str = "siegard:plan-work", session: str = "s1") -> None:
+    """The `PostToolUse` call the harness makes after a `Skill` invocation."""
+    event = {"hook_event_name": "PostToolUse", "session_id": session, "cwd": str(project),
+             "tool_name": "Skill", "tool_input": {"skill": skill}, "tool_response": {}}
+    done = subprocess.run([sys.executable, "-B", str(AFTER_TOOL)], input=json.dumps(event),
+                          capture_output=True, text=True)
+    assert done.returncode == 0 and done.stdout == "" and done.stderr == "", done
+
+
+def kept_a_render(project: Path) -> None:
+    """A record `bin/handoff.py --render` keeps beside the report it names."""
+    kept = siegard_dir(project) / "handoff"
+    kept.mkdir(parents=True, exist_ok=True)
+    (kept / "20991231T000000Z-plan-work.json").write_text("{}\n", encoding="utf-8")
+
+
 def test_a_violating_handoff_is_recorded_and_the_stop_allowed_by_default(siegard_project):
     done = stopped(siegard_project, VIOLATING)
     assert done.returncode == 0 and done.stdout == "" and done.stderr == "", done
@@ -475,26 +494,94 @@ def test_a_clean_handoff_is_recorded_with_no_violation(siegard_project):
     assert entry["violations"] == [] and entry["kinds"] == [] and entry["blocked"] is False
 
 
-def test_enforce_blocks_once_and_releases_the_next_stop_of_the_session(siegard_project):
+def test_enforce_blocks_a_route_left_unrendered_once_and_releases_the_next_stop(siegard_project):
+    """«under `enforce` a stop whose turn ran such a skill and printed no render is blocked once»
+    (SPEC-008 R15)."""
+    routed(siegard_project)
+    routed(siegard_project, session="s2")
     first = stopped(siegard_project, VIOLATING, mode="enforce")
     assert first.returncode == 0, first.stderr
     said = json.loads(first.stdout)
     assert said["decision"] == "block"
-    assert "length: " in said["reason"] and "decision: " in said["reason"]
+    assert "bin/handoff.py --render" in said["reason"] and "Recommend the door" in said["reason"]
     other = stopped(siegard_project, VIOLATING, session="s2", mode="enforce")
     assert json.loads(other.stdout)["decision"] == "block", "the release is the session's own"
     second = stopped(siegard_project, VIOLATING, mode="enforce")
     assert second.returncode == 0 and second.stdout == "", second.stdout
     entries = checks(siegard_project)
-    assert [(e["session_id"], e["blocked"], e["released"]) for e in entries] == [
-        ("s1", True, False), ("s2", True, False), ("s1", False, True)]
+    assert [(e["session_id"], e["route"], e["rendered"], e["blocked"], e["released"])
+            for e in entries] == [("s1", True, False, True, False), ("s2", True, False, True, False),
+                                  ("s1", True, False, False, True)]
     assert entries[2]["violations"], "the released stop is still measured"
-    third = stopped(siegard_project, VIOLATING, mode="enforce")
-    assert json.loads(third.stdout)["decision"] == "block", \
-        "a release answers one block; the stop after it is read afresh"
+    assert stopped(siegard_project, VIOLATING, mode="enforce").stdout == "", \
+        "the allowed stop cleared the turn; a stop with no route since is not blocked"
+    routed(siegard_project)
+    assert json.loads(stopped(siegard_project, VIOLATING, mode="enforce").stdout)[
+        "decision"] == "block", "a route invoked again is read afresh"
+
+
+def test_the_violations_of_a_message_s_form_are_recorded_and_never_block(siegard_project):
+    """«The violations of a message's form are recorded and never block.» (SPEC-008 R15)"""
+    done = stopped(siegard_project, VIOLATING, mode="enforce")
+    assert done.returncode == 0 and done.stdout == "", done.stdout
+    [entry] = checks(siegard_project)
+    assert entry["kinds"] == ["decision", "length", "opening"]
+    assert (entry["route"], entry["rendered"], entry["blocked"]) == (False, False, False)
+
+
+def test_a_route_turn_that_kept_a_render_is_allowed_under_enforce(siegard_project):
+    routed(siegard_project)
+    kept_a_render(siegard_project)
+    done = stopped(siegard_project, VIOLATING, mode="enforce")
+    assert done.returncode == 0 and done.stdout == "", done.stdout
+    [entry] = checks(siegard_project)
+    assert (entry["route"], entry["rendered"], entry["blocked"]) == (True, True, False)
+
+
+def test_a_render_kept_before_the_route_was_invoked_is_not_its_render(siegard_project):
+    kept_a_render(siegard_project)
+    old = siegard_dir(siegard_project) / "handoff" / "20991231T000000Z-plan-work.json"
+    os.utime(old, (1, 1))
+    routed(siegard_project)
+    said = json.loads(stopped(siegard_project, CLEAN, mode="enforce").stdout)
+    assert said["decision"] == "block"
+    assert checks(siegard_project)[0]["rendered"] is False
+
+
+def test_a_route_turn_is_recorded_whatever_its_message_holds(siegard_project):
+    routed(siegard_project, skill="/implement-task")
+    assert stopped(siegard_project, "Done. The suite is green.").stdout == ""
+    [entry] = checks(siegard_project)
+    assert (entry["hands_decision"], entry["route"], entry["mode"]) == (False, True, "measure")
+
+
+def test_a_skill_whose_run_ends_on_no_render_makes_no_route(siegard_project):
+    routed(siegard_project, skill="siegard:siegard-progress")
+    assert stopped(siegard_project, "Done. The suite is green.", mode="enforce").stdout == ""
+    assert checks(siegard_project) == []
+
+
+def test_an_allowed_stop_clears_the_turn_and_a_blocked_one_keeps_it(siegard_project):
+    record = siegard_dir(siegard_project) / "turn" / "s1.json"
+    routed(siegard_project)
+    assert record.is_file()
+    assert "block" in stopped(siegard_project, CLEAN, mode="enforce").stdout
+    assert record.is_file(), "a blocked stop keeps the turn"
+    assert stopped(siegard_project, CLEAN, mode="enforce").stdout == ""
+    assert not record.exists(), "an allowed stop clears it"
+
+
+def test_the_skills_read_as_a_route_are_those_whose_run_ends_on_a_render():
+    sys.path.insert(0, str(HOOKS))
+    import turn
+    skills = REPO / "src/claude/skills"
+    rendering = sorted(d.name for d in skills.iterdir() if d.is_dir() and any(
+        "--render" in f.read_text(encoding="utf-8") for f in d.rglob("*.md")))
+    assert sorted(turn.RENDERING) == rendering
 
 
 def test_a_release_is_recorded_even_where_the_next_message_hands_no_decision(siegard_project):
+    routed(siegard_project)
     stopped(siegard_project, VIOLATING, mode="enforce")
     assert stopped(siegard_project, "Rewritten in the report.", mode="enforce").stdout == ""
     last = checks(siegard_project)[-1]
@@ -525,6 +612,7 @@ def test_another_sessions_stop_is_held_to_the_handoff_check_beside_an_armed_goal
     held.mkdir(parents=True)
     (held / "goal.json").write_text(json.dumps({"contract": "goal-armed/1", "slug": "orders",
                                                 "session_id": "elsewhere"}), encoding="utf-8")
+    routed(siegard_project)
     done = stopped(siegard_project, VIOLATING, mode="enforce")
     assert done.returncode == 0
     assert json.loads(done.stdout)["decision"] == "block", done.stdout
@@ -642,7 +730,7 @@ def test_the_version_line_is_said_on_a_machine_without_the_validators(siegard_pr
 
 # ------------------------------------- the grant's obligations after a call (SPEC-011 R12)
 
-GRANT_GATE = HOOKS / "grant_gate.py"
+GRANT_GATE = HOOKS / "after_tool.py"
 
 
 def test_the_grants_obligations_are_read_after_the_calls_that_make_and_carry_them():
@@ -650,6 +738,6 @@ def test_the_grants_obligations_are_read_after_the_calls_that_make_and_carry_the
     read after each from what the harness hands the hook — never from the transcript."""
     groups = declared()["PostToolUse"]
     assert [(g["matcher"], [h["command"] for h in g["hooks"]]) for g in groups] == [
-        ("Bash|Skill|Agent|Task", ['python3 "${CLAUDE_PLUGIN_ROOT}/hooks/grant_gate.py"'])]
+        ("Bash|Skill|Agent|Task", ['python3 "${CLAUDE_PLUGIN_ROOT}/hooks/after_tool.py"'])]
     assert os.access(GRANT_GATE, os.X_OK), f"{GRANT_GATE} is not executable"
     assert "transcript" not in GRANT_GATE.read_text(encoding="utf-8").split('"""')[2]

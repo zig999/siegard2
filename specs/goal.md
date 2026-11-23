@@ -97,7 +97,7 @@ session that stopped while its subagents were still running. The harness refuses
 
 ### What a stop no armed goal answers holds
 
-- **R15** — Where no armed goal answers the stop in a project that declares `siegard.json`, the plugin's `Stop` hook reads the event's `last_assistant_message` and, where `bin/handoff.py`'s own reading says it hands a decision, appends one line to `siegard/handoff-checks.jsonl` under the repository's git directory — never in the tree the state reads — holding `at`, `session_id`, `characters`, `hands_decision`, `mode`, `violations` as `handoff.py --check` prints them, `kinds`, `blocked` and `released`. The mode is the environment variable `SIEGARD_HANDOFF_STOP`, which a project declares in the harness's own settings: `measure` is the default and the reading of every value but `enforce`, and under it the hook never blocks; under `enforce` a stop whose message violates is blocked once, `{"decision": "block", "reason": …}` with the violations as the reason, and the next stop of the same session is allowed whatever its message holds and recorded `released`. A stop while the session holds background work in flight is not read, a stop R14 answers `not yet` is R14's alone, while a stop on which R14 ends the goal — `state A`, `state B` or paused — is read here once the goal has ended, the line R14 says kept beside whatever this hook answers, and a stop of another session, where the armed goal is bound to one, is read here too — and every failure allows the stop and prints nothing.
+- **R15** — Where no armed goal answers the stop in a project that declares `siegard.json`, the plugin's `Stop` hook reads the event's `last_assistant_message` and the session's turn record, and where `bin/handoff.py`'s own reading says the message hands a decision, or the turn ran a skill whose run ends on a render, appends one line to `siegard/handoff-checks.jsonl` under the repository's git directory — never in the tree the state reads — holding `at`, `session_id`, `characters`, `hands_decision`, `route`, `rendered`, `mode`, `violations` as `handoff.py --check` prints them, `kinds`, `blocked` and `released`. The turn record is what the plugin's `PostToolUse` hook wrote since the session's last allowed stop, from the calls the harness hands it and never from the transcript: the instant of the last `Skill` invocation of a skill whose run ends on `bin/handoff.py --render`, which makes the line's `route`; the line's `rendered` is a record that command keeps under `siegard/handoff/` newer than that instant, a refused render keeping none; an allowed stop clears the record. The mode is the environment variable `SIEGARD_HANDOFF_STOP`, which a project declares in the harness's own settings: `measure` is the default and the reading of every value but `enforce`, and under it the hook never blocks; under `enforce` a stop whose turn ran such a skill and printed no render is blocked once, `{"decision": "block", "reason": …}`, the reason asking for the render and for a recommended door over a stated answer, and the next stop of the same session is allowed whatever its message holds and recorded `released`. The violations of a message's form are recorded and never block. A stop while the session holds background work in flight is not read, a stop R14 answers `not yet` is R14's alone, while a stop on which R14 ends the goal — `state A`, `state B` or paused — is read here once the goal has ended, the line R14 says kept beside whatever this hook answers, and a stop of another session, where the armed goal is bound to one, is read here too — and every failure allows the stop and prints nothing.
 
 ### What a session starts on
 
@@ -172,13 +172,18 @@ session that stopped while its subagents were still running. The harness refuses
    printed; and `hooks.json` declaring the hook on `Stop`.
 7. Tests hold the `Stop` hook to R15 by running it as the harness does: with no goal armed, a
    message handing a decision and violating appends one line and allows the stop under
-   `measure`; one that hands no decision appends nothing; under `enforce` the first violating
-   stop is blocked with the violations as the reason and the next stop of the same session is
-   allowed and recorded `released`; a stop with background work in flight appends nothing; a
-   stop an armed goal answers `not yet` appends nothing; a stop on which the armed goal ends in
-   `state A`, `state B` or paused is read like one no goal answers — its line appended, under
-   `enforce` a violating message blocked once with the goal's ending line still said and the
-   next stop released, a clean one allowed — and the goal stays ended either way; a log that
+   `measure` and under `enforce` alike; one that hands no decision in a turn that ran no
+   rendering skill appends nothing; a turn that ran one appends its line whatever the message
+   holds, `route` true and `rendered` as the turn record says; under `enforce` such a turn with
+   no render is blocked with a reason asking for the render, and the next stop of the same
+   session is allowed and recorded `released`, while one that rendered is allowed; an allowed
+   stop clears the turn record and a blocked one keeps it; the `PostToolUse` hook records the
+   instant of a `Skill` call to a skill whose run ends on a render and of no other, and a turn
+   reads `rendered` where a kept record is newer than that instant and not otherwise; a stop with background work in flight appends
+   nothing; a stop an armed goal answers `not yet` appends nothing; a stop on which the armed
+   goal ends in `state A`, `state B` or paused is read like one no goal answers — its line
+   appended, under `enforce` a route turn left unrendered blocked once with the goal's ending
+   line still said and the next stop released — and the goal stays ended either way; a log that
    cannot be written allows the stop with nothing printed.
 8. Tests hold the `SessionStart` hook to R16: one line on both channels where the armed goal's
    `version` differs from the plugin's; nothing where they agree, where no goal is armed, or
@@ -218,6 +223,31 @@ session that stopped while its subagents were still running. The harness refuses
    cannot be read, going ahead.
 
 ## Readings
+
+- 2026-11-23 — grounds for R15's turn record and for what `enforce` blocks. Read from the
+  inventory, productorder and configurator transcripts and their `handoff-checks.jsonl` under
+  5.136.0/5.136.1. A week of lines under `measure` held 456 stops checked and 340 violating; 40
+  of the 340 — the 10 longest, then 30 drawn with seed 22 — were read by a session the person
+  delegated to and the person confirmed it: 6 handed no decision, 19 a vague or buried one, 15 a
+  clear one. The 6 are 15%, over the one in ten the earlier reading set, so a block on the
+  message's form stays off. Of the 6, 4 answered the person's own question in free conversation,
+  where no skill ran and no render applies, and 2 closed a route without a choice (a goal ended
+  state A; a review recorded). Which signal of `bin/handoff.py`'s reading fired was counted over
+  the 40: a decision word anywhere fired on 38, and no signal of the words separated the two
+  route closings from the route stops whose decision was buried. The turn record is what
+  separates them without the words: a turn that ran a skill whose run ends on a render owes that
+  render, whatever its message holds. Replayed with `tools/replay_stops.py` over 24 stops the
+  person answered with a go-ahead or a "what now?" (live grant, one run each): the block asking
+  for a render or a rewrite rendered 4 of 24 and the sessions rewrote instead; the block asking
+  for the render alone rendered 19 of 24 and its message carried a recommendation in 6, the
+  others handed as the person's own; over the 14 of those whose render handed a decision, the
+  same block without naming `settles` rendered 14 of 14, carried a recommendation in 9 against
+  3, handed 7 as the person's own against 12, and the grant took 2 against 1. Estimator: the
+  grant's lines in each run's stream, the intercept log and the clone's check log; $0.75–$0.95 a
+  run. Reversal for the default: a week of lines under `measure`, the far end named first, read
+  for those with `route` true and `rendered` false; where a person judges at most one in ten a
+  turn that owed no render, the default becomes `enforce`; above it, the set of skills read as a
+  route narrows first. This replaces the 2026-10-31 reversal, which read the violating lines.
 
 - 2026-11-15 — grounds for R2's proof clause: `/deliver-scope`'s step 5 «runs once per run», and
   runs skipped it with reasons the step does not state. Read from the sales consumers' git and
@@ -323,7 +353,8 @@ session that stopped while its subagents were still running. The harness refuses
   armed goal just released. R16 reads only the armed goal: no delivery record — implementation,
   proof or review — carries the plugin version it was written under, and the armed goal's
   `version` is the one persisted record of the version an initiative runs under. Reversal for
-  the default: a week of `siegard/handoff-checks.jsonl` under `measure` across the consumers,
+  the default (superseded by the 2026-11-23 reading, which reads the turn record instead): a
+  week of `siegard/handoff-checks.jsonl` under `measure` across the consumers,
   read with R17's counts, where the share of checked stops violating has not fallen and a person
   reading the violating lines — the far end named first — judges at most one in ten a false
   positive, switches the default to `enforce`; a false-positive share above that narrows what

@@ -1066,7 +1066,7 @@ def post_tool(project: dict, tool: str, given: dict, output: str = "",
     event = {"hook_event_name": "PostToolUse", "session_id": session,
              "cwd": str(project["home"]), "tool_name": tool, "tool_input": given,
              "tool_response": {"stdout": "", "stderr": output}}
-    return subprocess.run([sys.executable, "-B", str(HOOKS / "grant_gate.py")],
+    return subprocess.run([sys.executable, "-B", str(HOOKS / "after_tool.py")],
                           input=json.dumps(event), capture_output=True, text=True)
 
 
@@ -1162,13 +1162,30 @@ DECISION_NAMING_A_DOOR = (
     "It would change if you want the plan changed first.\n\nReply with the word.")
 
 
-def test_an_unrendered_decision_naming_a_door_is_logged_and_never_blocked(project):
+def test_an_unrendered_decision_naming_a_door_leaves_no_line_of_the_grants(project):
+    """«a stop that hands a decision with no render printed since the session's last stop is read
+    by the handoff check, from the session's turn record (SPEC-008 R15), and the grant logs no
+    line of its own for it.» (SPEC-011 R13)"""
     assert arm(project, "--doors", "implement-task").returncode == 0
     done = stop_hook(project, DECISION_NAMING_A_DOOR)
     assert done.returncode == 0 and "block" not in done.stdout
+    assert gate_events(project) == []
+
+
+def test_every_line_of_the_grant_carries_the_mode_it_was_answered_under(project, tmp_path):
+    """«Each recording, carrying out, block and release is one line of `grant-checks.jsonl`
+    beside the grant, carrying the `mode` it was answered under.» (SPEC-011 R12)"""
+    assert arm(project, "--doors", "plan-work").returncode == 0
+    rendered(project, answer_printed(project, TAKE_RECORD, tmp_path))
+    assert "block" in stop_hook(project).stdout
+    assert "block" not in stop_hook(project).stdout
+    rendered(project, answer_printed(project, TAKE_RECORD, tmp_path))
+    stop_hook(project, env={"SIEGARD_GRANT_STOP": "measure"})
     path = gate_dir(project) / "grant-checks.jsonl"
     lines = [json.loads(x) for x in path.read_text(encoding="utf-8").splitlines()]
-    assert [(x["event"], x["kind"]) for x in lines] == [("measured", "unrendered")]
+    assert [(x["event"], x["mode"]) for x in lines] == [
+        ("recorded", "enforce"), ("blocked", "enforce"), ("released", "enforce"),
+        ("recorded", "enforce"), ("measured", "measure")]
 
 
 def test_a_stop_after_a_render_or_naming_no_door_is_not_blocked(project, tmp_path):
@@ -1217,6 +1234,6 @@ def test_a_stop_awaiting_background_work_is_not_read(project, tmp_path):
                                                "cwd": "/gone", "tool_input": {
                                                    "command": "handoff.py --render x"}})])
 def test_the_post_tool_hook_never_fails_and_prints_nothing(stdin):
-    done = subprocess.run([sys.executable, "-B", str(HOOKS / "grant_gate.py")], input=stdin,
+    done = subprocess.run([sys.executable, "-B", str(HOOKS / "after_tool.py")], input=stdin,
                           capture_output=True, text=True)
     assert done.returncode == 0 and done.stdout == "" and done.stderr == ""

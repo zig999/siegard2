@@ -626,12 +626,26 @@ O plugin registra hooks no Claude Code (`hooks/hooks.json`). Todos agem só num 
 |---|---|---|
 | `rules.py` | `SessionStart`, `SubagentStart` | Coloca `hooks/rules.md` literalmente no contexto da sessão e de cada agente (§4). |
 | `drift.py` | `SessionStart` | Coloca na abertura da sessão a contagem de drift por classe (do `trace.py --check`) e o que o `--owed` ainda deve, como contagem e nunca como lista. Com um goal armado, avisa quando a versão do plugin carregada é outra ou quando o goal está ligado a outra sessão. |
-| `goal_stop.py` | `Stop` | Com um goal armado, responde a cada parada pelo `goal.py --state` (acima). Sem goal, ou quando o goal acabou de terminar, passa a parada ao `handoff_stop.py`. |
-| `handoff_stop.py` | (chamado pelo `goal_stop.py`) | Mede a mensagem em que a sessão parou com as funções do `handoff.py --check` e acrescenta uma linha a `siegard/handoff-checks.jsonl`, no diretório do git. Por padrão só mede; com `SIEGARD_HANDOFF_STOP=enforce`, bloqueia uma vez um handoff fora do contrato. |
+| `goal_stop.py` | `Stop` | Com um goal armado, responde a cada parada pelo `goal.py --state` (acima). Sem goal, ou quando o goal acabou de terminar, passa a parada primeiro ao grant e depois ao `handoff_stop.py`. Uma parada liberada apaga o registro de turno da sessão. |
+| `after_tool.py` | `PostToolUse` (Bash, `Skill`, `Agent`) | Grava o registro de turno da sessão em `siegard/turn/<sessão>.json`, no diretório do git: o instante em que uma skill que termina num render foi invocada (a `route` do turno) e, com grant armado, as obrigações que o grant respondeu e quem as cumpriu. |
+| `handoff_stop.py` | (chamado pelo `goal_stop.py`) | Mede a mensagem em que a sessão parou com as funções do `handoff.py --check` e acrescenta uma linha a `siegard/handoff-checks.jsonl`, no diretório do git, com `route` e `rendered` lidos do registro de turno. Por padrão só mede; com `SIEGARD_HANDOFF_STOP=enforce`, bloqueia uma vez o turno que rodou uma skill de rota e não guardou nenhum render. A forma da mensagem (tamanho, abertura, recomendação) é medida e nunca bloqueia. |
 | `commit_check.py` | `PreToolUse` (Bash) | Num `git commit`, recusa uma linha `decided:` ou `recommended:` fora da forma, uma `decided:` julgada sem grant que cubra aquela iniciativa, e um commit que registra uma parada levando mais que a medição. |
 | `bounds.py` | `PreToolUse` (Bash, `Write`, `Edit`, `MultiEdit`) | Com goal ou grant armado, recusa `git push`, criar, renomear ou apagar branch, `rebase`, `commit --amend`, `reset --hard`, `filter-branch`, `filter-repo`, `stash` (exceto `list` e `show`), e `add`/`commit` de tudo o que é rastreado (`-A`, `-u`, `.`, `-a`). Em qualquer estado, recusa uma escrita à mão de `siegard-trace.json`, do `plan.json` de uma iniciativa, do `delivery.json` de uma entrega e de qualquer coisa em `run/`, que são arquivos de script. |
 
 Fora de um goal ou grant, push, branch e reescrita dependem só das suas palavras na sessão.
+
+#### O que responde a uma parada
+Cada parada passa pelas verificações abaixo, nesta ordem; a primeira que bloqueia responde, e
+uma parada com trabalho em segundo plano em andamento não é lida.
+
+| Verificação | Quando age | Bloqueia? | Onde registra | Controle |
+|---|---|---|---|---|
+| Goal (`goal.py --state`) | goal armado para esta sessão | `not yet`: sim, até três vezes; `state A`, `state B` ou pausado: não, e a parada segue para a checagem do handoff | registro do goal | nenhum |
+| Obrigação do grant | grant armado e um `take:` ou `judge:` impresso e não cumprido | uma vez | `grant-checks.jsonl`, com `mode` | `SIEGARD_GRANT_STOP` (padrão `enforce`; `measure` só registra) |
+| Checagem do handoff | toda parada que entrega decisão ou cujo turno rodou uma skill de rota | uma vez, só se a rota não guardou render | `handoff-checks.jsonl`, com `mode`, `route` e `rendered` | `SIEGARD_HANDOFF_STOP` (padrão `measure`; `enforce` bloqueia) |
+
+As variáveis ficam no `env` das configurações do Claude Code do projeto, por exemplo em
+`.claude/settings.local.json`: `{"env": {"SIEGARD_HANDOFF_STOP": "enforce"}}`.
 
 ### Os outros scripts
 Os scripts de cada fase têm o seu capítulo: `spec.py` (§5), `plan.py` (§6), `deliver.py` e `run.py`

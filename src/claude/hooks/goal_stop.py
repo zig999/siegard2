@@ -67,7 +67,6 @@ def granted(record: dict, siegard_dir: Path) -> dict | None:
     in flight, or where anything fails."""
     waiting = record.get("background_tasks")
     session = record.get("session_id")
-    message = record.get("last_assistant_message")
     if (isinstance(waiting, list) and waiting) or not isinstance(session, str) or not session:
         return None
     try:
@@ -76,10 +75,25 @@ def granted(record: dict, siegard_dir: Path) -> dict | None:
             import grant
         if grant.live_grant(siegard_dir) is None:
             return None
-        return grant.stop_answer(siegard_dir, session,
-                                 message if isinstance(message, str) else "", os.environ)
+        return grant.stop_answer(siegard_dir, session, os.environ)
     except (Exception, SystemExit):
         return None
+
+
+def settled(record: dict, siegard_dir: Path) -> None:
+    """An allowed stop clears the session's turn record: «an allowed stop clears the record.»
+    (SPEC-008 R15) A stop awaiting background work is no allowed stop of the turn — the session
+    is waiting to be woken — and a failure leaves the record as it was."""
+    waiting = record.get("background_tasks")
+    session = record.get("session_id")
+    if (isinstance(waiting, list) and waiting) or not isinstance(session, str) or not session:
+        return
+    try:
+        sys.path.insert(0, str(HOOKS))
+        import turn
+        turn.clear(siegard_dir, session)
+    except (Exception, SystemExit):
+        return
 
 
 def handed_on(record: dict, siegard_dir: Path) -> int:
@@ -94,6 +108,8 @@ def handed_on(record: dict, siegard_dir: Path) -> int:
     answer = handoff_stop.answer(record, siegard_dir)
     if answer is not None:
         print(json.dumps(answer))
+        return 0
+    settled(record, siegard_dir)
     return 0
 
 
@@ -168,6 +184,8 @@ def ended_with(text: str, record: dict, siegard_dir: Path) -> int:
         held = None
     if held is not None:
         reply.update(held)
+    else:
+        settled(record, siegard_dir)
     print(json.dumps(reply))
     return 0
 

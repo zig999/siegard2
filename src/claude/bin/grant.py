@@ -84,10 +84,12 @@ from pathlib import Path
 
 BIN = Path(__file__).resolve().parent
 sys.path.insert(0, str(BIN))
+sys.path.insert(0, str(BIN.parent / "hooks"))
 
 from jsonschema import Draft202012Validator  # noqa: E402
 
 import goal  # noqa: E402
+import turn  # noqa: E402
 
 CANNOT_RUN = 2
 REFUSED = 1
@@ -484,7 +486,6 @@ def newest_record(project_root: Path, skill: str, after: str) -> str:
     return str(found[-1])
 
 
-PENDING_DIR = "grant-pending"
 CHECKS_FILE = "grant-checks.jsonl"
 GATE_VARIABLE = "SIEGARD_GRANT_STOP"
 GATE_MEASURE, GATE_ENFORCE = "measure", "enforce"
@@ -492,7 +493,6 @@ GRANT_HEAD = re.compile(r"^grant: .*\(sha256 ([0-9a-f]{16})\)\s*$")
 ANSWER = re.compile(r"^decision (\d+): (take|judge): (.+)$")
 JUDGED_DOOR = re.compile(r"^door (\S+): (\S+)")
 DECIDED = re.compile(r"^decided: .+$")
-DOOR_NAMED = re.compile(r"/(" + "|".join(ALLOWED) + r")\b")
 
 
 def obligations_from(text: str) -> list[dict]:
@@ -539,35 +539,19 @@ def live_grant(siegard_dir: Path) -> dict | None:
     return held
 
 
-def pending_path(siegard_dir: Path, session: str) -> Path:
-    return siegard_dir / PENDING_DIR / f"{re.sub(r'[^A-Za-z0-9_-]', '_', session)}.json"
+def gate_mode(environment: dict) -> str:
+    """The mode a grant's stop is answered under: `measure` where `SIEGARD_GRANT_STOP` says so,
+    `enforce` for every other value and for none."""
+    return GATE_MEASURE if (environment.get(GATE_VARIABLE) or "").strip().lower() == GATE_MEASURE \
+        else GATE_ENFORCE
 
 
-def read_pending(siegard_dir: Path, session: str) -> dict:
-    path = pending_path(siegard_dir, session)
-    try:
-        state = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        state = None
-    if not isinstance(state, dict):
-        state = {}
-    return {"session_id": session, "obligations": state.get("obligations") or [],
-            "rendered": bool(state.get("rendered")), "blocked": state.get("blocked") or []}
-
-
-def write_pending(siegard_dir: Path, state: dict) -> None:
-    path = pending_path(siegard_dir, state["session_id"])
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(state, indent=1) + "\n", encoding="utf-8")
-
-
-def clear_pending(siegard_dir: Path, session: str) -> None:
-    pending_path(siegard_dir, session).unlink(missing_ok=True)
-
-
-def gate_log(siegard_dir: Path, session: str, event: str, **more) -> None:
+def gate_log(siegard_dir: Path, session: str, event: str, mode: str, **more) -> None:
+    """One line of `grant-checks.jsonl`: «Each recording, carrying out, block and release is one
+    line of `grant-checks.jsonl` beside the grant, carrying the `mode` it was answered under.»
+    (SPEC-011 R12)"""
     entry = {"at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-             "session_id": session, "event": event, **more}
+             "session_id": session, "event": event, "mode": mode, **more}
     with (siegard_dir / CHECKS_FILE).open("a", encoding="utf-8") as log:
         log.write(json.dumps(entry) + "\n")
 
@@ -578,22 +562,22 @@ def answered_by(command: str) -> bool:
         ("grant.py" in command and "--decide" in command)
 
 
-def after_tool(siegard_dir: Path, session: str, tool: str, given: dict, output: str) -> None:
+def after_tool(siegard_dir: Path, session: str, tool: str, given: dict, output: str,
+               mode: str = GATE_ENFORCE) -> None:
     """What one tool call does to the session's obligations under a live grant: a command that
-    printed a grant's answer replaces them with what it printed and marks the turn rendered; a
-    `Skill` invocation of a door a `take:` named, or an `Agent` spawn of the door decider over a
-    `judge:`, carries that obligation out."""
-    state = read_pending(siegard_dir, session)
+    printed a grant's answer replaces them with what it printed; a `Skill` invocation of a door a
+    `take:` named, or an `Agent` spawn of the door decider over a `judge:`, carries that
+    obligation out. The obligations live in the session's turn record."""
+    state = turn.read(siegard_dir, session)
     if tool == "Bash" and answered_by(str(given.get("command") or "")):
-        state["obligations"] = obligations_from(output)
-        state["rendered"], state["blocked"] = True, []
-        write_pending(siegard_dir, state)
+        state["obligations"], state["blocked"] = obligations_from(output), []
+        turn.write(siegard_dir, state)
         if state["obligations"]:
-            gate_log(siegard_dir, session, "recorded",
+            gate_log(siegard_dir, session, "recorded", mode,
                      lines=[o["line"] for o in state["obligations"]])
         return
     if tool == "Skill":
-        name = str(given.get("skill") or "").split(":")[-1].lstrip("/")
+        name = turn.skill_of(given)
         done = [o for o in state["obligations"] if o["kind"] == "take" and o["entry"] == name]
     elif tool in ("Agent", "Task"):
         named = str(given.get("subagent_type") or "")
@@ -603,8 +587,8 @@ def after_tool(siegard_dir: Path, session: str, tool: str, given: dict, output: 
         return
     if done:
         state["obligations"] = [o for o in state["obligations"] if o not in done]
-        write_pending(siegard_dir, state)
-        gate_log(siegard_dir, session, "fulfilled", lines=[o["line"] for o in done])
+        turn.write(siegard_dir, state)
+        gate_log(siegard_dir, session, "fulfilled", mode, lines=[o["line"] for o in done])
 
 
 def obligation_reason(obligation: dict) -> str:
@@ -621,46 +605,30 @@ def obligation_reason(obligation: dict) -> str:
             f"`reserved` or `none` return is the stop it was.")
 
 
-def stop_answer(siegard_dir: Path, session: str, message: str, environment: dict) -> dict | None:
+def stop_answer(siegard_dir: Path, session: str, environment: dict) -> dict | None:
     """What a session's stop is answered with under a live grant: blocked once where the grant
     answered this session's stop and the answer was not carried out, the next stop allowed
-    whatever it holds; under `measure` the line is logged and the stop allowed. A stop that hands
-    the person a decision naming a door no render answered since the session's last stop is
-    logged and never blocked: «it is logged and never blocked» (SPEC-011 R13)."""
-    enforce = (environment.get(GATE_VARIABLE) or GATE_ENFORCE).strip().lower() != GATE_MEASURE
-    state = read_pending(siegard_dir, session)
-    if state["obligations"]:
-        key, lines = "obligation", [o["line"] for o in state["obligations"]]
-        reason = ("The grant armed in this project answered this session's stop, and its answer "
-                  "was not carried out:\n" + "\n".join(f"- {obligation_reason(o)}"
-                                                       for o in state["obligations"]))
-    else:
-        if not state["rendered"] and DOOR_NAMED.search(message or "") and hands_decision(message):
-            gate_log(siegard_dir, session, "measured", kind="unrendered", lines=[])
-        clear_pending(siegard_dir, session)
+    whatever it holds; under `measure` the line is logged and the stop allowed. The turn record
+    is left for the `Stop` hook, which clears it once the stop is allowed."""
+    mode = gate_mode(environment)
+    state = turn.read(siegard_dir, session)
+    if not state["obligations"]:
         return None
+    key, lines = "obligation", [o["line"] for o in state["obligations"]]
+    reason = ("The grant armed in this project answered this session's stop, and its answer "
+              "was not carried out:\n" + "\n".join(f"- {obligation_reason(o)}"
+                                                    for o in state["obligations"]))
     if key in state["blocked"]:
-        gate_log(siegard_dir, session, "released", kind=key, lines=lines)
-        clear_pending(siegard_dir, session)
+        gate_log(siegard_dir, session, "released", mode, kind=key, lines=lines)
         return None
-    if not enforce:
-        gate_log(siegard_dir, session, "measured", kind=key, lines=lines)
-        clear_pending(siegard_dir, session)
+    if mode == GATE_MEASURE:
+        gate_log(siegard_dir, session, "measured", mode, kind=key, lines=lines)
         return None
     state["blocked"].append(key)
-    write_pending(siegard_dir, state)
-    gate_log(siegard_dir, session, "blocked", kind=key, lines=lines)
+    turn.write(siegard_dir, state)
+    gate_log(siegard_dir, session, "blocked", mode, kind=key, lines=lines)
     return {"decision": "block",
             "reason": reason + "\nThe next stop of this session is allowed whatever it holds."}
-
-
-def hands_decision(message: str) -> bool:
-    """`handoff.py`'s own reading of whether a message hands the person a decision."""
-    import contextlib
-    import io
-    with contextlib.redirect_stderr(io.StringIO()):
-        import handoff
-    return bool(handoff.reading(message, handoff.load_contract())["hands_decision"])
 
 
 def take(args: list[str], flag: str) -> str | None:
