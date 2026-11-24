@@ -1,0 +1,3 @@
+/tmp/an8/prompts/w33.txt
+/tmp/an8/w33.rules.md
+/tmp/an8/w33/siegard.json

@@ -331,7 +331,7 @@ def test_the_hook_is_declared_for_the_shell_and_for_every_writing_tool():
 
 
 def test_the_session_rules_state_the_bound_the_hook_holds():
-    rules = (HOOKS / "rules.md").read_text(encoding="utf-8")
-    assert ("a push, a branch, a stash or a\n  rewrite only on the person's own words in this "
+    rules = " ".join((HOOKS / "rules.md").read_text(encoding="utf-8").split())
+    assert ("a push, a branch, a stash or a rewrite only on the person's own words in this "
             "session, never while a goal or grant is armed.") in rules
     assert "never `git add -A`, a branch, a push" not in rules

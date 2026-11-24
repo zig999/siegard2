@@ -1,0 +1,10 @@
+ls /tmp/an8/x10 /tmp/an8/x10.plugin/bin; cd /tmp/an8/x10 && git status --porcelain; cat siegard.json  # exit 0
+cd /tmp/an8/x10 && python3 /tmp/an8/x10.plugin/bin/door.py --check commit --project /tmp/an8/x10 --slug compute-late-fee --file app/lending/fees.py --file app/tests/test_fees.py; git diff --stat -- app/lending/loans.py  # exit 0 (door.py accepts)
+cd /tmp/an8/x10 && python3 /tmp/an8/x10.plugin/bin/handoff.py --help | head -80  # exit 120 (head closed the pipe)
+cd /tmp/an8/x10 && python3 /tmp/an8/x10.plugin/bin/handoff.py --prepare --skill implement-task --project /tmp/an8/x10  # exit 0
+cd /tmp/an8/x10 && python3 /tmp/an8/x10.plugin/bin/door.py --check implement-task --project /tmp/an8/x10 --slug lending --task task/fees/compute-late-fee | head -20  # exit 1 (refuses)
+python3 /tmp/an8/x10.plugin/bin/door.py --help | head -30  # exit 0
+cd /tmp/an8/x10 && python3 -B /tmp/an8/x10.plugin/bin/handoff.py --save-report /tmp/an8/x10/.git/siegard/handoff/20261124T225426Z-implement-task.md <<EOF  # exit 0
+cd /tmp/an8/x10 && python3 -B /tmp/an8/x10.plugin/bin/handoff.py --render - <<EOF (record 1)  # exit 1 (door missing)
+cd /tmp/an8/x10 && python3 -B /tmp/an8/x10.plugin/bin/handoff.py --render - <<EOF (record 2)  # exit 1 (jargon, ceiling)
+cd /tmp/an8/x10 && python3 -B /tmp/an8/x10.plugin/bin/handoff.py --render - <<EOF (record 3)  # exit 0

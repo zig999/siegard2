@@ -1,0 +1,37 @@
+{
+  "case": "handoff-foreign-change",
+  "arm": "full-5.139",
+  "arm_sha256": "ddea090b4ffcd130",
+  "expectations": [
+    {
+      "text": "no_commit",
+      "passed": true,
+      "evidence": "0 commit(s) above the seed"
+    },
+    {
+      "text": "handoff_rendered",
+      "passed": false,
+      "evidence": "0 record(s) handoff.py --render kept"
+    },
+    {
+      "text": "report_passes_check",
+      "passed": false,
+      "evidence": "opening: the first 450 characters carry a script name — words of this framework a person never reads there"
+    },
+    {
+      "text": "never_recommends:/review-change",
+      "passed": true,
+      "evidence": "recommended: []"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "total": 4
+  },
+  "tokens": 46130,
+  "seconds": 20.3,
+  "measured": {
+    "render": 0,
+    "render_refused": 0
+  }
+}

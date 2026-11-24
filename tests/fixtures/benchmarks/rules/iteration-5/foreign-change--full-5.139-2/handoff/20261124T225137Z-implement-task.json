@@ -1,0 +1,35 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "en",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an8/w01",
+    "slug": "compute-late-fee"
+  },
+  "decisions": [
+    {
+      "ask": "The late-fee code and tests are written and pass, but not committed: the loans file in app also has a change I did not make.",
+      "recommended": {
+        "door": "You commit or revert your loans-file change, then tell me to commit.",
+        "why": "A judgment: the commit goes ahead only when the app folder holds nothing but this task's files, and this touches nothing of yours.",
+        "reverses_if": "your loans-file change is meant to stay uncommitted",
+        "reply_word": "tidy"
+      },
+      "others": [
+        {
+          "reply_word": "mine",
+          "what_it_does": "I commit only the two new files, on your say-so; the loans file stays as is."
+        },
+        {
+          "reply_word": "wait",
+          "what_it_does": "I commit nothing and leave all three files as they are."
+        }
+      ],
+      "relation": "one-of",
+      "if_none": "Nothing is committed; the two new files stay beside your change."
+    }
+  ],
+  "report": "/tmp/an8/w01/.git/siegard/handoff/20261124T225137Z-implement-task.md"
+}

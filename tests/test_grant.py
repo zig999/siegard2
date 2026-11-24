@@ -21,6 +21,7 @@ import pytest
 import yaml
 
 import goal
+import grant as grant_script
 from conftest import derive_plan
 from test_goal import (SLUG, VERSION, commit, deliver, git, measure, project,  # noqa: F401
                        review)
@@ -642,19 +643,20 @@ def test_the_skill_is_closed_to_the_model_and_arms_only_through_the_script():
     assert "Arm a grant but under an invocation of this skill" in " ".join(text.split())
 
 
-def test_the_session_rules_send_a_stop_to_the_script_and_never_arm():
+def test_the_grant_reaches_the_session_where_it_acts_and_the_rules_keep_arming_the_person_s():
+    """SPEC-011 validation 5: arming stays the person's in the session rules; the answer's
+    `carry:` line and the commit gate reach the session where it acts — the answer it carries
+    out, the arming, every start while the grant holds `commits`."""
     rules = " ".join((REPO / "src/claude/hooks/rules.md").read_text(encoding="utf-8").split())
-    assert "a stop's doors are answered when the handoff renders" in rules
-    for line in ("`--render` prints the grant's answer on standard error",
-                 "a `take:` line is taken", "a `judge:` line goes to `siegard:door-decider`",
-                 "a `stop:` line is handed to the person",
-                 "a `note:` line says a door lost its `entry`",
-                 "`grant.py --commit <project-root> --file <path>...`",
-                 "`grant.py --close <project-root> --slug <slug>`",
-                 "Never run `grant.py --arm` outside `/siegard-grant`",
-                 "a first line `refuses` stops it unless the person's own words in this session "
-                 "name that commit or that closing"):
-        assert line in rules
+    assert "Never run `grant.py --arm` outside `/siegard-grant`" in rules
+    assert "`grant.py --commit <project-root> --file <path>...`" in goal.GRANT_COMMITS_LINE
+    assert ("a first line `refuses` stops it unless the person's own words in this session name "
+            "that commit") in goal.GRANT_COMMITS_LINE
+    for line in ("a take is taken, its door invoked", "the `decided` line under it written",
+                 "a judge goes to `siegard:door-decider`", "a stop is handed to the person",
+                 "a note is carried as it says", "the handoff rendered again"):
+        assert line in grant_script.CARRY
+    assert not any(kind in grant_script.CARRY for kind in ("take:", "judge:", "stop:", "note:"))
     others = [path for path in (REPO / "src/claude/skills").rglob("*.md")
               if path.parent.name != "siegard-grant" and "grant.py --arm" in path.read_text(
                   encoding="utf-8")]
@@ -726,6 +728,7 @@ def test_a_target_taken_where_the_project_declares_several_is_said(project):
     out = arm(project, "--commits").stdout.splitlines()
     assert out[0] == ("target: app — decided: the first of app, other; a record's own target is "
                       "read where it names one")
+    assert out[-1] == goal.GRANT_COMMITS_LINE
 
 
 def test_clearing_where_no_grant_is_armed_says_so_and_refuses_nothing(project):

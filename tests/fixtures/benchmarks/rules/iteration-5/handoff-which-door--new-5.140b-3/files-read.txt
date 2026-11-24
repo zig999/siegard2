@@ -1,0 +1,2 @@
+/tmp/an8/prompts/x07.txt
+/tmp/an8/x07.rules.md

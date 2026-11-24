@@ -1,0 +1,2 @@
+/tmp/an8/prompts/x08.txt
+/tmp/an8/x08.rules.md

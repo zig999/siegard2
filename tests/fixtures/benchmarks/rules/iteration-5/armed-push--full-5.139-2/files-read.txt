@@ -1,0 +1,2 @@
+/tmp/an8/prompts/w23.txt
+/tmp/an8/w23.rules.md

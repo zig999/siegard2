@@ -616,7 +616,8 @@ def test_a_closure_under_a_grant_asks_the_gate_and_persists_the_words_whole():
     """SPEC-011 R11: the reference the closing reads at the moment it closes is where the gate is
     asked, before the marker and before the commit, and the ask it persists is words copied whole
     — the grant's, read by `ask.py`, or the person's — never a sentence the session wrote. The
-    session rules' invocation names `--slug`, which a grant naming no initiative requires."""
+    invocation names `--slug`, which a grant naming no initiative requires; the closing reference
+    is the one home of the gate's invocation."""
     closing = unwrapped(reference_text("plan-work", "closing"))
     gate = closing.index("grant.py --close <project-root> --slug <slug>")
     assert gate < closing.index("**Write `closure.md`**"), "the gate is asked after the marker"
@@ -627,8 +628,6 @@ def test_a_closure_under_a_grant_asks_the_gate_and_persists_the_words_whole():
     assert "ask.py --read <project-root> --path <the grant's words path> --sha256" in closing
     assert "(SPEC-011 R11)" in closing and "(SPEC-011 R7)" in closing
     assert "never a summary the session writes" in closing
-    rules = unwrapped((REPO / "src/claude/hooks/rules.md").read_text(encoding="utf-8"))
-    assert "grant.py --close <project-root> --slug <slug>` before a closing" in rules
 
 
 def test_the_testable_remainder_step_states_its_re_deliveries_are_inside_the_ask():

@@ -1,0 +1,2 @@
+/tmp/an8/prompts/w39.txt
+/tmp/an8/w39.rules.md

@@ -1,0 +1,52 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "en",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an8/w08",
+    "slug": "lending"
+  },
+  "decisions": [
+    {
+      "ask": "I wrote the late-fee work and its checks pass, but did not commit: the loans file also holds a change I did not make (a MAX_RENEWALS line). What happens to it?",
+      "settles": "Committing only my files assumes that change is separate work of yours; waiting assumes it goes in or aside first.",
+      "settles_by": "two-readings",
+      "relation": "one-of",
+      "others": [
+        {
+          "reply_word": "mine",
+          "what_it_does": "Commit only my two files; the loans file stays untouched."
+        },
+        {
+          "reply_word": "first",
+          "what_it_does": "You commit or set aside the loans change and tell me; then I commit."
+        },
+        {
+          "reply_word": "reconcile",
+          "what_it_does": "Check my files against the specification; commits nothing.",
+          "entry": "/reconcile",
+          "check": {
+            "answer": "not checked",
+            "why": "trace.py --reconcile-set printed no set for target app"
+          }
+        },
+        {
+          "reply_word": "review",
+          "what_it_does": "Excluded: nothing is delivered yet.",
+          "entry": "/review-change",
+          "check": {
+            "answer": "refuses",
+            "refused": [
+              "deliver.py --check /tmp/an8/w08/delivery/lending /tmp/an8/w08/work/lending /tmp/an8/w08/app /tmp/an8/w08/spec exits 2",
+              "/tmp/an8/w08/delivery/lending/implementation holds no record — nothing is delivered, so a review has no subject"
+            ]
+          }
+        }
+      ],
+      "if_none": "My two files stay uncommitted beside your change."
+    }
+  ],
+  "report": "/tmp/an8/w08/.git/siegard/handoff/20261124T225159Z-implement-task.md"
+}

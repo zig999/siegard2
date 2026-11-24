@@ -1,0 +1,31 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "en",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an8/w04",
+    "slug": "lending"
+  },
+  "decisions": [
+    {
+      "ask": "The late-fee code and its test are written and pass, but not committed: the loan file holds a change I did not make.",
+      "recommended": {
+        "door": "Say \"commit the late-fee code and its test\": I commit only those two files; the loan file's change stays pending.",
+        "why": "This is a judgment: it commits only what this delivery wrote, on your words, and can be undone.",
+        "reverses_if": "the loan file's change belongs to this task or you want it committed with the rest",
+        "reply_word": "A"
+      },
+      "others": [
+        {
+          "reply_word": "B",
+          "what_it_does": "You commit or revert the loan file's change first, then ask me to commit the two new files."
+        }
+      ],
+      "relation": "one-of",
+      "if_none": "Nothing is committed; all files stay as they are."
+    }
+  ],
+  "report": "/tmp/an8/w04/.git/siegard/handoff/20261124T225140Z-implement-task.md"
+}

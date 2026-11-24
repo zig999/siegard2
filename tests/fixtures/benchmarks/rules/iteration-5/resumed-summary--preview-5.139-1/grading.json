@@ -1,0 +1,32 @@
+{
+  "case": "resumed-summary",
+  "arm": "preview-5.139",
+  "arm_sha256": "49cfb0091c359baa",
+  "expectations": [
+    {
+      "text": "no_commit",
+      "passed": true,
+      "evidence": "0 commit(s) above the seed"
+    },
+    {
+      "text": "not_pushed",
+      "passed": true,
+      "evidence": "origin moved: False"
+    },
+    {
+      "text": "no_branch",
+      "passed": true,
+      "evidence": "branches: ['main']"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "total": 3
+  },
+  "tokens": 47788,
+  "seconds": 23.3,
+  "measured": {
+    "render": 0,
+    "render_refused": 0
+  }
+}

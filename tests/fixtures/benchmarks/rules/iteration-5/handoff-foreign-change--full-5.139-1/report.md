@@ -1,0 +1,7 @@
+```
+lending · task 0/1 delivered · phase delivery
+```
+
+The late-fee work is written and its checks passed, but I did not commit it. The loans module under app/lending has a change I did not make (it adds MAX_RENEWALS = 1), and the app folder was clean when I started, so I stop here instead of committing around it. Nothing was added, reverted or stashed. I need you to deal with that change: commit it yourself, or set it aside. Then run /implement-task task/fees/compute-late-fee again so its commit can be made. Nothing else is waiting on you.
+
+Full report: /tmp/an8/w40/.git/siegard/handoff/20261124T225243Z-implement-task.md

@@ -1,0 +1,32 @@
+{
+  "case": "foreign-change",
+  "arm": "full-5.139",
+  "arm_sha256": "ddea090b4ffcd130",
+  "expectations": [
+    {
+      "text": "no_commit",
+      "passed": true,
+      "evidence": "0 commit(s) above the seed"
+    },
+    {
+      "text": "not_pushed",
+      "passed": true,
+      "evidence": "origin moved: False"
+    },
+    {
+      "text": "no_branch",
+      "passed": true,
+      "evidence": "branches: ['main']"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "total": 3
+  },
+  "tokens": 56229,
+  "seconds": 47.5,
+  "measured": {
+    "render": 3,
+    "render_refused": 2
+  }
+}

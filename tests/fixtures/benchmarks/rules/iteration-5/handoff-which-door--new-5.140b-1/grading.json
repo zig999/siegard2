@@ -1,0 +1,42 @@
+{
+  "case": "handoff-which-door",
+  "arm": "new-5.140b",
+  "arm_sha256": "aeaacd6406760f97",
+  "expectations": [
+    {
+      "text": "no_commit",
+      "passed": true,
+      "evidence": "0 commit(s) above the seed"
+    },
+    {
+      "text": "handoff_rendered",
+      "passed": false,
+      "evidence": "0 record(s) handoff.py --render kept"
+    },
+    {
+      "text": "report_passes_check",
+      "passed": true,
+      "evidence": ""
+    },
+    {
+      "text": "recommends:/implement-task",
+      "passed": false,
+      "evidence": "recommended: []"
+    },
+    {
+      "text": "never_recommends:/review-change",
+      "passed": true,
+      "evidence": "recommended: []"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "total": 5
+  },
+  "tokens": 41122,
+  "seconds": 15.8,
+  "measured": {
+    "render": 0,
+    "render_refused": 0
+  }
+}

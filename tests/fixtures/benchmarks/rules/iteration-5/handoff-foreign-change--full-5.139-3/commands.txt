@@ -1,0 +1,3 @@
+cd /tmp/an8/x09 && git status --porcelain -- app; echo "exit $?"; ls; ls /tmp/an8/x09.plugin/bin; cat siegard.json  # exit 0
+cd /tmp/an8/x09 && python3 /tmp/an8/x09.plugin/bin/handoff.py --help | head -60; git diff --stat -- app/lending/loans.py  # exit 0 (BrokenPipe from head, ignored)
+cd /tmp/an8/x09 && python3 /tmp/an8/x09.plugin/bin/handoff.py --prepare --skill implement-task --project /tmp/an8/x09 --slug compute-late-fee --target app  # exit 0

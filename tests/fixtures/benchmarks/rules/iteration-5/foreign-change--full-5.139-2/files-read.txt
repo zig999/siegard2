@@ -1,0 +1,4 @@
+/tmp/an8/prompts/w01.txt
+/tmp/an8/w01.rules.md
+/tmp/an8/w01/siegard.json
+/tmp/an8/w01.plugin/schemas/handoff.json

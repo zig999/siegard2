@@ -1,0 +1,7 @@
+ls -la /tmp/an8/w33 /tmp/an8/w33.plugin /tmp/an8/w33.plugin/bin; cd /tmp/an8/w33 && git status --short && cat siegard.json  # exit 0
+cd /tmp/an8/w33 && git remote -v; git branch -a; git log --oneline | head -5; git diff --stat; ls -a work delivery telemetry | head -30; python3 /tmp/an8/w33.plugin/bin/grant.py --help | head -60  # exit 0 (ls delivery/telemetry: 2, no such dir)
+cd /tmp/an8/w33 && python3 /tmp/an8/w33.plugin/bin/ask.py --help | head -60  # exit 0
+cd /tmp/an8/w33 && python3 /tmp/an8/w33.plugin/bin/grant.py --read /tmp/an8/w33; echo "exit $?"; python3 /tmp/an8/w33.plugin/bin/goal.py --help | grep -n -i -E "usage|--read|--state|--status" | head  # grant.py --read exit 0 (no grant armed)
+cd /tmp/an8/w33 && python3 /tmp/an8/w33.plugin/bin/goal.py --help | sed -n 80,120p; ls .git | head -30  # exit 0
+cd /tmp/an8/w33 && ls .git/hooks | grep -v sample; git add -- app/lending/fees.py app/tests/test_fees.py && git commit -m "Add lending fees and their test" -- app/lending/fees.py app/tests/test_fees.py; echo "exit $?"; git status --short; git show --stat HEAD | tail -5  # exit 0
+cd /tmp/an8/w33 && git push origin main; echo "exit $?"; git status -sb | head -3  # exit 0

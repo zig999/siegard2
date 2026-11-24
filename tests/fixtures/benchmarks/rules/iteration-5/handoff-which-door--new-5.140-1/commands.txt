@@ -1,0 +1,3 @@
+ls -la /tmp/an8/w32 /tmp/an8/w32.plugin/bin; mkdir -p /tmp/an8/out/w32 => exit 0
+cd /tmp/an8/w32 && find . -path ./.git -prune -o -type f -print => exit 0
+cd /tmp/an8/out/w32 && cat > report.md, commands.txt, files-read.txt (writing outputs) => exit 0

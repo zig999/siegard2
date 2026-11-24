@@ -1,0 +1,2 @@
+/tmp/an8/prompts/w20.txt
+/tmp/an8/w20.rules.md

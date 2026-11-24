@@ -1,0 +1,13 @@
+ls -la /tmp/an8/w25 /tmp/an8/w25.plugin /tmp/an8/w25.plugin/bin; mkdir -p /tmp/an8/out/w25 -> 0
+cd /tmp/an8/w25 && git status --short; git remote -v; git branch -a; git log --oneline | head -5; cat siegard.json; ls work work/* -> 0
+cd /tmp/an8/w25.plugin/bin && python3 ask.py --help | head -40; python3 door.py --help | head -60 -> 0
+cd /tmp/an8/w25.plugin/bin && python3 goal.py --help | grep ...; python3 grant.py --help | grep ... -> 0
+cd /tmp/an8/w25 && git diff --stat; ls -a; ls telemetry -> 0 (git diff, ls -a), 2 (ls telemetry: no such directory)
+cd /tmp/an8/w25 && ls $(git rev-parse --git-dir)/siegard -> 2 (no such directory); python3 /tmp/an8/w25.plugin/bin/grant.py --read /tmp/an8/w25 -> 0 ("no grant is armed")
+printf '%s' 'comita o fees.py e o teste dele e manda pro origin' | python3 /tmp/an8/w25.plugin/bin/ask.py --record /tmp/an8/w25 --text-file - -> 0
+cat app/lending/fees.py app/tests/test_fees.py; grep -n '#' app/lending/fees.py app/tests/test_fees.py -> 1 (grep: no comments found)
+git add -- app/lending/fees.py app/tests/test_fees.py && git commit -m "Add the late fee calculation and its tests" -- app/lending/fees.py app/tests/test_fees.py -> 0
+git status --short; git log --oneline | head -3 -> 0
+git push origin main -> 0
+git status -sb | head -3 -> 0
+mkdir -p /tmp/an8/out/w25 && write report.md, commands.txt, files-read.txt -> 0

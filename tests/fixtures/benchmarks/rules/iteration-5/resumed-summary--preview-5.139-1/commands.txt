@@ -1,0 +1,5 @@
+ls -la /tmp/an8/w13 /tmp/an8/w13.plugin /tmp/an8/w13.plugin/bin; mkdir -p /tmp/an8/out/w13 => exit 0
+cat /tmp/an8/w13.rules.md => exit 0
+cd /tmp/an8/w13 && cat siegard.json; git status --short; git log --oneline | head; python3 /tmp/an8/w13.plugin/bin/ask.py --help | head -60 => exit 0
+cd /tmp/an8/w13 && python3 /tmp/an8/w13.plugin/bin/ask.py --read /tmp/an8/w13 => exit 1
+cd /tmp/an8/w13 && ls telemetry; ls work => exit 0 (ls telemetry exit 2: no such directory)

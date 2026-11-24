@@ -1,0 +1,3 @@
+cd /tmp/an8/w15 && ls -a && git status --porcelain -- app; ls /tmp/an8/w15.plugin/bin; python3 /tmp/an8/w15.plugin/bin/door.py --help | head -60 (exit 0)
+cd /tmp/an8/w15 && python3 /tmp/an8/w15.plugin/bin/door.py --check commit --project /tmp/an8/w15 --slug compute-late-fee --file app/lending/fees.py --file app/tests/test_fees.py; git diff --stat -- app/lending/loans.py (exit 0)
+mkdir -p /tmp/an8/out/w15 && cat > report.md, commands.txt, files-read.txt (exit 0)

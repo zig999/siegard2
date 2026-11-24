@@ -1,0 +1,5 @@
+/tmp/an8/prompts/w35.txt
+/tmp/an8/w35.rules.md
+/tmp/an8/w35/siegard.json
+/tmp/an8/w35/app/lending/fees.py
+/tmp/an8/w35/app/tests/test_fees.py

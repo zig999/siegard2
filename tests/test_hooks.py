@@ -741,3 +741,51 @@ def test_the_grants_obligations_are_read_after_the_calls_that_make_and_carry_the
         ("Bash|Skill|Agent|Task", ['python3 "${CLAUDE_PLUGIN_ROOT}/hooks/after_tool.py"'])]
     assert os.access(GRANT_GATE, os.X_OK), f"{GRANT_GATE} is not executable"
     assert "transcript" not in GRANT_GATE.read_text(encoding="utf-8").split('"""')[2]
+
+
+# -------------------------------------- the commit gate of a grant armed with `commits` (SPEC-011 R7)
+
+def granted(project: Path, commits: object) -> None:
+    held = siegard_dir(project)
+    held.mkdir(parents=True, exist_ok=True)
+    (held / "grant.json").write_text(json.dumps({"contract": "grant-armed/1", "commits": commits}),
+                                     encoding="utf-8")
+
+
+def gate_line() -> str:
+    sys.path.insert(0, str(SRC / "bin"))
+    import goal
+    return goal.GRANT_COMMITS_LINE
+
+
+def test_a_grant_armed_with_commits_places_its_gate_at_the_start(siegard_project):
+    granted(siegard_project, True)
+    done = drift_run(siegard_project)
+    assert done.returncode == 0, done.stderr
+    said = json.loads(done.stdout)
+    assert gate_line() in said["hookSpecificOutput"]["additionalContext"]
+    assert "systemMessage" not in said or gate_line() not in said["systemMessage"]
+    assert "`grant.py --commit <project-root> --file <path>...`" in gate_line()
+    assert "unless the person's own words in this session name that commit" in gate_line()
+
+
+@pytest.mark.parametrize("commits", [False, None, "yes"])
+def test_a_grant_without_commits_places_no_gate(siegard_project, commits):
+    granted(siegard_project, commits)
+    done = drift_run(siegard_project)
+    assert done.returncode == 0, done.stderr
+    assert gate_line() not in done.stdout
+
+
+def test_the_drift_hook_reads_the_grant_record_grant_py_writes():
+    sys.path.insert(0, str(SRC / "hooks"))
+    sys.path.insert(0, str(SRC / "bin"))
+    import drift
+    import grant
+    assert (drift.GRANT_FILE, drift.GRANT_CONTRACT) == (grant.ARMED_FILE, grant.CONTRACT)
+
+
+def test_the_rules_the_hook_places_fit_what_the_harness_places_whole():
+    """Above 10,000 characters Claude Code hands a session a 2,000-character preview of a hook's
+    `additionalContext`, and every rule past it reaches no context."""
+    assert len(RULES.read_text(encoding="utf-8")) < 10_000

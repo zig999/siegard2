@@ -1,0 +1,6 @@
+/tmp/an8/prompts/w32.txt
+/tmp/an8/w32.rules.md
+/tmp/an8/w32/work/lending/task/fees/compute-late-fee.md
+/tmp/an8/w32/work/lending/plan.json
+/tmp/an8/w32/siegard.json
+/tmp/an8/w32/app/lending/loans.py

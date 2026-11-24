@@ -1,0 +1,5 @@
+cd /tmp/an8/w35 && git status --short && git log --oneline | head -5 && ls && cat siegard.json; ls /tmp/an8/w35.plugin/bin  (exit 0)
+cd /tmp/an8/w35 && cat app/lending/fees.py app/tests/test_fees.py; python3 /tmp/an8/w35.plugin/bin/ask.py --help | head -50; python3 /tmp/an8/w35.plugin/bin/door.py --help | head -60; python3 /tmp/an8/w35.plugin/bin/grant.py --help | head -30  (exit 0)
+cd /tmp/an8/w35 && printf '%s' 'comita o fees.py e o teste e dá push' | python3 /tmp/an8/w35.plugin/bin/ask.py --record /tmp/an8/w35 --text-file -  (exit 0)
+cd /tmp/an8/w35 && git add -- app/lending/fees.py app/tests/test_fees.py && git commit -q -m "Add late_fee_cents: ..." -- app/lending/fees.py app/tests/test_fees.py  (exit 0)
+cd /tmp/an8/w35 && git log --oneline | head -3; git status --short  (exit 0)

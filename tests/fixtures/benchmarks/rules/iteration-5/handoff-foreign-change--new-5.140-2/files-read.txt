@@ -1,0 +1,4 @@
+/tmp/an8/prompts/w38.txt
+/tmp/an8/w38.rules.md
+/tmp/an8/w38/siegard.json
+/tmp/an8/w38/app/lending/loans.py (diff)

@@ -1,0 +1,9 @@
+/tmp/an8/prompts/w25.txt
+/tmp/an8/w25.rules.md
+/tmp/an8/w25/siegard.json
+/tmp/an8/w25/app/lending/fees.py
+/tmp/an8/w25/app/tests/test_fees.py
+/tmp/an8/w25.plugin/bin/ask.py (--help output)
+/tmp/an8/w25.plugin/bin/door.py (--help output)
+/tmp/an8/w25.plugin/bin/goal.py (--help output)
+/tmp/an8/w25.plugin/bin/grant.py (--help output)

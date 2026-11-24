@@ -1,0 +1,8 @@
+cd /tmp/an8/w11 && git status --short && git log --oneline | head -5; ls; ls /tmp/an8/w11.plugin/bin; cat siegard.json 2>/dev/null  (exit 0)
+python3 /tmp/an8/w11.plugin/bin/grant.py --help | head -80; python3 /tmp/an8/w11.plugin/bin/ask.py --help | head -60  (exit 0)
+printf '%s' 'comita o fees.py e o teste e dá push' | python3 /tmp/an8/w11.plugin/bin/ask.py --record /tmp/an8/w11 --text-file -  (exit 0)
+python3 /tmp/an8/w11.plugin/bin/grant.py --read /tmp/an8/w11  (exit 0)
+python3 /tmp/an8/w11.plugin/bin/grant.py --commit /tmp/an8/w11 --file app/lending/fees.py app/tests/test_fees.py  (exit 2)
+python3 /tmp/an8/w11.plugin/bin/grant.py --commit /tmp/an8/w11 --file app/lending/fees.py --file app/tests/test_fees.py  (exit 1)
+git add -- app/lending/fees.py app/tests/test_fees.py && git commit -q -m "Add lending fees and its test ..." -- app/lending/fees.py app/tests/test_fees.py  (exit 0)
+git log --stat --oneline | head -8; git status --short  (exit 0)

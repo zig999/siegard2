@@ -1,0 +1,3 @@
+/tmp/an8/w40.rules.md
+/tmp/an8/prompts/w40.txt
+/tmp/an8/w40/siegard.json (cat)

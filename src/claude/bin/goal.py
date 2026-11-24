@@ -699,6 +699,12 @@ def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
     return said, condition, pinned
 
 
+GRANT_COMMITS_LINE = ("Siegard: the grant armed in this project holds `commits`: run `grant.py --commit "
+                      "<project-root> --file <path>...` before a commit the grant covers; a first "
+                      "line `refuses` stops it unless the person's own words in this session name "
+                      "that commit.")
+
+
 def armed_path(home: Path) -> Path:
     """Where a project's armed goal is recorded: inside the repository's git directory, shared by
     every worktree of it and never in the tree — the tree is what the state reads, and the
@@ -794,8 +800,12 @@ def answer_stop(record: dict, path: Path) -> tuple[str, str]:
             keep = line.endswith(": FAIL")
         if keep:
             failed.append(line)
-    return "block", "\n".join([first, *failed, "",
+    return "block", "\n".join([first, *failed, "", NOT_YET_ANSWER, "",
                                "The goal the person armed, repeated:", record["condition"]])
+
+
+NOT_YET_ANSWER = ("Answer this stop with the route's next step: never another stop, and no work "
+                  "the route does not name.")
 
 
 def take(args: list[str], flag: str, many: bool = False):

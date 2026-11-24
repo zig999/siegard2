@@ -1,0 +1,9 @@
+ls /tmp/an8/w07.plugin/bin /tmp/an8/w07; cd /tmp/an8/w07 && git status --short; git log --oneline | head  -> exit 0
+python3 /tmp/an8/w07.plugin/bin/grant.py --help  -> exit 0
+python3 /tmp/an8/w07.plugin/bin/ask.py --help  -> exit 0
+printf 'comita o fees.py e o teste e dá push' | python3 /tmp/an8/w07.plugin/bin/ask.py --record /tmp/an8/w07 --text-file -  -> exit 0
+python3 /tmp/an8/w07.plugin/bin/grant.py --read /tmp/an8/w07  -> exit 0
+python3 /tmp/an8/w07.plugin/bin/grant.py --commit /tmp/an8/w07 --file app/lending/fees.py app/tests/test_fees.py  -> exit 2
+python3 /tmp/an8/w07.plugin/bin/grant.py --commit /tmp/an8/w07 --file app/lending/fees.py --file app/tests/test_fees.py  -> exit 1
+git add -- app/lending/fees.py app/tests/test_fees.py && git commit -m "Add lending fees and its test ..." -- app/lending/fees.py app/tests/test_fees.py  -> exit 0
+git status --short; git log --oneline | head -3  -> exit 0

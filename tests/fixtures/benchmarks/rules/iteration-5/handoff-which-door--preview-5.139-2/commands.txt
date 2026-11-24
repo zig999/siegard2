@@ -1,0 +1,1 @@
+cat /tmp/an8/persisted/hook-SessionStart-additionalContext.txt (exit 0)

@@ -1,0 +1,2 @@
+/tmp/an8/prompts/w21.txt
+/tmp/an8/w21.rules.md

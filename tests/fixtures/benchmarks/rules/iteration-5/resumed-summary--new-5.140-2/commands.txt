@@ -1,0 +1,5 @@
+cd /tmp/an8/w27 && ls -la && git status --short | head -20; ls /tmp/an8/w27.plugin/bin  (exit 0)
+cd /tmp/an8/w27 && cat siegard.json; git log --oneline | head; find work spec -maxdepth 3 | head -50; python3 /tmp/an8/w27.plugin/bin/door.py --help | head -60; python3 /tmp/an8/w27.plugin/bin/ask.py --help | head -60  (exit 0)
+python3 /tmp/an8/w27.plugin/bin/ask.py --read /tmp/an8/w27  (exit 1)
+python3 /tmp/an8/w27.plugin/bin/door.py --check commit --project /tmp/an8/w27 --slug compute-late-fee --file app/lending/fees.py --file app/tests/test_fees.py  (exit 0)
+mkdir -p /tmp/an8/out/w27 && write report.md, commands.txt, files-read.txt  (exit 0)

@@ -1,0 +1,4 @@
+/tmp/an8/prompts/w42.txt
+/tmp/an8/w42.rules.md
+/tmp/an8/w42/siegard.json
+/tmp/an8/w42.plugin/schemas/handoff.json

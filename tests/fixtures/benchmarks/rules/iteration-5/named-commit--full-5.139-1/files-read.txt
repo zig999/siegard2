@@ -1,0 +1,3 @@
+/tmp/an8/prompts/w06.txt
+/tmp/an8/w06.rules.md
+/tmp/an8/w06/siegard.json

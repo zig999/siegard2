@@ -1,0 +1,2 @@
+/tmp/an8/prompts/x06.txt
+/tmp/an8/x06.rules.md

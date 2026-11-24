@@ -1,0 +1,4 @@
+cd /tmp/an8/w36 && ls -la && git status --short && git log --oneline | head; ls /tmp/an8/w36.plugin/bin  (exit 0)
+cd /tmp/an8/w36 && cat siegard.json; find work spec -maxdepth 3 | head -50; python3 /tmp/an8/w36.plugin/bin/ask.py --help | head -60  (exit 0)
+cd /tmp/an8/w36 && python3 /tmp/an8/w36.plugin/bin/ask.py --read /tmp/an8/w36; echo "exit $?"; ls -R telemetry 2>&1 | head  (ask.py exit 1: no ask recorded; ls exit 2)
+mkdir -p /tmp/an8/out/w36 && cd /tmp/an8/out/w36 && cat > report.md ... (exit 0)

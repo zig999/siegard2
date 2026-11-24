@@ -1,0 +1,7 @@
+/tmp/an8/prompts/w12.txt
+/tmp/an8/w12.rules.md
+/tmp/an8/w12/siegard.json
+/tmp/an8/w12/app/lending/fees.py
+/tmp/an8/w12/app/tests/test_fees.py
+/tmp/an8/w12/app/lending/loans.py (via git diff)
+/tmp/an8/w12.plugin/schemas/handoff.json

@@ -1,0 +1,2 @@
+/tmp/an8/prompts/w16.txt
+/tmp/an8/w16.rules.md

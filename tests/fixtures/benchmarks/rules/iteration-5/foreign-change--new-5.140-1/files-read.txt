@@ -1,0 +1,7 @@
+/tmp/an8/prompts/w04.txt
+/tmp/an8/w04.rules.md
+/tmp/an8/w04.plugin/schemas/handoff.json
+/tmp/an8/w04.plugin/bin/door.py (--help output only)
+/tmp/an8/w04.plugin/bin/handoff.py (--help output only)
+/tmp/an8/w04/siegard.json
+/tmp/an8/w04/app/lending/loans.py (git diff only)

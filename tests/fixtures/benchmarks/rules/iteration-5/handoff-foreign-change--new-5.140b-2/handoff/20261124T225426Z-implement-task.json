@@ -1,0 +1,34 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "en",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an8/x10"
+  },
+  "decisions": [
+    {
+      "ask": "The late-fee code and its tests are written and pass, but not committed: the loans module has a change I did not make. What should be committed?",
+      "recommended": {
+        "door": "Commit only the two files this task wrote",
+        "reply_word": "commit-two",
+        "why": "It leaves your loans change alone and can be undone. This is a judgment on cost, not a fact on disk.",
+        "reverses_if": "It would change if the loans edit belongs to this fee work."
+      },
+      "others": [
+        {
+          "reply_word": "commit-all",
+          "what_it_does": "Commits the fee code, its tests and the loans change together."
+        },
+        {
+          "reply_word": "wait",
+          "what_it_does": "Commits nothing; you settle the loans change first and tell me."
+        }
+      ],
+      "if_none": "Nothing is committed; the new files stay untracked and the loans change stays modified.",
+      "relation": "one-of"
+    }
+  ],
+  "report": "/tmp/an8/x10/.git/siegard/handoff/20261124T225426Z-implement-task.md"
+}

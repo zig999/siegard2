@@ -1,0 +1,43 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "en",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an8/w12",
+    "slug": "lending"
+  },
+  "decisions": [
+    {
+      "ask": "The late-fee task is written and passes its checks, but I stopped before committing: the loans file has an edit I did not make. Commit only my two files?",
+      "recommended": {
+        "door": "Commit only my two files; your edit stays as it is.",
+        "why": "This is a judgment: it can be undone and takes nothing that is not mine.",
+        "reverses_if": "that edit belongs to this task, or you want it committed first",
+        "reply_word": "commit-mine"
+      },
+      "others": [
+        {
+          "reply_word": "hold",
+          "what_it_does": "You commit or set aside your edit, then run the task again."
+        },
+        {
+          "reply_word": "review",
+          "what_it_does": "Excluded: nothing is delivered yet.",
+          "entry": "/review-change",
+          "check": {
+            "answer": "refuses",
+            "refused": [
+              "/tmp/an8/w12/delivery/lending/implementation holds no record — nothing is delivered, so a review has no subject"
+            ]
+          }
+        }
+      ],
+      "if_none": "Nothing is committed; my files stay beside your edit.",
+      "relation": "one-of",
+      "invocation": "commit only app/lending/fees.py and app/tests/test_fees.py"
+    }
+  ],
+  "report": "/tmp/an8/w12/.git/siegard/handoff/20261124T225149Z-implement-task.md"
+}

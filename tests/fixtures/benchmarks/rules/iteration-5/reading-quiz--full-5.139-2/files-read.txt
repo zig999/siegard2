@@ -1,0 +1,2 @@
+/tmp/an8/prompts/w03.txt
+/tmp/an8/w03.rules.md

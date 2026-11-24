@@ -246,7 +246,7 @@ def arm(project_root: Path, slug: str | None, target: str | None, doors: list[st
                f"covers: {slug or 'every live initiative of the project'}",
                f"doors: {', '.join(doors) or 'none'}", f"budget of judged doors for each initiative: {budget}",
                f"commits: {'yes' if commits else 'no'}", f"close: {'yes' if close else 'no'}",
-               f"plugin: {record['version']}"]
+               f"plugin: {record['version']}"] + ([goal.GRANT_COMMITS_LINE] if commits else [])
     return ([said] if said else []) + summary, record
 
 
@@ -340,13 +340,20 @@ def decide_one(number: int, decision: dict, held: dict, fields: dict,
     return lines
 
 
+CARRY = ("carry: each decision line below is carried out by its kind — a take is taken, its door "
+         "invoked and the `decided` line under it written in the run's orchestration log; a judge "
+         "goes to `siegard:door-decider` over the doors it prints and nothing else; a stop is "
+         "handed to the person; a note is carried as it says, and the handoff rendered again")
+
+
 def decide(project_root: Path, record: dict, slug: str | None = None) -> tuple[list[str], int]:
     held, fields, path, ended = standing(project_root)
     if ended:
         end_grant(path, held, "ended", ended)
         return [f"stop: the grant ended — {ended}"], REFUSED
     decisions = record.get("decisions") or []
-    lines = [f"grant: {held.get('slug') or 'every live initiative'} (sha256 {mark_of(held)})"]
+    lines = [f"grant: {held.get('slug') or 'every live initiative'} (sha256 {mark_of(held)})",
+             CARRY]
     for number, decision in enumerate(decisions, 1):
         lines += decide_one(number, decision, held, fields, held.get("slug") or slug)
     if record.get("report"):

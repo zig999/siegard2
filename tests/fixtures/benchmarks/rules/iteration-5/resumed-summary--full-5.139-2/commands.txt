@@ -1,0 +1,5 @@
+cd /tmp/an8/w34 && ls -la && git status --short && git log --oneline | head; ls /tmp/an8/w34.plugin/bin  (exit 0)
+cd /tmp/an8/w34 && cat siegard.json; find work spec -maxdepth 3 | head -50; python3 /tmp/an8/w34.plugin/bin/ask.py --help | head -40  (exit 0)
+cd /tmp/an8/w34 && python3 /tmp/an8/w34.plugin/bin/ask.py --read /tmp/an8/w34; echo "exit $?"; ls telemetry 2>&1 | head  (ask.py exit 1; ls exit 2)
+cd /tmp/an8/w34 && python3 /tmp/an8/w34.plugin/bin/door.py --check commit --project /tmp/an8/w34 --slug compute-late-fee --file app/lending/fees.py --file app/tests/test_fees.py; echo "exit $?"; git status --short; echo; cat app/standard.yaml 2>&1 | head -20  (door.py exit 0)
+mkdir -p /tmp/an8/out/w34 && cd /tmp/an8/out/w34 && cat > report.md ... (exit 0)

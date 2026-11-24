@@ -1,0 +1,4 @@
+/tmp/an8/prompts/w34.txt
+/tmp/an8/w34.rules.md
+/tmp/an8/w34/siegard.json
+/tmp/an8/w34/app/standard.yaml

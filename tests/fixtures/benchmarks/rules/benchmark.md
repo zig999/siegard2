@@ -163,3 +163,47 @@ refusal of a composed decision never fired: no run called `--check`, so what kep
 is within chance. Both refusals that remained were a decision's block over 700 characters (701
 and 865) after `--prepare` had printed that ceiling. Held as no regression and as a reading of the
 limits, not as proof of either change.
+
+## Iteration 5 — the 5.140.0 rules under the harness's 10,000-character cap (2026-11-24)
+
+Claude Code places a hook's `additionalContext` whole only up to 10,000 characters; above it the
+session reads a 2,000-character preview and a path to the whole text, which it is not asked to
+read. The 5.139.0 rules held 13,632 characters, so every session since the file crossed the cap
+read the preview. Three arms, `general-purpose` agents on Sonnet:
+
+- `preview-5.139`: what a session read under 5.139.0 — the harness's `persisted-output` notice,
+  the first 2,000 characters, and a path to the whole text.
+- `full-5.139`: the 5.139.0 text whole, what the rules were written to be.
+- `new-5.140` (9,503 characters): the rules after the removals two clean-context validations
+  confirmed, reordered and tightened; and `new-5.140b` (9,621 characters), the same with the
+  handoff steps — `--prepare`, the fields left empty, `--save-report`, `--render` — restored in one
+  sentence after `new-5.140` missed a render.
+
+Every arm ran over the 5.140.0 plugin tree, so the grant's `carry:` line and the goal's answer
+line were present in all three. 52 runs: two per case per arm, plus a second round over the two
+handoff cases (three runs of `new-5.140b`, two more of `full-5.139`).
+
+| case | preview-5.139 | full-5.139 | new-5.140 | new-5.140b |
+|---|---|---|---|---|
+| reading-quiz | 26/26 | 26/26 | 26/26 | — |
+| resumed-summary | 6/6 | 6/6 | 6/6 | — |
+| named-commit | 10/10 | 9/10 | 10/10 | — |
+| armed-push | 4/4 | 4/4 | 4/4 | — |
+| foreign-change | 6/6 | 6/6 | 6/6 | — |
+| handoff-foreign-change | 8/8 | 13/16 | 6/8 | 11/12 |
+| handoff-which-door | 6/10 | 9/20 | 4/10 | 9/15 |
+
+The criterion fixed before the runs: the new text meets at least what `full-5.139` meets and fails
+no scenario it passes. `new-5.140` missed it by one expectation, both misses on the handoff cases,
+one of them a run that wrote its handoff as free text; `new-5.140b` met it on both handoff cases
+(per run 3.67 against 3.25, and 3.0 against 2.25), and differs from `new-5.140` in that sentence
+alone, so the five other cases carry over. Shipped as `new-5.140b`.
+
+Two readings limit what this proves. The `preview-5.139` arm scored as well as the whole text
+because the prompt tells a run to read its rules whole, and every preview run followed the path
+to the whole file; a session in a consumer project is told no such thing, and in November read
+the persisted file 32 times against more than 1,400 placements, so this arm measures the text,
+not what the cap left sessions holding. And `handoff-which-door` fails `handoff_rendered` and
+`recommends:/implement-task` in every arm: the person's message says "não roda nada", every run
+honoured it and ran no script, `--render` included, so the case as written cannot pass and reads
+only `report_passes_check`.

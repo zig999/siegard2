@@ -1,0 +1,6 @@
+/tmp/an8/prompts/w05.txt
+/tmp/an8/w05.rules.md
+/tmp/an8/persisted/hook-SessionStart-additionalContext.txt
+/tmp/an8/w05/siegard.json
+/tmp/an8/w05.plugin/bin/ask.py (--help output only)
+/tmp/an8/w05.plugin/bin/door.py (--help output only)

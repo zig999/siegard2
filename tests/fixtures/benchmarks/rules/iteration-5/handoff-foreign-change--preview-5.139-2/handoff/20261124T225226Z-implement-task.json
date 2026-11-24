@@ -1,0 +1,31 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "en",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an8/w29",
+    "slug": "lending"
+  },
+  "decisions": [
+    {
+      "ask": "The late-fee code and its test are written and passing, but not committed: the loans file under app/lending holds a change I did not make. How should the commit go?",
+      "recommended": {
+        "door": "You say commit, and I commit only the two new files, leaving your loans change pending.",
+        "why": "Neither new file uses the added MAX_RENEWALS line, and the commit can be undone.",
+        "reverses_if": "the loans change is meant to ship together with the late fee",
+        "reply_word": "commit"
+      },
+      "others": [
+        {
+          "reply_word": "mine",
+          "what_it_does": "You commit or set aside the loans change yourself, then invoke the task again and I commit the two new files."
+        }
+      ],
+      "if_none": "Nothing is committed; the new files and your loans change stay as they are.",
+      "relation": "one-of"
+    }
+  ],
+  "report": "/tmp/an8/w29/.git/siegard/handoff/20261124T225226Z-implement-task.md"
+}

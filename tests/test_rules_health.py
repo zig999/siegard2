@@ -24,9 +24,10 @@ RULES = REPO / "src/claude/hooks/rules.md"
 BIN = REPO / "src/claude/bin"
 SCHEMAS = REPO / "src/claude/schemas"
 
-PINNED_LINES = 168
-PINNED_CHARACTERS = 13562
+PINNED_LINES = 116
+PINNED_CHARACTERS = 9621
 GUIDANCE_CEILING_LINES = 200
+PLATFORM_CEILING_CHARACTERS = 9800
 
 SCRIPT_SPAN = re.compile(r"`bin/([a-z_]+)\.py([^`]*)`")
 FLAG = re.compile(r"(?<![\w-])(--[a-z][a-z-]*)")
@@ -61,6 +62,14 @@ def test_the_size_is_the_pinned_one():
 
 def test_the_pin_stays_under_the_guidance_ceiling():
     assert PINNED_LINES <= GUIDANCE_CEILING_LINES
+
+
+def test_the_pin_stays_under_what_the_harness_places_whole():
+    """Claude Code places a hook's `additionalContext` whole only up to 10,000 characters; above
+    it the session reads a 2,000-character preview and every rule past it reaches no context. The
+    ceiling keeps a margin under that cap, and the hook's own output is held to it below."""
+    assert PINNED_CHARACTERS <= PLATFORM_CEILING_CHARACTERS
+    assert len(text()) <= PLATFORM_CEILING_CHARACTERS
 
 
 def test_each_bullet_opens_with_its_rule_in_bold():

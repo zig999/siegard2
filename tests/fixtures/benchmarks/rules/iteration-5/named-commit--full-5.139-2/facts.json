@@ -1,0 +1,19 @@
+{
+  "commits": [
+    {
+      "subject": "Add lending fees and their test",
+      "paths": [
+        "app/lending/fees.py",
+        "app/tests/test_fees.py"
+      ]
+    }
+  ],
+  "branches": [
+    "main"
+  ],
+  "origin_moved": true,
+  "origin_holds_head": true,
+  "asks": [],
+  "handoff_records": [],
+  "handoff_calls": []
+}

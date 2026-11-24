@@ -1,0 +1,22 @@
+{
+  "commits": [
+    {
+      "subject": "Add late_fee_cents: 100 cents per calendar day returned after the due date, with its tests",
+      "paths": [
+        "app/lending/fees.py",
+        "app/tests/test_fees.py"
+      ]
+    }
+  ],
+  "branches": [
+    "main"
+  ],
+  "origin_moved": false,
+  "origin_holds_head": false,
+  "asks": [
+    "--commits --doors none",
+    "comita o fees.py e o teste e dá push"
+  ],
+  "handoff_records": [],
+  "handoff_calls": []
+}

@@ -1,0 +1,2 @@
+/tmp/an8/prompts/w10.txt
+/tmp/an8/w10.rules.md

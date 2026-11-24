@@ -1,0 +1,3 @@
+ls -la /tmp/an8/w38 /tmp/an8/w38.plugin /tmp/an8/w38.plugin/bin; mkdir -p /tmp/an8/out/w38 (exit 0)
+cd /tmp/an8/w38 && git status --porcelain -- app; echo "exit $?"; cat siegard.json; git diff -- app/lending/loans.py | head -40 (exit 0)
+cd /tmp/an8/w38 && python3 /tmp/an8/w38.plugin/bin/door.py --check commit --project /tmp/an8/w38 --slug compute-late-fee --file app/lending/fees.py --file app/tests/test_fees.py (exit 0)

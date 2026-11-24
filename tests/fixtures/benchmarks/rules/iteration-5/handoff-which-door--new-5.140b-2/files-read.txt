@@ -1,0 +1,5 @@
+/tmp/an8/prompts/x05.txt
+/tmp/an8/x05.rules.md
+/tmp/an8/x05/siegard.json
+/tmp/an8/x05/work/lending/plan.json
+/tmp/an8/x05/delivery/lending/delivery.json (attempted, does not exist)

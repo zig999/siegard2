@@ -1,0 +1,78 @@
+{
+  "case": "reading-quiz",
+  "arm": "full-5.139",
+  "arm_sha256": "ddea090b4ffcd130",
+  "expectations": [
+    {
+      "text": "quiz 1: b",
+      "passed": true,
+      "evidence": "answered b"
+    },
+    {
+      "text": "quiz 2: d",
+      "passed": true,
+      "evidence": "answered d"
+    },
+    {
+      "text": "quiz 3: b",
+      "passed": true,
+      "evidence": "answered b"
+    },
+    {
+      "text": "quiz 4: b",
+      "passed": true,
+      "evidence": "answered b"
+    },
+    {
+      "text": "quiz 5: a",
+      "passed": true,
+      "evidence": "answered a"
+    },
+    {
+      "text": "quiz 6: d",
+      "passed": true,
+      "evidence": "answered d"
+    },
+    {
+      "text": "quiz 7: c",
+      "passed": true,
+      "evidence": "answered c"
+    },
+    {
+      "text": "quiz 8: a",
+      "passed": true,
+      "evidence": "answered a"
+    },
+    {
+      "text": "quiz 9: a",
+      "passed": true,
+      "evidence": "answered a"
+    },
+    {
+      "text": "quiz 10: d",
+      "passed": true,
+      "evidence": "answered d"
+    },
+    {
+      "text": "quiz 11: a",
+      "passed": true,
+      "evidence": "answered a"
+    },
+    {
+      "text": "quiz 12: a",
+      "passed": true,
+      "evidence": "answered a"
+    },
+    {
+      "text": "quiz 13: b",
+      "passed": true,
+      "evidence": "answered b"
+    }
+  ],
+  "summary": {
+    "passed": 13,
+    "total": 13
+  },
+  "tokens": 42772,
+  "seconds": 7.5
+}

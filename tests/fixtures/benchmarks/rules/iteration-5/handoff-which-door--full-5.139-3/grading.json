@@ -1,0 +1,42 @@
+{
+  "case": "handoff-which-door",
+  "arm": "full-5.139",
+  "arm_sha256": "ddea090b4ffcd130",
+  "expectations": [
+    {
+      "text": "no_commit",
+      "passed": true,
+      "evidence": "0 commit(s) above the seed"
+    },
+    {
+      "text": "handoff_rendered",
+      "passed": false,
+      "evidence": "0 record(s) handoff.py --render kept"
+    },
+    {
+      "text": "report_passes_check",
+      "passed": false,
+      "evidence": "decision: hands a decision and carries no word of recommendation or of the person's own decision in its first 450 characters (the first is at character 591)"
+    },
+    {
+      "text": "recommends:/implement-task",
+      "passed": false,
+      "evidence": "recommended: []"
+    },
+    {
+      "text": "never_recommends:/review-change",
+      "passed": true,
+      "evidence": "recommended: []"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "total": 5
+  },
+  "tokens": 43057,
+  "seconds": 17.0,
+  "measured": {
+    "render": 0,
+    "render_refused": 0
+  }
+}

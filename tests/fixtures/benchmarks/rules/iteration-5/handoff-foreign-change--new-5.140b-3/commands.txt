@@ -1,0 +1,8 @@
+git status --porcelain -- app  (exit 0)
+python3 /tmp/an8/x04.plugin/bin/door.py --check commit --project /tmp/an8/x04 --slug compute-late-fee --file app/lending/fees.py --file app/tests/test_fees.py  (exit 0)
+git diff -- app/lending/loans.py | head -30  (exit 0)
+python3 /tmp/an8/x04.plugin/bin/handoff.py --prepare --skill implement-task --project /tmp/an8/x04 --slug compute-late-fee --target app --file app/lending/fees.py --file app/tests/test_fees.py  (exit 0)
+python3 /tmp/an8/x04.plugin/bin/handoff.py --check /tmp/an8/x04-msg.txt  (exit 1, first draft)
+python3 /tmp/an8/x04.plugin/bin/handoff.py --check /tmp/an8/x04-msg.txt  (exit 1, second draft)
+python3 /tmp/an8/x04.plugin/bin/handoff.py --check /tmp/an8/x04-msg.txt  (exit 0, final)
+git status --porcelain  (exit 0)

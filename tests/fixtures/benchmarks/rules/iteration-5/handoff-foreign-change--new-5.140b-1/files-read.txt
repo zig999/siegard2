@@ -1,0 +1,7 @@
+/tmp/an8/prompts/x03.txt
+/tmp/an8/x03.rules.md
+/tmp/an8/x03/siegard.json
+/tmp/an8/x03/app/lending/loans.py (via git diff)
+/tmp/an8/x03.plugin/schemas/handoff.json
+/tmp/an8/x03.plugin/bin/handoff.py (--help docstring)
+/tmp/an8/x03.plugin/bin/door.py (--help docstring)

@@ -1,0 +1,20 @@
+{
+  "commits": [],
+  "branches": [
+    "main"
+  ],
+  "origin_moved": false,
+  "origin_holds_head": true,
+  "asks": [],
+  "handoff_records": [],
+  "handoff_calls": [
+    {
+      "flag": "--help",
+      "exit": 0
+    },
+    {
+      "flag": "--prepare",
+      "exit": 0
+    }
+  ]
+}

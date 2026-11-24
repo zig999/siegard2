@@ -44,6 +44,10 @@ answers nobody's stops, and the person learns it at the start rather than never.
 is the one record of the version an
 initiative runs under; it is read with the standard library alone, before and apart from the
 validators.
+
+A grant armed with `commits` is the other record a start reads: the gate a commit the grant covers
+asks, `grant.py --commit`, is placed in the session's context alone, at every start and after
+every compaction, so the session rules need not carry it into contexts no grant reaches.
 """
 from __future__ import annotations
 
@@ -59,6 +63,8 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 EVENT = "SessionStart"
 GIT_TIMEOUT_SECONDS = 10
 VALIDATORS = {"yaml": "PyYAML", "jsonschema": "jsonschema"}
+GRANT_FILE = "grant.json"
+GRANT_CONTRACT = "grant-armed/1"
 
 
 def declares_a_project(root: Path) -> bool:
@@ -140,6 +146,26 @@ def bound_line(root: Path, session: object) -> str:
     return (f"Siegard: the armed goal {armed.get('slug', '')}, armed at "
             f"{armed.get('armed_at', 'an unrecorded time')}, answers the stops of another session "
             f"({bound}), not this one's; where that session is gone, `goal.py --disarm` ends it.")
+
+
+def grant_line(root: Path) -> str:
+    """The commit gate of a grant armed with `commits`, for the session alone; empty where no
+    grant is armed, where it holds no `commits`, or where the record cannot be read."""
+    try:
+        sys.path.insert(0, str(PLUGIN_ROOT / "bin"))
+        from project import toplevel_of
+        with contextlib.redirect_stderr(io.StringIO()):
+            import goal
+        home = toplevel_of(root, timeout=GIT_TIMEOUT_SECONDS)
+        path = goal.armed_path(home).with_name(GRANT_FILE)
+        if not path.is_file():
+            return ""
+        held = goal.read_armed(path) or {}
+    except (Exception, SystemExit):
+        return ""
+    if held.get("contract") != GRANT_CONTRACT or held.get("commits") is not True:
+        return ""
+    return goal.GRANT_COMMITS_LINE
 
 
 def targets_of(root: Path) -> list[Path]:
@@ -245,6 +271,9 @@ def main() -> int:
             if line:
                 told.append(line)
                 context.append(line)
+        granted = grant_line(root)
+        if granted:
+            context.append(granted)
         missing = missing_validators()
         if missing:
             told.append(unchecked(missing))

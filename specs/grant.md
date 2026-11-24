@@ -14,8 +14,9 @@ asking, who can record it, what ends it, and the gates a script holds each act t
 for a project until the person clears it, over every live initiative or over the one it names. It binds
 `bin/grant.py`, the one script that records, reads and ends a grant and answers every act it is
 asked about, `/siegard-grant`, the one skill that arms it, the plugin's `PreToolUse` commit check
-where it reads an orchestration log's `decided:` lines, the session rules' one line that
-sends a stop to the script, `bin/handoff.py --render` where it keeps the record it rendered, and
+where it reads an orchestration log's `decided:` lines, the plugin's `SessionStart` hook where it
+places the commit gate, the session rules' line that keeps arming the person's,
+`bin/handoff.py --render` where it keeps the record it rendered, and
 the orchestrating entry point `/deliver-scope`, where it receives a stop.
 
 A grant is the person's own words, decided in advance, for the stops the framework would
@@ -108,7 +109,9 @@ bound a script on disk decides.
   `precondition unmet`; where the
   recommended door's check accepted and its entry point is in the grant's `doors` the answer is
   `judge`, with the doors, the budget left and the facts the decider reads, and where no door
-  qualifies it is `stop`. A door whose check was not run is never taken.
+  qualifies it is `stop`. A door whose check was not run is never taken. Under the line naming
+  the grant, the answer carries one `carry:` line saying what carries out each kind of line, so
+  the session reads it where it acts and not from the session rules.
 - **R5** — `judge` is answered by the door decider, blind to the grant and to any goal condition,
   and within the budget; the door it names is taken, one `decided:` line carrying the rung it named
   and the grant's mark among its deciding facts. The budget left is the grant's budget less the
@@ -139,7 +142,10 @@ bound a script on disk decides.
   clause does not hold, or a specification file the commit modifies where `HEAD` already holds it,
   beyond its decision log. A path that holds a change no record of a covered initiative accounts for
   is `refuses`. A first line `refuses` stops the commit unless the person's own words in the
-  session name that commit: a commit they name is not a taking. `bin/grant.py --close`, over one initiative the grant covers, answers `accepts` only
+  session name that commit: a commit they name is not a taking. Where the grant holds `commits`,
+  the gate reaches the session where it commits, not through the session rules: `grant.py --arm`
+  prints it as the last line of its summary, and the plugin's `SessionStart` hook places the same
+  line in the session's context at every start while that grant is armed. `bin/grant.py --close`, over one initiative the grant covers, answers `accepts` only
   where the grant holds `close` and the goal computation over the initiative, read from the grant's
   `HEAD`, finds every task delivered, proven and reviewed, no criterion unmet that no covered review
   answers, and a sound specification; the closure's reason is the grant's words, never the
@@ -174,9 +180,12 @@ bound a script on disk decides.
    holding `commits` and `close`, with or without a slug, `--commit` accepts the closing's own
    paths — `closure.md`, its `intake/` ask and the derived `plan.json` — written and not yet
    committed, and once that commit lands the initiative is no longer covered.
-5. A test holds `/siegard-grant` closed to the model and the session rules' line to the script,
-   the person's own words in the session exempting from a refusal the commit or the closing they
-   name.
+5. A test holds `/siegard-grant` closed to the model and the session rules to never arming a
+   grant outside it; the commit gate R7 places, printed by `grant.py --arm` and by the plugin's
+   `SessionStart` hook, to the person's own words in the session exempting the commit they name;
+   and the `carry:` line to naming what carries out a take, a judge, a stop and a note, in words
+   no decision line's kind is read from. The closing's exemption is `/plan-work`'s closing
+   reference's, under validation 7.
 6. For R9 and R10: a test holds `handoff.py --render` to keeping the record beside its report and
    `grant.py --decide --latest` to reading the newest one of a skill; a test holds the grant's
    budget to counting only the lines that carry its digest; and `/deliver-scope`'s file states the
@@ -184,8 +193,7 @@ bound a script on disk decides.
    `tests/test_goal.py` and `tests/test_skill_contract.py` prove each.
 7. For R11: a test holds `/plan-work`'s closing reference to asking `grant.py --close` with
    `--slug` before the marker, to `grant.py --commit` before the closing's commit, and to
-   persisting the ask copied whole, stated in the words above, and the session rules' invocation
-   of `--close` to naming `--slug` — `tests/test_skill_contract.py`.
+   persisting the ask copied whole, stated in the words above — `tests/test_skill_contract.py`.
 8. For R9's answer at the render: a test holds `handoff.py --render` under an armed grant to printing `judge`
    with the budget left on standard error for a recommended door its check accepts beside an open door, `stop`
    with the note naming the lost entry where the recommended door carries none, nothing where no grant is armed,
@@ -423,3 +431,11 @@ bound a script on disk decides.
   `door.py --check reconcile` decides the plain reconciliation, and what it leaves not decided — a
   certification, a rewrite — are modes the person names and a grant never takes. Grounds and
   reversal in SPEC-006's reading of the same day.
+- 2026-11-24 — grounds for R4's `carry:` line and R7's placement of the commit gate. The session
+  rules had grown to 13,632 characters, and Claude Code places a hook's output above 10,000
+  characters as a 2,000-character preview: since 2026-10-31 the grant's lines in those rules
+  reached no session (199 of 202 placements read in November were truncated). Each line now
+  reaches the session where it acts — the answer it carries out, the arming, every start while
+  the grant holds `commits` — and the rules keep only that arming is the person's. Reversal: a
+  session under a grant holding `commits` that commits a covered path without asking `--commit`
+  while the gate line stood in its context.

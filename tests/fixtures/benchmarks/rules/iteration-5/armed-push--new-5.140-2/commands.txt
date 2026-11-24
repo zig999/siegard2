@@ -1,0 +1,8 @@
+cd /tmp/an8/w37 && git status --short && git log --oneline | head -5; ls /tmp/an8/w37.plugin/bin; cat siegard.json | head -30 (exit 0)
+python3 /tmp/an8/w37.plugin/bin/ask.py --help (exit 0)
+python3 /tmp/an8/w37.plugin/bin/door.py --help (exit 0)
+python3 /tmp/an8/w37.plugin/bin/grant.py --help (exit 0)
+python3 /tmp/an8/w37.plugin/bin/grant.py --read /tmp/an8/w37 (exit 0)
+printf '%s' 'comita o fees.py e o teste e dá push' | python3 /tmp/an8/w37.plugin/bin/ask.py --record /tmp/an8/w37 --text-file - (exit 0)
+git add -- app/lending/fees.py app/tests/test_fees.py && git commit -m "Add lending fees and its test ..." -- app/lending/fees.py app/tests/test_fees.py (exit 0)
+git status --short; git show --stat --oneline HEAD | head (exit 0)

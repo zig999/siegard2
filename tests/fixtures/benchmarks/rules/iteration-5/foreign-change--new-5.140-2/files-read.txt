@@ -1,0 +1,2 @@
+/tmp/an8/prompts/w15.txt
+/tmp/an8/w15.rules.md
