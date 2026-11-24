@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.140.0 — 2026-11-24
+
+The session rules fit what the harness places whole: `hooks/rules.md` falls from 13,562 to 9,621 characters under a pinned 9,800 ceiling, its text reordered with the rules first; the grant's answer carries a `carry:` line saying how each kind of line is carried out (SPEC-011 R4), its commit gate is printed by `grant.py --arm` and placed by the `SessionStart` hook while a grant holds `commits` (R7), and a goal's `not yet` reason says to answer with the route's next step (SPEC-008 R14). (`001d934`)
+
 ## 5.139.0 — 2026-11-23
 
 A delivery that stops commits what it wrote as work in progress before its stop line, so the next route opens on a clean tree (SPEC-008 R18, `door.py --check commit --wip`); `/siegard-standard` opens to a session, writing only what a recorded ask names (SPEC-010 R10); and an armed goal's report says when no findings policy is set. (`5e83e43`)
