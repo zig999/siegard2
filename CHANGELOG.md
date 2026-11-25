@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.144.0 — 2026-11-25
+
+A grant naming one initiative answers no stop over another, nor over a record naming none: the decision is `stop: the grant covers <slug>, not <initiative>`, read from the caller's `--slug`, the record's initiative, a door's invocation or the initiative its check ran over (SPEC-011 R4). The record's initiative has one definition — its `state_from`, else the armed goal's, else the one live initiative — read alike by `--prepare` and `--render` (SPEC-006 R11). (`89b0a11`)
+
 ## 5.143.0 — 2026-11-25
 
 Under a grant covering the initiative, `--render` refuses a closing report of `/analyse`, `/implement-task`, `/plan-work`, `/reconcile` or `/survey` that recommends a next step, so the step is handed as the decision the grant answers — or as the person's own choice under `settles_by`, or the body recommends nothing; `--prepare` says so on a `limits:` line (SPEC-006 R11). (`15424da`)
