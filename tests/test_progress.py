@@ -274,3 +274,13 @@ def test_a_line_otherwise_empty_stays_empty_whatever_version_is_loaded(project, 
     installed(config, {"scope": "user", "installPath": "/c/9.9.9", "version": "9.9.9"})
     (project / "plans" / SLUG / "closure.md").write_text("Closed.\n", encoding="utf-8")
     assert printed(project) == ""
+
+
+def test_a_review_record_quoting_three_dashes_keeps_its_tasks(tmp_path):
+    sys.path.insert(0, str(BIN))
+    import progress
+    review = tmp_path / "review"
+    review.mkdir()
+    (review / "r.md").write_text("---\nuntested:\n- 'An id made only of ''---'''\ntasks:\n- task/a/x\n"
+                                 "---\n\nbody\n", encoding="utf-8")
+    assert progress.reviewed_of(tmp_path) == {"task/a/x"}

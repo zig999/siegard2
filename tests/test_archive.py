@@ -177,3 +177,14 @@ def test_an_unstated_or_contradictory_invocation_cannot_run(project, args):
     assert done.returncode == 2, done.stdout + done.stderr
     assert done.stderr.startswith("cannot run:")
     assert (project / "plans/checkout").is_dir()
+
+
+def test_a_record_quoting_three_dashes_before_its_target_keeps_the_target(tmp_path):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src/claude/bin"))
+    import archive as archive_module
+    proof = tmp_path / "proof" / "a"
+    proof.mkdir(parents=True)
+    (proof / "x.md").write_text("---\nuntested:\n- 'An id made only of ''---'''\ntarget: backend\n"
+                                "---\n\nbody\n", encoding="utf-8")
+    assert "proof" in archive_module.RECORD_KINDS
+    assert archive_module.targets_named(tmp_path) == {"backend"}

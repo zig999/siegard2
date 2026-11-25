@@ -129,14 +129,14 @@ def reviewed_of(delivery: Path) -> set[str]:
     if not records:
         return set()
     import yaml
+    import spec
     loader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
     named: set[str] = set()
     for record in records:
         try:
-            text = record.read_text(encoding="utf-8")
-            front = yaml.load(text.split("---", 2)[1], Loader=loader) if text.startswith("---") \
-                else None
-        except (OSError, IndexError, UnicodeDecodeError, yaml.YAMLError):
+            match = spec.FENCE.match(record.read_text(encoding="utf-8"))
+            front = yaml.load(match.group(1), Loader=loader) if match else None
+        except (OSError, UnicodeDecodeError, yaml.YAMLError):
             continue
         if isinstance(front, dict) and isinstance(front.get("tasks"), list):
             named |= {t for t in front["tasks"] if isinstance(t, str)}

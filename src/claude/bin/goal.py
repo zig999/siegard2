@@ -338,10 +338,10 @@ def proof_answer(fields: dict, slug: str, since: str, delivery: Path,
 
 def front_of(record: Path) -> dict:
     import spec
-    text = record.read_text(encoding="utf-8")
-    if not text.startswith("---"):
+    match = spec.FENCE.match(record.read_text(encoding="utf-8"))
+    if not match:
         return {}
-    front = spec.load_yaml(text.split("---", 2)[1])
+    front = spec.load_yaml(match.group(1))
     return front if isinstance(front, dict) else {}
 
 

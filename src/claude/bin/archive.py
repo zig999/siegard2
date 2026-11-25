@@ -63,6 +63,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import door
+import spec
 
 CANNOT_RUN = 2
 CLOSURE = "closure.md"
@@ -95,11 +96,9 @@ def targets_named(delivery: Path) -> set[str]:
     named: set[str] = set()
     for kind in RECORD_KINDS:
         for record in sorted((delivery / kind).rglob("*.md")) if (delivery / kind).is_dir() else []:
-            text = record.read_text(encoding="utf-8", errors="replace")
-            if not text.startswith("---"):
-                continue
-            front = text.split("---", 2)[1] if text.count("---") >= 2 else ""
-            named |= set(TARGET_LINE.findall(front))
+            match = spec.FENCE.match(record.read_text(encoding="utf-8", errors="replace"))
+            if match:
+                named |= set(TARGET_LINE.findall(match.group(1)))
     return named
 
 

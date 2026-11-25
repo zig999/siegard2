@@ -1291,3 +1291,16 @@ def test_a_check_that_cannot_run_still_lets_the_goal_end_and_says_it(project):
     said = json.loads(stop(project, mode="enforce", last_assistant_message=CLOSING).stdout)
     assert "decision" not in said and said["systemMessage"].startswith("Siegard ended")
     assert [e["ended"] for e in ended(project)] == ["state A"]
+
+
+def test_a_record_s_front_matter_quoting_three_dashes_is_read_whole(tmp_path):
+    sys.path.insert(0, str(BIN))
+    import goal
+    record = tmp_path / "record.md"
+    record.write_text("---\ntarget: backend\nuntested:\n- 'An id made only of ''---'', and more'\n"
+                      "files:\n- path: src/a.ts\n---\n\nbody\n---\n", encoding="utf-8")
+    assert goal.front_of(record) == {"target": "backend",
+                                     "untested": ["An id made only of '---', and more"],
+                                     "files": [{"path": "src/a.ts"}]}
+    record.write_text("----\ntarget: backend\n---\n", encoding="utf-8")
+    assert goal.front_of(record) == {}
