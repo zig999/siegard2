@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.154.0 — 2026-11-25
+
+Where several targets are declared and none is named, `/reconcile` is checked over the one target the initiative's implementation and proof records name, every one naming it; an invocation's declared `--target` is read (SPEC-006 R9). (`568eca0`)
+
 ## 5.153.0 — 2026-11-25
 
 A review stopped because a certification's node is bound to none of the named files hands its own re-invocation as a door over the records' set and the files the trace binds to that node, built by `--prepare --skill review-change --task --name --file` and checked again at `--render` (SPEC-006 R9). (`8d5424a`)
