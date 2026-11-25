@@ -413,7 +413,8 @@ def check_door(name: str, project: Path, slug: str | None, target: str | None,
         return {"answer": "not checked",
                 "why": f"no script decides what /{name} refuses; its own file states it"}
     if name == "reconcile":
-        return check_reconcile(project, target or goal_target(project, slug))
+        return check_reconcile(project, target or goal_target(project, slug)
+                               or initiative_target(project, slug))
     if name in door.NAMED_SLUG and not slug:
         return {"answer": "not checked", "why": f"/{name} {UNNAMED_SLUG}"}
     target = target or goal_target(project, slug)
@@ -480,12 +481,37 @@ def initiative_files(project: Path, slug: str, target: str | None = None,
     return named
 
 
+def initiative_target(project: Path, slug: str | None) -> str | None:
+    """The one target the initiative's implementation and proof records name, or None where they
+    name none or several, or one record names none: `/reconcile` is checked over «the one target
+    the initiative's records name» (SPEC-006 R9)."""
+    import goal
+    if not slug:
+        return None
+    try:
+        declared = json.loads((project / "siegard.json").read_text(encoding="utf-8"))
+        base = project / declared["delivery_root"] / slug
+        targets = declared["targets"]
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    try:
+        named = {goal.front_of(record).get("target") for root in ("implementation", "proof")
+                 for record in ((base / root).rglob("*.md") if (base / root).is_dir() else [])}
+    except Exception:
+        return None
+    if len(named) != 1:
+        return None
+    only = next(iter(named))
+    return only if isinstance(only, str) and only in targets else None
+
+
 def scope_end_check(project: Path, slug: str | None, target: str | None) -> dict:
     """The `/reconcile` door a scope's end hands: «the reconciliation a scope's end hands reads the
     files of the reconcile set that the initiative's own records name, and no other» (SPEC-006 R9),
     so it never records as the person's word that a file outside the ask is correct."""
     if not slug:
         return {"answer": "not checked", "why": "the scope's end names no initiative"}
+    target = target or initiative_target(project, slug)
     declared_target = target
     if declared_target is None:
         try:
@@ -591,8 +617,9 @@ def closing_check(project: Path, slug: str | None) -> dict | None:
 
 def check_reconcile(project: Path, target: str | None, within: set[str] | None = None) -> dict:
     """`/reconcile`'s check over the file set and the free slug its trace prints for the target:
-    the target named, else the armed goal's, else the project's one target. A certification and a
-    rewrite are the person's to name, so the check is of the reconciliation that reads alone."""
+    the target named, else the armed goal's, else the one the initiative's records name, else the
+    project's one target. A certification and a rewrite are the person's to name, so the check is
+    of the reconciliation that reads alone."""
     import door
     try:
         declared = json.loads((project / "siegard.json").read_text(encoding="utf-8"))
@@ -659,9 +686,16 @@ def check_as_it_stands(entry: str, project: Path, source: dict, invocation: str,
     opening = INVOCATION_ENTRY.match(invocation)
     tasks = [task.removesuffix(".md") for task in INVOCATION_TASK.findall(invocation)] \
         if name == "implement-task" and opening and opening.group(1) == "implement-task" else []
+    named_target = next(iter(re.findall(r"--target[ \t=]+([\w.-]+)", invocation)), None) \
+        if opening and opening.group(1) == name else None
     try:
-        check = check_of(name, project, slug, None, [], tasks) if tasks \
-            else check_of(name, project, slug, None, [])
+        declared_targets = json.loads((project / "siegard.json").read_text(encoding="utf-8"))["targets"]
+    except (OSError, ValueError, KeyError, TypeError):
+        declared_targets = {}
+    named_target = named_target if named_target in declared_targets else None
+    try:
+        check = check_of(name, project, slug, named_target, [], tasks) if tasks \
+            else check_of(name, project, slug, named_target, [])
     except Exception as broken:
         return {"answer": "not checked", "why": f"the check of /{name} could not run: {broken}"}
     if not infer:
@@ -707,8 +741,8 @@ def completed(record: dict, check_of=check_door) -> dict:
                 if named:
                     chosen["entry"] = named
             if "entry" in chosen and chosen["entry"] == "/reconcile" and is_scope_end(done):
-                chosen["check"] = scope_end_check(project, record_initiative(project, source),
-                                                  goal_target(project, None))
+                initiative = record_initiative(project, source)
+                chosen["check"] = scope_end_check(project, initiative, goal_target(project, initiative))
             elif "entry" in chosen and chosen["entry"] == "/plan-work" and is_scope_end(done):
                 chosen["check"] = closing_check(project, record_initiative(project, source)) \
                     or {"answer": "refuses", "refused": ["the initiative is not ready to close, "

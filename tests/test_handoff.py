@@ -1535,6 +1535,45 @@ def test_no_skill_offers_itself_as_a_door_without_files(project, skill):
     assert f"/{skill}" not in doors_of(prepared), skill
 
 
+def test_reconcile_reads_the_one_target_the_initiative_s_records_name(project, monkeypatch):
+    """`/reconcile` is checked over «the one target the initiative's records name» (SPEC-006 R9)."""
+    two_targets(project)
+    seen = []
+    monkeypatch.setattr(handoff, "reconcile_set", lambda project_, root: seen.append(root.name) or ([], None))
+    monkeypatch.setattr(handoff, "initiative_target", lambda project_, slug: "app")
+    check = handoff.check_door("reconcile", project, SLUG, None, [])
+    assert check["answer"] == "refuses" and seen == ["target"], (check, seen)
+    seen.clear()
+    handoff.check_door("reconcile", project, SLUG, "web", [])
+    assert seen == ["web"]
+    monkeypatch.setattr(handoff, "initiative_target", lambda project_, slug: None)
+    check = handoff.check_door("reconcile", project, SLUG, None, [])
+    assert check == {"answer": "not checked", "why": "/reconcile reads one target's set, and no target was named"}
+
+
+def test_the_initiative_target_needs_one_declared_target_on_every_record(project):
+    two_targets(project)
+    for root in ("implementation", "proof"):
+        for old in (project / "deliveries" / SLUG / root).rglob("*.md"):
+            old.unlink()
+    base = project / "deliveries" / SLUG / "implementation"
+    base.mkdir(parents=True, exist_ok=True)
+    for name in ("a", "b"):
+        (base / f"{name}.md").write_text("---\ntarget: app\n---\n", encoding="utf-8")
+    assert handoff.initiative_target(project, SLUG) == "app"
+    seen = []
+    handoff.check_as_it_stands("/reconcile", project, {"script": "progress.py", "project": str(project)},
+                               "/reconcile /x --target web --slug r", lambda *a: seen.append(a[3]) or
+                               {"answer": "accepts", "refused": []})
+    handoff.check_as_it_stands("/reconcile", project, {"script": "progress.py", "project": str(project)},
+                               "/reconcile /x --target <alvo> --slug r", lambda *a: seen.append(a[3]) or
+                               {"answer": "accepts", "refused": []})
+    assert seen == ["web", None], seen
+    for front in ("title: x", "target: web", "target: nowhere", "target: [a, b]"):
+        (base / "c.md").write_text(f"---\n{front}\n---\n", encoding="utf-8")
+        assert handoff.initiative_target(project, SLUG) is None, front
+
+
 def test_a_skill_whose_report_hands_no_door_prepares_a_report(project):
     prepared = prepare(project, "siegard-goal")
     assert prepared["kind"] == "report" and "decisions" not in prepared
