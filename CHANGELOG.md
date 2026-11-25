@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.141.0 — 2026-11-25
+
+A grant may hold the choice of route: `/siegard-grant --routes` lets the framework route a request that names none, `/analyse` or `/plan-work` over a new initiative, as a grant answers a stop's doors, through `handoff.py --prepare --route` and a budget counted apart (SPEC-011 R14, R15); `door.py --check analyse` makes the `/analyse` door one a grant can take; the commit check refuses a judged route under a grant without `routes`. (`b33c3dd`)
+
 ## 5.140.1 — 2026-11-25
 
 The session rules drop four clauses the skill listing and the skills already state — the state question, the adoption route row, a review's conformance pass — falling to 8,963 characters; "Six routes" reads "Five routes". (`fb65c07`)
