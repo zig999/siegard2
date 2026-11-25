@@ -272,6 +272,13 @@ states, a door whose work is already done, a reading paid twice. **Judged**, onl
 decides and the choice is one of cost or of reading the ask — by the first rung of SPEC-006's
 one ladder that separates the doors.
 
+Which route a request takes is a recommendation like any other door: derived where a fact decides
+it, judged where none does, and taken under the same arming. A grant the person armed may hold the
+choice of route as it holds the choice of door; without one, the route is the person's to name or
+to accept. The route a finding deserves stays the person's, as SPEC-006 R3 reserves it, save where
+a findings policy the person stated applies. A grant's choice of route never supplies the words an
+end-to-end route or a corrective increment requires of the person.
+
 Three bounds hold it, and giving up any of them is a proposal, never a change:
 
 - **A recommendation carries its reason and its reversal.** The door, why it, and the fact that
