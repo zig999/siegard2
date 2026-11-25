@@ -593,6 +593,51 @@ def unentered_recommendations(record: dict) -> list[str]:
     return lines
 
 
+def grant_covers(project: Path, slug: str | None) -> bool:
+    """Whether a grant stands in the project over the initiative `slug`: one naming no initiative
+    covers every one, one naming an initiative covers it alone. A grant that cannot be read
+    covers nothing."""
+    try:
+        import grant
+        held, _, _, ended = grant.standing(project)
+    except Exception:
+        return False
+    return ended is None and (not held.get("slug") or held["slug"] == slug)
+
+
+def answered_as_decision(skill: str, project: Path, slug: str | None) -> bool:
+    """Whether a recommending close of `skill` is handed as a decision the grant answers: the
+    skill's report hands doors and a grant covers the initiative."""
+    return (SKILLS / skill / "SKILL.md").is_file() and bool(next_doors(skill)) \
+        and grant_covers(project, slug)
+
+
+def recommending_report(record: dict, contract: dict) -> list[str]:
+    """The refusal of a report that recommends where a grant would answer the step: «Where a grant
+    covering the record's initiative stands, `--render` refuses kind `report` from a skill whose
+    report hands doors when its body recommends, so the step is handed as a decision the grant
+    answers» (SPEC-006 R11). A report naming no project, no skill, a skill handing no door, or an
+    initiative no grant covers is left as it is."""
+    source = record.get("state_from")
+    found = REPORT_SKILL.search(str(record.get("report") or ""))
+    if record.get("kind") != "report" or not isinstance(source, dict) \
+            or not isinstance(source.get("project"), str) or not found \
+            or decision_word_at(str(record.get("body") or ""), contract, ("recommendation",)) is None:
+        return []
+    project = Path(source["project"])
+    if not answered_as_decision(found.group(1), project, source.get("slug") or live_slug(project)):
+        return []
+    return [f"kind: a report of /{found.group(1)} that recommends, where a grant covers the "
+            f"initiative, is refused «so the step is handed as a decision the grant answers» "
+            f"(SPEC-006 R11) — keep "
+            f"this record's `report`, `state` and `state_from`, set kind `decision` and carry the "
+            f"`decisions` `handoff.py --prepare --skill {found.group(1)}` prints, the door you "
+            f"recommend as `recommended` (a step that is no door carries no `entry`); where the "
+            f"choice is a contradiction, two readings, a finding's worth or every door excluded, "
+            f"carry `settles` and its `settles_by` instead; or drop the recommendation from the "
+            f"body"]
+
+
 def unslugged_recommendations(record: dict) -> list[str]:
     """One line per decision whose recommended door went unchecked because it takes a slug and
     none was named: the grant answers only a door its check accepted, and a slug written in the
@@ -880,6 +925,7 @@ def render(record: object, contract: dict, base: Path, state_of=state_now
         problems.append(f"body: recommends without the fact that would change it — say it after "
                         f"{labels['reverses_if']!r}: «without all four, none is named» "
                         f"(SPEC-006 R2)")
+    problems.extend(recommending_report(record, contract))
     seen: dict[str, str] = {}
     for at, decision in enumerate(record.get("decisions", [])):
         chosen = decision.get("recommended")
@@ -1021,6 +1067,9 @@ def main_prepare(args: list[str], contract: dict) -> int:
     record = prepare(skill, root, slug, target, files, language, contract, ledger)
     print(json.dumps(record, indent=2, ensure_ascii=False))
     print(limits(contract, language), end="", file=sys.stderr)
+    if answered_as_decision(skill, root, slug or live_slug(root)):
+        print("limits: a grant covers this initiative: a close that recommends a next step is "
+              "kind `decision`, never `report`", file=sys.stderr)
     print(next_steps(record), end="", file=sys.stderr)
     return 0
 

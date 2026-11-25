@@ -891,6 +891,110 @@ def test_a_status_decision_under_a_grant_renders_with_the_grant_s_answer(project
         in done.stderr, done.stderr
 
 
+def report_of(project: Path, skill: str, body: str) -> dict:
+    """The skeleton `--prepare` printed for `skill`, rewritten by hand as kind `report` with
+    `body`, its full report written."""
+    prepared = prepare(project, skill, "--slug", SLUG)
+    prepared.pop("decisions", None)
+    prepared.update(kind="report", body=body)
+    Path(prepared["report"]).write_text("full\n", encoding="utf-8")
+    return prepared
+
+
+SUGGESTING = ("Both tasks are delivered and the suite passed. I suggest reviewing the delivery "
+              "next. It would change if you want the stale links reread first.")
+
+
+def test_a_report_recommending_a_next_step_under_a_standing_grant_is_refused(project):
+    """«Where a grant covering the record's initiative stands, `--render` refuses kind `report`
+    from a skill whose report hands doors when its body recommends, so the step is handed as a
+    decision the grant answers» (SPEC-006 R11)."""
+    arm_grant(project)
+    done = run("--render", "-", stdin=json.dumps(report_of(project, "implement-task", SUGGESTING)))
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "kind: " in done.stdout and "SPEC-006 R11" in done.stdout, done.stdout
+    assert "--prepare" in done.stdout and "settles_by" in done.stdout, done.stdout
+
+
+def test_the_step_handed_as_a_choice_left_to_the_person_under_a_grant_renders_with_its_stop(project):
+    """The refused report's step re-rendered as the person's own choice — a finding's worth —
+    renders, and the grant stops on it: the refusal never makes the framework decide one of the
+    three questions."""
+    arm_grant(project)
+    prepared = prepare(project, "implement-task", "--slug", SLUG)
+    one = prepared["decisions"][0]
+    one.update(ask="Does the finding on the price list deserve a correction?",
+               if_none="The finding stays recorded.", relation="one-of",
+               settles="Correcting assumes the list is wrong; leaving it assumes the node allows it.",
+               settles_by="finding-worth")
+    for word, door in zip("ab", one["others"]):
+        door.update(reply_word=word, what_it_does="Take this step")
+    Path(prepared["report"]).write_text("full\n", encoding="utf-8")
+    done = run("--render", "-", stdin=json.dumps(prepared))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "decision 1: stop: the choice is the person's" in done.stderr, done.stderr
+
+
+def test_a_status_report_recommending_nothing_renders_under_a_standing_grant(project):
+    arm_grant(project)
+    body = "Every initiative is delivered and reviewed. Nothing waits on you."
+    done = run("--render", "-", stdin=json.dumps(report_of(project, "siegard-status", body)))
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_prepare_says_so_where_a_grant_covers_the_initiative(project):
+    done = run("--prepare", "--skill", "implement-task", "--project", str(project), "--slug", SLUG)
+    assert "never `report`" not in done.stderr, done.stderr
+    arm_grant(project)
+    done = run("--prepare", "--skill", "implement-task", "--project", str(project), "--slug", SLUG)
+    assert done.returncode == 0, done.stderr
+    assert "limits: a grant covers this initiative" in done.stderr, done.stderr
+    done = run("--prepare", "--skill", "siegard-goal", "--project", str(project))
+    assert "limits: a grant covers this initiative" not in done.stderr, done.stderr
+
+
+def test_a_report_recommending_over_an_initiative_the_grant_does_not_name_renders(project):
+    arm_grant(project)
+    import grant
+    path = grant.grant_path(project)
+    held = json.loads(path.read_text(encoding="utf-8"))
+    held["slug"] = "another-initiative"
+    path.write_text(json.dumps(held), encoding="utf-8")
+    assert grant.standing(project)[3] is None
+    assert handoff.grant_covers(project, "another-initiative")
+    done = run("--render", "-", stdin=json.dumps(report_of(project, "implement-task", SUGGESTING)))
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_a_report_recommending_with_no_state_source_renders_under_a_grant(project):
+    arm_grant(project)
+    prepared = report_of(project, "implement-task", SUGGESTING)
+    prepared.pop("state_from")
+    done = run("--render", "-", stdin=json.dumps(prepared))
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_a_report_recommending_a_next_step_with_no_grant_renders(project):
+    done = run("--render", "-", stdin=json.dumps(report_of(project, "implement-task", SUGGESTING)))
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_a_report_recommending_nothing_under_a_standing_grant_renders(project):
+    arm_grant(project)
+    body = "Both tasks are delivered and the suite passed. Nothing waits on you."
+    done = run("--render", "-", stdin=json.dumps(report_of(project, "plan-work", body)))
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_a_report_of_a_skill_handing_no_door_renders_under_a_standing_grant(project):
+    arm_grant(project)
+    prepared = prepare(project, "siegard-goal")
+    prepared["body"] = SUGGESTING
+    Path(prepared["report"]).write_text("full\n", encoding="utf-8")
+    done = run("--render", "-", stdin=json.dumps(prepared))
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
 def arm(home: Path) -> dict:
     import goal
     record = {"contract": goal.ARMED_CONTRACT, "project_root": str(home), "slug": SLUG,

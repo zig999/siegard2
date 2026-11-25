@@ -489,6 +489,11 @@ O grant também toma as derived da lista `--doors`, em qualquer sessão que rece
 momento de cada stop**, então precisa estar armado antes de o goal chegar nele; armá-lo antes do
 goal é a ordem mais simples.
 
+Com um grant armado que cobre a iniciativa, o relatório final de um `/analyse`, `/implement-task`,
+`/plan-work`, `/reconcile` ou `/survey` que sugere o próximo passo sai como decisão, e o grant a
+responde como numa parada: o `--render` recusa esse relatório como `report`. Escolha que só você
+faz continua voltando para você.
+
 ---
 
 ### 4.10 `/reconcile` — "alguém mexeu no código por fora"
