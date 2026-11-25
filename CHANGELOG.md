@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.142.0 — 2026-11-25
+
+Under an armed grant, a `/siegard-status` that recommends a next step is rendered as a decision the grant answers as at a stop — taken where its check decides, judged by the blind door decider within the budget otherwise; without a grant it stays a report. The session rules send status and next-step answers to `/siegard-status` (SPEC-006 R11). (`9feed99`)
+
 ## 5.141.1 — 2026-11-25
 
 A routing record never refuses `/plan-work` for want of a target it does not name: in a project declaring several targets the door reads not checked rather than refused, so `/analyse` is no longer taken as derived on a refusal the record produced (SPEC-006 R9, SPEC-011 R14); the `carry:` line says `/analyse` reads the recorded request; the session rules name `/analyse` and `/plan-work` as the routes a grant takes. (`454510c`)
