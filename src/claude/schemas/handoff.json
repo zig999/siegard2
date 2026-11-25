@@ -211,6 +211,11 @@
           ],
           "description": "Why the choice is the person's own, required with `settles` and never without it: `contradiction` — the scope and the specification state opposite facts; `two-readings` — one piece of evidence reads two ways; `finding-worth` — whether a finding matters or what route it deserves; `all-excluded` — every door the handoff hands is excluded. A choice of cost, of order or of reading the ask is none of the four: its door is recommended as a judgment."
         },
+        "finding": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The review record that holds the finding a `finding-worth` choice is over — its frontmatter carrying `findings`, or a reconciliation's `notes` owed a route — as a path absolute or relative to the project root `state_from` names. `--render` refuses `finding-worth` without it, or naming a file that is no record holding a finding: evidence that reads two ways is `two-readings`, and a choice of cost, of order or of reading the ask is recommended."
+        },
         "relation": {
           "enum": [
             "one-of",

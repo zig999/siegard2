@@ -783,7 +783,9 @@ def block_of(number: int | None, decision: dict, labels: dict) -> tuple[str, str
     lines = [f"{number}. {decision['ask']}" if number else decision["ask"]]
     chosen = decision.get("recommended")
     if not chosen:
-        lines.append(f"   **{labels['own']}**: {sentence(decision['settles'])}")
+        lines.append(f"   **{labels['own']}**: {sentence(decision['settles'])}"
+                     + (f" (`{decision['finding']}`)" if decision.get("finding")
+                        and decision.get("settles_by") == "finding-worth" else ""))
     doors = doors_of(decision)
     relation = decision.get("relation") if len(doors) >= 2 else None
     if relation:
@@ -890,6 +892,44 @@ def unclassed_choices(record: object, contract: dict) -> list[str]:
     return problems
 
 
+def unfound_findings(record: object, base: Path) -> list[str]:
+    """A `finding-worth` choice whose `finding` names no record holding a finding: «A choice left
+    to the person as `finding-worth` names in `finding` the review record that holds the finding,
+    and `--render` refuses it where that record holds no finding» (SPEC-006 R3). A relative path
+    is read from the project root `state_from` names, else from where `--render` runs; a record
+    holds a finding where its frontmatter carries `findings`, or `notes` owed a route."""
+    decisions = record.get("decisions") if isinstance(record, dict) else None
+    source = record.get("state_from") if isinstance(record, dict) else None
+    root = Path(source["project"]) if isinstance(source, dict) \
+        and isinstance(source.get("project"), str) and Path(source["project"]).is_dir() else base
+    problems = []
+    for at, decision in enumerate(decisions if isinstance(decisions, list) else []):
+        if not isinstance(decision, dict) or decision.get("settles_by") != "finding-worth":
+            continue
+        named = decision.get("finding")
+        path = Path(named) if isinstance(named, str) and named else None
+        path = path if path is None or path.is_absolute() else root / path
+        if path is not None and path.is_file():
+            try:
+                import goal
+                front = goal.front_of(path)
+            except Exception:
+                front = {}
+            if front.get("findings") or front.get("notes"):
+                continue
+            why = f"{path} holds no finding in its frontmatter"
+        else:
+            why = "none is named" if path is None else f"{path} is no file"
+        problems.append(f"decisions/{at}/finding: `finding-worth` names in `finding` the record "
+                        f"that holds the finding — a review record, absolute or from the project "
+                        f"root — and {why}: where one piece of evidence reads two ways, or the "
+                        f"scope and the specification state opposite facts, carry `two-readings` "
+                        f"or `contradiction`; where the choice is one of cost, of order or of "
+                        f"reading the ask, drop `settles` and recommend its door as a judgment, "
+                        f"with `why` saying it is one")
+    return problems
+
+
 def render(record: object, contract: dict, base: Path, state_of=state_now
            ) -> tuple[str | None, list[str]]:
     """The message the record renders to, or None and the problems that refuse it. `state_of`
@@ -903,6 +943,8 @@ def render(record: object, contract: dict, base: Path, state_of=state_now
                 or (f"{where}/settles_by" in said and "settles" in error.message):
             continue
         problems.append(f"{where}: {error.message}")
+    if not problems:
+        problems.extend(unfound_findings(record, base))
     if problems:
         return None, problems
     ceilings = contract["x-ceilings"]
@@ -1008,7 +1050,9 @@ def limits(contract: dict, language: str = "en") -> str:
             f"{ceilings['message']}\n"
             f"limits: a decision carries `recommended` (door, why, reverses_if, reply_word) or "
             f"`settles` with `settles_by`: contradiction, two-readings, finding-worth or "
-            f"all-excluded, and a choice of cost, order or reading the ask is recommended; two "
+            f"all-excluded, `finding-worth` naming in `finding` the review record holding the "
+            f"finding, absolute or from the project root, and a choice of cost, order or reading "
+            f"the ask is recommended; two "
             f"doors or more carry `relation`: one-of, in-order or independent\n"
             f"limits: a recommended door carries the `entry` its skeleton door holds, which "
             f"`--render` checks again as the tree stands\n"

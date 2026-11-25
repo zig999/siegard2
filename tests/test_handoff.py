@@ -21,6 +21,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 import handoff
 
@@ -306,11 +307,71 @@ def test_a_choice_left_to_the_person_without_its_class_is_refused_and_told_to_re
         assert "recommend its door as a judgment" in said[0]
 
 
-@pytest.mark.parametrize("value", ["contradiction", "two-readings", "finding-worth",
-                                   "all-excluded"])
+@pytest.mark.parametrize("value", ["contradiction", "two-readings", "all-excluded"])
 def test_a_choice_left_to_the_person_under_one_of_the_four_renders(value):
     message, problems = rendered(own_choice(value))
     assert message is not None, problems
+
+
+def review_record(at: Path, findings: list) -> Path:
+    path = at / "review" / "first.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("---\n" + yaml.safe_dump({"target": "app", "title": "Review", "findings": findings})
+                    + "---\n\nBody.\n", encoding="utf-8")
+    return path
+
+
+def test_a_finding_s_worth_naming_no_finding_is_refused_and_told_to_recommend():
+    """«A choice left to the person as `finding-worth` names in `finding` the review record that
+    holds the finding, and `--render` refuses it where that record holds no finding» (SPEC-006 R3)."""
+    message, problems = rendered(own_choice("finding-worth"))
+    assert message is None
+    said = [p for p in problems if p.startswith("decisions/0/finding:")]
+    assert len(said) == 1, problems
+    assert "review record" in said[0] and "recommend" in said[0]
+    assert said[0].index("two-readings") < said[0].index("recommend its door"), said[0]
+
+
+def test_a_finding_s_worth_naming_a_review_record_with_findings_renders(tmp_path):
+    choice = own_choice("finding-worth")
+    named = str(review_record(tmp_path, [{"where": "a", "kind": "unstated"}]))
+    choice["decisions"][0]["finding"] = named
+    message, problems = rendered(choice)
+    assert message is not None, problems
+    assert f"(`{named}`)" in message, message
+
+
+def test_a_finding_s_worth_naming_a_record_from_the_project_root_renders(tmp_path):
+    review_record(tmp_path / "deliveries" / "s", [{"where": "a", "kind": "unstated"}])
+    choice = own_choice("finding-worth")
+    choice["state_from"] = {"script": "progress.py", "project": str(tmp_path)}
+    choice["decisions"][0]["finding"] = "deliveries/s/review/first.md"
+    message, problems = rendered(choice, state_of=lambda source, language, contract: choice["state"])
+    assert message is not None, problems
+
+
+def test_a_finding_s_worth_naming_a_file_with_no_frontmatter_is_refused(tmp_path):
+    plain = tmp_path / "plain.md"
+    plain.write_text("findings: one\n", encoding="utf-8")
+    choice = own_choice("finding-worth")
+    choice["decisions"][0]["finding"] = str(plain)
+    message, problems = rendered(choice)
+    assert message is None and any("holds no finding" in p for p in problems), problems
+
+
+def test_a_finding_named_beside_another_class_is_not_shown(tmp_path):
+    choice = own_choice("two-readings")
+    choice["decisions"][0]["finding"] = str(tmp_path / "unchecked.md")
+    message, problems = rendered(choice)
+    assert message is not None and "unchecked.md" not in message, problems
+
+
+def test_a_finding_s_worth_naming_a_record_without_findings_or_no_file_is_refused(tmp_path):
+    for named in (str(review_record(tmp_path, [])), str(tmp_path / "review" / "absent.md")):
+        choice = own_choice("finding-worth")
+        choice["decisions"][0]["finding"] = named
+        message, problems = rendered(choice)
+        assert message is None and any(p.startswith("decisions/0/finding:") for p in problems), problems
 
 
 def test_a_recommendation_never_carries_the_class_of_a_choice_left_to_the_person():
@@ -926,7 +987,8 @@ def test_the_step_handed_as_a_choice_left_to_the_person_under_a_grant_renders_wi
     one.update(ask="Does the finding on the price list deserve a correction?",
                if_none="The finding stays recorded.", relation="one-of",
                settles="Correcting assumes the list is wrong; leaving it assumes the node allows it.",
-               settles_by="finding-worth")
+               settles_by="finding-worth",
+               finding=str(review_record(project / "deliveries" / SLUG, [{"where": "a", "kind": "unstated"}])))
     for word, door in zip("ab", one["others"]):
         door.update(reply_word=word, what_it_does="Take this step")
     Path(prepared["report"]).write_text("full\n", encoding="utf-8")

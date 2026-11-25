@@ -89,7 +89,7 @@ review, a drift count — as one bullet list; that part is decided in the report
 ### What a handoff recommends
 
 - **R2** — A recommendation names the door, the criterion, the deciding fact and the reversing fact; without all four, none is named. A derived recommendation's criterion is one of four and no other: `precondition unmet`, the door's own entry point refuses its inputs as the tree stands; `rule violated`, the door breaks a rule this framework states; `already done`, the door's work is already in the tree; `reading paid twice`, the same file read by two judgments, where of two readings over the same files the one owed once is named over the one paid twice — two invocations over different files are each paid once, and their order is a decision about cost. In the handoff the four are carried as sentences in the session's plain words — the door, why it, what on disk says so, what would change it — and the criterion's name is written as it reads here only in the log line R5 states; a label, a field name or the criterion's English name in the prose is the record showing through. A derived recommendation's deciding fact and reversing fact are each a fact on disk, named by path or quoted. A door excluded on one of the four grounds is said to be excluded, beside it and with its fact, and where one door remains it is the door recommended: a handoff that hands an excluded door as though it were open has failed to apply R2. Where no ground excludes a door and the choice left is one of cost or of reading the ask, the recommendation is judged: its criterion is the first rung of this ladder that separates the doors, and no other — `keeps the route`, the door holds to this framework's route, a step done by hand that this framework itself prescribes counting as the route; `serves the stated goal`, the door reaches a goal the ask or its intake states, quoted verbatim, and without the quotation this rung does not apply; `can be undone`, the door can be reversed where the other cannot; `costs less`, by a cost a command printed. Its deciding fact is what the rung read — the step this framework prescribes, the quotation, what reverses the door, or the printed figure — its reversing fact what would move the choice to another door, and the handoff says the recommendation is a judgment. One ladder serves every handoff; a skill applies it and never states another.
-- **R3** — No recommendation is made over a scope and a specification that contradict, over two readings of one piece of evidence, or over whether a finding matters or what route it deserves. Each is the person's, and a handoff hands its doors and names none. The record names which of the three leaves the choice to the person, in `settles_by` — `contradiction`, `two-readings` or `finding-worth`, or `all-excluded` where R6 holds — and `bin/handoff.py --render` refuses one that names none of the four: a choice of cost, of order or of reading the ask is none of them, and its door is recommended as a judgment. A finding's worth the person decided in advance, as the findings policy a goal condition states, is applied by its class and never judged. It says so in the person's words: that the choice is the person's own decision, what each door assumes is true, and what on disk or in the person's own answer would settle it — never a bare absence of a recommendation, which reads as an answer withheld.
+- **R3** — No recommendation is made over a scope and a specification that contradict, over two readings of one piece of evidence, or over whether a finding matters or what route it deserves. Each is the person's, and a handoff hands its doors and names none. The record names which of the three leaves the choice to the person, in `settles_by` — `contradiction`, `two-readings` or `finding-worth`, or `all-excluded` where R6 holds — and `bin/handoff.py --render` refuses one that names none of the four: a choice of cost, of order or of reading the ask is none of them, and its door is recommended as a judgment. A choice left to the person as `finding-worth` names in `finding` the review record that holds the finding, and `--render` refuses it where that record holds no finding: such a choice is another of the four, or a choice its door is recommended over. The record named holds a finding where its frontmatter carries `findings`, or a reconciliation's `notes` owed a route; a relative path is read from the project root the record's `state_from` names. A finding's worth the person decided in advance, as the findings policy a goal condition states, is applied by its class and never judged. It says so in the person's words: that the choice is the person's own decision, what each door assumes is true, and what on disk or in the person's own answer would settle it — never a bare absence of a recommendation, which reads as an answer withheld.
 
 ### What stops
 
@@ -227,7 +227,10 @@ review, a drift count — as one bullet list; that part is decided in the report
     and a door naming exactly one door of the route in its words takes it — `tests/test_handoff.py`.
 12. A test holds `bin/handoff.py --render` to R3's class: a choice left to the person with no
     `settles_by` or with a value none of the four is refused once, naming each value and telling
-    the session to recommend its door as a judgment; each of the four renders; a recommendation
+    the session to recommend its door as a judgment; each of the four renders, `finding-worth` only
+    naming in `finding` a review record that holds a finding, refused naming none, a file that is
+    not one or a record with no finding, its refusal naming the other classes before the
+    recommendation, and the record it names shown in the rendered block; a recommendation
     carrying `settles_by` is refused — `tests/test_handoff.py`.
 
 ## Readings
@@ -431,3 +434,17 @@ review, a drift count — as one bullet list; that part is decided in the report
   handed the decision. Measured by `temp/goal-melhoria/20261124-2334/c1/measure.py`. Reversal: a
   report refused for a recommendation it did not make, seen in a consumer, or a reserved question
   a grant took after the refusal.
+- 2026-11-25 — grounds for R3's `finding`. Read from the decision records the sales projects kept
+  since 2026-11-20: 10 decisions left to the person as `finding-worth`, none over a finding a
+  review recorded — configurator 11-24 18:40 "when to resume" after a usage limit, 19:36 "nothing
+  needs you now"; inventory 16:51 "review now or wait", 19:26 "a full re-delivery or reread the
+  files first" (the person pasted the rendered choices back as "these decisions are options");
+  productorder 11-22 21:51 "split into several tasks"; salese2e 01:04 and 01:06 the plan's order,
+  10:45 a stopped delivery's files; and productorder 11-23 22:04 and 22:16, a conformance kit
+  against the specification, a reserved question of another class. `--render` accepted all ten
+  (`temp/goal-melhoria/20261124-2334/c3/measure.py`); the schema and `--prepare` already said a
+  choice of cost, of order or of reading the ask is none of the four. Refusing `finding-worth`
+  where the initiative holds no review with findings was weighed and refused: it would have held 5
+  of the 10, the other five initiatives holding reviews their choices were not about. Reversal:
+  `finding-worth` choices naming a review the choice is not about, in most of the consumer records
+  after the release.
