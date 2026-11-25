@@ -344,7 +344,8 @@ def state_source(project: Path, slug: str | None, ledger: str | None = None) -> 
     material ledger whose open lines lead it, where the skill names one."""
     held = {"ledger": str(Path(ledger).resolve())} if ledger else {}
     if armed_goal(project) is not None:
-        return {"script": "goal.py", "project": str(project), **held}
+        return {"script": "goal.py", "project": str(project), **({"slug": slug} if slug else {}),
+                **held}
     return {"script": "progress.py", "project": str(project), **({"slug": slug} if slug else {}),
             **held}
 
@@ -487,11 +488,15 @@ def live_slug(project: Path) -> str | None:
 def check_as_it_stands(entry: str, project: Path, source: dict, invocation: str,
                        check_of=check_door, infer: bool = True) -> dict:
     """The check of a door named by its entry, run now: over the slug the record's `state_from`
-    names, else the one its invocation names, else the one live initiative, which the check
-    marks `inferred_slug` so that what read it is told it was not named."""
+    names, else the one its invocation names, else the armed goal's where the state is the goal's,
+    else the one live initiative, which the check marks `inferred_slug` so that what read it is
+    told it was not named. A routing record's door takes no initiative it does not name."""
     import door
     name = entry.removeprefix("/")
-    slug = source.get("slug") or next(iter(INVOCATION_SLUG.findall(invocation)), None)
+    invoked = [] if INVOCATION_ENTRY.match(invocation) and \
+        INVOCATION_ENTRY.match(invocation).group(1) == "reconcile" else INVOCATION_SLUG.findall(invocation)
+    slug = source.get("slug") or next(iter(invoked), None) \
+        or (goal_initiative(project, source) if infer and name in door.NAMED_SLUG else None)
     inferred = None
     if slug is None and name in door.NAMED_SLUG and infer:
         slug = inferred = live_slug(project)
@@ -704,10 +709,28 @@ def record_initiative(project: Path, source: dict | None) -> str | None:
     source = source if isinstance(source, dict) else {}
     if isinstance(source.get("slug"), str):
         return source["slug"]
-    held = armed_goal(project) if source.get("script") == "goal.py" else None
-    if held is not None and isinstance(held.get("slug"), str):
-        return held["slug"]
-    return live_slug(project)
+    return goal_initiative(project, source) or live_slug(project)
+
+
+def slug_doors() -> tuple[str, ...]:
+    """The doors whose entry point takes a slug, as `door.py` names them."""
+    import door
+    return tuple(door.NAMED_SLUG)
+
+
+def goal_initiative(project: Path, source: dict | None) -> str | None:
+    """The armed goal's initiative where the record's state is the goal's, else None: the one the
+    person named when arming it."""
+    if not isinstance(source, dict) or source.get("script") != "goal.py":
+        return None
+    held = armed_goal(project)
+    if held is None or not isinstance(held.get("slug"), str):
+        return None
+    try:
+        same = Path(held["project_root"]).resolve() == project.resolve()
+    except (KeyError, TypeError, OSError):
+        same = False
+    return held["slug"] if same else None
 
 
 def prepare(skill: str, project: Path, slug: str | None, target: str | None, files: list[str],
@@ -722,7 +745,8 @@ def prepare(skill: str, project: Path, slug: str | None, target: str | None, fil
     if open_count(source.get("ledger")):
         names = [skill] + names
     doors = [{"reply_word": "", "what_it_does": "", "entry": f"/{name}",
-              "check": check_door(name, project, slug, target, files)}
+              "check": check_door(name, project, slug or (goal_initiative(project, source)
+                                  if name in slug_doors() else None), target, files)}
              for name in names]
     record: dict = {"contract_version": contract["properties"]["contract_version"]["const"],
                     "kind": "decision" if doors else "report", "language": language,

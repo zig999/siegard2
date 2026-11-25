@@ -57,7 +57,7 @@
         "slug": {
           "type": "string",
           "minLength": 1,
-          "description": "`progress.py` only: the initiative whose segment is the state."
+          "description": "The initiative the invocation named: for `progress.py` the one whose segment is the state; for `goal.py` the record's initiative, read before the armed goal's."
         },
         "ledger": {
           "type": "string",

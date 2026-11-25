@@ -419,6 +419,89 @@ def test_with_two_live_initiatives_the_unchecked_door_is_noted_under_a_grant(pro
                                "checked") for line in lines)
 
 
+def test_under_a_goal_a_door_naming_no_slug_is_checked_over_the_goal_s_initiative(project):
+    """«The record's initiative is the one its `state_from` names, else the armed goal's where the
+    state is the goal's, else the one live initiative» (SPEC-006 R11): with two initiatives live,
+    a door the record names no slug for is checked over the goal's, as named, never left unchecked
+    and never marked inferred."""
+    make_second_initiative(project)
+    arm(project)
+    prepared = prepare(project, "analyse")
+    assert prepared["state_from"]["script"] == "goal.py"
+    one = prepared["decisions"][0]
+    one.update(ask="Plan the correction next?", if_none="The code stays as it is.", relation="one-of")
+    one["recommended"] = {"reply_word": "a", "door": "Plan it", "entry": "/plan-work",
+                          "why": "The specification changed", "reverses_if": "you want to read it first"}
+    one["others"] = [{"reply_word": "b", "what_it_does": "Leave it", "entry": "/reconcile",
+                      "check": {"answer": "not checked", "why": "no script decides it"}}]
+    check = handoff.completed(prepared)["decisions"][0]["recommended"]["check"]
+    assert check["answer"] != "not checked", check
+    assert "inferred_slug" not in check
+
+
+def test_a_routing_record_s_door_is_never_checked_over_the_goal_s_initiative(project):
+    make_second_initiative(project)
+    arm(project)
+    calls = []
+    def spy(name, project_, slug, target, files):
+        calls.append(slug)
+        return {"answer": "accepts", "refused": []}
+    source = {"script": "goal.py", "project": str(project)}
+    handoff.check_as_it_stands("/plan-work", project, source, "", spy, infer=False)
+    handoff.check_as_it_stands("/plan-work", project, source, "", spy, infer=True)
+    assert calls == [None, SLUG], calls
+
+
+def test_under_a_goal_on_a_project_of_two_targets_the_door_reads_the_goal_s_target(project):
+    two_targets(project)
+    make_second_initiative(project)
+    arm(project)
+    source = {"script": "goal.py", "project": str(project)}
+    check = handoff.check_as_it_stands("/deliver-scope", project, source, "")
+    assert check["answer"] != "not checked", check
+    assert not any("target" in fact for fact in check.get("refused", [])), check
+
+
+def test_an_initiative_the_invocation_named_under_a_goal_wins_over_the_goal_s(project):
+    """«The record's initiative is the one its `state_from` names» first (SPEC-006 R11): a skill
+    prepared with `--slug` under a goal on another initiative keeps the one it was named."""
+    make_second_initiative(project)
+    arm(project)
+    prepared = prepare(project, "plan-work", "--slug", "another-initiative")
+    assert prepared["state_from"] == {"script": "goal.py", "project": str(project), "slug": "another-initiative"}
+    assert handoff.record_initiative(project, prepared["state_from"]) == "another-initiative"
+    calls = []
+    handoff.check_as_it_stands("/plan-work", project, prepared["state_from"], "",
+                               lambda name, p, slug, t, f: calls.append(slug) or
+                               {"answer": "accepts", "refused": []})
+    assert calls == ["another-initiative"]
+
+
+def test_a_goal_of_another_project_names_no_initiative_here(project, tmp_path):
+    arm(project)
+    import goal
+    path = goal.armed_path(project)
+    held = json.loads(path.read_text(encoding="utf-8"))
+    held["project_root"] = str(tmp_path / "elsewhere")
+    path.write_text(json.dumps(held), encoding="utf-8")
+    assert handoff.goal_initiative(project, {"script": "goal.py", "project": str(project)}) is None
+
+
+def test_a_reconcile_invocation_s_slug_is_no_initiative_for_the_check(project):
+    calls = []
+    handoff.check_as_it_stands("/plan-work", project, {"script": "progress.py", "project": str(project)},
+                               "/reconcile /x --target app --slug r1",
+                               lambda name, p, slug, t, f: calls.append(slug) or
+                               {"answer": "accepts", "refused": []})
+    assert calls and calls[0] != "r1", calls
+
+
+def test_under_a_goal_the_skeleton_checks_its_doors_over_the_goal_s_initiative(project):
+    make_second_initiative(project)
+    arm(project)
+    assert doors_of(prepare(project, "analyse"))["/plan-work"]["answer"] != "not checked"
+
+
 def test_a_state_over_its_ceiling_is_refused():
     problems = refusal(lambda d: d.update(state="x" * (CONTRACT["x-ceilings"]["state"] + 1)))
     assert any(p.startswith("state:") and "over the ceiling" in p for p in problems)
@@ -1093,7 +1176,7 @@ def test_under_an_armed_goal_the_state_is_the_goal_s_first_line(project):
     prepared = prepare(project, "implement-task", "--slug", SLUG)
     fields = goal.resolve(project, "app")
     first, _ = goal.state(fields, SLUG, armed["since"], armed["version"], [], [])
-    assert prepared["state_from"] == {"script": "goal.py", "project": str(project)}
+    assert prepared["state_from"] == {"script": "goal.py", "project": str(project), "slug": SLUG}
     assert prepared["state"] == handoff.cut(first, CONTRACT)
     assert prepared["state"].startswith(("state A", "state B", "not yet"))
 
@@ -1689,8 +1772,9 @@ def test_a_status_over_an_initiative_the_grant_does_not_name_prepares_a_report(p
 
 def test_prepare_and_render_read_one_initiative_under_a_goal(project):
     """`--prepare` and `--render` read the record's initiative from the same `state_from`: under a
-    goal on the initiative the grant covers, a skeleton prepared naming another initiative still
-    hands its doors, and the grant answers the other initiative's invocation with its stop."""
+    goal on the initiative the grant covers, a skeleton prepared naming another initiative keeps the
+    one it was named, so neither the skeleton's line nor the grant treats it as covered, and the
+    grant answers its invocation with a stop."""
     arm_grant(project)
     import grant
     held = json.loads(grant.grant_path(project).read_text(encoding="utf-8"))
@@ -1700,9 +1784,8 @@ def test_prepare_and_render_read_one_initiative_under_a_goal(project):
     done = run("--prepare", "--skill", "plan-work", "--project", str(project), "--slug", "elsewhere")
     assert done.returncode == 0, done.stderr
     prepared = json.loads(done.stdout)
-    assert prepared["state_from"] == {"script": "goal.py", "project": str(project)}
-    assert prepared["kind"] == "decision"
-    assert "limits: a grant covers this initiative" in done.stderr, done.stderr
+    assert prepared["state_from"] == {"script": "goal.py", "project": str(project), "slug": "elsewhere"}
+    assert "limits: a grant covers this initiative" not in done.stderr, done.stderr
     one = prepared["decisions"][0]
     one.update(ask="Deliver the next task?", if_none="Nothing runs.",
                invocation="/implement-task /x --target app --slug elsewhere")
