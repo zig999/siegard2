@@ -1,0 +1,22 @@
+{
+ "name": "routing-fact-routes",
+ "kind": "scenario",
+ "what": "The same request under a grant holding `routes`: the request is recorded, a routing record is rendered, and the grant's answer is carried — a route taken is one `decided:` line in the delivery root's own log, or a judged choice handed on, never the person's to name.",
+ "situation": "At this session's start the plugin also placed these lines in its context:\n> Siegard: the grant armed in this project holds `commits`: run `grant.py --commit <project-root> --file <path>...` before a commit the grant covers; a first line `refuses` stops it unless the person's own words in this session name that commit.\n> Siegard: the grant armed in this project holds `routes`: a request that names no route is routed by `handoff.py --prepare --route` and rendered, and the grant's answer is carried as its `carry:` line says.\n\nNothing ran in this session before this message, nothing is pending in the tree, and no initiative is live but `lending`.",
+ "message": "quero que um empréstimo em atraso há mais de 90 dias seja bloqueado para renovação — hoje ele pode ser renovado",
+ "grant": {
+  "flags": [
+   "--routes",
+   "--budget",
+   "2",
+   "--commits"
+  ],
+  "words": "--routes --budget 2 --commits\n"
+ },
+ "checks": [
+  "routing_rendered",
+  "ask_recorded:empréstimo em atraso",
+  "no_branch",
+  "not_pushed"
+ ]
+}

@@ -1,0 +1,42 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an9/r04",
+    "slug": "overdue-loan-renewal-blocked"
+  },
+  "decisions": [
+    {
+      "ask": "por qual rota o pedido de bloquear a renovação com mais de 90 dias de atraso segue",
+      "recommended": {
+        "door": "Registrar primeiro na especificação a regra nova, antes de planejar ou codar",
+        "why": "A especificação não tem regra sobre esse limite, e mudança de fato do negócio passa pela análise antes do plano.",
+        "reverses_if": "a especificação já trouxesse a regra dos 90 dias, ou você dissesse que é só ajuste de tela",
+        "reply_word": "analisar",
+        "entry": "/analyse",
+        "check": {
+          "answer": "accepts",
+          "refused": []
+        }
+      },
+      "others": [
+        {
+          "reply_word": "planejar",
+          "what_it_does": "Planeja direto, sem registrar antes a regra dos 90 dias na especificação.",
+          "entry": "/plan-work",
+          "check": {
+            "answer": "accepts",
+            "refused": []
+          }
+        }
+      ],
+      "if_none": "Nada muda: a renovação continua permitida para empréstimo em atraso.",
+      "relation": "one-of",
+      "invocation": "/analyse quero que um empréstimo em atraso há mais de 90 dias seja bloqueado para renovação — hoje ele pode ser renovado"
+    }
+  ],
+  "report": "/tmp/an9/r04/.git/siegard/handoff/20261125T003943Z-route.md"
+}

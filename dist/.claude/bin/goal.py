@@ -705,6 +705,11 @@ GRANT_COMMITS_LINE = ("Siegard: the grant armed in this project holds `commits`:
                       "that commit.")
 
 
+GRANT_ROUTES_LINE = ("Siegard: the grant armed in this project holds `routes`: a request that names "
+                     "no route is routed by `handoff.py --prepare --route` and rendered, and the "
+                     "grant's answer is carried as its `carry:` line says.")
+
+
 def armed_path(home: Path) -> Path:
     """Where a project's armed goal is recorded: inside the repository's git directory, shared by
     every worktree of it and never in the tree — the tree is what the state reads, and the

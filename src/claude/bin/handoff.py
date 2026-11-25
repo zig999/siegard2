@@ -87,6 +87,11 @@ Declared dependencies: jsonschema; PyYAML for `--prepare` and for a `state_from`
 (this script imports goal.py, progress.py and door.py, its siblings, only there).
 
 Usage:  handoff.py --prepare --skill <name> --project <root> [--slug <slug>] [--target <key>] [--file <path>]... [--ledger <ledger.md>] [--language <en|pt-BR>]
+        handoff.py --prepare --route --project <root> --slug <new-slug> --ask <ask.md> [--language <en|pt-BR>]
+                                             the routing record's skeleton for a request that
+                                             names no route: doors /analyse and /plan-work over a
+                                             slug no initiative holds, each checked; the ask is
+                                             the request recorded by ask.py --record
                                              print the record's skeleton: the state a script
                                              printed, the skill's next doors each checked, the
                                              report's path. --file is the file set a door that
@@ -135,6 +140,8 @@ INVOCATION_SLUG = re.compile(r"--slug[ \t]+(\S+)")
 UNNAMED_SLUG = "takes a slug, and none was named"
 NAMED_ENTRY = re.compile(r"(?<![\w/])/(?:siegard:)?([a-z][\w-]*)(?![\w/-])")
 REPORT_SKILL = re.compile(r"Z-([a-z][\w-]*)\.md$")
+ROUTE = "route"
+ROUTE_DOORS = ("analyse", "plan-work")
 HANDOFF_DIR = ("siegard", "handoff")
 GIT_TIMEOUT_SECONDS = 5
 
@@ -477,7 +484,7 @@ def live_slug(project: Path) -> str | None:
 
 
 def check_as_it_stands(entry: str, project: Path, source: dict, invocation: str,
-                       check_of=check_door) -> dict:
+                       check_of=check_door, infer: bool = True) -> dict:
     """The check of a door named by its entry, run now: over the slug the record's `state_from`
     names, else the one its invocation names, else the one live initiative, which the check
     marks `inferred_slug` so that what read it is told it was not named."""
@@ -485,7 +492,7 @@ def check_as_it_stands(entry: str, project: Path, source: dict, invocation: str,
     name = entry.removeprefix("/")
     slug = source.get("slug") or next(iter(INVOCATION_SLUG.findall(invocation)), None)
     inferred = None
-    if slug is None and name in door.NAMED_SLUG:
+    if slug is None and name in door.NAMED_SLUG and infer:
         slug = inferred = live_slug(project)
     try:
         check = check_of(name, project, slug, None, [])
@@ -517,6 +524,7 @@ def completed(record: dict, check_of=check_door) -> dict:
     if record.get("kind") != "decision" or project is None or not project.is_dir():
         return record
     done = copy.deepcopy(record)
+    infer = not is_routing(done)
     for decision in done.get("decisions") or []:
         if not isinstance(decision, dict):
             continue
@@ -532,12 +540,20 @@ def completed(record: dict, check_of=check_door) -> dict:
                     chosen["entry"] = named
             if "entry" in chosen:
                 chosen["check"] = check_as_it_stands(chosen["entry"], project, source,
-                                                     invocation, check_of)
+                                                     invocation, check_of, infer)
         for door in decision.get("others") or []:
             if isinstance(door, dict) and door.get("entry") and "check" not in door:
                 door["check"] = check_as_it_stands(door["entry"], project, source, invocation,
-                                                   check_of)
+                                                   check_of, infer)
     return done
+
+
+def is_routing(record: dict) -> bool:
+    """Whether a record is a routing record `--prepare --route` wrote, told apart by its report's
+    name, which no skill's report carries: a door of it is never checked over an initiative its
+    words do not name, since the request it routes belongs to none yet."""
+    found = REPORT_SKILL.search(str(record.get("report") or ""))
+    return bool(found) and found.group(1) == ROUTE
 
 
 def unentered_recommendations(record: dict) -> list[str]:
@@ -642,6 +658,28 @@ def prepare(skill: str, project: Path, slug: str | None, target: str | None, fil
     if path is not None:
         path.parent.mkdir(parents=True, exist_ok=True)
         record["report"] = str(path)
+    return record
+
+
+def prepare_route(project: Path, slug: str, ask: Path, language: str, contract: dict) -> dict:
+    """The routing record's skeleton, over a slug no initiative holds and the request `ask.py
+    --record` copied whole, its doors `/analyse` and `/plan-work` each checked as the tree stands:
+    «The material `/analyse` reads under a taken route is the recorded request, never the
+    session's paraphrase of it.» (SPEC-011 R14) The ask is named in the decision's `ask`."""
+    source = state_source(project, slug)
+    doors = [{"reply_word": "", "what_it_does": "", "entry": f"/{name}",
+              "check": check_door(name, project, slug, None, [])}
+             for name in ROUTE_DOORS]
+    record: dict = {"contract_version": contract["properties"]["contract_version"]["const"],
+                    "kind": "decision", "language": language,
+                    "state": state_now(source, language, contract), "state_from": source,
+                    "decisions": [{"ask": "", "others": doors, "if_none": "", "relation": "one-of",
+                                   "invocation": ""}]}
+    path = report_path(project, ROUTE)
+    if path is not None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        record["report"] = str(path)
+    record["decisions"][0]["ask"] = f"which route the request recorded at {ask} takes"
     return record
 
 
@@ -911,7 +949,11 @@ def rendered(text: str, contract: dict) -> bool:
 
 
 def main_prepare(args: list[str], contract: dict) -> int:
+    route = "--route" in args
+    if route:
+        args.remove("--route")
     try:
+        ask = take(args, "--ask")
         skill = take(args, "--skill")
         project = take(args, "--project")
         slug = take(args, "--slug")
@@ -922,9 +964,13 @@ def main_prepare(args: list[str], contract: dict) -> int:
     except CannotRun as refusal:
         print(f"cannot run: {refusal}", file=sys.stderr)
         return CANNOT_RUN
-    if args or not skill or not project:
+    if route:
+        return main_prepare_route(args, contract, skill, project, slug, target, files, ledger,
+                                  language, ask)
+    if args or not skill or not project or ask:
         print("cannot run: --prepare takes --skill <name> and --project <root>"
-              + (f"; not understood: {' '.join(args)}" if args else ""), file=sys.stderr)
+              + (f"; not understood: {' '.join(args)}" if args else "")
+              + ("; --ask belongs to --route" if ask else ""), file=sys.stderr)
         return CANNOT_RUN
     skill = skill.removeprefix("/").removeprefix("siegard:")
     if not (SKILLS / skill / "SKILL.md").is_file():
@@ -942,6 +988,45 @@ def main_prepare(args: list[str], contract: dict) -> int:
         print(f"cannot run: {ledger} is no ledger file", file=sys.stderr)
         return CANNOT_RUN
     record = prepare(skill, root, slug, target, files, language, contract, ledger)
+    print(json.dumps(record, indent=2, ensure_ascii=False))
+    print(limits(contract, language), end="", file=sys.stderr)
+    print(next_steps(record), end="", file=sys.stderr)
+    return 0
+
+
+def main_prepare_route(args: list[str], contract: dict, skill, project, slug, target, files,
+                       ledger, language: str, ask) -> int:
+    if args or skill or target or files or ledger or not project or not slug or not ask:
+        print("cannot run: --prepare --route takes --project <root>, --slug <a new initiative's "
+              "slug> and --ask <the request recorded by ask.py --record>, and --language; no "
+              "--skill, --target, --file or --ledger"
+              + (f"; not understood: {' '.join(args)}" if args else ""), file=sys.stderr)
+        return CANNOT_RUN
+    if language not in contract["x-labels"] or language == "description":
+        print(f"cannot run: {language} is no language the record admits — "
+              + ", ".join(contract["properties"]["language"]["enum"]), file=sys.stderr)
+        return CANNOT_RUN
+    root = Path(project).resolve()
+    if not root.is_dir():
+        print(f"cannot run: {root} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    asked = Path(ask).resolve()
+    if not asked.is_file():
+        print(f"refused: {asked} is no recorded ask — record the request first with "
+              f"`ask.py --record {root} --text-file -`, whole")
+        return 1
+    try:
+        declared = json.loads((root / "siegard.json").read_text(encoding="utf-8"))
+        work = root / declared["work_root"] / slug
+    except (OSError, ValueError, KeyError, TypeError) as broken:
+        print(f"cannot run: siegard.json cannot be read for the work root: {broken}",
+              file=sys.stderr)
+        return CANNOT_RUN
+    if work.exists():
+        print(f"refused: {work} exists — a route opens a new initiative, so --slug names one "
+              f"no initiative holds")
+        return 1
+    record = prepare_route(root, slug, asked, language, contract)
     print(json.dumps(record, indent=2, ensure_ascii=False))
     print(limits(contract, language), end="", file=sys.stderr)
     print(next_steps(record), end="", file=sys.stderr)

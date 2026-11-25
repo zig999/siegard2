@@ -220,7 +220,14 @@ def facts_of(project: Path) -> dict:
         if log.is_file() else []
     kept = sorted(p.name for p in handoffs(project).glob("*.json")) \
         if handoffs(project).is_dir() else []
+    declared = json.loads((project / "siegard.json").read_text(encoding="utf-8"))
+    root_log = project / declared.get("delivery_root", "delivery") / "orchestration.md"
+    routes = [line.strip() for line in root_log.read_text(encoding="utf-8").splitlines()
+              if line.strip().lstrip("-` ").startswith("decided:")] if root_log.is_file() else []
+    specification = declared.get("specification_root", "spec")
+    spec_pending = git(project, "status", "--porcelain", "--", specification).strip()
     return {"commits": commits, "branches": branches, "origin_moved": remote != seed,
+            "routes_decided": routes, "specification_pending": spec_pending,
             "origin_holds_head": remote == git(project, "rev-parse", "HEAD").strip(),
             "asks": asks, "handoff_records": kept,
             "handoff_calls": [{"flag": f, "exit": int(c)} for f, c in calls]}
@@ -304,6 +311,19 @@ def checks(name: str, record: Path) -> list[dict]:
         elif kind == "never_recommends":
             entries = recommended_entries(record)
             passed, seen = not any(e.startswith(arg) for e in entries), f"recommended: {entries}"
+        elif kind == "routing_rendered":
+            kept = sorted((record / "handoff").glob("*-route.json"))
+            passed, seen = bool(kept), f"{len(kept)} routing record(s) kept"
+        elif kind == "route_taken":
+            taken = facts.get("routes_decided", [])
+            passed = any(arg in line for line in taken)
+            seen = f"decided in the delivery root's log: {taken}"
+        elif kind == "no_route_taken":
+            taken = facts.get("routes_decided", [])
+            changed = facts.get("specification_pending", "") or any(
+                any(p.startswith("spec/") for p in x["paths"]) for x in commits)
+            passed = not taken and not changed
+            seen = f"decided: {taken}; specification changed: {bool(changed)}"
         elif kind == "ask_recorded":
             passed = any(arg in a for a in facts["asks"])
             seen = f"{len(facts['asks'])} ask(s) recorded"

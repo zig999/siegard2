@@ -1,7 +1,7 @@
 ---
 name: siegard-grant
 description: Use when a person wants the framework to take the decisions its stops hand back — a door, a commit of the route's own work, the closing of an initiative — without asking at each stop, until the person clears it; or to clear a grant already armed. Records the person's invocation as typed — the flags are the authorization, a sentence after them is optional — and arms the grant for the project, or for one initiative; an invocation with no argument arms nothing and shows the grant armed. Closed to the model, so every argument is the person's own words. Not for delivering anything now (that is /deliver-scope), and not for a run that ends by itself (that is /siegard-goal).
-argument-hint: "[<project-root>] [--clear | [--slug <slug>] [--target <key>] [--doors <skill>,...|none] [--budget <n>] [--commits] [--close] [<a sentence of the person's own>]]"
+argument-hint: "[<project-root>] [--clear | [--slug <slug>] [--target <key>] [--doors <skill>,...|none] [--budget <n>] [--commits] [--close] [--routes] [<a sentence of the person's own>]]"
 disable-model-invocation: true
 effort: low
 ---
@@ -36,6 +36,7 @@ Read the arguments once, and decide nothing they do not say:
 | **Budget** | `--budget <n>`, a whole number of judged doors for each initiative covered | zero: a choice between open doors stops until the person writes one |
 | **Commits** | `--commits` | none |
 | **Close** | `--close` | none |
+| **Routes** | `--routes` | none: the route of a request is the person's to name or to accept |
 | **A sentence** | every word that is no flag nor a flag's value, whole and in order | none: the flags are the person's words |
 
 **The words the script records are the invocation's arguments as typed** — every flag, every
@@ -65,14 +66,15 @@ them equals — pick another where `WORDS` is one of their lines — so no quote
 in them is altered by a shell. The heredoc adds one final newline, and the digest covers the file as stored.
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/grant.py --arm <project-root> [--slug <slug>] [--target <key>] [--doors a,b|none] [--budget <n>] [--commits] [--close] --words-file - <<'WORDS'
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/grant.py --arm <project-root> [--slug <slug>] [--target <key>] [--doors a,b|none] [--budget <n>] [--commits] [--close] [--routes] --words-file - <<'WORDS'
 … the invocation's arguments, verbatim, as the person typed them …
 WORDS
 ```
 
 The record it writes is held to the contract `${CLAUDE_PLUGIN_ROOT}/schemas/grant.json` before it is
 written. Arming while a grant stands ends that grant as `replaced` and arms the new one; the person needs no `--clear` first. The script refuses an invocation that names nothing, a slug that is not a live initiative, an
-entry point outside the list, a budget without doors, and an arming with no clause; it prints every
+entry point outside the list, a budget without doors, an arming with no clause, `--routes` beside
+`--slug`, and `--routes` whose doors hold neither `analyse` nor `plan-work`; it prints every
 reason. On success it prints what it recorded — what the grant covers, the doors, the budget, the
 clauses, the words' digest and the grant's mark, the target where it chose one, and the plugin's version — and the report
 quotes those lines. A grant already in place — one that stands, which the arming replaces, or one a plugin update or
@@ -99,12 +101,15 @@ ends the grant: `/siegard:siegard-grant <project-root> --clear`.
   where the budget is zero, which the report says; this is the one place a judged door is armed,
   under a goal or outside one;
 - the commits of what the route wrote;
-- the closing of an initiative, once everything in it is delivered, proven and reviewed.
+- the closing of an initiative, once everything in it is delivered, proven and reviewed;
+- with `--routes`, the route of a request that names none — `/analyse` or `/plan-work` over a new
+  initiative, the same way it answers a stop's doors, the budget counted apart for the routes.
 
 Where `analyse` is among the doors, the specification it writes is disclosed and the person reads it
 afterwards. The report also says what the grant never takes, whatever the words say: a choice only
 the person makes, a push, a branch, an edit by a session outside a skill, a file of the project file,
-a standard or `CLAUDE.md`, and anything outside this project.
+a standard or `CLAUDE.md`, and anything outside this project — and, with `--routes`, the route a
+finding deserves, an end-to-end route and a corrective increment, which stay the person's.
 
 **Refused.** `body`: nothing was armed, how many reasons the script gave, and that each is below.
 Then the script's reasons, verbatim, in one fenced block.

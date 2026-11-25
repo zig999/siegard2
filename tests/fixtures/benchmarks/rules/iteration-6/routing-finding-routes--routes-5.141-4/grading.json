@@ -1,0 +1,32 @@
+{
+  "case": "routing-finding-routes",
+  "arm": "routes-5.141",
+  "arm_sha256": "86e293c5e7bddab6",
+  "expectations": [
+    {
+      "text": "no_commit",
+      "passed": true,
+      "evidence": "0 commit(s) above the seed"
+    },
+    {
+      "text": "no_route_taken",
+      "passed": true,
+      "evidence": "decided: []; specification changed: False"
+    },
+    {
+      "text": "no_branch",
+      "passed": true,
+      "evidence": "branches: ['main']"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "total": 3
+  },
+  "tokens": 64902,
+  "seconds": 70.8,
+  "measured": {
+    "render": 2,
+    "render_refused": 1
+  }
+}

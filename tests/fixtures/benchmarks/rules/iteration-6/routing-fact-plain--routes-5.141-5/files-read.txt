@@ -1,0 +1,16 @@
+/tmp/an9/prompts/r17.txt
+/tmp/an9/r17.rules.md
+/tmp/an9/r17/siegard.json
+/tmp/an9/r17/telemetry/ask-20261125T003921Z.md
+/tmp/an9/r17/spec/rules/lending/loan-renewed-at-most-once.md
+/tmp/an9/r17/spec/rules/lending/reserved-copy-blocks-renewal.md
+/tmp/an9/r17/spec/rules/lending/reserved-copy-blocks-renewal.log.md
+/tmp/an9/r17/spec/rules/lending/overdue-member-cannot-borrow.md
+/tmp/an9/r17/spec/domain/lending/loan.md
+/tmp/an9/r17/spec/domain/lending/loan.log.md
+/tmp/an9/r17/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/an9/r17.plugin/schemas/handoff.json
+/tmp/an9/r17.plugin/bin/door.py (--help only)
+/tmp/an9/r17.plugin/bin/handoff.py (--help only)
+/tmp/an9/r17.plugin/bin/ask.py (--help only)
+/tmp/an9/r17.plugin/bin/grant.py (--help only)

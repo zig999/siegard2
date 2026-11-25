@@ -1,0 +1,42 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an9/r09",
+    "slug": "late-fee-rounding"
+  },
+  "decisions": [
+    {
+      "ask": "por qual rota entra o pedido de arredondar a multa de atraso para cima",
+      "recommended": {
+        "door": "registrar na especificação que a multa arredonda para cima, antes de qualquer plano ou código",
+        "why": "Julgamento meu: a regra da multa não diz nada de arredondamento e compute_late_fee ainda não existe em código; não há erro entregue, só um fato do negócio a acrescentar.",
+        "reverses_if": "a especificação já cobrir isso, ou compute_late_fee existir e estar entregue em outro lugar",
+        "reply_word": "A",
+        "entry": "/analyse",
+        "check": {
+          "answer": "accepts",
+          "refused": []
+        }
+      },
+      "others": [
+        {
+          "reply_word": "B",
+          "what_it_does": "trata como defeito de código entregue, no plano da tarefa; a regra segue muda sobre arredondamento",
+          "entry": "/plan-work",
+          "check": {
+            "answer": "accepts",
+            "refused": []
+          }
+        }
+      ],
+      "relation": "one-of",
+      "if_none": "nada muda: especificação, plano e código ficam como estão",
+      "invocation": "/analyse a multa de atraso por dia corrido arredonda para cima, conforme apontou a revisão"
+    }
+  ],
+  "report": "/tmp/an9/r09/.git/siegard/handoff/20261125T003957Z-route.md"
+}

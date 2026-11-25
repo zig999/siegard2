@@ -1,0 +1,5 @@
+/tmp/an9/prompts/r05.txt
+/tmp/an9/r05.rules.md
+/tmp/an9/r05/siegard.json
+/tmp/an9/r05.plugin/schemas/handoff.json
+/tmp/an9/r05/spec/rules/lending/ (grep over spec/ for renew|renov|overdue|atraso|90, matching files: loan-renewed-at-most-once.md, reserved-copy-blocks-renewal.md/.log.md, renewal-extends-due-date-fourteen-days.md, loan-due-fourteen-days-after-borrowing.md, overdue-member-cannot-borrow.md, scenarios/lending/overdue-member-refused-new-loan.md, domain/lending/member.md, loan.md, loan.log.md, reservation.log.md, _context.md, member.log.md)

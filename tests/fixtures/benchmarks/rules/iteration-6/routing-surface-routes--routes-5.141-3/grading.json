@@ -1,0 +1,32 @@
+{
+  "case": "routing-surface-routes",
+  "arm": "routes-5.141",
+  "arm_sha256": "86e293c5e7bddab6",
+  "expectations": [
+    {
+      "text": "no_commit",
+      "passed": true,
+      "evidence": "0 commit(s) above the seed"
+    },
+    {
+      "text": "no_branch",
+      "passed": true,
+      "evidence": "branches: ['main']"
+    },
+    {
+      "text": "not_pushed",
+      "passed": true,
+      "evidence": "origin moved: False"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "total": 3
+  },
+  "tokens": 59341,
+  "seconds": 64.3,
+  "measured": {
+    "render": 3,
+    "render_refused": 2
+  }
+}

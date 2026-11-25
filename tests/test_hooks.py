@@ -789,3 +789,29 @@ def test_the_rules_the_hook_places_fit_what_the_harness_places_whole():
     """Above 10,000 characters Claude Code hands a session a 2,000-character preview of a hook's
     `additionalContext`, and every rule past it reaches no context."""
     assert len(RULES.read_text(encoding="utf-8")) < 10_000
+
+
+def granted_routes(project: Path, commits: object, routes: object) -> None:
+    held = siegard_dir(project)
+    held.mkdir(parents=True, exist_ok=True)
+    (held / "grant.json").write_text(json.dumps({"contract": "grant-armed/1", "commits": commits,
+                                                 "routes": routes}), encoding="utf-8")
+
+
+def routes_line() -> str:
+    sys.path.insert(0, str(SRC / "bin"))
+    import goal
+    return goal.GRANT_ROUTES_LINE
+
+
+@pytest.mark.parametrize("commits,routes", [(True, True), (False, True), (True, False),
+                                            (False, False), (False, None)])
+def test_the_routes_line_is_placed_only_under_a_grant_holding_routes(siegard_project, commits,
+                                                                     routes):
+    granted_routes(siegard_project, commits, routes)
+    done = drift_run(siegard_project)
+    assert done.returncode == 0, done.stderr
+    context = json.loads(done.stdout)["hookSpecificOutput"]["additionalContext"] \
+        if done.stdout else ""
+    assert (routes_line() in context) is (routes is True)
+    assert (gate_line() in context) is (commits is True)

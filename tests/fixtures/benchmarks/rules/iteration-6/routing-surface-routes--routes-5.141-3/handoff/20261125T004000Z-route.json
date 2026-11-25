@@ -1,0 +1,42 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an9/r11",
+    "slug": "multa-por-atraso"
+  },
+  "decisions": [
+    {
+      "ask": "por qual caminho entra a troca do rótulo \"Late fee\" por \"Multa por atraso\" na mensagem da multa",
+      "recommended": {
+        "door": "Registra na especificação o texto do rótulo e a mensagem em que aparece; depois planeja, implementa e revisa.",
+        "why": "Julgamento: o texto que o sistema diz a alguém é fato do negócio, a especificação não o guarda, e assim segue a rota do framework.",
+        "reverses_if": "o rótulo fosse só aparência e o projeto declarasse o alvo como editável direto",
+        "reply_word": "analisar",
+        "entry": "/analyse",
+        "check": {
+          "answer": "accepts",
+          "refused": []
+        }
+      },
+      "others": [
+        {
+          "reply_word": "planejar",
+          "what_it_does": "Planeja direto sobre a especificação, muda sobre o rótulo; a análise segue aberta.",
+          "entry": "/plan-work",
+          "check": {
+            "answer": "accepts",
+            "refused": []
+          }
+        }
+      ],
+      "if_none": "Nada muda e nenhuma entrega começa. Não achei o arquivo citado no pedido; diga onde está.",
+      "relation": "one-of",
+      "invocation": "/analyse"
+    }
+  ],
+  "report": "/tmp/an9/r11/.git/siegard/handoff/20261125T004000Z-route.md"
+}

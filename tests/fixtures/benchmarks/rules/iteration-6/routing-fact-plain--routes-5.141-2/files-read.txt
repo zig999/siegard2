@@ -1,0 +1,13 @@
+/tmp/an9/prompts/r19.txt
+/tmp/an9/r19.rules.md
+/tmp/an9/r19/siegard.json
+/tmp/an9/r19/telemetry/ask-20261125T003922Z.md
+/tmp/an9/r19/spec/rules/lending/loan-renewed-at-most-once.md
+/tmp/an9/r19/spec/rules/lending/reserved-copy-blocks-renewal.md
+/tmp/an9/r19/spec/rules/lending/overdue-member-cannot-borrow.md
+/tmp/an9/r19/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/an9/r19/spec/domain/lending/loan.md
+/tmp/an9/r19.plugin/schemas/handoff.json
+/tmp/an9/r19.plugin/bin/door.py (--help only)
+/tmp/an9/r19.plugin/bin/handoff.py (--help only)
+/tmp/an9/r19.plugin/bin/ask.py (--help only)

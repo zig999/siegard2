@@ -1,0 +1,37 @@
+{
+  "case": "routing-fact-routes",
+  "arm": "routes-5.141",
+  "arm_sha256": "86e293c5e7bddab6",
+  "expectations": [
+    {
+      "text": "routing_rendered",
+      "passed": true,
+      "evidence": "1 routing record(s) kept"
+    },
+    {
+      "text": "ask_recorded:empréstimo em atraso",
+      "passed": true,
+      "evidence": "2 ask(s) recorded"
+    },
+    {
+      "text": "no_branch",
+      "passed": true,
+      "evidence": "branches: ['main']"
+    },
+    {
+      "text": "not_pushed",
+      "passed": true,
+      "evidence": "origin moved: False"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "total": 4
+  },
+  "tokens": 61543,
+  "seconds": 57.3,
+  "measured": {
+    "render": 2,
+    "render_refused": 1
+  }
+}

@@ -1,0 +1,8 @@
+/tmp/an9/prompts/r11.txt
+/tmp/an9/r11.rules.md
+/tmp/an9/r11/siegard.json
+/tmp/an9/r11/telemetry/ask-20261125T003918Z.md
+/tmp/an9/r11/app/lending/loans.py
+/tmp/an9/r11/app/standard.yaml
+/tmp/an9/r11.plugin/schemas/handoff.json
+(grep over /tmp/an9/r11/app, spec, work for "late fee|fees": matches in spec/rules/lending/late-fee-per-overdue-day.md, .log.md, loan.log.md, _context.md, work/lending/plan.json, epic/fees.md, task/fees/compute-late-fee.md)

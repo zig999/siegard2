@@ -1,0 +1,46 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an9/r18",
+    "slug": "late-fee-rounding"
+  },
+  "decisions": [
+    {
+      "ask": "o que fazer com o arredondamento de compute_late_fee, que não existe aqui",
+      "settles": "Não há compute_late_fee no código nem entrega da tarefa que a criaria, e a especificação não fala de arredondamento. Definir a regra supõe que a revisão olhou este projeto; apontar outro lugar supõe outro projeto ou ramo. Onde a revisão olhou decide.",
+      "settles_by": "two-readings",
+      "relation": "one-of",
+      "others": [
+        {
+          "reply_word": "a",
+          "what_it_does": "Registra na especificação o arredondamento para cima; o código fica como está.",
+          "entry": "/analyse",
+          "check": {
+            "answer": "accepts",
+            "refused": []
+          }
+        },
+        {
+          "reply_word": "b",
+          "what_it_does": "Replaneja a tarefa sem a regra nova; a especificação segue muda.",
+          "entry": "/plan-work",
+          "check": {
+            "answer": "accepts",
+            "refused": []
+          }
+        },
+        {
+          "reply_word": "c",
+          "what_it_does": "Você diz onde a revisão olhou; nada aqui muda até lá."
+        }
+      ],
+      "if_none": "Nada muda: tarefa sem entrega e especificação sem regra de arredondamento.",
+      "invocation": "/analyse"
+    }
+  ],
+  "report": "/tmp/an9/r18/.git/siegard/handoff/20261125T004005Z-route.md"
+}

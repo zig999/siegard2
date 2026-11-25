@@ -1,0 +1,15 @@
+/tmp/an9/r15/siegard.json
+/tmp/an9/r15.rules.md
+/tmp/an9/r15/telemetry/ask-20261125T003920Z.md
+/tmp/an9/r15/spec/rules/lending/loan-renewed-at-most-once.md
+/tmp/an9/r15/spec/rules/lending/reserved-copy-blocks-renewal.md
+/tmp/an9/r15/spec/rules/lending/reserved-copy-blocks-renewal.log.md
+/tmp/an9/r15/spec/rules/lending/overdue-member-cannot-borrow.md
+/tmp/an9/r15/spec/rules/lending/renewal-extends-due-date-fourteen-days.md
+/tmp/an9/r15/spec/domain/lending/loan.md
+/tmp/an9/r15/spec/domain/lending/loan.log.md
+/tmp/an9/r15/spec/scenarios/lending/overdue-member-refused-new-loan.md
+/tmp/an9/r15/work/lending/plan.json
+/tmp/an9/r15/app/lending/loans.py
+/tmp/an9/r15.plugin/schemas/handoff.json
+(help text printed by /tmp/an9/r15.plugin/bin/door.py, handoff.py, ask.py, grant.py via --help)

@@ -1,0 +1,12 @@
+/tmp/an9/prompts/r03.txt
+/tmp/an9/r03.rules.md
+/tmp/an9/r03/siegard.json
+/tmp/an9/r03/telemetry/ask-20261125T003914Z.md
+/tmp/an9/r03/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/an9/r03/work/lending/task/fees/compute-late-fee.md
+/tmp/an9/r03/app/lending/loans.py
+/tmp/an9/r03/spec/domain/lending/loan.md
+/tmp/an9/r03.plugin/schemas/handoff.json
+/tmp/an9/r03.plugin/bin/handoff.py (--help)
+/tmp/an9/r03.plugin/bin/ask.py (--help)
+/tmp/an9/r03.plugin/bin/grant.py (--help)

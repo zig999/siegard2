@@ -1,0 +1,10 @@
+/tmp/an9/r12.rules.md
+/tmp/an9/prompts/r12.txt
+/tmp/an9/r12/siegard.json
+/tmp/an9/r12/spec/rules/lending/loan-renewed-at-most-once.md
+/tmp/an9/r12/spec/rules/lending/reserved-copy-blocks-renewal.md
+/tmp/an9/r12/spec/rules/lending/overdue-member-cannot-borrow.md
+/tmp/an9/r12/spec/domain/lending/loan.md
+/tmp/an9/r12.plugin/schemas/handoff.json
+/tmp/an9/r12.plugin/bin/handoff.py (--help only)
+/tmp/an9/r12.plugin/bin/ask.py (--help only)

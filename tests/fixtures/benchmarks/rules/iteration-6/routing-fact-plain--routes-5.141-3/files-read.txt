@@ -1,0 +1,9 @@
+/tmp/an9/prompts/r14.txt
+/tmp/an9/r14.rules.md
+/tmp/an9/r14/siegard.json
+/tmp/an9/r14/spec/rules/lending/loan-renewed-at-most-once.md
+/tmp/an9/r14/spec/rules/lending/reserved-copy-blocks-renewal.md
+/tmp/an9/r14/spec/rules/lending/overdue-member-cannot-borrow.md
+/tmp/an9/r14/spec/domain/lending/loan.md
+/tmp/an9/r14/telemetry/ask-20261125T003919Z.md
+/tmp/an9/r14.plugin/schemas/handoff.json

@@ -231,7 +231,7 @@ def test_the_route_table_counts_the_routes_it_lists():
     rows = [line for line in table.splitlines()
             if line.startswith("| ") and not line.startswith("| what changed")]
     words = {5: "Five", 6: "Six", 7: "Seven"}
-    assert f"{words[len(rows)]} routes;" in table, f"{len(rows)} rows under the heading"
+    assert f"{words[len(rows)]} routes." in table, f"{len(rows)} rows under the heading"
 
 
 def test_the_adoption_route_is_stated_where_every_session_lists_the_skills():

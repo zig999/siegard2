@@ -341,3 +341,39 @@ def test_a_commit_recording_a_stop_with_a_passed_run_and_a_delivery_file_is_refu
     B = f"deliveries/{SLUG}/implementation/a/b.md"
     reason = refused(hook(home, f"git add -- {RUN} {B} {LOG} && git commit -q -m x -- {RUN} {B} {LOG}"))
     assert "b.md" in reason
+
+
+# ------------------------------------------------------------ the root log's routes (SPEC-011 R14)
+
+ROOT_LOG = "deliveries/orchestration.md"
+JUDGED_ROUTE = "- decided: /plan-work — keeps the route — the request plans a capability"
+
+
+def granted(home: Path, **held) -> None:
+    (home / ".git" / "siegard").mkdir(exist_ok=True)
+    (home / ".git" / "siegard" / "grant.json").write_text(json.dumps({"slug": None, **held}),
+                                                           encoding="utf-8")
+
+
+@pytest.mark.parametrize("held", [None, {}, {"routes": False}])
+def test_a_judged_route_in_the_root_log_without_routes_is_refused(home, held):
+    """«the commit check refuses a judged line in that log under a grant without it»
+    (SPEC-011 R14): a grant naming no initiative no longer lets a root-log judged line through
+    unless it holds `routes`."""
+    if held is not None:
+        granted(home, **held)
+    append(home, JUDGED_ROUTE, ROOT_LOG)
+    reason = refused(hook(home, f"git add {ROOT_LOG} && git commit -m x"))
+    assert ("holds no `routes`" in reason) or ("no grant is armed" in reason)
+
+
+def test_a_judged_route_in_the_root_log_under_routes_goes_ahead(home):
+    granted(home, routes=True)
+    append(home, JUDGED_ROUTE, ROOT_LOG)
+    allowed(hook(home, f"git add {ROOT_LOG} && git commit -m x"))
+
+
+def test_a_judged_door_in_an_initiative_log_is_read_as_before_under_routes(home):
+    granted(home, routes=True)
+    append(home, JUDGED)
+    allowed(hook(home, f"git add {LOG} && git commit -m x"))

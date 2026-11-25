@@ -1,0 +1,42 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an9/r01",
+    "slug": "late-fee-label"
+  },
+  "decisions": [
+    {
+      "ask": "qual caminho o pedido registrado em /tmp/an9/r01/telemetry/ask-20261125T003943Z.md segue",
+      "recommended": {
+        "door": "Análise primeiro: a especificação passa a guardar o texto \"Multa por atraso\"; depois vêm plano, código e revisão",
+        "why": "É um julgamento: o rótulo é o que o sistema diz sobre a multa, nenhum nó guarda esse texto e o arquivo da mensagem nem existe na árvore.",
+        "reverses_if": "a especificação já guardasse o texto da mensagem de multa.",
+        "reply_word": "analisar",
+        "entry": "/analyse",
+        "check": {
+          "answer": "accepts",
+          "refused": []
+        }
+      },
+      "others": [
+        {
+          "reply_word": "planejar",
+          "what_it_does": "Planeja direto a troca do rótulo, sem registrar o texto na especificação.",
+          "entry": "/plan-work",
+          "check": {
+            "answer": "accepts",
+            "refused": []
+          }
+        }
+      ],
+      "if_none": "Nada muda: o rótulo \"Late fee\" fica como está e nenhuma iniciativa nova é aberta.",
+      "relation": "one-of",
+      "invocation": "/analyse /tmp/an9/r01/telemetry/ask-20261125T003943Z.md"
+    }
+  ],
+  "report": "/tmp/an9/r01/.git/siegard/handoff/20261125T003945Z-route.md"
+}

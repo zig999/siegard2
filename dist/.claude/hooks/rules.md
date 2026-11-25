@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.140.1. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.141.0. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -93,7 +93,8 @@ the one that applies; never restate it from memory.
 
 ## Which route a change takes
 
-Five routes; which one a change takes is stated by a person and never inferred. **Invoke the
+Five routes. Which one a change takes is the person's, or a grant's they armed holding `routes`
+for a route with an entry point: recommended with its reason and never chosen silently. **Invoke the
 entry point by name rather than doing its work ad hoc**: the entry point is the route, and the
 fifth names none.
 

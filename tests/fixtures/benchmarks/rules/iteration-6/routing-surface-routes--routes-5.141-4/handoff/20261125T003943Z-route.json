@@ -1,0 +1,42 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an9/r02",
+    "slug": "late-fee-label"
+  },
+  "decisions": [
+    {
+      "ask": "which route the request recorded at /tmp/an9/r02/telemetry/ask-20261125T003941Z.md takes",
+      "recommended": {
+        "door": "/analyse",
+        "why": "O rótulo está na mensagem que o sistema diz a quem paga a multa, e o que o sistema diz a alguém é um fato do negócio que nenhuma regra guarda; a mudança começa pela análise.",
+        "reverses_if": "o texto fosse só o rótulo de um controle numa tela, sem mudar o que a pessoa aprende ou faz.",
+        "reply_word": "analisar",
+        "entry": "/analyse",
+        "check": {
+          "answer": "accepts",
+          "refused": []
+        }
+      },
+      "others": [
+        {
+          "reply_word": "planejar",
+          "what_it_does": "Planeja direto, sem analisar; só serve se a especificação já guardar o texto da mensagem, e hoje não guarda.",
+          "entry": "/plan-work",
+          "check": {
+            "answer": "accepts",
+            "refused": []
+          }
+        }
+      ],
+      "if_none": "Nada muda: o texto continua \"Late fee\" e nada é aberto.",
+      "relation": "one-of",
+      "invocation": "/analyse troca o texto do rótulo \"Late fee\" para \"Multa por atraso\" na mensagem de multa por atraso"
+    }
+  ],
+  "report": "/tmp/an9/r02/.git/siegard/handoff/20261125T003943Z-route.md"
+}

@@ -1,0 +1,17 @@
+/tmp/an9/prompts/r18.txt
+/tmp/an9/r18.rules.md
+/tmp/an9/r18/siegard.json
+/tmp/an9/r18/telemetry/ask-20261125T003922Z.md
+/tmp/an9/r18/work/lending/epic/fees.md
+/tmp/an9/r18/work/lending/task/fees/compute-late-fee.md
+/tmp/an9/r18/work/lending/plan.json
+/tmp/an9/r18/work/lending/inventory/lending-app.md
+/tmp/an9/r18/app/lending/loans.py
+/tmp/an9/r18/app/standard.yaml
+/tmp/an9/r18/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/an9/r18/spec/rules/lending/late-fee-per-overdue-day.log.md
+/tmp/an9/r18/.git/siegard/grant.json
+/tmp/an9/r18/app/tests/test_loans.py (grep only)
+/tmp/an9/r18/spec (grep for round/arredond/late)
+/tmp/an9/r18.plugin/schemas/handoff.json
+/tmp/an9/r18.plugin/bin/*.py --help text: handoff.py, ask.py, door.py, grant.py

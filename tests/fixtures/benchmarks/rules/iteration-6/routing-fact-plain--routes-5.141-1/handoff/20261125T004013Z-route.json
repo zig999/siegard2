@@ -1,0 +1,42 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an9/r15",
+    "slug": "renewal-block"
+  },
+  "decisions": [
+    {
+      "ask": "Por qual caminho seguir com o bloqueio de renovação após 90 dias de atraso?",
+      "recommended": {
+        "door": "Registrar primeiro a nova regra na especificação, depois planejar, implementar e revisar",
+        "why": "É uma recusa nova do negócio que a especificação não diz hoje, e esse caminho começa pela análise.",
+        "reverses_if": "a regra já estivesse escrita na especificação e só faltasse entregá-la",
+        "reply_word": "a",
+        "entry": "/analyse",
+        "check": {
+          "answer": "accepts",
+          "refused": []
+        }
+      },
+      "relation": "one-of",
+      "others": [
+        {
+          "reply_word": "b",
+          "what_it_does": "Planejar direto: quebra o caminho do framework, pois o fato do bloqueio não está na especificação",
+          "entry": "/plan-work",
+          "check": {
+            "answer": "accepts",
+            "refused": []
+          }
+        }
+      ],
+      "if_none": "Nada muda: o empréstimo em atraso continua podendo ser renovado.",
+      "invocation": "/analyse /tmp/an9/r15/telemetry/ask-20261125T004010Z.md"
+    }
+  ],
+  "report": "/tmp/an9/r15/.git/siegard/handoff/20261125T004013Z-route.md"
+}

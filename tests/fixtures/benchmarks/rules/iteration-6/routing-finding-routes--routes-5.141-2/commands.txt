@@ -1,0 +1,15 @@
+ls -la /tmp/an9/r20 /tmp/an9/r20.plugin /tmp/an9/r20.plugin/bin; mkdir -p /tmp/an9/out/r20 | exit 0
+python3 /tmp/an9/r20.plugin/bin/handoff.py --help | exit 0
+cat siegard.json; git status --short; ls work work/* telemetry | exit 0
+cat telemetry/*; python3 /tmp/an9/r20.plugin/bin/ask.py --help; git log --oneline | exit 0
+printf '<the person message>' | python3 /tmp/an9/r20.plugin/bin/ask.py --record /tmp/an9/r20 --text-file - | exit 0
+python3 /tmp/an9/r20.plugin/bin/handoff.py --prepare --route --project /tmp/an9/r20 --slug late-fee-rounding --ask /tmp/an9/r20/telemetry/ask-20261125T004004Z.md --language pt-BR | exit 0
+grep -rn -i "late_fee|late fee|round|arredond" app spec work; find app spec work -type f | exit 0
+cat app/lending/loans.py app/tests/test_loans.py work/lending/task/fees/compute-late-fee.md spec/rules/lending/late-fee-per-overdue-day.md work/lending/plan.json; ls work/lending/task/fees; progress.py --help | exit 0
+grep -rn compute_late_fee . --exclude-dir=.git; git branch -a; git log --all --oneline; progress.py --project /tmp/an9/r20; grant.py --help | grep ... | exit 0
+door.py --check plan-work --project /tmp/an9/r20 | exit 0 (printed: cannot run: plan-work takes --slug)
+door.py --check analyse --project /tmp/an9/r20 | exit 0 (accepts)
+grant.py --help | sed -n 1,48p; cat schemas/handoff.json (head, sed 150,400p) | exit 0
+handoff.py --save-report /tmp/an9/r20/.git/siegard/handoff/20261125T004007Z-route.md (heredoc) | exit 0
+handoff.py --render - (first record, block 937 chars) | exit 1
+handoff.py --render - (second record, tee'd to a temp file later removed) | exit 0

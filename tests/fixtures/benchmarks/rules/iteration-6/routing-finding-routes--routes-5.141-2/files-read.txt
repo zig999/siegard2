@@ -1,0 +1,12 @@
+/tmp/an9/prompts/r20.txt
+/tmp/an9/r20.rules.md
+/tmp/an9/r20/siegard.json
+/tmp/an9/r20/telemetry/ask-20261125T003923Z.md
+/tmp/an9/r20/app/lending/loans.py
+/tmp/an9/r20/app/tests/test_loans.py
+/tmp/an9/r20/work/lending/task/fees/compute-late-fee.md
+/tmp/an9/r20/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/an9/r20/work/lending/plan.json
+/tmp/an9/r20.plugin/schemas/handoff.json
+(grep hits only, not whole reads: spec/rules/lending/late-fee-per-overdue-day.log.md, spec/domain/lending/*, work/lending/epic/fees.md)
+(--help output of plugin bin scripts handoff.py, ask.py, grant.py, progress.py)

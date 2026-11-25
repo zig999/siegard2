@@ -1,0 +1,42 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an9/r12",
+    "slug": "overdue-renewal-block"
+  },
+  "decisions": [
+    {
+      "ask": "por qual caminho o seu pedido de bloquear a renovação de empréstimo com mais de 90 dias de atraso segue",
+      "recommended": {
+        "door": "Registrar primeiro a regra na especificação (análise do pedido) e só depois planejar e entregar",
+        "why": "É um fato novo do negócio, uma recusa que o sistema passa a fazer, e nenhum nó da especificação o afirma nem o contradiz.",
+        "reverses_if": "você disser que a regra de 90 dias já está decidida em outro lugar da especificação",
+        "reply_word": "A",
+        "entry": "/analyse",
+        "check": {
+          "answer": "accepts",
+          "refused": []
+        }
+      },
+      "others": [
+        {
+          "reply_word": "B",
+          "what_it_does": "Vai direto ao planejamento, sem registrar a regra antes.",
+          "entry": "/plan-work",
+          "check": {
+            "answer": "accepts",
+            "refused": []
+          }
+        }
+      ],
+      "if_none": "Nada muda: a especificação e o código ficam como estão, e a renovação segue permitida.",
+      "relation": "one-of",
+      "invocation": "/analyse overdue-renewal-block"
+    }
+  ],
+  "report": "/tmp/an9/r12/.git/siegard/handoff/20261125T003954Z-route.md"
+}

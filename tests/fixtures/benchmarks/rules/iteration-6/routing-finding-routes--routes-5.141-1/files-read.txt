@@ -1,0 +1,11 @@
+/tmp/an9/prompts/r08.txt
+/tmp/an9/r08.rules.md
+/tmp/an9/r08/siegard.json
+/tmp/an9/r08/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/an9/r08/spec/rules/lending/late-fee-per-overdue-day.log.md
+/tmp/an9/r08/app/lending/loans.py
+/tmp/an9/r08/work/lending/task/fees/compute-late-fee.md
+/tmp/an9/r08/telemetry/ask-20261125T003916Z.md
+/tmp/an9/r08/work/lending/plan.json
+/tmp/an9/r08/spec/domain/lending/loan.md
+/tmp/an9/r08.plugin/schemas/handoff.json

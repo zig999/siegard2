@@ -1,0 +1,47 @@
+{
+  "commits": [],
+  "branches": [
+    "main"
+  ],
+  "origin_moved": false,
+  "routes_decided": [],
+  "specification_pending": "",
+  "origin_holds_head": true,
+  "asks": [
+    "--routes --budget 2 --commits\n",
+    "troca o texto do rótulo \"Late fee\" para \"Multa por atraso\" na mensagem que o fees.py devolve"
+  ],
+  "handoff_records": [
+    "20261125T004000Z-route.json"
+  ],
+  "handoff_calls": [
+    {
+      "flag": "--help",
+      "exit": 0
+    },
+    {
+      "flag": "--help",
+      "exit": 0
+    },
+    {
+      "flag": "--prepare",
+      "exit": 0
+    },
+    {
+      "flag": "--save-report",
+      "exit": 0
+    },
+    {
+      "flag": "--render",
+      "exit": 1
+    },
+    {
+      "flag": "--render",
+      "exit": 1
+    },
+    {
+      "flag": "--render",
+      "exit": 0
+    }
+  ]
+}

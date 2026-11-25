@@ -1,0 +1,11 @@
+/tmp/an9/prompts/r13.txt
+/tmp/an9/r13.rules.md
+/tmp/an9/r13/siegard.json
+/tmp/an9/r13/spec/rules/lending/loan-renewed-at-most-once.md
+/tmp/an9/r13/spec/rules/lending/renewal-extends-due-date-fourteen-days.md
+/tmp/an9/r13/spec/rules/lending/reserved-copy-blocks-renewal.md
+/tmp/an9/r13/spec/domain/lending/loan.md (grep lines only)
+/tmp/an9/r13.plugin/schemas/handoff.json
+/tmp/an9/r13.plugin/bin/handoff.py (--help)
+/tmp/an9/r13.plugin/bin/ask.py (--help)
+/tmp/an9/r13.plugin/bin/grant.py (--help)

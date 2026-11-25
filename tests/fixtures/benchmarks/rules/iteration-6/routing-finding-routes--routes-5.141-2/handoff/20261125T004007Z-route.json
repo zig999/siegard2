@@ -1,0 +1,41 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an9/r20",
+    "slug": "late-fee-rounding"
+  },
+  "decisions": [
+    {
+      "ask": "qual caminho o pedido de arredondar a multa para cima segue",
+      "settles": "compute_late_fee não existe aqui: a tarefa está planejada, não entregue, e a regra cobra R$ 1,00 por dia inteiro, sem fração a arredondar. Ou a revisão olhou outro código, ou você quer uma regra nova. Só você diz qual.",
+      "settles_by": "two-readings",
+      "others": [
+        {
+          "reply_word": "regra",
+          "what_it_does": "Analisa o arredondamento como regra nova de negócio, antes de qualquer plano.",
+          "entry": "/analyse",
+          "check": {
+            "answer": "accepts",
+            "refused": []
+          }
+        },
+        {
+          "reply_word": "entrega",
+          "what_it_does": "Planeja a entrega da multa como a especificação já diz, sem regra nova.",
+          "entry": "/plan-work",
+          "check": {
+            "answer": "accepts",
+            "refused": []
+          }
+        }
+      ],
+      "relation": "one-of",
+      "if_none": "Nada muda: nenhum arquivo é alterado."
+    }
+  ],
+  "report": "/tmp/an9/r20/.git/siegard/handoff/20261125T004007Z-route.md"
+}

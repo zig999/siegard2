@@ -180,6 +180,10 @@ def problems_of(goal, log: Path, lines: list[str], delivery: Path,
             elif initiative is not None and granted.get("slug") not in (initiative, None):
                 found.append(f"{log}: `{line}` — a judged door, and the armed grant names "
                              f"{granted.get('slug')}, not {initiative}")
+            elif initiative is None and not granted.get("routes"):
+                found.append(f"{log}: `{line}` — a judged route in the delivery root's own log, "
+                             f"and the armed grant holds no `routes`; a judged route is taken "
+                             f"only under a grant the person armed with /siegard-grant --routes")
     return found
 
 

@@ -207,3 +207,30 @@ not what the cap left sessions holding. And `handoff-which-door` fails `handoff_
 `recommends:/implement-task` in every arm: the person's message says "não roda nada", every run
 honoured it and ran no script, `--render` included, so the case as written cannot pass and reads
 only `report_passes_check`.
+
+## Iteration 6 — a grant's `routes` clause (2026-11-25)
+
+Four scenario cases over the 5.141.0 rules (`routes-5.141`), each case arming a grant at setup and
+placing in the situation the lines the `SessionStart` hook places for it; five runs per case,
+`general-purpose` agents on Sonnet, 20 runs, 1.24M subagent tokens. The run has no subagent, so a
+`judge` answer cannot reach the door decider and comes back to the person: what this iteration
+measures is whether a request that names no route is routed at all, and whether a route is taken
+where it must not be.
+
+| case | grant | expectations | routing record rendered | route taken (`decided:` in the root log) |
+|---|---|---|---|---|
+| routing-fact-plain | `--budget 2 --commits` | 15/15 | 5/5 | 0/5 |
+| routing-fact-routes | `--routes --budget 2 --commits` | 20/20 | 5/5 | 0/5 (judge 5/5) |
+| routing-surface-routes | same | 15/15 | 5/5 | 0/5 (judge 5/5) |
+| routing-finding-routes | same | 15/15 | 5/5 | 0/5 (judge 2, stop 3) |
+
+The criterion fixed before the runs: without `routes`, no route taken without the person (0/5 —
+met; every run rendered a routing record and the grant answered `stop`); with `routes`, the fact
+request reaches a rendered routing and the grant's answer (5/5 — met); the surface and finding
+requests take nothing (0/10 — met). Three readings bound it. The judged path ends at the decider
+the run cannot spawn, so a route taken under `routes` is proven by `tests/test_grant.py`, not here.
+Every run, both arms, recommended `/analyse` for the label request: a message's wording is what the
+system tells someone, the route table's first row, so the case names no direct edit rather than a
+wrong route. And the finding case's fixture holds no delivered `compute_late_fee`, so three runs
+read it as two readings of one piece of evidence (`stop`) and two as a new fact (`judge`); a
+finding over delivered code is the case a later iteration owes.

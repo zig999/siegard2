@@ -1,0 +1,16 @@
+ls -la /tmp/an9/r15 /tmp/an9/r15.plugin /tmp/an9/r15.plugin/bin; mkdir -p /tmp/an9/out/r15 — exit 0
+cd /tmp/an9/r15 && cat siegard.json && git status --short && git log --oneline | head && find spec work app telemetry -type f | head -80; python3 /tmp/an9/r15.plugin/bin/door.py --help | head -80 — exit 0
+cd /tmp/an9/r15 && cat telemetry/ask-*.md; for f in <8 spec nodes>; do cat $f; done; cat work/lending/plan.json | head -40; cat app/lending/loans.py | head -60 — exit 0
+python3 /tmp/an9/r15.plugin/bin/door.py --check analyse --project /tmp/an9/r15 — exit 0
+python3 /tmp/an9/r15.plugin/bin/door.py --check plan-work --project /tmp/an9/r15 --slug lending — exit 0
+python3 /tmp/an9/r15.plugin/bin/handoff.py --help | head -70 — exit 0 (pipe closed by head)
+python3 /tmp/an9/r15.plugin/bin/handoff.py --prepare --skill analyse --project /tmp/an9/r15 — exit 0
+python3 /tmp/an9/r15.plugin/bin/handoff.py --help | sed -n 70,140p — exit 0
+python3 /tmp/an9/r15.plugin/bin/ask.py --help | head -60 — exit 0
+python3 /tmp/an9/r15.plugin/bin/grant.py --help | grep -n -i -B2 -A8 route | head -120 — exit 0
+printf <the person's message, verbatim> | python3 /tmp/an9/r15.plugin/bin/ask.py --record /tmp/an9/r15 --text-file - — exit 0
+python3 /tmp/an9/r15.plugin/bin/handoff.py --prepare --route --project /tmp/an9/r15 --slug renewal-block --ask /tmp/an9/r15/telemetry/ask-20261125T004010Z.md --language pt-BR — exit 0
+cat /tmp/an9/r15.plugin/schemas/handoff.json — exit 0
+python3 -B /tmp/an9/r15.plugin/bin/handoff.py --save-report /tmp/an9/r15/.git/siegard/handoff/20261125T004013Z-route.md (stdin: report) — exit 0
+python3 -B /tmp/an9/r15.plugin/bin/handoff.py --render - (first record, block over 700 chars) — exit 1
+python3 -B /tmp/an9/r15.plugin/bin/handoff.py --render - (shortened record) | tee — exit 0

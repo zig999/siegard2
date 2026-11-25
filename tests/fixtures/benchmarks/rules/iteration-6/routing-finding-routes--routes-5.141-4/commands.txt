@@ -1,0 +1,14 @@
+ls -la /tmp/an9/r10 /tmp/an9/r10.plugin /tmp/an9/r10.plugin/bin; ls /tmp/an9/out ; 0
+cd /tmp/an9/r10 && python3 /tmp/an9/r10.plugin/bin/handoff.py --help; cat siegard.json; git status --short; git log --oneline | head ; 0
+cd /tmp/an9/r10 && python3 /tmp/an9/r10.plugin/bin/ask.py --help; find app spec work -type f | head -50; python3 /tmp/an9/r10.plugin/bin/grant.py --help | head -80 ; 0
+cd /tmp/an9/r10 && cat spec/rules/lending/late-fee-per-overdue-day.md spec/rules/lending/late-fee-per-overdue-day.log.md work/lending/task/fees/compute-late-fee.md; grep -n "late_fee" -A12 app/lending/loans.py ; 0
+cd /tmp/an9/r10 && grep -rn "late_fee\|round\|ceil\|floor" app | head -20; ls app/lending; wc -l app/lending/loans.py ; 0
+cd /tmp/an9/r10 && cat app/lending/loans.py app/tests/test_loans.py; cat work/lending/inventory/lending-app.md | head -40; head -c 1500 work/lending/plan.json ; 0
+cd /tmp/an9/r10 && ls -la telemetry; find . -path ./.git -prune -o -type f -newer siegard.json -print | head; ls $(git rev-parse --git-common-dir)/siegard; python3 /tmp/an9/r10.plugin/bin/grant.py --read /tmp/an9/r10 ; 0
+cd /tmp/an9/r10 && printf '%s' '<the person message>' | python3 /tmp/an9/r10.plugin/bin/ask.py --record /tmp/an9/r10 --text-file - ; 0
+cd /tmp/an9/r10 && python3 /tmp/an9/r10.plugin/bin/handoff.py --prepare --route --project /tmp/an9/r10 --slug late-fee-rounding --ask /tmp/an9/r10/telemetry/ask-20261125T004003Z.md --language pt-BR > skeleton.json ; 0
+cd /tmp/an9/r10 && python3 /tmp/an9/r10.plugin/bin/door.py --help | head -60 ; 0
+python3 -c "import json;d=json.load(open('handoff.json'))..." (in /tmp/an9/r10.plugin/schemas, print schema) ; 0
+cd /tmp/an9/r10 && python3 /tmp/an9/r10.plugin/bin/handoff.py --save-report /tmp/an9/r10/.git/siegard/handoff/20261125T004006Z-route.md <<heredoc ; 0
+cd /tmp/an9/r10 && python3 /tmp/an9/r10.plugin/bin/handoff.py --render /tmp/an9/out/r10/record.json ; 1 (block over 700 characters)
+cd /tmp/an9/r10 && python3 /tmp/an9/r10.plugin/bin/handoff.py --render /tmp/an9/out/r10/record.json ; 0

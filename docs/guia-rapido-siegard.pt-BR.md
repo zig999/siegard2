@@ -446,7 +446,7 @@ Antes do primeiro passo ele já confere tudo o que o `/deliver-scope` recusaria.
 Sem grant, uma decisão *judged* sempre volta para você.
 
 ```
-/siegard-grant [<project-root>] [--clear | [--slug <slug>] [--target <key>] [--doors <skill>,...|none] [--budget <n>] [--commits] [--close] [<uma frase sua>]]
+/siegard-grant [<project-root>] [--clear | [--slug <slug>] [--target <key>] [--doors <skill>,...|none] [--budget <n>] [--commits] [--close] [--routes] [<uma frase sua>]]
 ```
 
 | Parâmetro | Significado | Padrão |
@@ -460,6 +460,7 @@ Sem grant, uma decisão *judged* sempre volta para você.
 | `--budget <n>` | Quantas decisões **judged** por iniciativa | **0** (sem orçamento, decisão de custo para) |
 | `--commits` | Autoriza os commits do que a rota escreveu | Nenhum |
 | `--close` | Autoriza **fechar** a iniciativa quando tudo estiver entregue, provado e revisado (suas palavras são o motivo do fechamento) | Nenhum |
+| `--routes` | Deixa o Siegard escolher a **rota** de um pedido que não nomeia nenhuma: `/analyse` ou `/plan-work` numa iniciativa nova, do mesmo jeito que responde as portas de uma parada (orçamento de rotas *judged* contado à parte). Nunca com `--slug`, e só se `--doors` tiver `analyse` ou `plan-work` | Nenhum: a rota é sua |
 | frase | Qualquer texto seu | Opcional: as flags já são o grant |
 
 **Só um grant armado por projeto:** para mudar orçamento ou portas, arme de novo. O arming
@@ -467,13 +468,16 @@ substitui o grant em pé, que fica registrado como `replaced` (a linha `ended:` 
 cobria); não precisa de `--clear` antes.
 
 **O grant nunca toma:** escolha que só você faz, `push`, branch, edição fora de skill,
-`siegard.json`, standard, `CLAUDE.md`, nem nada fora do projeto. Se `--budget` for dado,
+`siegard.json`, standard, `CLAUDE.md`, nem nada fora do projeto. Com `--routes`, continuam suas a
+rota de um achado, uma rota de ponta a ponta (`/deliver-scope`, `/adopt-scope`) e o incremento
+corretivo. Se `--budget` for dado,
 `--doors` não pode ser vazio.
 
 **Exemplos:**
 ```
 /siegard-grant . --budget 5 --commits --close "pode seguir, eu reviso depois"
 /siegard-grant . --slug cupom --doors implement-task,review-change --commits
+/siegard-grant . --routes --budget 3 --commits
 /siegard-grant . --clear
 /siegard-grant
 ```

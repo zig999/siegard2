@@ -902,8 +902,12 @@ def test_a_door_its_entry_point_refuses_is_marked_with_its_fact(project):
 
 
 def test_a_door_no_script_decides_is_never_marked_accepted(project):
+    """Every door a skill's report hands has a check since `/analyse` gained one (SPEC-006 R9);
+    an entry point no script decides, such as `/survey`, is still never marked accepted."""
+    unchecked = handoff.check_door("survey", project, SLUG, None, [])
+    assert unchecked["answer"] == "not checked" and unchecked["why"]
     doors = doors_of(prepare(project, "reconcile", "--slug", SLUG))
-    assert doors["/analyse"]["answer"] == "not checked" and doors["/analyse"]["why"]
+    assert doors["/analyse"]["answer"] == "accepts"
     assert doors["/plan-work"]["answer"] == "accepts"
 
 
@@ -985,7 +989,7 @@ def test_a_ledger_with_open_lines_leads_the_state_and_hands_the_analysis_back(tm
     assert prepared["state_from"]["ledger"] == str(ledger.resolve())
     doors = [door["entry"] for door in prepared["decisions"][0]["others"]]
     assert doors[0] == "/analyse" and "/plan-work" in doors
-    assert doors_of(prepared)["/analyse"]["answer"] == "not checked"
+    assert doors_of(prepared)["/analyse"]["answer"] == "refuses"
 
 
 def test_a_ledger_with_no_open_line_changes_nothing(tmp_path):
@@ -1360,3 +1364,70 @@ def test_the_specification_states_what_render_writes_for_a_door():
     for words in ("`--render` writes the `entry` and the `check` of the door a record recommends",
                   "`inferred_slug`"):
         assert words in r9, words
+
+
+# ------------------------------------------------------------ routing a request (SPEC-011 R14)
+
+
+def recorded_ask(home: Path) -> Path:
+    path = home / "telemetry" / "ask-20261125T000000Z.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("adicione o desconto por fidelidade ao pedido\n", encoding="utf-8")
+    return path
+
+
+def route(home: Path, *extra: str) -> subprocess.CompletedProcess:
+    return run("--prepare", "--route", "--project", str(home), *extra)
+
+
+def test_a_routing_skeleton_hands_analyse_and_plan_work_each_checked(project):
+    """«whose doors are `/analyse` and `/plan-work`, each checked by `door.py --check` as the tree
+    stands and never over an initiative the record does not name; the record is kept under a
+    report whose name no skill's report carries» (SPEC-011 R14)"""
+    ask = recorded_ask(project)
+    done = route(project, "--slug", "loyalty-discount", "--ask", str(ask), "--language", "pt-BR")
+    assert done.returncode == 0, done.stdout + done.stderr
+    prepared = json.loads(done.stdout)
+    assert prepared["kind"] == "decision" and prepared["language"] == "pt-BR"
+    assert prepared["report"].endswith("-route.md")
+    assert handoff.is_routing(prepared)
+    checks = doors_of(prepared)
+    assert list(checks) == ["/analyse", "/plan-work"]
+    assert checks["/analyse"]["answer"] == "accepts"
+    assert checks["/plan-work"]["answer"] == "accepts"
+    assert prepared["state_from"].get("slug") == "loyalty-discount"
+    assert str(ask) in prepared["decisions"][0]["ask"]
+
+
+def test_a_routing_skeleton_refuses_a_slug_an_initiative_holds(project):
+    done = route(project, "--slug", SLUG, "--ask", str(recorded_ask(project)))
+    assert done.returncode == 1 and "a route opens a new initiative" in done.stdout
+
+
+def test_a_routing_skeleton_refuses_a_request_not_recorded(project):
+    done = route(project, "--slug", "loyalty-discount", "--ask", str(project / "nowhere.md"))
+    assert done.returncode == 1 and "is no recorded ask" in done.stdout
+
+
+@pytest.mark.parametrize("extra", [("--ask", "x.md"), ("--slug", "x"),
+                                   ("--slug", "x", "--ask", "x.md", "--skill", "analyse")])
+def test_a_routing_skeleton_cannot_run_without_its_inputs_or_beside_a_skill(project, extra):
+    assert route(project, *extra).returncode == 2
+
+
+def test_a_routing_record_never_checks_a_door_over_the_live_initiative(project):
+    """«save in a routing record `--prepare --route` wrote (SPEC-011 R14), whose doors are never
+    checked over an initiative it does not name» (SPEC-006 R9): with no slug left in the record,
+    the `/plan-work` door goes unchecked rather than checked over the live one."""
+    ask = recorded_ask(project)
+    prepared = json.loads(route(project, "--slug", "loyalty-discount", "--ask", str(ask)).stdout)
+    prepared["state_from"].pop("slug")
+    one = prepared["decisions"][0]
+    one["recommended"] = {"reply_word": "p", "door": "Plan it", "entry": "/plan-work",
+                          "why": "w", "reverses_if": "r"}
+    one["others"] = [door for door in one["others"] if door["entry"] != "/plan-work"]
+    done = handoff.completed(prepared)
+    check = done["decisions"][0]["recommended"]["check"]
+    assert check["answer"] == "not checked" and "inferred_slug" not in check
+    stop = handoff.completed({**prepared, "report": prepared["report"].replace("-route", "-plan-work")})
+    assert stop["decisions"][0]["recommended"]["check"].get("inferred_slug") == SLUG

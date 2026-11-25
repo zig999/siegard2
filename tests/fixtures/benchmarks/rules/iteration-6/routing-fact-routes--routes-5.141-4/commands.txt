@@ -1,0 +1,11 @@
+ls -la /tmp/an9/r05 /tmp/an9/r05.plugin /tmp/an9/r05.plugin/bin; mkdir -p /tmp/an9/out/r05 — exit 0
+cd /tmp/an9/r05 && python3 /tmp/an9/r05.plugin/bin/handoff.py --help 2>&1 | head -150 — exit 0
+cd /tmp/an9/r05 && cat siegard.json; git status --short; ls spec spec/* work | head -50 — exit 0
+cd /tmp/an9/r05 && python3 /tmp/an9/r05.plugin/bin/ask.py --help 2>&1 | head -60; python3 /tmp/an9/r05.plugin/bin/grant.py --help 2>&1 | head -60 — exit 0
+cd /tmp/an9/r05 && printf '%s' '<the person message>' | python3 /tmp/an9/r05.plugin/bin/ask.py --record /tmp/an9/r05 --text-file - — exit 0
+cd /tmp/an9/r05 && python3 /tmp/an9/r05.plugin/bin/handoff.py --prepare --route --project /tmp/an9/r05 --slug renewal-overdue-block --ask /tmp/an9/r05/telemetry/ask-20261125T003943Z.md --language pt-BR — exit 0
+cd /tmp/an9/r05 && find spec work app -type f | head -60; grep -rniE "renew|renov|overdue|atraso|90" spec | head -40 — exit 0
+cd /tmp/an9/r05 && python3 /tmp/an9/r05.plugin/bin/handoff.py --save-report /tmp/an9/r05/.git/siegard/handoff/20261125T003945Z-route.md <<EOF (report) — exit 0
+python3 -c (print handoff.json schema, 2 calls to inspect defs and x-labels) — exit 0
+cd /tmp/an9/r05 && python3 /tmp/an9/r05.plugin/bin/handoff.py --render - <<EOF (first record) — exit 1 (block over 700 characters)
+cd /tmp/an9/r05 && python3 /tmp/an9/r05.plugin/bin/handoff.py --render - <<EOF (shortened record) — exit 0

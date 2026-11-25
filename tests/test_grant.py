@@ -243,7 +243,7 @@ def test_an_invocation_that_names_nothing_arms_nothing_and_records_nothing(proje
     result = arm(project, words="")
     assert result.returncode == 1
     assert "the invocation names nothing" in result.stdout
-    assert "at least one of --doors, --budget, --commits or --close" in result.stdout
+    assert "at least one of --doors, --budget, --commits, --close or --routes" in result.stdout
     assert not armed(project).exists() and ask_files(project) == before
 
 
@@ -1238,3 +1238,132 @@ def test_the_post_tool_hook_never_fails_and_prints_nothing(stdin):
     done = subprocess.run([sys.executable, "-B", str(HOOKS / "after_tool.py")], input=stdin,
                           capture_output=True, text=True)
     assert done.returncode == 0 and done.stdout == "" and done.stderr == ""
+
+
+# ------------------------------------------------------------------- routes (R15, R14)
+
+
+def routing(*decisions: dict) -> dict:
+    return {**handoff(*decisions), "report": "/tmp/20261125T000000Z-route.md"}
+
+
+def route_door(word: str, entry: str, answer: str = "accepts") -> dict:
+    return door(word, entry, answer)
+
+
+def judged_route_line(mark: str) -> str:
+    return f"- decided: /plan-work — keeps the route — the request plans a capability (grant sha256 {mark})\n"
+
+
+def test_routes_is_held_only_where_the_person_names_it(project):
+    """«A grant armed without it holds none, and a record that lacks the key holds none.»
+    (SPEC-011 R15) The default every grant armed before the clause existed reads the same."""
+    assert arm(project, "--commits", "--budget", "2", slug=None).returncode == 0
+    assert record_of(project)["routes"] is False
+    out = arm(project, "--routes", "--budget", "2", slug=None)
+    assert out.returncode == 0, out.stdout + out.stderr
+    assert record_of(project)["routes"] is True
+    assert "routes: yes" in out.stdout and goal.GRANT_ROUTES_LINE in out.stdout
+
+
+@pytest.mark.parametrize("flags,slug,why", [
+    (("--routes",), SLUG, "`routes` never covers one initiative"),
+    (("--routes", "--doors", "implement-task,review-change"), None,
+     "`routes` needs `doors` to hold analyse or plan-work"),
+    (("--routes", "--doors", "none", "--commits"), None,
+     "`routes` needs `doors` to hold analyse or plan-work"),
+])
+def test_routes_is_refused_beside_a_slug_or_without_a_route_door(project, flags, slug, why):
+    out = arm(project, *flags, slug=slug)
+    assert out.returncode != 0 and why in out.stdout, out.stdout + out.stderr
+    assert not armed(project).exists()
+
+
+def test_a_routing_record_under_a_grant_without_routes_is_the_persons(project, tmp_path):
+    """«a grant that holds no `routes` answers every decision `stop: the grant holds no routes`»
+    (SPEC-011 R14), whatever its doors and budget: the record of a grant armed before the clause
+    existed, with no key at all, reads the same."""
+    assert arm(project, "--budget", "5", slug=None).returncode == 0
+    held = record_of(project)
+    held.pop("routes")
+    armed(project).write_text(json.dumps(held), encoding="utf-8")
+    record = routing({"ask": "which route?", "others": [route_door("a", "/analyse")],
+                      "if_none": "nothing runs"})
+    out = decide(project, record, tmp_path).stdout
+    assert "decision 1: stop: the grant holds no `routes`" in out
+    assert "take:" not in out and "judge:" not in out
+
+
+def test_the_one_route_left_is_taken_under_routes(project, tmp_path):
+    assert arm(project, "--routes", slug=None).returncode == 0
+    record = routing({"ask": "which route?", "if_none": "nothing runs", "relation": "one-of",
+                      "others": [route_door("a", "/analyse", "refuses"),
+                                 route_door("p", "/plan-work")]})
+    out = decide(project, record, tmp_path).stdout
+    assert "decision 1: take: p /plan-work" in out
+    assert "decided: /plan-work — precondition unmet" in out
+
+
+def test_a_judged_route_draws_on_the_routing_budget_and_stops_once_it_is_spent(project, tmp_path):
+    """«The routing budget is the grant's budget less the judged `decided:` lines carrying its
+    mark that the delivery root's own `orchestration.md` holds on disk beyond what it held when the
+    grant armed» (SPEC-011 R14): a line written and not committed is counted."""
+    assert arm(project, "--routes", "--budget", "1", slug=None).returncode == 0
+    record = routing(with_recommended("/analyse", "accepts", route_door("p", "/plan-work")))
+    out = decide(project, record, tmp_path).stdout
+    assert "decision 1: judge:" in out and "budget left 1" in out
+    log = project["home"] / "deliveries" / "orchestration.md"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    log.write_text(judged_route_line(record_of(project)["mark"]), encoding="utf-8")
+    spent = decide(project, record, tmp_path).stdout
+    assert "decision 1: stop: the grant's budget of judged routes is spent" in spent
+
+
+def test_a_line_of_another_grant_draws_nothing_on_the_routing_budget(project, tmp_path):
+    assert arm(project, "--routes", "--budget", "1", slug=None).returncode == 0
+    log = project["home"] / "deliveries" / "orchestration.md"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    log.write_text(judged_route_line("0123456789abcdef"), encoding="utf-8")
+    record = routing(with_recommended("/analyse", "accepts", route_door("p", "/plan-work")))
+    assert "budget left 1" in decide(project, record, tmp_path).stdout
+
+
+@pytest.mark.parametrize("entry", ["/deliver-scope", "/adopt-scope", "/review-change"])
+def test_a_recommended_route_outside_analyse_and_plan_work_stays_the_persons(project, tmp_path,
+                                                                            entry):
+    """«a recommended route outside them being `stop`» (SPEC-011 R14): an end-to-end route needs
+    words a grant never supplies."""
+    assert arm(project, "--routes", "--budget", "3", slug=None).returncode == 0
+    record = routing(with_recommended(entry, "accepts", route_door("a", "/analyse")))
+    out = decide(project, record, tmp_path).stdout
+    assert "decision 1: stop: the recommended route" in out and "is the person's" in out
+    assert "take:" not in out and "judge:" not in out
+
+
+def test_a_settled_routing_choice_stays_the_persons_under_routes(project, tmp_path):
+    assert arm(project, "--routes", "--budget", "3", slug=None).returncode == 0
+    record = routing({"ask": "which route?", "settles": "whether it is a fact or a label",
+                      "settles_by": "two-readings", "if_none": "nothing runs",
+                      "others": [route_door("a", "/analyse"), route_door("p", "/plan-work")]})
+    assert "decision 1: stop: the choice is the person's" in decide(project, record, tmp_path).stdout
+
+
+def test_a_stop_record_is_never_read_as_a_routing_record(project, tmp_path):
+    """A grant with `routes` answers a stop's record as it did before: R4 over every door."""
+    assert arm(project, "--routes", "--budget", "1", slug=None).returncode == 0
+    record = handoff(with_recommended("/review-change", "accepts", door("i", "/implement-task",
+                                                                        "accepts")))
+    out = decide(project, record, tmp_path, slug=SLUG).stdout
+    assert "decision 1: judge:" in out and "budget left 1" in out, out
+    assert "stop: the recommended route" not in out
+
+
+def test_the_commit_gate_admits_the_routing_log_only_under_routes(project):
+    assert arm(project, "--routes", "--commits", slug=None).returncode == 0
+    held = record_of(project)
+    fields = goal.resolve(project["home"], None)
+    fields["home"] = project["home"]
+    import grant as grant_module
+    assert "deliveries/orchestration.md" in grant_module.route_roots(fields, held)
+    assert "deliveries/orchestration.md" not in grant_module.route_roots(fields,
+                                                                         {**held, "routes": False})

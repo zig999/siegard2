@@ -1,0 +1,17 @@
+ls -la /tmp/an9/r19 /tmp/an9/r19.plugin /tmp/an9/r19.plugin/bin — exit 0
+cd /tmp/an9/r19; cat siegard.json; find spec work app telemetry -maxdepth 3 | head -60; git status --short | head; git log --oneline | head — exit 0
+python3 /tmp/an9/r19.plugin/bin/door.py --help | head -80 — exit 0
+python3 /tmp/an9/r19.plugin/bin/handoff.py --help | head -120 — exit 0
+python3 /tmp/an9/r19.plugin/bin/ask.py --help | head -60; ls -la telemetry; cat telemetry/ask-*.md — exit 0
+printf '%s' '<the person message>' | python3 /tmp/an9/r19.plugin/bin/ask.py --record /tmp/an9/r19 --text-file - — exit 0
+python3 /tmp/an9/r19.plugin/bin/handoff.py --prepare --route --project /tmp/an9/r19 --slug overdue-renewal-block --ask /tmp/an9/r19/telemetry/ask-20261125T004003Z.md --language pt-BR — exit 0
+cd /tmp/an9/r19/spec; cat rules/lending/loan-renewed-at-most-once.md rules/lending/reserved-copy-blocks-renewal.md rules/lending/overdue-member-cannot-borrow.md rules/lending/late-fee-per-overdue-day.md — exit 0
+python3 /tmp/an9/r19.plugin/bin/door.py --check analyse --project /tmp/an9/r19 — exit 0
+python3 /tmp/an9/r19.plugin/bin/door.py --check plan-work --project /tmp/an9/r19 --slug overdue-renewal-block — exit 0
+cat spec/domain/lending/loan.md | head -40 — exit 0
+sed -n 1,200p /tmp/an9/r19.plugin/schemas/handoff.json | head -150 — exit 0
+sed -n 150,330p /tmp/an9/r19.plugin/schemas/handoff.json — exit 0
+python3 -B /tmp/an9/r19.plugin/bin/handoff.py --save-report /tmp/an9/r19/.git/siegard/handoff/20261125T004007Z-route.md (full report on stdin) — exit 0
+python3 -B /tmp/an9/r19.plugin/bin/handoff.py --render /tmp/an9/r19.record.json — exit 1 (block 848 > 700)
+python3 (edit record JSON to shorten prose) — exit 0
+python3 -B /tmp/an9/r19.plugin/bin/handoff.py --render /tmp/an9/r19.record.json — exit 0 (grant answer on stderr: stop, the grant holds no routes)

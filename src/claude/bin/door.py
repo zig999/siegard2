@@ -73,8 +73,9 @@ its siblings, and runs them and project.py, spec.py and trace.py as commands).
 
 Usage:  door.py --check <skill> [--project <dir>] [--target <key>] [--slug <slug>] [--task <id>]... [--name <review-name>] [--scope <id>]... [--file <path>]... [--standard <file>]
                                     decide whether <skill>'s entry point refuses these inputs as
-                                    the tree stands: implement-task, plan-work, review-change,
-                                    deliver-scope or reconcile. --project defaults to the working
+                                    the tree stands: analyse, implement-task, plan-work,
+                                    review-change, deliver-scope or reconcile. analyse takes no
+                                    target and no slug: its root is the specification root. --project defaults to the working
                                     directory. --slug is required by plan-work, deliver-scope and
                                     reconcile, whose slug no tree decides; implement-task and
                                     review-change infer the one live initiative. --task names the
@@ -111,8 +112,10 @@ BIN = Path(__file__).resolve().parent
 sys.path.insert(0, str(BIN))
 
 CANNOT_RUN = 2
-DOORS = ("implement-task", "plan-work", "review-change", "deliver-scope", "reconcile", "commit")
+DOORS = ("analyse", "implement-task", "plan-work", "review-change", "deliver-scope", "reconcile",
+         "commit")
 ROOTS = {
+    "analyse": ("specification_root",),
     "implement-task": ("specification_root", "work_root", "delivery_root"),
     "plan-work": ("specification_root", "work_root"),
     "review-change": ("specification_root", "work_root", "delivery_root"),
@@ -130,6 +133,10 @@ RUN_DIR = "run"
 RECORD_DIRS = ("implementation", "proof", "review")
 
 NOT_DECIDED = {
+    "analyse": [
+        "the material — the person's prose, or a file of it; under a grant's route, the request "
+        "recorded verbatim by `ask.py --record` — is a required input no file decides",
+    ],
     "implement-task": [
         "a request naming several tasks is a stop — the request's words, which no file holds",
         "a proof-only re-delivery, or a task carrying `stands`: a binding of a node the task "
@@ -427,6 +434,16 @@ def door_implement_task(fields: dict, target: str, slug: str, args: dict, answer
         hold_standard(registry, *extra, answer=answer)
 
 
+def door_analyse(fields: dict, answer: Answer) -> None:
+    """What `/analyse` refuses before its first write: a specification root git does not hold, or
+    one holding a change it did not make — its commit takes that root, so it starts clean."""
+    specification = fields["specification_root"]
+    if toplevel(specification) is None:
+        answer.refuse(f"the specification root {specification} is not under git")
+        return
+    check_tree([specification], answer)
+
+
 def door_plan_work(fields: dict, target: str, slug: str, args: dict, answer: Answer) -> None:
     work = fields["work_root"] / slug
     specification = fields["specification_root"]
@@ -691,6 +708,10 @@ def check(door: str, project_root: Path, args: dict) -> Answer:
     if missing or (not fields["targets"] and door != "commit"):
         answer.refuse(f"siegard.json declares no {', '.join(missing or ['targets'])} — the entry "
                       f"point stops on it; /siegard-config declares it")
+        return answer
+
+    if door == "analyse":
+        door_analyse(fields, answer)
         return answer
 
     if door == "commit":

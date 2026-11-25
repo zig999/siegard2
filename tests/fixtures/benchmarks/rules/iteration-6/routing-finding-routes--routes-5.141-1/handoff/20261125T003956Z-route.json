@@ -1,0 +1,42 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an9/r08",
+    "slug": "late-fee-rounding"
+  },
+  "decisions": [
+    {
+      "ask": "por qual caminho o pedido de arredondar a multa por atraso para cima segue",
+      "recommended": {
+        "door": "Registrar a regra de arredondamento na especificação com /analyse, antes de planejar e codar.",
+        "why": "É um julgamento: a especificação só fala em R$ 1,00 por dia corrido, sem arredondamento, e o que o sistema cobra é fato do negócio.",
+        "reverses_if": "você disser que a especificação já cobre o arredondamento",
+        "reply_word": "A",
+        "entry": "/analyse",
+        "check": {
+          "answer": "accepts",
+          "refused": []
+        }
+      },
+      "others": [
+        {
+          "reply_word": "B",
+          "what_it_does": "Vai direto ao planejamento; a especificação segue sem dizer como arredondar.",
+          "entry": "/plan-work",
+          "check": {
+            "answer": "accepts",
+            "refused": []
+          }
+        }
+      ],
+      "if_none": "Nada muda: a especificação, o plano e o código ficam como estão.",
+      "relation": "one-of",
+      "invocation": "/analyse late-fee-rounding"
+    }
+  ],
+  "report": "/tmp/an9/r08/.git/siegard/handoff/20261125T003956Z-route.md"
+}

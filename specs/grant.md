@@ -84,6 +84,13 @@ bound a script on disk decides.
   recorded is printed: the initiative or the project, the doors, the budget, the clauses, the words'
   digest, the mark and the plugin's version.
 
+- **R15** — A grant may hold one more clause, `routes`, named alone by `--routes`: the choice of
+  route for a request that names none, as CLAUDE.md's recommendation authority allows a grant to
+  hold it. A grant armed without it holds none, and a record that lacks the key holds none.
+  `--arm` refuses `routes` beside `--slug` — a request's route opens a new initiative or changes the
+  specification, so a grant scoped to one initiative never covers it — and refuses it where
+  `doors` holds neither `analyse` nor `plan-work`, the only entry points a grant's route takes.
+
 ### What ends it
 
 - **R3** — A grant ends when the person clears it and, where it names an initiative, when that
@@ -132,6 +139,27 @@ bound a script on disk decides.
 - **R12** — Where the project holds a grant armed under the plugin's version, each `take` and `judge` a command prints — `bin/handoff.py --render` or `bin/grant.py --decide` — is an obligation of the session that ran it, which the plugin's `PostToolUse` hook records under the repository's git directory, never in the tree, from the command's own output and never from the session's transcript; a new answer replaces the obligations an earlier one left. A `take` is carried out by a `Skill` invocation of the door it named, a `judge` by an `Agent` spawn of `siegard:door-decider`. A stop of a session whose obligation is not carried out is blocked once by the plugin's `Stop` hook, its reason the grant's line and what carries it out, and the session's next stop is allowed whatever it holds. Each recording, carrying out, block and release is one line of `grant-checks.jsonl` beside the grant, carrying the `mode` it was answered under. `SIEGARD_GRANT_STOP` set to `measure` logs a stop's block without blocking; an armed goal's `not yet` answers its stop first, and a stop the grant blocks is not read by the handoff check.
 - **R13** — No rule: a stop that hands a decision with no render printed since the session's last stop is read by the handoff check, from the session's turn record (SPEC-008 R15), and the grant logs no line of its own for it.
 
+### Where a request meets it
+
+- **R14** — A request that names no route is routed by a record `bin/handoff.py --prepare --route`
+  writes — over a slug no initiative holds and the request `ask.py --record` copied whole — whose
+  doors are `/analyse` and `/plan-work`, each checked by `door.py --check` as the tree stands and
+  never over an initiative the record does not name; the record is kept under a report whose name
+  no skill's report carries, `<stamp>-route.md`. `--render` asks the grant as it does at a stop
+  (R9): a grant that holds no `routes` answers every decision `stop: the grant holds no routes`; one
+  that holds it answers as R4 does over those two doors alone, a recommended route outside them
+  being `stop`, and a judged route draws on a budget counted apart: «The routing budget is the
+  grant's budget less the judged `decided:` lines carrying its mark that the delivery root's own
+  `orchestration.md` holds on disk beyond what it held when the grant armed». A route taken is
+  carried out as R12 says, its `decided:` line written in the delivery root's own
+  `orchestration.md`, which `grant.py --commit` admits as a path the route writes where the grant
+  holds `routes`; the commit check refuses a judged line in that log under a grant without it. The
+  material `/analyse` reads under a taken route is the recorded request, never the session's
+  paraphrase of it. The route a finding deserves, an end-to-end route (`/deliver-scope`,
+  `/adopt-scope`) and a corrective increment are never a grant's route (R8). A plugin
+  `SessionStart` line says, while a grant holding `routes` stands, that a request naming no route
+  is routed so.
+
 ### The gates
 
 - **R7** — `bin/grant.py --commit`, over the paths a commit names, answers `accepts` only where the
@@ -153,7 +181,9 @@ bound a script on disk decides.
 - **R8** — Whatever the clauses say, a grant takes no push, no branch and no history rewrite; no
   edit of a file by the session outside a skill; no action in another project's tree and no command
   the project's registry does not declare; nothing a door's own check refuses; and no choice R3 of
-  SPEC-006 reserves to the person.
+  SPEC-006 reserves to the person. Under `routes`, the routes that edit a file directly — the
+  comment and the surface routes — are never a grant's, and neither are the route a finding
+  deserves, an end-to-end route or a corrective increment: the words each needs are the person's.
 
 ## Validation required before acceptance
 
@@ -201,6 +231,17 @@ bound a script on disk decides.
    `tests/test_grant.py`; and the note for a recommended door left unchecked for want of a slug, and for no
    other unchecked door — `tests/test_handoff.py`.
 9. For R12 and R13: tests hold `grant.py`'s reading of a render's output to one obligation per `take` and `judge` with the grant's mark and none for `stop`, the obligation to being carried out by the door's `Skill` and the decider's `Agent` and by nothing else, a stop with an obligation pending to one block and then a release, `measure` to never blocking, each line carrying its `mode`, a stop that hands an unrendered decision naming a door to no line of the grant's, and a grant of another version or none to silence — `tests/test_grant.py`; and the hooks to the declaration, to the goal's `not yet` answering first and to every failure allowing the stop — `tests/test_hooks.py`.
+
+10. For R15 and R14: tests hold `grant.py --arm` to recording `routes` only where named and to
+   refusing it beside `--slug` and without `analyse` or `plan-work` in `doors`; `--decide` over a
+   routing record to `stop` under a grant without `routes`, to `take` over the one route left, to
+   `judge` with the routing budget over two, to `stop` once that budget is spent counting a line
+   written and not committed, and to `stop` over a recommended route outside the two; `handoff.py
+   --prepare --route` to its doors, its report name, a refused taken slug and an unrecorded ask,
+   and `--render` to never inferring a slug for it; `door.py --check analyse` to what `/analyse`
+   refuses before its first write; the commit check to refusing a judged root-log line under a
+   grant without `routes`; and the start line to appearing only under `routes` —
+   `tests/test_grant.py`, `tests/test_handoff.py`, `tests/test_door.py`, `tests/test_hooks.py`.
 
 ## Readings
 
@@ -439,3 +480,17 @@ bound a script on disk decides.
   the grant holds `commits` — and the rules keep only that arming is the person's. Reversal: a
   session under a grant holding `commits` that commits a covered path without asking `--commit`
   while the gate line stood in its context.
+- 2026-11-25 — grounds for R15 and R14. The maintainer decided that which route a request takes is
+  configurable through the grant: without `routes` the person names or accepts it, with it the
+  framework chooses as it answers a stop's doors (CLAUDE.md, recommendation authority, the same
+  day). Read from the 5.139.0 window of inventory, productorder and configurator (2026-11-23..24):
+  of 41 person turns, about 14 chose a route or a door; in 4 of the 6 route answers the transcripts
+  of 11-20..11-24 hold, the person chose `/deliver-scope`, which stays the person's — so `routes`
+  answers the `/analyse` and `/plan-work` choices, not the most frequent one. A clean-context review
+  found the `analyse` door uncheckable (`door.py` had no check for it), the `plan-work` check
+  falling back to the live initiative, a per-initiative budget that a request without one could
+  never draw on, and a root-log judged line the commit check let through under any grant; each is
+  answered above. Nothing triggers a routing record mechanically: whether a session prepares one
+  for a request that names no route is measured from `handoff-checks.jsonl` in the week after the
+  release, and only a measured miss rate reopens a `UserPromptSubmit` hook. Reversal: judged routes
+  read as reverted outnumbering those that held, which narrows the grant back (CLAUDE.md).

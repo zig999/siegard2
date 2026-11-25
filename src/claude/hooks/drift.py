@@ -47,7 +47,10 @@ validators.
 
 A grant armed with `commits` is the other record a start reads: the gate a commit the grant covers
 asks, `grant.py --commit`, is placed in the session's context alone, at every start and after
-every compaction, so the session rules need not carry it into contexts no grant reaches.
+every compaction, so the session rules need not carry it into contexts no grant reaches; and a
+grant armed with `routes` places the line that says a request naming no route is routed by
+`handoff.py --prepare --route`: «A plugin `SessionStart` line says, while a grant holding `routes`
+stands, that a request naming no route is routed so.» (SPEC-011 R14)
 """
 from __future__ import annotations
 
@@ -149,8 +152,9 @@ def bound_line(root: Path, session: object) -> str:
 
 
 def grant_line(root: Path) -> str:
-    """The commit gate of a grant armed with `commits`, for the session alone; empty where no
-    grant is armed, where it holds no `commits`, or where the record cannot be read."""
+    """The commit gate of a grant armed with `commits`, and the routing line of one armed with
+    `routes`, for the session alone; empty where no grant is armed, where it holds neither, or
+    where the record cannot be read."""
     try:
         sys.path.insert(0, str(PLUGIN_ROOT / "bin"))
         from project import toplevel_of
@@ -163,9 +167,11 @@ def grant_line(root: Path) -> str:
         held = goal.read_armed(path) or {}
     except (Exception, SystemExit):
         return ""
-    if held.get("contract") != GRANT_CONTRACT or held.get("commits") is not True:
+    if held.get("contract") != GRANT_CONTRACT:
         return ""
-    return goal.GRANT_COMMITS_LINE
+    return "\n".join(line for line, holds in ((goal.GRANT_COMMITS_LINE, held.get("commits")),
+                                               (goal.GRANT_ROUTES_LINE, held.get("routes")))
+                     if holds is True)
 
 
 def targets_of(root: Path) -> list[Path]:

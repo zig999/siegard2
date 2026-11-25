@@ -1,0 +1,12 @@
+/tmp/an9/prompts/r01.txt
+/tmp/an9/r01.rules.md
+/tmp/an9/r01/siegard.json
+/tmp/an9/r01/app/lending/loans.py
+/tmp/an9/r01/app/standard.yaml
+/tmp/an9/r01/work/lending/epic/fees.md
+/tmp/an9/r01/work/lending/task/fees/compute-late-fee.md
+/tmp/an9/r01/telemetry/ask-20261125T003913Z.md
+/tmp/an9/r01.plugin/bin/handoff.py (--help and lines 664-700, grep)
+/tmp/an9/r01.plugin/bin/ask.py (--help)
+/tmp/an9/r01.plugin/bin/grant.py (--help)
+/tmp/an9/r01.plugin/schemas/handoff.json

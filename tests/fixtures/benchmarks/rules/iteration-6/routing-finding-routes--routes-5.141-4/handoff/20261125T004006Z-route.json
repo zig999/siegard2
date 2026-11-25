@@ -1,0 +1,42 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an9/r10",
+    "slug": "late-fee-rounding"
+  },
+  "decisions": [
+    {
+      "ask": "compute_late_fee não existe no código e nenhuma revisão está gravada: o que você quer?",
+      "settles": "Leitura 1: arredondar para cima é regra nova, que a especificação não guarda (ela diz R$ 1,00 por dia de calendário, dias inteiros). Leitura 2: a revisão olhou outro código, e falta entregar a tarefa que cria a função. Diga qual vale e de onde veio a revisão.",
+      "settles_by": "two-readings",
+      "others": [
+        {
+          "reply_word": "a",
+          "what_it_does": "Registra o arredondamento como regra nova na especificação, antes do plano e da entrega.",
+          "entry": "/analyse",
+          "check": {
+            "answer": "accepts",
+            "refused": []
+          }
+        },
+        {
+          "reply_word": "b",
+          "what_it_does": "Replaneja a tarefa da multa sobre a regra atual, sem arredondamento; a especificação não muda.",
+          "entry": "/plan-work",
+          "check": {
+            "answer": "accepts",
+            "refused": []
+          }
+        }
+      ],
+      "if_none": "Nada muda.",
+      "relation": "one-of",
+      "invocation": "/analyse"
+    }
+  ],
+  "report": "/tmp/an9/r10/.git/siegard/handoff/20261125T004006Z-route.md"
+}

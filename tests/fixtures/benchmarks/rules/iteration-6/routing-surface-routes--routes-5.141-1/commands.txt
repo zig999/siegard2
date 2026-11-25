@@ -1,0 +1,14 @@
+ls -la /tmp/an9/r01 /tmp/an9/r01.plugin /tmp/an9/r01.plugin/bin; mkdir -p /tmp/an9/out/r01 — exit 0
+cd /tmp/an9/r01; cat siegard.json; find app work telemetry -type f | head -50; git status --short | head; python3 /tmp/an9/r01.plugin/bin/handoff.py --help 2>&1 | head -80 — exit 0
+cd /tmp/an9/r01; python3 /tmp/an9/r01.plugin/bin/handoff.py --help 2>&1 | sed -n 80,200p; grep -n "route" /tmp/an9/r01.plugin/bin/handoff.py | head -60 — exit 0
+cd /tmp/an9/r01; cat app/lending/loans.py; ls app; cat app/standard.yaml; cat work/lending/epic/fees.md work/lending/task/fees/compute-late-fee.md | head -80; ls spec spec/* — exit 0
+cd /tmp/an9/r01; grep -rn "Late fee\|fees.py\|Multa" . | grep -v "^./.git/" | head; find . -name "fees*" -not -path "./.git/*"; find spec -type f | xargs ls; cat telemetry/ask-*.md; git log --oneline | head — exit 0
+cd /tmp/an9/r01; python3 /tmp/an9/r01.plugin/bin/ask.py --help 2>&1 | head -40; python3 /tmp/an9/r01.plugin/bin/grant.py --help 2>&1 | head -60 — exit 0
+cd /tmp/an9/r01; printf '%s' '<the person message>' | python3 /tmp/an9/r01.plugin/bin/ask.py --record /tmp/an9/r01 --text-file - — exit 0
+cd /tmp/an9/r01; python3 /tmp/an9/r01.plugin/bin/handoff.py --prepare --route --project /tmp/an9/r01 --slug late-fee-label --ask /tmp/an9/r01/telemetry/ask-20261125T003943Z.md --language pt-BR — exit 0
+cd /tmp/an9/r01.plugin/schemas; ls; python3 -c "<print handoff.json first 7000 chars>"; sed -n 664,700p ../bin/handoff.py — exit 0
+cd /tmp/an9/r01.plugin/schemas; python3 -c "<print handoff.json chars 7000-14000>"; sed -n 664,700p ../bin/handoff.py — exit 0
+python3 /tmp/an9/r01.plugin/bin/handoff.py --save-report /tmp/an9/r01/.git/siegard/handoff/20261125T003945Z-route.md (heredoc report) — exit 0
+python3 /tmp/an9/r01.plugin/bin/handoff.py --render /tmp/an9/out/r01/record.json (first record) — exit 1
+python3 /tmp/an9/r01.plugin/bin/handoff.py --render /tmp/an9/out/r01/record.json (shortened record) — exit 0
+python3 /tmp/an9/r01.plugin/bin/handoff.py --render /tmp/an9/out/r01/record.json (label duplicate fixed) — exit 0

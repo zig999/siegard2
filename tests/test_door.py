@@ -680,3 +680,35 @@ def test_commit_reads_no_run_for_a_pathspec_outside_the_delivery_root(project):
 def test_commit_takes_no_target_and_no_standard(project):
     assert door(project, "commit", "--target", "app").returncode == 2
     assert door(project, "commit", "--standard", "x.json").returncode == 2
+
+
+# ---------------------------------------------------------------- analyse (SPEC-006 R9)
+
+
+def test_analyse_accepts_a_clean_specification_root_and_takes_no_target_or_slug(project):
+    """`/analyse` takes the specification root and the material, and no target or slug: two
+    targets and several live initiatives are no refusal of it."""
+    declare(project, targets={"app": "target", "web": "target"})
+    (project / "plans" / "other").mkdir()
+    (project / "plans" / "other" / "plan.md").write_text("x\n", encoding="utf-8")
+    commit(project)
+    result = door(project, "analyse")
+    accepts(result)
+    assert "not decided: the material" in result.stdout
+
+
+def test_analyse_refuses_a_pending_change_under_the_specification_root(project):
+    (project / "specification/domain/sales/order.md").write_text("changed\n", encoding="utf-8")
+    refuses(door(project, "analyse"), "git status --porcelain --", "specification")
+
+
+def test_analyse_refuses_a_specification_root_git_does_not_hold(tmp_path):
+    (tmp_path / "specification").mkdir()
+    (tmp_path / "siegard.json").write_text(json.dumps(DECLARED), encoding="utf-8")
+    refuses(door(tmp_path, "analyse"), "is not under git")
+
+
+def test_analyse_refuses_where_the_file_declares_no_specification_root(project):
+    declare(project, specification_root=...)
+    commit(project)
+    refuses(door(project, "analyse"), "siegard.json declares no specification_root")

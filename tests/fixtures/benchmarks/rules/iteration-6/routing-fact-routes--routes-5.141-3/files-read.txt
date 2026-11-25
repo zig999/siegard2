@@ -1,0 +1,9 @@
+/tmp/an9/prompts/r04.txt
+/tmp/an9/r04.rules.md
+/tmp/an9/r04/siegard.json
+/tmp/an9/r04/spec/rules/lending/loan-renewed-at-most-once.md
+/tmp/an9/r04/spec/rules/lending/reserved-copy-blocks-renewal.md
+/tmp/an9/r04/spec/rules/lending/overdue-member-cannot-borrow.md
+/tmp/an9/r04/spec/rules/lending/renewal-extends-due-date-fourteen-days.md
+/tmp/an9/r04/spec/domain/lending/loan.md
+/tmp/an9/r04.plugin/schemas/handoff.json

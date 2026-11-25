@@ -1,0 +1,8 @@
+/tmp/an9/prompts/r06.txt
+/tmp/an9/r06.rules.md
+/tmp/an9/r06/siegard.json
+/tmp/an9/r06/telemetry/ask-20261125T003915Z.md
+/tmp/an9/r06/spec/rules/lending/reserved-copy-blocks-renewal.md
+/tmp/an9/r06/work/lending/plan.json
+/tmp/an9/r06.plugin/schemas/handoff.json
+spec/ (grep over all files under /tmp/an9/r06/spec for 90|overdue|renew|atraso|renov)

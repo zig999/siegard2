@@ -23,7 +23,12 @@ zero where the person names none;
 `commits`, which lets a session commit what the route wrote; `close`, which lets a session
 close an initiative where R7 holds, the grant's words being the reason it is closed under.»
 (SPEC-011 R2) The recorded invocation is the closing reason: it is recorded verbatim and no
-other text is.
+other text is. `routes`, named alone by `--routes`, lets the grant hold the choice of route for a
+request that names none: «The route a finding deserves, an end-to-end route (`/deliver-scope`,
+`/adopt-scope`) and a corrective increment are never a grant's route (R8).» (SPEC-011 R14) A
+routing record `handoff.py --prepare --route` wrote is answered like a stop's, over `/analyse` and
+`/plan-work` alone, within a budget the grant counts in the delivery root's own log; a grant
+without it answers every routing decision `stop`.
 
 **`--decide` answers a stop's handoff record, one line per decision.** `stop: <why>`, `take: <door>
 — precondition unmet — <fact>`, or `judge:` followed by the doors, the budget left and the
@@ -43,13 +48,15 @@ follows for every refusal and a `checked:` line for every check that passed.
 Declared dependencies: PyYAML and jsonschema (through goal.py and spec.py, its siblings, which this
 script imports; it runs ask.py and project.py as commands).
 
-Usage:  grant.py --arm <project-root> [--slug <slug>] [--target <key>] [--doors <skill>[,<skill>...]|none] [--budget <n>] [--commits] [--close] --words-file <file|->
+Usage:  grant.py --arm <project-root> [--slug <slug>] [--target <key>] [--doors <skill>[,<skill>...]|none] [--budget <n>] [--commits] [--close] [--routes] --words-file <file|->
                                     record the person's words and arm the grant for the project, or
                                     for one initiative where --slug names it; --words-file is the
                                     text the person typed after the flags, copied verbatim; --doors
                                     names the entry points a stop may take, all six where it is
                                     absent, and `none` where the grant is for commits or a closing
-                                    alone
+                                    alone; --routes lets it hold the choice of route for a request,
+                                    never with --slug, and only where --doors holds analyse or
+                                    plan-work
         grant.py --disarm <project-root>
                                     end the armed grant, which is what /siegard-grant --clear runs
         grant.py --read <project-root>
@@ -101,6 +108,8 @@ ASK_LINE = re.compile(r"^ask: (\S+) \(sha256 ([0-9a-f]{16})\)")
 CREDENTIALS = re.compile(r"(^\.env|\.(pem|key|p12|pfx|jks)$|^id_(rsa|dsa|ecdsa|ed25519)|"
                          r"credential|secret|(^|/)\.ssh/|(^|/)\.aws/)", re.I)
 CLOSED_AFTER = ("records", "review", "criteria", "delivery", "plan", "specification")
+ROUTE_DOORS = ("analyse", "plan-work")
+ROUTE_REPORT = re.compile(r"Z-route\.md$")
 
 
 def grant_path(home: Path) -> Path:
@@ -191,11 +200,13 @@ def replaced_line(held: dict) -> str:
             f"covered {held.get('slug') or 'every live initiative of the project'}, doors "
             f"{held_doors}, budget {held.get('budget', 0)}, commits "
             f"{'yes' if held.get('commits') else 'no'}, close {'yes' if held.get('close') else 'no'}, "
+            f"routes {'yes' if held.get('routes') else 'no'}, "
             f"mark (grant sha256 {mark_of(held) if held else 'unknown'})")
 
 
 def arm(project_root: Path, slug: str | None, target: str | None, doors: list[str] | None,
-        budget: int, commits: bool, close: bool, words: str) -> tuple[list[str], dict | None]:
+        budget: int, commits: bool, close: bool, words: str,
+        routes: bool = False) -> tuple[list[str], dict | None]:
     doors = list(ALLOWED) if doors is None else doors
     refused = []
     unknown = [door for door in doors if door not in ALLOWED]
@@ -207,9 +218,16 @@ def arm(project_root: Path, slug: str | None, target: str | None, doors: list[st
                        "is named")
     if budget and not doors:
         refused.append("a budget of judged doors needs `doors`")
+    if routes and slug:
+        refused.append("`routes` never covers one initiative: a request's route opens a new "
+                       "initiative or changes the specification, so a grant naming --slug holds "
+                       "no `routes`")
+    if routes and not any(door in doors for door in ROUTE_DOORS):
+        refused.append(f"`routes` needs `doors` to hold {' or '.join(ROUTE_DOORS)}, the only "
+                       f"entry points a grant's route takes")
     if not words.strip():
         refused.append("the invocation names nothing: a grant is armed by the person's own "
-                       "arguments — at least one of --doors, --budget, --commits or --close — "
+                       "arguments — at least one of --doors, --budget, --commits, --close or --routes — "
                        "recorded as typed, and an invocation with none arms nothing")
     fields, said = fields_of(project_root, target)
     refused += live_initiative(fields, slug) if slug else []
@@ -227,7 +245,7 @@ def arm(project_root: Path, slug: str | None, target: str | None, doors: list[st
     armed_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     record = {"contract": CONTRACT, "project_root": str(project_root), "slug": slug,
               "target": fields["target"], "doors": doors, "budget": budget, "commits": commits,
-              "close": close, "words": {"path": goal.relative(fields, words_path),
+              "close": close, "routes": routes, "words": {"path": goal.relative(fields, words_path),
                                         "sha256": digest},
               "version": goal.plugin_version(),
               "since": goal.git(fields["home"], "rev-parse", "HEAD"),
@@ -246,7 +264,9 @@ def arm(project_root: Path, slug: str | None, target: str | None, doors: list[st
                f"covers: {slug or 'every live initiative of the project'}",
                f"doors: {', '.join(doors) or 'none'}", f"budget of judged doors for each initiative: {budget}",
                f"commits: {'yes' if commits else 'no'}", f"close: {'yes' if close else 'no'}",
-               f"plugin: {record['version']}"] + ([goal.GRANT_COMMITS_LINE] if commits else [])
+               f"routes: {'yes' if routes else 'no'}",
+               f"plugin: {record['version']}"] + ([goal.GRANT_COMMITS_LINE] if commits else []) \
+        + ([goal.GRANT_ROUTES_LINE] if routes else [])
     return ([said] if said else []) + summary, record
 
 
@@ -282,19 +302,63 @@ def budget_left(fields: dict, held: dict, slug: str | None) -> int:
     return max(0, held["budget"] - taken)
 
 
+def routing_log(fields: dict) -> Path:
+    return fields["delivery_root"] / "orchestration.md"
+
+
+def routing_budget_left(fields: dict, held: dict) -> int:
+    """The judged routes the grant may still take: its budget less the judged `decided:` lines
+    carrying its mark that the delivery root's own log holds beyond what it held when the grant
+    armed, read on disk, so a line written and not yet committed is counted too: «The routing
+    budget is the grant's budget less the judged `decided:` lines carrying its mark that the
+    delivery root's own `orchestration.md` holds on disk beyond what it held when the grant armed»
+    (SPEC-011 R14)."""
+    path = routing_log(fields)
+    if not path.is_file():
+        return held["budget"]
+    at = goal.relative(fields, path)
+    before = subprocess.run(["git", "-C", str(fields["home"]), "show", f"{held['since']}:{at}"],
+                            capture_output=True, text=True).stdout
+    earlier = [line.strip() for line in before.splitlines()]
+    taken = 0
+    for line in (line.strip() for line in path.read_text(encoding="utf-8").splitlines()):
+        found = goal.log_line(line)
+        if line in earlier:
+            earlier.remove(line)
+        elif goal.TAKEN_JUDGED.match(found) and f"{goal.GRANT_MARK}{mark_of(held)})" in found:
+            taken += 1
+    return max(0, held["budget"] - taken)
+
+
+def is_routing(record: dict) -> bool:
+    """Whether a handoff record is a routing record `handoff.py --prepare --route` wrote: it is
+    told apart by its report's name, which no skill's report carries."""
+    return bool(ROUTE_REPORT.search(str(record.get("report") or "")))
+
+
 def skill_of(door: dict) -> str | None:
     entry = door.get("entry")
     return entry.lstrip("/") if isinstance(entry, str) else None
 
 
 def decide_one(number: int, decision: dict, held: dict, fields: dict,
-               slug: str | None = None) -> list[str]:
+               slug: str | None = None, routing: bool = False) -> list[str]:
     head = f"decision {number}:"
+    if routing and not held.get("routes"):
+        return [f"{head} stop: the grant holds no `routes`, so the route is the person's to name "
+                f"or to accept"]
     if decision.get("settles"):
         return [f"{head} stop: the choice is the person's, and the record says what would settle "
                 f"it"]
     offered = ([decision["recommended"]] if decision.get("recommended") else []) \
         + list(decision.get("others") or [])
+    if routing:
+        chosen = decision.get("recommended")
+        if chosen and skill_of(chosen) not in ROUTE_DOORS:
+            return [f"{head} stop: the recommended route, "
+                    f"{skill_of(chosen) or 'with no entry point'}, is the person's: a grant's "
+                    f"route takes only {' or '.join('/' + door for door in ROUTE_DOORS)}"]
+        offered = [door for door in offered if skill_of(door) in ROUTE_DOORS]
     excluded = [door for door in offered if (door.get("check") or {}).get("answer") == "refuses"]
     remaining = [door for door in offered if door not in excluded]
     if not remaining:
@@ -324,10 +388,11 @@ def decide_one(number: int, decision: dict, held: dict, fields: dict,
         return [f"{head} stop: no recommended door is in the grant's doors"]
     if (recommended.get("check") or {}).get("answer") != "accepts":
         return [f"{head} stop: the recommended door was not accepted by `door.py --check`"]
-    left = budget_left(fields, held, slug)
+    left = routing_budget_left(fields, held) if routing else budget_left(fields, held, slug)
     if left <= 0:
-        return [f"{head} stop: the grant's budget of judged doors for "
-                f"{slug or 'an initiative no --slug names'} is spent"]
+        return [f"{head} stop: the grant's budget of judged "
+                + ("routes is spent" if routing else
+                   f"doors for {slug or 'an initiative no --slug names'} is spent")]
     lines = [f"{head} judge: spawn the door decider over these doors, budget left {left}; end the "
              f"deciding fact of the `decided:` line with `(grant sha256 {mark_of(held)})`"]
     for door in remaining:
@@ -341,7 +406,8 @@ def decide_one(number: int, decision: dict, held: dict, fields: dict,
 
 
 CARRY = ("carry: each decision line below is carried out by its kind — a take is taken, its door "
-         "invoked and the `decided` line under it written in the run's orchestration log; a judge "
+         "invoked and the `decided` line under it written in the run's orchestration log, or for a "
+         "route in the delivery root's own orchestration.md; a judge "
          "goes to `siegard:door-decider` over the doors it prints and nothing else; a stop is "
          "handed to the person; a note is carried as it says, and the handoff rendered again")
 
@@ -354,8 +420,10 @@ def decide(project_root: Path, record: dict, slug: str | None = None) -> tuple[l
     decisions = record.get("decisions") or []
     lines = [f"grant: {held.get('slug') or 'every live initiative'} (sha256 {mark_of(held)})",
              CARRY]
+    routing = is_routing(record)
     for number, decision in enumerate(decisions, 1):
-        lines += decide_one(number, decision, held, fields, held.get("slug") or slug)
+        lines += decide_one(number, decision, held, fields, None if routing else
+                            held.get("slug") or slug, routing)
     if record.get("report"):
         lines.append(f"report: {record['report']}")
     return lines, 0
@@ -389,6 +457,8 @@ def route_roots(fields: dict, held: dict) -> list[str]:
     chosen = [fields["telemetry_root"], home / "siegard-reconcile", home / "siegard-trace.json"]
     for slug in covered(fields, held):
         chosen += [fields["delivery_root"] / slug, fields["work_root"] / slug]
+    if held.get("routes"):
+        chosen.append(routing_log(fields))
     return [goal.relative(fields, item).rstrip("/") for item in chosen]
 
 
@@ -666,7 +736,8 @@ def main(argv: list[str]) -> int:
             budget_text = take(args, "--budget")
             source = take(args, "--words-file")
             commits, close = "--commits" in args, "--close" in args
-            for word in ("--commits", "--close"):
+            routes = "--routes" in args
+            for word in ("--commits", "--close", "--routes"):
                 if word in args:
                     args.remove(word)
             if args or source is None:
@@ -677,7 +748,7 @@ def main(argv: list[str]) -> int:
             if budget_text is not None and not budget_text.isdigit():
                 raise goal.Refused("--budget is a whole number")
             lines, record = arm(project_root, slug, target, doors, int(budget_text or 0),
-                                commits, close, words_from(source))
+                                commits, close, words_from(source), routes)
             print("\n".join(lines))
             return 0 if record else REFUSED
         if flag in ("--disarm", "--read", "--close", "--decide", "--commit"):

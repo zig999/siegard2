@@ -1,0 +1,39 @@
+{
+  "commits": [],
+  "branches": [
+    "main"
+  ],
+  "origin_moved": false,
+  "routes_decided": [],
+  "specification_pending": "",
+  "origin_holds_head": true,
+  "asks": [
+    "--routes --budget 2 --commits\n",
+    "quero que um empréstimo em atraso há mais de 90 dias seja bloqueado para renovação — hoje ele pode ser renovado"
+  ],
+  "handoff_records": [
+    "20261125T003956Z-route.json"
+  ],
+  "handoff_calls": [
+    {
+      "flag": "--help",
+      "exit": 0
+    },
+    {
+      "flag": "--prepare",
+      "exit": 0
+    },
+    {
+      "flag": "--save-report",
+      "exit": 0
+    },
+    {
+      "flag": "--render",
+      "exit": 1
+    },
+    {
+      "flag": "--render",
+      "exit": 0
+    }
+  ]
+}

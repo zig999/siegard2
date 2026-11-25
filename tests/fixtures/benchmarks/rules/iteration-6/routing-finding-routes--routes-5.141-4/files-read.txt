@@ -1,0 +1,12 @@
+/tmp/an9/prompts/r10.txt
+/tmp/an9/r10.rules.md
+/tmp/an9/r10/siegard.json
+/tmp/an9/r10/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/an9/r10/spec/rules/lending/late-fee-per-overdue-day.log.md
+/tmp/an9/r10/work/lending/task/fees/compute-late-fee.md
+/tmp/an9/r10/app/lending/loans.py
+/tmp/an9/r10/app/tests/test_loans.py
+/tmp/an9/r10/work/lending/inventory/lending-app.md
+/tmp/an9/r10/work/lending/plan.json
+/tmp/an9/r10/.git/siegard/grant.json (via grant.py --read)
+/tmp/an9/r10.plugin/schemas/handoff.json

@@ -1,0 +1,42 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "lending · task 0/1 delivered · phase delivery",
+  "state_from": {
+    "script": "progress.py",
+    "project": "/tmp/an9/r16",
+    "slug": "late-fee-label"
+  },
+  "decisions": [
+    {
+      "ask": "Que caminho segue a troca de \"Late fee\" por \"Multa por atraso\"? Não achei o arquivo de multas nem esse texto no projeto.",
+      "recommended": {
+        "door": "Registrar na especificação o texto da mensagem de multa; depois planejar e entregar a troca.",
+        "why": "É um julgamento: o texto que o sistema diz é um fato do negócio e nenhum nó o guarda.",
+        "reverses_if": "você disser que é só um rótulo de tela, ou que o texto já está em algum nó que não achei",
+        "reply_word": "analisar",
+        "entry": "/analyse",
+        "check": {
+          "answer": "accepts",
+          "refused": []
+        }
+      },
+      "others": [
+        {
+          "reply_word": "planejar",
+          "what_it_does": "Vai direto ao planejamento, sem registrar o texto na especificação; a análise segue possível depois.",
+          "entry": "/plan-work",
+          "check": {
+            "answer": "accepts",
+            "refused": []
+          }
+        }
+      ],
+      "relation": "one-of",
+      "if_none": "Nada muda: o pedido fica sem caminho e nenhum arquivo é tocado.",
+      "invocation": "/analyse trocar o texto do rótulo \"Late fee\" para \"Multa por atraso\" na mensagem de multa"
+    }
+  ],
+  "report": "/tmp/an9/r16/.git/siegard/handoff/20261125T004005Z-route.md"
+}
