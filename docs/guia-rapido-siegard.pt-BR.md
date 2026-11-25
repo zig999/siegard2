@@ -613,7 +613,9 @@ onde o `HEAD` aponta) e não chama o `/deliver-scope`.
 **Para que serve:** responde, **do disco** e a cada vez, onde o projeto está: se a specification
 está sã, que iniciativas estão vivas, o que falta entregar e o que cada tarefa espera, notas
 `BLOCKING`, drift do trace por classe, decisões tomadas em seu nome e o que está sem commit. Onde
-há algo a reconciliar, já traz a invocação do `/reconcile` pronta. Só lê.
+há algo a reconciliar, já traz a invocação do `/reconcile` pronta. Só lê. Com um grant armado,
+o próximo passo que ele recomenda vira uma decisão que o grant responde como numa parada: segue
+sozinho dentro das portas e do orçamento que você armou.
 
 | Parâmetro | Notas |
 |---|---|

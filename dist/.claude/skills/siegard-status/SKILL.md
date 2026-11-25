@@ -235,6 +235,18 @@ handoff opens with what needs the person, and explains after» (SPEC-006 R1) sta
 form; every block, door and quotation the sections
 above call for is the full status on disk, which the short form points at and never repeats.
 
+**Where a grant stands, a recommended close is a decision.** «Where a grant stands in the
+project and the close recommends an invocation, the status is rendered kind `decision`, so the
+grant answers it as it answers a stop» (SPEC-006 R11). `--prepare` hands the skeleton's doors only
+where such a grant stands, and prints kind `report` where none does. Under it, run `--prepare`
+with `--slug` where the close names an initiative, so the check and the grant's budget read that
+one; the record is one decision whose `recommended` door is the close's invocation — its `entry`
+the skill it opens with, its `why` the close's reason, its `reverses_if` the reversing fact —
+whose `others` are the skeleton's doors and each other invocation the close weighed, and whose
+`invocation` is the close's line ready to paste. The short form lives in the full report. Hand
+the person what `--render` prints and carry the grant's answer as its `carry:` line says. A close
+that recommends no invocation is kind `report`, with no `decisions`, under a grant as without one.
+
 The full status, in this order, every line naming its source:
 
 - per live initiative: delivered X of Y tasks; deliverable now; what each remaining task waits
@@ -282,5 +294,6 @@ The full status, in this order, every line naming its source:
   those fields do not exist in this framework, and prose does not get to hold what the
   contracts refused.
 - Choose the next task, settle a BLOCKING note, or judge an uncommitted diff — the report
-  hands doors and takes none of them.
+  hands doors and takes none of them; under a grant, the grant's answer takes one, never the
+  report.
 - Commit, stash, or otherwise change the consumer's git state.

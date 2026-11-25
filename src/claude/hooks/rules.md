@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.141.1. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.142.0. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -81,7 +81,8 @@ the one that applies; never restate it from memory.
   a decision is rendered by `bin/handoff.py --render` from a record, never composed as free text»
   (SPEC-006 R8): run `bin/handoff.py --prepare --skill <skill> --project <project-root>`, fill
   only the fields it left empty, save the full report with `--save-report`, and hand the person
-  what `--render` prints. A status answer or a design conversation is kind `report`.
+  what `--render` prints. A status or next-step answer runs `/siegard-status`; a design
+  conversation is kind `report`.
 - **The framework's version is the one the first line of these rules states.**
 - **Only the person arms or ends a goal or a grant.** Never run `grant.py --arm` outside
   `/siegard-grant`; never run `goal.py --arm` outside `/siegard-goal --arm`, and never run

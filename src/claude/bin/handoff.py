@@ -141,6 +141,7 @@ UNNAMED_SLUG = "takes a slug, and none was named"
 NAMED_ENTRY = re.compile(r"(?<![\w/])/(?:siegard:)?([a-z][\w-]*)(?![\w/-])")
 REPORT_SKILL = re.compile(r"Z-([a-z][\w-]*)\.md$")
 ROUTE = "route"
+STATUS = "siegard-status"
 UNNAMED_TARGET = "takes a target, and none was named"
 HANDOFF_DIR = ("siegard", "handoff")
 GIT_TIMEOUT_SECONDS = 5
@@ -650,6 +651,19 @@ def report_path(project: Path, skill: str) -> Path | None:
     return Path(done.stdout.strip()).joinpath(*HANDOFF_DIR) / f"{stamp}-{skill}.md"
 
 
+def grant_stands(project: Path) -> bool:
+    """Whether the project holds a grant that stands, for the status the grant answers: «Where a
+    grant stands in the project and the close recommends an invocation, the status is rendered
+    kind `decision`, so the grant answers it as it answers a stop» (SPEC-006 R11). A grant that
+    cannot be read stands for nothing here."""
+    try:
+        import grant
+        _, _, _, ended = grant.standing(project)
+    except Exception:
+        return False
+    return ended is None
+
+
 def prepare(skill: str, project: Path, slug: str | None, target: str | None, files: list[str],
             language: str, contract: dict, ledger: str | None = None) -> dict:
     """The record's skeleton: what scripts decide written, what only the model writes empty. A
@@ -657,6 +671,8 @@ def prepare(skill: str, project: Path, slug: str | None, target: str | None, fil
     the analysis, so an analysis with lines open is never handed as complete» (SPEC-001 R16)."""
     source = state_source(project, slug, ledger)
     names = next_doors(skill)
+    if skill == STATUS and not grant_stands(project):
+        names = []
     if open_count(source.get("ledger")):
         names = [skill] + names
     doors = [{"reply_word": "", "what_it_does": "", "entry": f"/{name}",

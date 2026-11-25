@@ -114,7 +114,7 @@ review, a drift count — as one bullet list; that part is decided in the report
 
 - **R10** — The state a handoff opens with is a script's line, never the session's. `bin/handoff.py --prepare` prints the record's skeleton for the skill and the inputs it names, with `state` written and `state_from` naming the script it is the line of: the first line `goal.py --state` answers where a goal is armed through the framework, else the segment `progress.py` prints for the initiative named, else the line it prints for the project, else the fixed words the schema holds for a project with nothing live — quoted as the script printed it, cut to the state ceiling, never translated and never read for the closed list of terms. Beside the skeleton, on standard error, it prints the limits `--render` holds a record to — the ceilings of the state, of each decision's block and of the message, what a decision carries, the words in the record's language a body that recommends says the reversing fact after, that the record holds the skeleton's fields and no other, and the closed list's terms, phrases and pattern names — so that a record is filled to them rather than refused into them — and after them the two invocations that follow, ready to paste: `--save-report` over the skeleton's report path, the report read from standard input, and `--render` over the filled record. The skeleton's doors are the invocations the skill's own report names ready to paste, each marked with the first line `bin/door.py --check` prints for it and its `refused:` facts, or as not checked where no script decides that door or an input it takes is not named; none is marked recommended, and the report's path lies outside the tree every entry point holds to `git status`. Where the skill names a material ledger that leaves lines open, the count of open lines leads the state, before the script's line, and the skill's own invocation is a door beside the others. `--prepare --route`, over a project, a slug no initiative holds and the request `ask.py --record` copied, prints a routing record's skeleton instead, for a request that names no route (SPEC-011 R14): its doors are `/analyse` and `/plan-work`, each so checked, and it refuses a slug an initiative holds and an ask that is no recorded file. A record of kind `decision` carries `state_from`, and `--render` refuses it where `state` differs from what that script prints when it renders, where its door recommended is one the check refuses, and where a recommendation's `why` or `reverses_if` is empty.
 
-- **R11** — A report's short form is held as an opening is. Where kind `report` carries a `report` path, its `body` is the short form above the full report, and `bin/handoff.py --render` refuses it where it carries a term of the closed list anywhere; where it carries no path, its first 450 characters are held so. A body that recommends carries the fixed words the schema holds for the reversing fact in the record's language, followed by that fact, or `--render` refuses it. A door a report hands is handed whole: where its entry point requires a name the tree decides is free, the script that composes the door prints one, and the report never asks the person for it.
+- **R11** — A report's short form is held as an opening is. Where kind `report` carries a `report` path, its `body` is the short form above the full report, and `bin/handoff.py --render` refuses it where it carries a term of the closed list anywhere; where it carries no path, its first 450 characters are held so. A body that recommends carries the fixed words the schema holds for the reversing fact in the record's language, followed by that fact, or `--render` refuses it. A door a report hands is handed whole: where its entry point requires a name the tree decides is free, the script that composes the door prints one, and the report never asks the person for it. Where a grant stands in the project and the close recommends an invocation, the status is rendered kind `decision`, so the grant answers it as it answers a stop (SPEC-011 R9): its recommended door is that invocation and its others the doors the status hands; a close that recommends none is kind `report`. `--prepare --skill siegard-status` hands its doors only where a grant stands, and prints kind `report` where none does.
 
 ## Validation required before acceptance
 
@@ -181,6 +181,9 @@ review, a drift count — as one bullet list; that part is decided in the report
    carries one only past them renders, and a body that recommends without the reversing words
    of its language is refused; and a test holds `bin/trace.py --check --reconcile-set` printing a
    `free slug:` line that names no record or returns directory under `siegard-reconcile/`.
+   A test holds `--prepare --skill siegard-status` to kind `report` with no `decisions` where no
+   grant stands, and to its doors where one does; and `--render` of a status decision under a
+   grant to printing the grant's answer.
 
 8. A test holds the `PreToolUse` hook to R12 over fixture repositories: a commit adding a
    `decided:` or `recommended:` line that does not parse is refused with the line named; one
@@ -389,3 +392,20 @@ review, a drift count — as one bullet list; that part is decided in the report
   over the whole set of its target, which may be wider than the files a session meant: the skill
   reads that set whole either way. Reversal: a `/reconcile` taken under a grant that the person
   reverts in more than one of ten returns the door to `not checked`.
+- 2026-11-25 — grounds for R11's status under a grant. Read from the sales transcripts and
+  `handoff-checks.jsonl` of 2026-11-24 (local day; configurator, inventory, salese2e,
+  productorder): 49 stops, 21 rendered. Of the 28 unrendered, 4 were turns of a skill that ends
+  on a render, each blocked under `enforce` and rendered at the next stop; 24 were turns of no
+  skill — status and next-step answers — which SPEC-008 R15 measures and never blocks. In about 8
+  of them the stop handed a door the armed grant could have answered (`/plan-work`,
+  `/implement-task`, `/reconcile`, a review, a choice of cost), and the person spent a turn on
+  "sim", "segue" or "siga". Two causes: the four sessions ran 5.139.0 and 5.137.0, whose session
+  rules reached the model as a 2 KB preview, so the rule to render never arrived; and a status
+  answer, even rendered, was kind `report`, which no grant answers — `/siegard-status` rendered at
+  23:29 in configurator recommending `/plan-work`, and the person still answered "sim" two turns
+  later. Asked whether a next-step question under a grant should inform or proceed, the
+  maintainer answered that it follows the recommendation; under CLAUDE.md a judged one is taken
+  only as the blind door decider returns it, so the status hands the doors it weighed and the
+  grant answers them as at a stop. Without a grant nothing changes: `--prepare` prints kind
+  `report`, as the skill already required. Reversal: a status taken under a grant that the
+  person reverts, or answers by naming another door, in more than one of ten.

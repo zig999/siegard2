@@ -852,6 +852,45 @@ def test_with_nothing_live_the_state_is_the_fixed_words_in_the_record_s_language
     assert prepared["language"] == "pt-BR" and "report" not in prepared
 
 
+def arm_grant(home: Path) -> None:
+    done = subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/grant.py"), "--arm",
+                           str(home), "--budget", "2", "--words-file", "-"],
+                          input="siga a recomendação", capture_output=True, text=True)
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_a_status_with_no_grant_standing_prepares_a_report(project):
+    """«`--prepare --skill siegard-status` hands its doors only where a grant stands, and prints
+    kind `report` where none does» (SPEC-006 R11)."""
+    prepared = prepare(project, "siegard-status")
+    assert prepared["kind"] == "report" and "decisions" not in prepared
+
+
+def test_a_status_under_a_standing_grant_prepares_its_doors(project):
+    arm_grant(project)
+    prepared = prepare(project, "siegard-status", "--slug", SLUG)
+    assert prepared["kind"] == "decision"
+    assert list(doors_of(prepared)) == ["/reconcile"]
+
+
+def test_a_status_decision_under_a_grant_renders_with_the_grant_s_answer(project):
+    arm_grant(project)
+    prepared = prepare(project, "siegard-status", "--slug", SLUG)
+    one = prepared["decisions"][0]
+    one.update(ask="Deliver the next task now?", if_none="Nothing runs.", relation="one-of",
+               invocation=f"/implement-task --slug {SLUG}")
+    one["recommended"] = {"reply_word": "a", "door": "Deliver it", "entry": "/implement-task",
+                          "why": "It is the one task ready", "reverses_if": "you want a review first"}
+    for door in one["others"]:
+        door.update(reply_word="b", what_it_does="Reread the links")
+    Path(prepared["report"]).write_text("full\n", encoding="utf-8")
+    done = run("--render", "-", stdin=json.dumps(prepared))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "grant: every live initiative" in done.stderr
+    assert "decision 1: judge: spawn the door decider over these doors, budget left 2" \
+        in done.stderr, done.stderr
+
+
 def arm(home: Path) -> dict:
     import goal
     record = {"contract": goal.ARMED_CONTRACT, "project_root": str(home), "slug": SLUG,
