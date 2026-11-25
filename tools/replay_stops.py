@@ -15,7 +15,7 @@ Subcommands:
     points  --consumer <dir>... --since <iso> --out <points.json> [--live-grant] [--doors]
             every stop a person answered with a go-ahead or a "what now?", with the context it
             stood in and the grant live then
-    build   <points.json> <index> <arm-dir> <run-dir> [--cut final|render]
+    build   <points.json> <index> <arm-dir> <run-dir> [--cut final|render|ask]
     run     <run-dir> <arm-dir> [--model <id>]
     batch   <points.json> <root> --arm <name>=<dir>... [--reps N] [--jobs N] [--only i,j]
     grade   <run-dir>
@@ -213,10 +213,27 @@ def points(consumers: list[Path], since: str, live_grant: bool, doors: bool) -> 
     return chosen
 
 
+def asked_at(events: list[dict], at: str) -> int:
+    """The person's own message the turn ending at `at` answers: the last event before the stop's
+    second that `is_person` reads as the person's words, never one the harness wrote."""
+    found = None
+    for index, e in enumerate(events):
+        if e.get("timestamp", "")[:19] > at:
+            break
+        if not e.get("isSidechain") and is_person(e) is not None:
+            found = index
+    if found is None:
+        raise SystemExit(f"no message of the person before {at}")
+    return found
+
+
 def cut_at(events: list[dict], at: str, mode: str) -> int:
     """Where the transcript is cut: `final`, at the last tool result before the stop's last
     message, so the session writes that message again; `render`, right after the tool result
-    that printed a grant's `judge`."""
+    that printed a grant's `judge`; `ask`, right before the person's own message the turn
+    answers, which the run then sends as its prompt, so a hook on that message meets it."""
+    if mode == "ask":
+        return asked_at(events, at) - 1
     if mode == "render":
         for index, e in enumerate(events):
             if e.get("timestamp", "").startswith(at[:16]) and e.get("type") == "user" \
@@ -291,13 +308,18 @@ def build(point: dict, tree: Path, run_dir: Path, mode: str) -> dict:
     (run_dir / "scratch").mkdir()
     clone = run_dir / real.name
     subprocess.run(["git", "clone", "-q", "--no-hardlinks", str(real), str(clone)], check=True)
+    source = transcript_dir(real) / f"{point['session']}.jsonl"
+    raw = source.read_text(encoding="utf-8").splitlines()
+    events = [json.loads(line) for line in raw]
+    cut = cut_at(events, point["at"], mode)
+    moment = events[cut + 1]["timestamp"][:19] if mode == "ask" else point["at"][:19]
     commit = subprocess.run(["git", "-C", str(real), "rev-list", "-1",
-                             f"--before={point['at'][:19]}Z", "HEAD"],
+                             f"--before={moment}Z", "HEAD"],
                             capture_output=True, text=True, check=True).stdout.strip()
     subprocess.run(["git", "-C", str(clone), "checkout", "-q", commit], check=True)
     subprocess.run(["git", "-C", str(clone), "checkout", "-q", "-B", "main"], check=True)
     subprocess.run(["git", "-C", str(clone), "remote", "remove", "origin"], check=True)
-    stamp = point["at"][:16].replace("-", "").replace(":", "")
+    stamp = moment[:16].replace("-", "").replace(":", "")
 
     def later(_, names):
         return [n for n in names if n.endswith(".jsonl")
@@ -313,17 +335,13 @@ def build(point: dict, tree: Path, run_dir: Path, mode: str) -> dict:
         held = {k: v for k, v in point["grant"].items() if k not in ("ended", "reason", "ended_at")}
         grant.write_text(json.dumps({**held, "project_root": str(clone), "version": version},
                                     indent=2), encoding="utf-8")
-    source = transcript_dir(real) / f"{point['session']}.jsonl"
-    raw = source.read_text(encoding="utf-8").splitlines()
-    events = [json.loads(line) for line in raw]
-    cut = cut_at(events, point["at"], mode)
     session = str(uuid.uuid4())
     out = [rewrite(line, real, clone, tree, point["session"], session, run_dir.resolve() / "scratch")
            for line in raw[:cut + 1]]
     where = transcript_dir(clone)
     where.mkdir(parents=True, exist_ok=True)
     (where / f"{session}.jsonl").write_text("\n".join(out) + "\n", encoding="utf-8")
-    seeded = route_at(events, cut)
+    seeded = None if mode == "ask" else route_at(events, cut)
     if seeded is not None:
         record = clone / ".git/siegard/turn" / f"{session}.json"
         record.parent.mkdir(parents=True, exist_ok=True)
@@ -332,6 +350,9 @@ def build(point: dict, tree: Path, run_dir: Path, mode: str) -> dict:
     meta = {"point": point, "clone": str(clone), "session": session, "commit": commit,
             "cut": cut, "mode": mode, "tree": str(tree), "transcript": str(where),
             "route_at": seeded}
+    if mode == "ask":
+        meta["prompt"] = rewrite(text_of(events[cut + 1]["message"].get("content")), real, clone,
+                                 tree, point["session"], session, run_dir.resolve() / "scratch")
     (run_dir / "meta.json").write_text(json.dumps(meta, indent=1, ensure_ascii=False),
                                        encoding="utf-8")
     return meta
@@ -374,7 +395,8 @@ def run(run_dir: Path, tree: Path, model: str) -> dict:
     with (run_dir / "stream.jsonl").open("w", encoding="utf-8") as out, \
             (run_dir / "stderr.txt").open("w", encoding="utf-8") as err:
         try:
-            subprocess.run(["claude", "-p", NOTIFICATION, "--resume", meta["session"],
+            subprocess.run(["claude", "-p", meta.get("prompt") or NOTIFICATION,
+                            "--resume", meta["session"],
                             "--model", model, "--plugin-dir", str(tree),
                             "--settings", str(run_dir / "settings.json"),
                             "--output-format", "stream-json", "--verbose",
@@ -510,7 +532,7 @@ def clean(root: Path) -> None:
 
 
 def batch(chosen: list[dict], root: Path, arms: dict[str, Path], reps: int, jobs: int,
-          only: list[int] | None, model: str) -> None:
+          only: list[int] | None, model: str, cut: str = "final") -> None:
     work = [(arm, index, rep) for arm in arms for index in range(len(chosen))
             if only is None or index in only for rep in range(1, reps + 1)]
 
@@ -520,7 +542,7 @@ def batch(chosen: list[dict], root: Path, arms: dict[str, Path], reps: int, jobs
         if (run_dir / "grade.json").is_file() and \
                 json.loads((run_dir / "grade.json").read_text())["outcome"] != "invalid":
             return
-        build(chosen[index], arms[arm], run_dir, "final")
+        build(chosen[index], arms[arm], run_dir, cut)
         print(json.dumps({k: v for k, v in run(run_dir, arms[arm], model).items()
                           if k in ("run", "outcome", "cost_usd")}), flush=True)
 
@@ -538,7 +560,7 @@ def main() -> int:
     p.add_argument("--out", type=Path)
     p.add_argument("--live-grant", action="store_true")
     p.add_argument("--doors", action="store_true")
-    p.add_argument("--cut", choices=("final", "render"), default="final")
+    p.add_argument("--cut", choices=("final", "render", "ask"), default="final")
     p.add_argument("--model", default=MODEL)
     p.add_argument("--arm", action="append", default=[])
     p.add_argument("--reps", type=int, default=1)
@@ -568,7 +590,7 @@ def main() -> int:
         arms = dict(item.split("=", 1) for item in a.arm)
         only = [int(i) for i in a.only.split(",")] if a.only else None
         batch(chosen, Path(a.paths[1]), {k: Path(v) for k, v in arms.items()}, a.reps, a.jobs,
-              only, a.model)
+              only, a.model, a.cut)
         print(table(Path(a.paths[1])))
     elif a.action == "grade":
         print(json.dumps(grade(Path(a.paths[0])), indent=1, ensure_ascii=False))

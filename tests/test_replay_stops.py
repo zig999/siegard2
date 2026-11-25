@@ -74,6 +74,22 @@ def test_the_final_cut_lands_on_the_last_tool_result_before_the_stop_s_message()
     assert replay.cut_at(events, "2026-11-21T10:00:09", "final") == 2
 
 
+def test_the_ask_cut_lands_before_the_person_s_own_message_the_turn_answers():
+    events = [
+        event("user", "2026-11-21T09:59:00", content="Siga"),
+        event("assistant", "2026-11-21T09:59:05", content=[{"type": "text", "text": "Done."}]),
+        event("user", "2026-11-21T10:00:00", content="E agora?"),
+        event("assistant", "2026-11-21T10:00:05", content=[{"type": "tool_use", "id": "a"}]),
+        event("user", "2026-11-21T10:00:06", content=[{"type": "tool_result", "tool_use_id": "a"}]),
+        event("user", "2026-11-21T10:00:07", content="<task-notification>x</task-notification>"),
+        event("user", "2026-11-21T10:00:08", content="Stop hook feedback: render it"),
+        dict(event("user", "2026-11-21T10:00:08", content="Caveat: local command"), isMeta=True),
+        event("assistant", "2026-11-21T10:00:09", content=[{"type": "text", "text": "Next: plan."}]),
+    ]
+    assert replay.cut_at(events, "2026-11-21T10:00:09", "ask") == 1
+    assert replay.text_of(events[2]["message"]["content"]) == "E agora?"
+
+
 def test_a_transcript_line_is_rewritten_to_the_clone_the_tree_and_the_new_session():
     line = ('{"cwd":"/home/x/sales/inv","p":"/home/x/sales/other","s":"old-id",'
             '"c":"/home/x/.claude/plugins/cache/gen/siegard/5.133.0/bin/handoff.py"}')

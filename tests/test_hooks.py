@@ -65,10 +65,12 @@ def record(event: str, cwd: Path) -> str:
 
 def test_both_starts_are_declared_and_neither_is_narrowed():
     hooks = declared()
-    assert sorted(hooks) == sorted((*EVENTS, "Stop", "PreToolUse", "PostToolUse")), \
+    assert sorted(hooks) == sorted((*EVENTS, "Stop", "PreToolUse", "PostToolUse",
+                                    "UserPromptSubmit")), \
         f"hooks.json declares {sorted(hooks)}; the rules must reach the session and every agent, " \
         f"an armed goal's stop is answered on Stop, a command or a write is read before it runs, " \
-        f"and a grant's answer is read after the call that prints or carries it"
+        f"a grant's answer is read after the call that prints or carries it, and a question of " \
+        f"what comes next is met where it is asked"
     for event in hooks:
         for group in hooks[event]:
             if event == "PreToolUse":
@@ -815,3 +817,55 @@ def test_the_routes_line_is_placed_only_under_a_grant_holding_routes(siegard_pro
         if done.stdout else ""
     assert (routes_line() in context) is (routes is True)
     assert (gate_line() in context) is (commits is True)
+
+
+NEXT_STEP = HOOKS / "next_step.py"
+
+
+def asked(prompt: object, cwd: Path) -> subprocess.CompletedProcess:
+    stdin = json.dumps({"hook_event_name": "UserPromptSubmit", "prompt": prompt, "cwd": str(cwd)})
+    return subprocess.run([sys.executable, str(NEXT_STEP)], input=stdin, capture_output=True,
+                          text=True)
+
+
+@pytest.mark.parametrize("prompt", ["E agora?", "e agora", "qual o próximo passo?",
+                                    "Qual a recomendação?", "What now?", "which way do we go?",
+                                    "E qual caminho?", "Acho q mudar é melhor. Qual a recomendação?",
+                                    "What are the next steps?", "o que você recomenda?"])
+def test_a_question_of_what_comes_next_gains_one_line_of_context(prompt, siegard_project):
+    """«Where a person's message in a project that declares `siegard.json` asks what comes next,
+    the plugin's `UserPromptSubmit` hook places one line of context beside it» (SPEC-008 R20)."""
+    done = asked(prompt, siegard_project)
+    assert done.returncode == 0, done.stderr
+    out = json.loads(done.stdout)["hookSpecificOutput"]
+    assert out["hookEventName"] == "UserPromptSubmit"
+    line = out["additionalContext"]
+    assert "\n" not in line and "/siegard-status" in line and "--render" in line
+
+
+@pytest.mark.parametrize("prompt", ["corrija os 78", "agoravai", "rode o pnpm e2e", 3,
+                                    "Siga o próximo passo", "pode seguir com os próximos passos",
+                                    "go with the next step", "rodei e agora deu erro 500",
+                                    "/siegard:analyse o próximo passo do pedido é aprovar o crédito",
+                                    "Next step: run the build", ["E agora?"]])
+def test_any_other_message_gains_nothing(prompt, siegard_project):
+    done = asked(prompt, siegard_project)
+    assert done.returncode == 0 and done.stdout == "", done.stdout
+
+
+def test_a_project_without_siegard_json_or_an_unreadable_record_gains_nothing(foreign_project):
+    done = asked("E agora?", foreign_project)
+    assert done.returncode == 0 and done.stdout == ""
+    done = subprocess.run([sys.executable, str(NEXT_STEP)], input="not json", capture_output=True,
+                          text=True)
+    assert done.returncode == 0 and done.stdout == ""
+    assert "UserPromptSubmit" in declared() and any(
+        "hooks/next_step.py" in c for c in commands("UserPromptSubmit"))
+
+
+def test_the_phrases_hold_every_language_the_handoff_record_admits():
+    sys.path.insert(0, str(HOOKS))
+    import next_step
+    schema = json.loads((SRC / "schemas/handoff.json").read_text(encoding="utf-8"))
+    assert set(next_step.PHRASES) == set(schema["properties"]["language"]["enum"])
+

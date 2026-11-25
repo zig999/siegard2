@@ -83,6 +83,11 @@ Each point carries `project`, `consumer`, `session`, `at` (the stop's last messa
 (the turn after) with its `reply_class`, `doors`, `rendered`, and the `grant` armed then.
 Read a few before spending: the selection is regular-expression work and errs both ways.
 
+- `--cut ask`: the transcript ends right before the person's own message the stop's turn
+  answers, and the run sends that message as its prompt instead of a notification, so a hook on
+  the person's message (`UserPromptSubmit`) meets it. It also replays a turn that ran no tool,
+  whose question the `final` cut leaves out. `batch` takes `--cut` too.
+
 ### 2. Build the arms
 
 An arm is a plugin tree: a directory holding `.claude-plugin/plugin.json`. The arm under test is

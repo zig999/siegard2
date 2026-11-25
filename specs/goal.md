@@ -142,6 +142,8 @@ session that stopped while its subagents were still running. The harness refuses
 
   Reading of 2026-11-16, from the `salese2e` session that stopped `inventory-real-nas-jornadas`: the stop left the setup run, which `passed`, uncommitted under the delivery root; `goal.py --arm` refuses a change pending under that root, so the person's own word to commit was the only way to arm again, 48 minutes later. R18 admits a run that passed to every other commit, so the refusal of R19 over it protected no red. Replayed over R19's tests with a passed run beside the stop, the commit goes ahead; a red run, an unreadable record and a delivery file beside the stop are still refused. Reversal: a run that passed and hid a cause nobody wrote down, committed with a stop.
 
+- **R20** — Where a person's message in a project that declares `siegard.json` asks what comes next, the plugin's `UserPromptSubmit` hook places one line of context beside it: the answer is given by `/siegard-status`, and the person is handed what `bin/handoff.py --render` prints. A message asks what comes next where a clause of it that is a question carries one of the fixed phrases the hook holds as data, in each language the handoff record admits; a message that opens with a slash command or a word of going ahead hands the step and gains nothing, as does any other message. The hook never blocks a message, and every failure — a project it cannot resolve, a record it cannot read — prints nothing.
+
 ## Validation required before acceptance
 
 1. Tests hold `goal.py --state` to R2, R3, R11, R12 and R13 over fixture repositories: one
@@ -224,8 +226,32 @@ session that stopped while its subagents were still running. The harness refuses
    class going ahead; a commit after the stop adding no stop line going ahead; a staged file the
    commit's pathspec leaves out not counted; and a project without `siegard.json`, or a log that
    cannot be read, going ahead.
+15. Tests hold the `UserPromptSubmit` hook to R20 by running it as the harness does: a message
+   carrying a phrase of each language in a question in a project declaring `siegard.json` gains
+   exactly one line of `additionalContext` naming `/siegard-status` and `--render`; a message
+   carrying none, one carrying a phrase outside a question, one opening with a word of going
+   ahead or a slash command, a project without `siegard.json`, and a record that is not JSON
+   print nothing and exit 0; the phrases hold every language the handoff record admits.
 
 ## Readings
+
+- 2026-11-25 (cycle 4 of the improvement goal) — grounds for R20. Replayed under 5.145.0 with the
+  session rules whole and `SIEGARD_HANDOFF_STOP=enforce`, turns of no skill in which the person
+  asked what comes next ("E agora?", "E qual caminho?", "Acho q mudar é melhor. Qual a
+  recomendação?", from configurator, inventory and productorder, 2026-11-20..23): 0 of 9 runs
+  rendered, each answering in free text, two recommending a route door the armed grant could have
+  judged; the session rules already said a next-step answer runs `/siegard-status`. On 2026-11-24
+  24 of 49 consumer stops were such turns. Extending R15's block to turns of no skill was weighed
+  and refused: R15's reversal is the person's reading, and the reading of 2026-11-23 found most of
+  its false positives in exactly those turns. SPEC-011's reading of the same day reopens a
+  `UserPromptSubmit` hook on a measured miss rate; this is one. Measured by
+  `temp/goal-melhoria/20261124-2334/c4/` (`tools/replay_stops.py --cut ask`). Reversal: stops in
+  free text after a next-step question in the week after the release in the proportion before
+  (24 of 49), or turns the person redirects after the line was placed on a message that asked
+  no status, counted from the transcripts. Under a grant covering the initiative the status's
+  recommended step is answered by the grant (SPEC-006 R11), so a question of what comes next may
+  be followed by the step taken; a person reading a step so taken as unwanted counts toward the
+  reversal too.
 
 - 2026-11-24 — grounds for R14's answer line in a `not yet`'s reason. The session rules told a
   session how to answer a `not yet`, but they had grown past the 10,000 characters Claude Code
