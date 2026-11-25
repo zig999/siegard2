@@ -307,7 +307,7 @@ in `references/finish.md`.
 
 A stop after you wrote commits it first, as `references/finish.md`'s work-in-progress commit says.
 
-«The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
+«The state a handoff carries is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill implement-task --project
 <project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>`. Write the
 full report — every item `references/report.md` lists, in its order — through `bin/handoff.py

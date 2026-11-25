@@ -285,7 +285,7 @@ better, and a pass that did not run is never recorded as having run.
 Commit the delivery root, the trace and `siegard-reconcile/<review-name>.*`:
 `review-change <slug>: review <review-name>`.
 
-«The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
+«The state a handoff carries is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill review-change --project
 <project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>`, then read
 `references/report.md`: what the report holds, in order, the findings first as counts. Write it

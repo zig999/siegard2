@@ -197,9 +197,11 @@ def test_a_record_renders_and_what_it_renders_holds(name):
     assert handoff.violations(handoff.reading(message, CONTRACT), CONTRACT) == []
 
 
-def test_the_rendering_opens_with_the_state_and_the_recommendation_first():
+def test_the_rendering_opens_with_the_recommendation_and_the_state_follows():
     message, _ = rendered(record("record-en-two-decisions.json"))
-    assert message.startswith("```\ncheckout · task 2/2 delivered · phase review")
+    assert not message.startswith("```")
+    state = message.index("```\ncheckout · task 2/2 delivered · phase review")
+    assert state > message.rindex("If none is taken") and state < message.index("Full report:")
     first = message.index("1. Should an empty order")
     assert message.index("**Recommended** `a`: Refuse it") > first
     assert "needs at least one item. It would change if a product owner says" in message
@@ -208,6 +210,18 @@ def test_the_rendering_opens_with_the_state_and_the_recommendation_first():
     assert "```\n   /plan-work checkout\n   ```" in message
     assert message.rstrip().endswith("Full report: full-report.txt")
     assert message.index("The earlier note") < first
+
+
+def test_a_decision_opens_with_what_needs_the_person_and_the_state_line_follows():
+    """«A handoff opens with what needs the person, and explains after» (SPEC-006 R1): the script's
+    state line, quoted untranslated, follows the decisions and the body, above the report path."""
+    data = record("record-pt-own-decision.json")
+    message, problems = rendered(data)
+    assert message is not None, problems
+    assert message.startswith(data["decisions"][0]["ask"]), message[:200]
+    state = message.index(data["state"])
+    assert state > message.index(data["decisions"][0]["if_none"])
+    assert state < message.index(data["report"])
 
 
 def test_a_choice_that_is_the_person_s_renders_in_their_language():
@@ -555,7 +569,7 @@ def test_a_state_a_script_printed_is_quoted_and_not_read_for_the_term_list():
     data["state"] = "state B — stop: stands — the bound file moved; see trace.py --check"
     message, problems = rendered(data)
     assert problems == [], problems
-    assert message.startswith(f"```\n{data['state']}\n```\n")
+    assert f"\n\n```\n{data['state']}\n```\n" in message
     assert handoff.violations(handoff.reading(message, CONTRACT), CONTRACT) == []
 
 
@@ -771,7 +785,7 @@ def test_only_a_door_is_a_bullet_and_the_person_s_own_choice_and_what_stays_are_
 def test_a_lone_decision_is_not_numbered_and_several_are_counted_before_the_first():
     one, _ = rendered(record("record-pt-own-decision.json"))
     assert "1. " not in one and "perguntas" not in one
-    assert "\nOs resultados da busca devem ignorar acentos ao ordenar?\n" in one
+    assert one.startswith("Os resultados da busca devem ignorar acentos ao ordenar?\n")
     two, _ = rendered(record("record-en-two-decisions.json"))
     count = "2 questions, each answered on its own:"
     assert count in two and two.index(count) < two.index("1. Should an empty order")
@@ -1166,7 +1180,8 @@ def test_a_filled_skeleton_renders_and_a_moved_state_refuses_it(project):
     path.write_text(json.dumps(prepared), encoding="utf-8")
     done = run("--render", str(path))
     assert done.returncode == 0, done.stdout
-    assert done.stdout.startswith(f"```\n{prepared['state']}\n```")
+    assert done.stdout.startswith("Review the task just delivered?")
+    assert f"\n\n```\n{prepared['state']}\n```\n" in done.stdout
     log = project / "deliveries" / SLUG / "orchestration.md"
     log.write_text("- implement-task task/checkout/bill-order — accepted\n", encoding="utf-8")
     done = run("--render", str(path))
@@ -1697,3 +1712,32 @@ def test_prepare_and_render_read_one_initiative_under_a_goal(project):
     one["others"] = []
     lines = handoff.grant_answer(prepared)
     assert f"decision 1: stop: the grant covers {SLUG}, not elsewhere" in lines, lines
+
+
+def test_a_report_opens_with_its_body_and_a_script_s_state_follows(project):
+    data = report_of(project, "plan-work", "Both tasks are delivered.")
+    message, problems = rendered(data, state_of=lambda source, language, contract: data["state"])
+    assert message is not None, problems
+    assert message.startswith("Both tasks are delivered."), message[:120]
+    assert message.index(f"```\n{data['state']}\n```") < message.index(data["report"])
+
+
+def test_a_state_the_session_wrote_stays_first_and_a_lone_state_opens_the_message(project):
+    data = record("record-pt-status.json")
+    message, _ = rendered(data)
+    assert message.startswith(data["state"])
+    alone = {k: v for k, v in report_of(project, "plan-work", "x").items() if k != "body"}
+    message, problems = rendered(alone, state_of=lambda source, language, contract: alone["state"])
+    assert message is not None and message.startswith(f"```\n{alone['state']}\n```"), problems
+
+
+def test_a_count_of_open_lines_leads_the_message_apart_from_the_fenced_state():
+    data = record("record-pt-own-decision.json")
+    label = CONTRACT["x-labels"]["pt-BR"]["open_lines"].format(n=3)
+    script = data["state"]
+    data["state"] = f"{label} · {script}"
+    message, problems = rendered(data)
+    assert message is not None, problems
+    assert message.startswith(label + "\n"), message[:120]
+    assert f"```\n{script}\n```" in message
+

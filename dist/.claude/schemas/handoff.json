@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/handoff.json",
   "title": "Siegard handoff record",
-  "description": "What a handoff is made from: the record an agent fills and `bin/handoff.py --render` turns into the message a person reads. The record holds the opening and nothing else — the state, what needs the person, the door recommended and why, the other doors, what stays as it is if none is taken — and points at the full report on disk for the pending items, commit hashes, measurements and command output, which never enter the opening. `bin/handoff.py --prepare` writes the skeleton: the state a script printed, with `state_from` naming it, each door the skill's own report hands with what its entry point's check answered, and the report's path; the agent fills the rest. The prose is the agent's, in the person's language, and is never translated; the few fixed words the rendering adds are this schema's, per language, under `x-labels`. What this schema cannot express — the ceilings, the closed list of framework terms, a reply word used twice, a state that no longer matches its script — `bin/handoff.py` decides, reading the numbers and the list from here: one home for each.",
+  "description": "What a handoff is made from: the record an agent fills and `bin/handoff.py --render` turns into the message a person reads. The record holds the opening and nothing else — what needs the person, the door recommended and why, the other doors, what stays as it is if none is taken, and the state a script printed — and points at the full report on disk for the pending items, commit hashes, measurements and command output, which never enter the opening. `bin/handoff.py --prepare` writes the skeleton: the state a script printed, with `state_from` naming it, each door the skill's own report hands with what its entry point's check answered, and the report's path; the agent fills the rest. The prose is the agent's, in the person's language, and is never translated; the few fixed words the rendering adds are this schema's, per language, under `x-labels`. What this schema cannot express — the ceilings, the closed list of framework terms, a reply word used twice, a state that no longer matches its script — `bin/handoff.py` decides, reading the numbers and the list from here: one home for each.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -62,7 +62,7 @@
         "ledger": {
           "type": "string",
           "minLength": 1,
-          "description": "A material ledger the skill answered, absolute. Where it leaves lines open, «the count of open lines leads the state the analysis's handoff opens with, beside a door back to the analysis» (SPEC-001 R16): the state is `x-labels`' `open_lines` with the count `trace.py` reads, then ` · ` and the script's line."
+          "description": "A material ledger the skill answered, absolute. Where it leaves lines open, «the count of open lines leads the state the analysis's handoff carries, beside a door back to the analysis» (SPEC-001 R16): the state is `x-labels`' `open_lines` with the count `trace.py` reads, then ` · ` and the script's line."
         }
       },
       "description": "Which script the state is the line of, and the inputs it was read with. Required of kind `decision`: `--render` runs it again and refuses a `state` that differs from what it prints then."

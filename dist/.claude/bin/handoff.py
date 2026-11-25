@@ -18,7 +18,7 @@ words `x-labels` opens the reversing fact with; a reply word no other door in th
 report path that names a file. A record that fails any of them is refused with one line per
 failure, and nothing is printed for the person to read.
 
-**`--prepare` writes what the session must not.** «The state a handoff opens with is a script's
+**`--prepare` writes what the session must not.** «The state a handoff carries is a script's
 line, never the session's» (SPEC-006 R10). It prints the record's skeleton as JSON: `state`
 already written, and `state_from` naming where it was read — the first line of `goal.py --state`
 over the goal armed through the framework (`siegard/goal.json` under the repository's git common
@@ -26,7 +26,7 @@ directory), else the segment `progress.py` prints for the initiative named, else
 prints for the project, else the fixed words `x-labels` holds for a project with nothing live.
 Given `--ledger`, a material ledger the skill answered, the count of the lines it leaves open
 leads that line under `x-labels`' `open_lines` — «the count of open lines leads the state the
-analysis's handoff opens with, beside a door back to the analysis» (SPEC-001 R16) — and the skill
+analysis's handoff carries, beside a door back to the analysis» (SPEC-001 R16) — and the skill
 itself is the first door. The line is cut to `x-ceilings.state`. Its doors are the invocations
 the skill's own report names ready to paste — the marker "`/<skill>` invocation ready to paste" inside the file's report
 section — each under `others`, none recommended, each carrying `entry` and the `check` that
@@ -327,7 +327,7 @@ def open_count(ledger: str | None) -> int:
 def state_now(source: dict, language: str, contract: dict) -> str:
     """The line `state_from` names, as its script prints it now, cut to the state ceiling — led by
     the count of lines a material ledger it names leaves open: «the count of open lines leads the
-    state the analysis's handoff opens with» (SPEC-001 R16)."""
+    state the analysis's handoff carries» (SPEC-001 R16)."""
     project = Path(source["project"])
     if source["script"] == "goal.py":
         line = goal_line(project)
@@ -989,7 +989,15 @@ def render(record: object, contract: dict, base: Path, state_of=state_now
         if not (path if path.is_absolute() else base / path).is_file():
             problems.append(f"report: {record['report']} names no file; the full report is "
                             f"written before the handoff that points at it")
-    parts = [f"```\n{record['state']}\n```" if "state_from" in record else record["state"]]
+    state, lead = record["state"], None
+    if "state_from" in record:
+        counted = re.match(re.escape(labels["open_lines"]).replace(re.escape("{n}"), r"\d+")
+                           + r" · ", state)
+        if counted:
+            lead, state = counted.group(0)[:-3], state[counted.end():]
+    parts = [] if "state_from" in record else [state]
+    if lead:
+        parts.append(lead)
     if "withdraws" in record:
         parts.append(record["withdraws"])
     handed = record.get("decisions", [])
@@ -1003,6 +1011,8 @@ def render(record: object, contract: dict, base: Path, state_of=state_now
         parts.append(block + (f"\n\n   ```\n   {invocation}\n   ```" if invocation else ""))
     if "body" in record:
         parts.append(record["body"])
+    if "state_from" in record:
+        parts.append(f"```\n{state}\n```")
     if "report" in record:
         parts.append(f"{labels['report']}: {record['report']}")
     message = "\n\n".join(parts) + "\n"

@@ -213,7 +213,7 @@ quoted verbatim and untranslated» (SPEC-006 R1) is one of the rules it is voice
 
 ## The report
 
-«The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
+«The state a handoff carries is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill siegard-status --project
 <project-root> --language <en or pt-BR, the session's>`, write the full status below through
 `bin/handoff.py --save-report <path>`, to the path its `report` names, and hand the person exactly what `handoff.py --render` prints over the
@@ -225,7 +225,7 @@ running `--prepare` again and carrying its `state` and `state_from` whole.
 its `report` the path the full status was written to; its `body` holds at most four lines, in
 the session's plain words and in this order: what was built, as the task and node counts the
 scripts printed — delivered X of Y tasks per live initiative from `deliver.py --outstanding`,
-the node counts from `spec.py`; what is live beyond the state line, where it says more; and what
+the node counts from `spec.py`; what is live that the state line, shown below, does not say; and what
 needs the person — each owed act and each decision that is the person's own, named in a clause —
 with, last, the one invocation the close recommends, why in a sentence, and the fact that would
 change it after the words `x-labels` holds for `reverses_if` in the session's language. A figure no

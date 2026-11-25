@@ -259,7 +259,7 @@ what it refuses and what its receipt names, and carry the receipt into the repor
 
 Commit the trace and `siegard-reconcile/<slug>.*` as the plugin's rules state: `reconcile <slug>`.
 
-«The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
+«The state a handoff carries is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill reconcile --project
 <project-root> --target <target> --language <en or pt-BR, the session's>` — with `--slug` only
 where a live initiative's slug is what the `/plan-work` door carries, never this reconciliation's

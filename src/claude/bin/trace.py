@@ -3468,7 +3468,7 @@ def read_ledger(ledger: Path) -> tuple[dict | None, dict[str, list[dict]], list[
 
 def open_lines(ledger: Path) -> int | None:
     """How many lines of the material the ledger leaves open — the count «leads the state the
-    analysis's handoff opens with» (SPEC-001 R16) — read from its frontmatter alone; None where
+    analysis's handoff carries» (SPEC-001 R16) — read from its frontmatter alone; None where
     the ledger cannot be read as one."""
     front, _ = frontmatter_of(ledger)
     if not isinstance(front, dict) or not isinstance(front.get("entries"), list):

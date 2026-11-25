@@ -120,7 +120,7 @@ leaves untouched. Keep its whole output: the report quotes it.
 ## Report, and stop
 
 Every outcome is handed through the handoff record, so the person reads the same shape every
-time. «The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10).
+time. «The state a handoff carries is a script's line, never the session's» (SPEC-006 R10).
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill siegard-goal --project
 <project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>`. It prepares
 a report: write the full report through `bin/handoff.py --save-report <path>` to the path its

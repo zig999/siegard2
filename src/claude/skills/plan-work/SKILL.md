@@ -313,7 +313,7 @@ Once `plan.py` derived the plan, commit those roots and the suite run, one commi
 `/plan-work`, `/implement-task`, `/review-change`, `/reconcile` — commits what its own invocation
 wrote once its validator passes» (SPEC-010 R7).
 
-«The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
+«The state a handoff carries is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill plan-work --project
 <project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>`. Write the
 full report — every item `references/report.md` lists, in its order — through `bin/handoff.py

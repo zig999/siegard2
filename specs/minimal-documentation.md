@@ -186,7 +186,7 @@ enforces mechanically.
   records the sha256 digest of every such file, and a ledger whose digest no longer matches its
   file is refused, because its line numbers no longer locate the items. A line with no entry is
   refused; an open line is not, and the count of open lines leads the state the analysis's handoff
-  opens with, beside a door back to the analysis, so an analysis with lines open is never handed
+  carries, beside a door back to the analysis, so an analysis with lines open is never handed
   as complete. The reasons lines were left out are reported grouped and counted, largest first,
   and none is refused for its count. Material given only in conversation has no lines and owes no
   ledger, and the report says the material was not a file. A file the material only cites is a

@@ -171,7 +171,7 @@ the report is where a person reads it.
 
 ## Report, and stop
 
-«The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
+«The state a handoff carries is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill adopt-scope --project
 <project-root> --target <target> --language <en or pt-BR, the session's>` — where a step stopped
 the run, `--skill` names that step instead, so the doors it marks are the ones that step's report

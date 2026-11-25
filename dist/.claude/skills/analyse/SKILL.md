@@ -426,7 +426,7 @@ Recording a decision moves frontmatter: rerun the validation of step 4 before re
 
 Commit, by path as the plugin's rules state, the specification root and the ledger or its removal as
 `--ledger`'s last line says, as `analyse <the invocation's slug, else the material's stem>: <specify under a goal, else analyse>`.
-«The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Hand off
+«The state a handoff carries is a script's line, never the session's» (SPEC-006 R10). Hand off
 in four steps:
 
 1. Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill analyse --project <project-root> --ledger <ledger.md> --language <en or pt-BR, the session's>`.
