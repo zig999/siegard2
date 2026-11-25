@@ -280,8 +280,8 @@ def test_the_reconcile_terms_are_schemas_terms_json_s_and_each_is_used_outside_i
 DELIVER_AGENTS = ("door-decider",)
 DELIVER_BASELINE = REPO / "tests/fixtures/benchmarks/deliver-scope/text-metrics-5.67.0.json"
 DELIVER_PINS = {
-    "chars": 36_126,
-    "skill_chars": 18_106,
+    "chars": 36_646,
+    "skill_chars": 18_626,
     "sentence_words_median": 19,
     "sentence_words_p90": 35,
     "sentences_over_60_words": 3,

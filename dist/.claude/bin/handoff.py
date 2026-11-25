@@ -148,6 +148,7 @@ ROUTE = "route"
 STATUS = "siegard-status"
 DELIVER = "deliver-scope"
 SCOPE_END = "deliver-scope-end"
+NOTHING_STALE = ("no file of the reconcile set of target", "the reconcile set of target")
 UNNAMED_TARGET = "takes a target, and none was named"
 HANDOFF_DIR = ("siegard", "handoff")
 GIT_TIMEOUT_SECONDS = 5
@@ -490,6 +491,26 @@ def scope_end_check(project: Path, slug: str | None, target: str | None) -> dict
     return check_reconcile(project, target, initiative_files(project, slug, declared_target))
 
 
+def closing_check(project: Path, slug: str | None) -> dict | None:
+    """The closing a scope's end hands, as `bin/grant.py --close` answers it, read-only: «where
+    nothing of the initiative is stale, the scope's end hands its closing: accepted where the grant's
+    close gate accepts, not checked where no grant, no `close` clause or no cover allows it, and not
+    handed where the initiative is not ready or already closed» (SPEC-006 R9). None: not handed."""
+    if not slug:
+        return None
+    import goal
+    import grant
+    try:
+        lines, ok, scope = grant.close_readiness(project, slug)
+    except goal.Refused as refusal:
+        return {"answer": "not checked", "why": f"the closing is the person's: {refusal}"}
+    if ok:
+        return {"answer": "accepts", "refused": []}
+    if scope is not None:
+        return {"answer": "not checked", "why": f"the closing is the person's: {scope}"}
+    return None
+
+
 def check_reconcile(project: Path, target: str | None, within: set[str] | None = None) -> dict:
     """`/reconcile`'s check over the file set and the free slug its trace prints for the target:
     the target named, else the armed goal's, else the project's one target. A certification and a
@@ -610,6 +631,10 @@ def completed(record: dict, check_of=check_door) -> dict:
             if "entry" in chosen and chosen["entry"] == "/reconcile" and is_scope_end(done):
                 chosen["check"] = scope_end_check(project, record_initiative(project, source),
                                                   goal_target(project, None))
+            elif "entry" in chosen and chosen["entry"] == "/plan-work" and is_scope_end(done):
+                chosen["check"] = closing_check(project, record_initiative(project, source)) \
+                    or {"answer": "refuses", "refused": ["the initiative is not ready to close, "
+                                                         "or already closed"]}
             elif "entry" in chosen:
                 chosen["check"] = check_as_it_stands(chosen["entry"], project, source,
                                                      invocation, check_of, infer)
@@ -860,6 +885,11 @@ def prepare(skill: str, project: Path, slug: str | None, target: str | None, fil
         end = scope_end_check(project, slug, target or goal_target(project, slug))
         ends = [{"reply_word": "", "what_it_does": "", "entry": "/reconcile", "check": end}] \
             if end["answer"] == "accepts" else []
+        empty = end["answer"] == "refuses" and all(
+            fact.startswith(NOTHING_STALE) for fact in end.get("refused") or [])
+        closing = closing_check(project, slug) if empty else None
+        if closing is not None:
+            ends = [{"reply_word": "", "what_it_does": "", "entry": "/plan-work", "check": closing}]
     doors = ends + [{"reply_word": "", "what_it_does": "", "entry": f"/{name}",
               "check": check_door(name, project, slug or (goal_initiative(project, source)
                                   if name in slug_doors() else None), target, files)}

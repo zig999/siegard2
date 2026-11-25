@@ -33,6 +33,7 @@ is reached, before acting on it.
 - [ ] 5b Under a grant, at the scope's end: --prepare, grant.py --decide --record; a take as
       references/doors.md; never after a stop
 - [ ] 6 Measure: telemetry.py --probe; commit; after a stop too
+- [ ] 6b The closing a grant takes at the scope's end, as the run's last commit
 - [ ] Log: a line per step in <delivery_root>/<slug>/orchestration.md; the stop line:
       references/stops.md
 - [ ] Report: handoff.py --prepare; references/report.md; --save-report, --render; stop
@@ -217,9 +218,10 @@ project root, the slug and the target. Where it hands no decision, go to step 6.
 one door a `reply_word` and a `what_it_does`. Save the record under the git directory, beside the
 `report` path it names, never in the tree. Run `bin/grant.py --decide <project-root> --record
 <that file> --slug <slug>`. Carry a `take` as `references/doors.md` carries one: its `decided:`
-line in the log, the log committed alone, then `/reconcile` over the files the door's check names
-as the initiative's own. Its premise's `said` is the ask this log quotes. A `stop`, or a
-`/reconcile` that stops (`references/stops.md`), leaves the door to the report.
+line in the log, the log committed alone, then `/reconcile` over the files its check names as the
+initiative's own; its premise's `said` is the ask this log quotes. A closing the skeleton hands
+waits for step 6b. A `stop`, or a `/reconcile` that stops (`references/stops.md`), leaves the door
+to the report.
 
 ### 6. Measure
 
@@ -233,6 +235,13 @@ requires; then run it without `--probe`: `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/t
 line, never a stop.
 
 A stop ends the route, never the measure: step 6 runs after it, and commits.
+
+### 6b. The closing, last
+
+Only where step 5b ran. Prepare the scope's end again; where it hands the `/plan-work` closing,
+decide over it as in 5b. Carry a `take`: its `decided:` line, the log committed alone, then the
+`/plan-work` closing named by mode, project root and slug. It is the run's last commit: nothing is
+logged or committed after it, as a closed initiative is no root a grant covers.
 
 ## The orchestration log
 

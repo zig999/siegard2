@@ -415,6 +415,25 @@ CARRY = ("carry: each decision line below is carried out by its kind — a take 
          "handed to the person; a note is carried as it says, and the handoff rendered again")
 
 
+def new_initiative(fields: dict, decision: dict) -> str | None:
+    """The initiative with no plan a decision's `/plan-work` invocation names, or None: «A grant
+    never takes `/plan-work` over an initiative that holds no plan outside a routing record»
+    (SPEC-011 R4)."""
+    import handoff
+    invocation = str(decision.get("invocation") or "")
+    opening = handoff.INVOCATION_ENTRY.match(invocation)
+    if not opening or opening.group(1) != "plan-work":
+        return None
+    armed = handoff.armed_goal(fields["home"])
+    for named in handoff.INVOCATION_SLUG.findall(invocation):
+        slug = named.strip("`'\".,;:)(")
+        if not slug or slug.startswith("<") or (armed and armed.get("slug") == slug):
+            continue
+        if not (fields["work_root"] / slug / "plan.json").is_file():
+            return slug
+    return None
+
+
 def reconcile_taken(fields: dict, held: dict, slug: str | None) -> bool:
     """Whether the initiative's log, as committed since the grant armed, holds the scope's end
     `/reconcile` this grant took: «A scope's end whose `/reconcile` this grant already took in the
@@ -482,6 +501,12 @@ def decide(project_root: Path, record: dict, slug: str | None = None) -> tuple[l
             lines.append(f"decision {number}: stop: the grant covers {held['slug']}, not "
                          f"{outside}")
             continue
+        opened = new_initiative(fields, decision)
+        if opened is not None and not routing:
+            lines.append(f"decision {number}: stop: /plan-work over {opened}, an initiative with no "
+                         f"plan, opens a route, which the person names or a grant holding "
+                         f"`routes` answers through a routing record")
+            continue
         if scope_end and any(skill_of(door) == "reconcile" for door in
                              ([decision.get("recommended")] if decision.get("recommended") else [])
                              + list(decision.get("others") or []) if isinstance(door, dict)) \
@@ -489,11 +514,19 @@ def decide(project_root: Path, record: dict, slug: str | None = None) -> tuple[l
             lines.append(f"decision {number}: stop: /reconcile was already taken at this "
                          f"initiative's scope's end under this grant")
             continue
+        if scope_end and any(skill_of(door) == "plan-work" for door in
+                             ([decision.get("recommended")] if decision.get("recommended") else [])
+                             + list(decision.get("others") or []) if isinstance(door, dict)) \
+                and not close_readiness(project_root, held.get("slug") or slug or initiative)[1]:
+            lines.append(f"decision {number}: stop: the closing is not one this grant's close gate "
+                         f"accepts as the tree stands")
+            continue
         answered = decide_one(number, decision, held, fields, None if routing else
                               held.get("slug") or slug or initiative, routing)
         if scope_end:
             answered = [line.replace(" — precondition unmet — ", " — precondition unmet — at the "
-                                     "scope's end, ", 1) if line.strip().startswith("decided: /reconcile")
+                                     "scope's end, ", 1)
+                        if line.strip().startswith(("decided: /reconcile", "decided: /plan-work"))
                         else line for line in answered]
         lines += answered
     if record.get("report"):
@@ -589,22 +622,29 @@ def commit_gate(project_root: Path, files: list[str]) -> tuple[list[str], bool]:
     return found, not any(line.startswith("refused:") for line in found)
 
 
-def close_gate(project_root: Path, slug: str | None) -> tuple[list[str], bool]:
+def close_readiness(project_root: Path, slug: str | None) -> tuple[list[str], bool, str | None]:
+    """`close_gate`'s answer read and never acted on — no grant is ended here: the lines, whether
+    the closing is accepted, and, where it is refused for the grant's scope rather than the
+    initiative's state, why: «A scope's end checks the closing as `bin/grant.py --close` answers it,
+    read-only» (SPEC-011 R10)."""
     held, fields, path, ended = standing(project_root)
-    if ended:
-        end_grant(path, held, "ended", ended)
-        return [f"refused: the grant ended — {ended}"], False
-    if not held["close"]:
-        return ["refused: the grant holds no `close` clause"], False
     slug = slug or held.get("slug")
+    if slug is not None and (fields["work_root"] / slug / "closure.md").is_file():
+        return [f"refused: {slug} holds a closure.md"], False, None
+    if ended:
+        return [f"refused: the grant ended — {ended}"], False, f"the grant ended — {ended}"
+    if not held["close"]:
+        return ["refused: the grant holds no `close` clause"], False, "the grant holds no `close` clause"
     if slug is None:
-        return ["refused: the grant names no initiative, so --close takes --slug <slug>"], False
+        return ["refused: the grant names no initiative, so --close takes --slug <slug>"], False, \
+            "no initiative named"
     if slug not in covered(fields, held):
-        return [f"refused: {slug} is no live initiative the grant covers"], False
+        return [f"refused: {slug} is no live initiative the grant covers"], False, \
+            f"{slug} is no live initiative the grant covers"
     try:
         found, _ = goal.checks(fields, slug, held["since"], held["version"], [], [])
     except goal.Refused as refusal:
-        return [f"refused: the initiative's state could not be read: {refusal}"], False
+        return [f"refused: the initiative's state could not be read: {refusal}"], False, None
     lines = []
     for name in CLOSED_AFTER:
         ok, out = found.get(name, (False, "no answer"))
@@ -613,8 +653,16 @@ def close_gate(project_root: Path, slug: str | None) -> tuple[list[str], bool]:
         else:
             lines.append(f"refused: {name}")
             lines += [f"  {line}" for line in out.splitlines()]
-    return lines, not any(line.startswith("refused:") for line in lines)
+    return lines, not any(line.startswith("refused:") for line in lines), None
 
+
+def close_gate(project_root: Path, slug: str | None) -> tuple[list[str], bool]:
+    held, fields, path, ended = standing(project_root)
+    if ended:
+        end_grant(path, held, "ended", ended)
+        return [f"refused: the grant ended — {ended}"], False
+    lines, ok, _ = close_readiness(project_root, slug)
+    return lines, ok
 
 def newest_record(project_root: Path, skill: str, after: str) -> str:
     """The newest record `handoff.py --render` kept for a skill's report, in the git directory,

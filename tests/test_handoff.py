@@ -1338,7 +1338,9 @@ def test_the_end_of_a_scope_hands_reconcile_over_the_initiative_s_own_files(proj
     why = prepared["decisions"][0]["others"][0]["check"]["why"]
     assert owned[0] in why and "src/elsewhere/other.ts" not in why
     stale_files_of(project, monkeypatch, ["src/elsewhere/other.ts"])
-    assert prepare_in(project, "deliver-scope", "--scope-end", "--slug", SLUG)["kind"] == "report"
+    nothing_stale = prepare_in(project, "deliver-scope", "--scope-end", "--slug", SLUG)
+    assert "/reconcile" not in doors_of(nothing_stale)
+    assert doors_of(nothing_stale).get("/plan-work", {}).get("answer") in (None, "not checked")
 
 
 def test_a_grant_takes_the_scope_s_end_once_and_stops_on_it_after(project, monkeypatch):
@@ -1397,6 +1399,106 @@ def test_a_scope_end_reconcile_moved_to_recommended_is_rechecked_over_the_initia
     stale_files_of(project, monkeypatch, ["src/elsewhere/other.ts"])
     done = handoff.completed(prepared)
     assert done["decisions"][0]["recommended"]["check"]["answer"] == "refuses"
+
+
+def test_a_scope_end_with_nothing_stale_hands_the_closing_a_grant_takes(project, monkeypatch):
+    """«Where nothing is stale, the scope's end hands the initiative's closing, checked as
+    `bin/grant.py --close` answers it, read-only» (SPEC-006 R9)."""
+    stale_files_of(project, monkeypatch, [])
+    import grant
+    monkeypatch.setattr(grant, "close_readiness", lambda root, slug: (["checked: records — ok"], True, None))
+    arm_grant(project)
+    prepared = prepare_in(project, "deliver-scope", "--scope-end", "--slug", SLUG)
+    assert list(doors_of(prepared)) == ["/plan-work"], prepared
+    assert doors_of(prepared)["/plan-work"]["answer"] == "accepts"
+    prepared["decisions"][0]["others"][0].update(reply_word="a", what_it_does="Close the initiative")
+    lines, _ = grant.decide(project, prepared, SLUG)
+    assert "decision 1: take: a /plan-work" in lines, lines
+
+
+def test_the_scope_end_closing_is_omitted_unready_or_closed_and_person_s_without_close(project, monkeypatch):
+    import grant
+    stale_files_of(project, monkeypatch, [])
+    arm_grant(project)
+    before = [p.read_text() for p in sorted((project / ".git/siegard").glob("grant*.json*"))]
+    assert prepare_in(project, "deliver-scope", "--scope-end", "--slug", SLUG)["kind"] in ("report", "decision")
+    assert [p.read_text() for p in sorted((project / ".git/siegard").glob("grant*.json*"))] == before
+    monkeypatch.setattr(grant, "close_readiness", lambda root, slug: (["refused: review"], False, None))
+    assert prepare_in(project, "deliver-scope", "--scope-end", "--slug", SLUG)["kind"] == "report"
+    monkeypatch.setattr(grant, "close_readiness",
+                        lambda root, slug: (["refused: no close"], False, "the grant holds no `close` clause"))
+    prepared = prepare_in(project, "deliver-scope", "--scope-end", "--slug", SLUG)
+    assert doors_of(prepared)["/plan-work"]["answer"] == "not checked"
+    prepared["decisions"][0]["others"][0].update(reply_word="a", what_it_does="Close")
+    lines, _ = grant.decide(project, prepared, SLUG)
+    assert any(": stop:" in line for line in lines), lines
+
+
+def test_a_scope_end_with_something_unchecked_hands_no_closing(project, monkeypatch):
+    monkeypatch.setattr(handoff, "scope_end_check", lambda *a: {"answer": "not checked", "why": "no target"})
+    import grant
+    monkeypatch.setattr(grant, "close_readiness", lambda root, slug: (["checked"], True, None))
+    assert prepare_in(project, "deliver-scope", "--scope-end", "--slug", SLUG)["kind"] == "report"
+
+
+def test_a_grant_never_takes_plan_work_over_an_initiative_with_no_plan(project):
+    arm_grant(project)
+    import grant
+    decision = {"ask": "Open the next one?", "if_none": "Nothing runs.",
+                "invocation": f"/plan-work {project} --target app --slug a-new-one",
+                "recommended": {"reply_word": "a", "door": "Plan it", "entry": "/plan-work", "why": "w",
+                                "reverses_if": "r", "check": {"answer": "accepts", "refused": []}},
+                "others": []}
+    lines, _ = grant.decide(project, {"kind": "decision", "decisions": [decision]}, SLUG)
+    assert "decision 1: stop: /plan-work over a-new-one, an initiative with no plan" in " ".join(lines), lines
+
+
+def test_a_scope_end_closing_moved_to_recommended_is_rechecked_by_the_close_gate(project, monkeypatch):
+    stale_files_of(project, monkeypatch, [])
+    import grant
+    monkeypatch.setattr(grant, "close_readiness", lambda root, slug: (["checked"], True, None))
+    arm_grant(project)
+    prepared = prepare_in(project, "deliver-scope", "--scope-end", "--slug", SLUG)
+    one = prepared["decisions"][0]
+    one["recommended"] = {"reply_word": "a", "door": "Close", "entry": "/plan-work", "why": "w", "reverses_if": "r"}
+    one["others"] = []
+    monkeypatch.setattr(grant, "close_readiness", lambda root, slug: (["refused: review"], False, None))
+    assert handoff.completed(prepared)["decisions"][0]["recommended"]["check"]["answer"] == "refuses"
+
+
+def test_a_reconcile_refused_with_stale_files_hands_no_closing(project, monkeypatch):
+    monkeypatch.setattr(handoff, "scope_end_check", lambda *a: {
+        "answer": "refuses", "refused": ["git status --porcelain is not empty"]})
+    import grant
+    monkeypatch.setattr(grant, "close_readiness", lambda root, slug: (["checked"], True, None))
+    assert prepare_in(project, "deliver-scope", "--scope-end", "--slug", SLUG)["kind"] == "report"
+
+
+def test_a_backticked_or_placeholder_slug_or_the_goal_s_is_no_new_initiative(project):
+    arm_grant(project)
+    import grant
+    fields = grant.standing(project)[1]
+    for invocation in (f"`/plan-work {project} --target app --slug {SLUG}`",
+                       f"/plan-work {project} --target app --slug <slug>"):
+        assert grant.new_initiative(fields, {"invocation": invocation}) is None, invocation
+    arm(project)
+    import goal
+    held = json.loads(goal.armed_path(project).read_text())
+    held["slug"] = "goal-new"
+    goal.armed_path(project).write_text(json.dumps(held))
+    assert grant.new_initiative(fields, {"invocation": f"/plan-work {project} --slug goal-new"}) is None
+
+
+def test_decide_rechecks_the_close_gate_before_taking_a_scope_end_closing(project, monkeypatch):
+    stale_files_of(project, monkeypatch, [])
+    import grant
+    monkeypatch.setattr(grant, "close_readiness", lambda root, slug: (["checked"], True, None))
+    arm_grant(project)
+    prepared = prepare_in(project, "deliver-scope", "--scope-end", "--slug", SLUG)
+    prepared["decisions"][0]["others"][0].update(reply_word="a", what_it_does="Close")
+    monkeypatch.setattr(grant, "close_readiness", lambda root, slug: (["refused: review"], False, None))
+    lines, _ = grant.decide(project, prepared, SLUG)
+    assert "decision 1: stop: the closing is not one this grant's close gate accepts" in " ".join(lines)
 
 
 def test_a_skill_whose_report_hands_no_door_prepares_a_report(project):
