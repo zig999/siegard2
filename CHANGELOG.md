@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.147.0 — 2026-11-25
+
+A rendered handoff opens with what needs the person — what it withdraws, the decisions, the body — and the script's state line, quoted untranslated, follows above the report's path; a count of open lines leads apart in the person's words, and a state the session wrote stays first (SPEC-006 R1, R10; SPEC-001 R16). (`990f6c2`)
+
 ## 5.146.0 — 2026-11-25
 
 A person's question of what comes next — a phrase like "e agora?", "qual caminho?", "what now?" inside a question — gains, through a `UserPromptSubmit` hook, one line sending the answer to `/siegard-status` and its render, where a grant covering the initiative answers the recommended step; a go-ahead or a slash command gains nothing, and the hook never blocks (SPEC-008 R20). `tools/replay_stops.py --cut ask` replays a turn from the person's own message. (`d15cb96`)
