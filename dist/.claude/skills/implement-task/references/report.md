@@ -19,8 +19,8 @@ Read at step 9: the report holds every item below, in this order.
 - where the bind printed a stale-bindings receipt: the receipt verbatim, then one `/reconcile`
   invocation ready to paste **for the case where no `/review-change` follows this delivery**,
   since the review's conformance pass restamps the same bindings. Fill the project root and the
-  target; the file set is every path the receipt names, converted from the git toplevel the
-  receipt spells to the target source root `/reconcile` reads; leave the slug as a slot for the
+  target; the file set is exactly the `files` the skeleton's `/reconcile` check carries, which
+  `--render` refuses to see other than checked; leave the slug as a slot for the
   person to name, since `/reconcile` requires one and refuses one already taken. Say that it runs
   only after the person commits this delivery, because `/reconcile` refuses a named file the tree
   holds uncommitted. One invocation over one file set, never one per file and never a stop; taking

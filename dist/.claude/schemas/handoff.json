@@ -354,6 +354,14 @@
           "minLength": 1,
           "description": "For `not checked`: why no check ran; for a `/reconcile` door `--render` checked, the file set and the free slug the check ran over."
         },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "For a `/reconcile` door checked over an initiative's own files: exactly the files the check read, spelled from the target source root — the set its invocation names."
+        },
         "inferred_slug": {
           "type": "string",
           "minLength": 1,

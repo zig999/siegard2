@@ -2185,3 +2185,147 @@ def test_a_count_of_open_lines_leads_the_message_apart_from_the_fenced_state():
     assert message.startswith(label + "\n"), message[:120]
     assert f"```\n{script}\n```" in message
 
+
+def test_the_implement_task_reconcile_door_reads_the_initiative_s_own_stale_files(project, monkeypatch):
+    """«The `/reconcile` door `/implement-task`'s skeleton hands is checked over the files of the
+    reconcile set that the initiative's own records name, and no other» (SPEC-006 R9)."""
+    owned = sorted(handoff.initiative_files(project, SLUG))
+    assert owned, "the fixture's records name files"
+    stale_files_of(project, monkeypatch, [owned[0], "src/elsewhere/other.ts"])
+    prepared = handoff.prepare("implement-task", project, SLUG, None, [], "en", CONTRACT)
+    check = doors_of(prepared)["/reconcile"]
+    assert check["answer"] == "accepts"
+    assert owned[0] in check["why"] and "src/elsewhere/other.ts" not in check["why"]
+    stale_files_of(project, monkeypatch, ["src/elsewhere/other.ts"])
+    nothing = doors_of(handoff.prepare("implement-task", project, SLUG, None, [], "en", CONTRACT))
+    assert nothing["/reconcile"]["answer"] == "refuses"
+    assert all(fact.startswith(handoff.NOTHING_STALE) for fact in nothing["/reconcile"]["refused"])
+
+
+def test_the_implement_task_reconcile_door_is_rechecked_over_the_same_files_at_render(project, monkeypatch):
+    owned = sorted(handoff.initiative_files(project, SLUG))
+    stale_files_of(project, monkeypatch, [owned[0]])
+    prepared = handoff.prepare("implement-task", project, SLUG, None, [], "en", CONTRACT)
+    assert doors_of(prepared)["/reconcile"]["answer"] == "accepts"
+    one = prepared["decisions"][0]
+    one["recommended"] = {"reply_word": "a", "door": "Reread", "entry": "/reconcile",
+                          "why": "w", "reverses_if": "r"}
+    one["others"] = [door for door in one["others"] if door["entry"] != "/reconcile"]
+    stale_files_of(project, monkeypatch, ["src/elsewhere/other.ts"])
+    again = handoff.completed(prepared)["decisions"][0]["recommended"]["check"]
+    assert again["answer"] == "refuses"
+    assert all(fact.startswith(handoff.NOTHING_STALE) for fact in again["refused"])
+
+
+def test_the_implement_task_reconcile_door_is_not_checked_without_an_initiative(project, monkeypatch):
+    owned = sorted(handoff.initiative_files(project, SLUG))
+    stale_files_of(project, monkeypatch, [owned[0]])
+    check = handoff.implement_reconcile_check(project, None, None, "")
+    assert check["answer"] == "not checked"
+
+
+def test_a_recommended_reconcile_naming_other_files_than_the_checked_ones_is_refused(project, monkeypatch):
+    owned = sorted(handoff.initiative_files(project, SLUG))
+    stale_files_of(project, monkeypatch, [owned[0], "src/elsewhere/other.ts"])
+    wide = handoff.implement_reconcile_check(
+        project, SLUG, None, f"/reconcile {project} --slug r --file {owned[0]} --file src/elsewhere/other.ts")
+    assert wide["answer"] == "refuses" and "src/elsewhere/other.ts" in wide["refused"][0]
+    exact = handoff.implement_reconcile_check(project, SLUG, None,
+                                              f"/reconcile {project} --slug r --file {owned[0]}")
+    assert exact["answer"] == "accepts"
+
+
+def test_an_initiative_record_quoting_three_dashes_is_read_for_its_files(project):
+    base = project / "deliveries" / SLUG / "proof" / "dashes"
+    base.mkdir(parents=True, exist_ok=True)
+    (base / "quoted.md").write_text("---\nuntested:\n- 'An id made only of ''---'''\nfiles:\n"
+                                    "- path: src/dashes/quoted.ts\n---\n\nbody\n", encoding="utf-8")
+    assert "src/dashes/quoted.ts" in handoff.initiative_files(project, SLUG)
+
+
+def test_an_unreadable_record_is_skipped_and_the_implement_task_skeleton_still_prepares(project, monkeypatch):
+    broken = project / "deliveries" / SLUG / "implementation" / "broken"
+    broken.mkdir(parents=True, exist_ok=True)
+    (broken / "bad.md").write_text("---\nfiles: [unclosed\n\tpath: x\n---\n", encoding="utf-8")
+    owned = sorted(handoff.initiative_files(project, SLUG))
+    assert owned
+    stale_files_of(project, monkeypatch, [owned[0]])
+    prepared = handoff.prepare("implement-task", project, SLUG, None, [], "en", CONTRACT)
+    assert doors_of(prepared)["/reconcile"]["answer"] == "accepts"
+
+
+def test_a_reconcile_door_left_among_others_is_rechecked_over_the_initiative_s_files(project, monkeypatch):
+    owned = sorted(handoff.initiative_files(project, SLUG))
+    stale_files_of(project, monkeypatch, [owned[0]])
+    prepared = handoff.prepare("implement-task", project, SLUG, None, [], "en", CONTRACT)
+    assert doors_of(prepared)["/reconcile"]["files"] == [owned[0]]
+    stale_files_of(project, monkeypatch, ["src/elsewhere/other.ts"])
+    others = handoff.completed(prepared)["decisions"][0]["others"]
+    again = next(door["check"] for door in others if door["entry"] == "/reconcile")
+    assert again["answer"] == "refuses"
+    assert all(fact.startswith(handoff.NOTHING_STALE) for fact in again["refused"])
+
+
+def test_a_reconcile_door_carrying_its_files_is_rechecked_scoped_without_a_report(project, monkeypatch):
+    owned = sorted(handoff.initiative_files(project, SLUG))
+    stale_files_of(project, monkeypatch, [owned[0]])
+    prepared = handoff.prepare("implement-task", project, SLUG, None, [], "en", CONTRACT)
+    prepared.pop("report", None)
+    stale_files_of(project, monkeypatch, ["src/elsewhere/other.ts"])
+    others = handoff.completed(prepared)["decisions"][0]["others"]
+    again = next(door["check"] for door in others if door["entry"] == "/reconcile")
+    assert again["answer"] == "refuses"
+
+
+def test_the_invocation_s_files_are_read_as_a_shell_reads_them_and_a_narrowed_set_is_refused(project, monkeypatch):
+    owned = sorted(handoff.initiative_files(project, SLUG))
+    assert len(owned) >= 2, "the fixture's records name two files"
+    stale_files_of(project, monkeypatch, owned[:2])
+    both = f"/reconcile {project} --slug r --file={owned[0]} --file '{owned[1]}'"
+    assert handoff.implement_reconcile_check(project, SLUG, None, both)["answer"] == "accepts"
+    one = handoff.implement_reconcile_check(project, SLUG, None, f"/reconcile {project} --slug r --file {owned[0]}")
+    assert one["answer"] == "refuses" and one["refused"] == [
+        f"the invocation's file set is not the one checked: it omits {owned[1]}"]
+    prepared = handoff.prepare("implement-task", project, SLUG, None, [], "en", CONTRACT)
+    decision = prepared["decisions"][0]
+    decision["recommended"] = {"reply_word": "a", "door": "Reread", "entry": "/reconcile",
+                               "why": "w", "reverses_if": "r"}
+    decision["others"] = [door for door in decision["others"] if door["entry"] != "/reconcile"]
+    decision["invocation"] = f"/reconcile {project} --slug r --file {owned[0]}"
+    assert handoff.completed(prepared)["decisions"][0]["recommended"]["check"]["answer"] == "refuses"
+
+
+def test_a_record_whose_files_is_no_list_is_read_for_none_and_the_skeleton_still_prepares(project, monkeypatch):
+    odd = project / "deliveries" / SLUG / "proof" / "odd"
+    odd.mkdir(parents=True, exist_ok=True)
+    (odd / "mapping.md").write_text("---\nfiles:\n  path: src/odd.ts\ntests:\n- path: tests/odd.test.ts\n---\n",
+                                    encoding="utf-8")
+    owned = handoff.initiative_files(project, SLUG)
+    assert "tests/odd.test.ts" in owned and "src/odd.ts" not in owned
+    stale_files_of(project, monkeypatch, sorted(owned)[:1])
+    assert doors_of(handoff.prepare("implement-task", project, SLUG, None, [], "en", CONTRACT))["/reconcile"]
+
+
+def test_a_recommended_reconcile_without_a_report_or_a_check_is_never_widened(project, monkeypatch):
+    owned = sorted(handoff.initiative_files(project, SLUG))
+    stale_files_of(project, monkeypatch, [owned[0]])
+    prepared = handoff.prepare("implement-task", project, SLUG, None, [], "en", CONTRACT)
+    prepared.pop("report", None)
+    decision = prepared["decisions"][0]
+    decision["recommended"] = {"reply_word": "a", "door": "Reread", "entry": "/reconcile",
+                               "why": "w", "reverses_if": "r"}
+    decision["others"] = [door for door in decision["others"] if door["entry"] != "/reconcile"]
+    stale_files_of(project, monkeypatch, ["src/elsewhere/other.ts"])
+    assert handoff.completed(prepared)["decisions"][0]["recommended"]["check"]["answer"] == "refuses"
+
+
+def test_another_skill_s_target_does_not_steer_the_reconcile_door_and_an_unnamed_set_is_refused(project, monkeypatch):
+    owned = sorted(handoff.initiative_files(project, SLUG))
+    stale_files_of(project, monkeypatch, [owned[0]])
+    prepared = handoff.prepare("implement-task", project, SLUG, None, [], "en", CONTRACT)
+    prepared["decisions"][0]["invocation"] = f"/review-change {project} --target elsewhere --slug {SLUG}"
+    others = handoff.completed(prepared)["decisions"][0]["others"]
+    assert next(door["check"] for door in others if door["entry"] == "/reconcile")["answer"] == "accepts"
+    bare = handoff.implement_reconcile_check(project, SLUG, None, f"/reconcile {project} --slug r")
+    assert bare["answer"] == "refuses" and bare["refused"] == [
+        f"the invocation's file set is not the one checked: it omits {owned[0]}"]
