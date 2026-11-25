@@ -495,7 +495,9 @@ bound a script on disk decides.
   answered above. Nothing triggers a routing record mechanically: whether a session prepares one
   for a request that names no route is measured from `handoff-checks.jsonl` in the week after the
   release, and only a measured miss rate reopens a `UserPromptSubmit` hook. Reversal: judged routes
-  read as reverted outnumbering those that held, which narrows the grant back (CLAUDE.md).
+  read as reverted outnumbering those that held, which narrows the grant back (CLAUDE.md). The
+  source of that measurement is corrected by the baseline below: `handoff-checks.jsonl` cannot
+  tell a route question from another decision, so the miss rate is read from the transcripts.
 - 2026-11-25 — a validation of R14 and R15 across the shipped artifacts. In a project declaring
   two targets — productorder and productcatalog declare `backend` and `frontend` — the routing
   skeleton marked `/plan-work` `refuses` for want of a target, and `--decide` took `/analyse` as a
@@ -505,3 +507,24 @@ bound a script on disk decides.
   session rules said a grant takes "a route with an entry point", which `/deliver-scope` and
   `/adopt-scope` are; they now name `/analyse` and `/plan-work`. Reversal: a routing record whose
   request names a target, which would let the skeleton check `/plan-work` over it.
+- 2026-11-25 — the baseline for R14's miss rate, before any grant holds `routes` (the six sales
+  grants were armed 11-16..11-23, under 5.140.x and earlier). Read from the main-session transcripts
+  of inventory, productorder, configurator, productcatalog, partymgmt, salese2e and bff last written
+  on or after 2026-11-10, by a script kept outside the repository: each `Skill` invocation of
+  `/analyse`, `/plan-work` or `/deliver-scope` classed by the person's message before it, in order —
+  named (the message carries the skill's name or a slash command), answering a door (the turn
+  before ran `handoff.py --render` or named a route in its text), a loose word ("planejar",
+  "analisar"), else neither. Of 94 `/analyse`, 177 `/plan-work` and 101 `/deliver-scope`
+  invocations: named 53/89/77, answering a door 35/73/22, a loose word 2/3/2, neither 4/12/0. Read
+  one by one, the 16 of neither are 6 closings of a live initiative, 5 short answers to a door the
+  classing missed ("faz o 2", "Pode seguir", "a"), 3 harness entries, and 2 requests that name no
+  route — "corrija pela rota do Siegard" and "pode abrir um incremento para salese2e esperar a cópia
+  dos pedidos antes" — each of which may be a finding's route or a corrective increment, which R8
+  keeps the person's. So the requests `routes` answers number zero to two in about two weeks across
+  seven projects; the 14 route-or-door turns of the grounds above were mostly answers to a door,
+  which the `doors` clause already holds. The measurement after arming is the same reading, done
+  by hand over so few: each request that names no route either has a `<stamp>-route.md` or is a
+  miss. Nothing is built for it while the requests stay this few. Reversal: requests naming no route
+  too many to read by hand, which justifies a script; or under two a week after `routes` is armed,
+  which makes `routes` a candidate for withdrawal, its session-rules sentence being paid in every
+  context.
