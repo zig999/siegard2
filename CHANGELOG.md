@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.151.0 — 2026-11-25
+
+At a scope's end without a stop, under a grant, `/deliver-scope` asks the grant over its own report's skeleton before the measure: `--prepare --scope-end` hands `/reconcile` over the initiative's own stale files alone, a take is carried with its `decided:` line committed first, and the same scope-end take is answered `stop` afterwards (SPEC-006 R9, SPEC-011 R4, R10). (`fa6fb2e`)
+
 ## 5.150.0 — 2026-11-25
 
 `--render` refuses `settles_by: all-excluded` beside a door that still accepts as the tree stands, asking for the step meant as a recommendation or another reserved class (SPEC-006 R6). (`0ea2ddf`)
