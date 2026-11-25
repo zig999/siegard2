@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.148.0 — 2026-11-25
+
+Under a goal, a door taking a slug that the record leaves unnamed is checked over the armed goal's initiative — the project's own, as named — before the one live initiative, at `--prepare` and at `--render`; a skill prepared with `--slug` keeps it in `state_from`, so the initiative it was named wins; a `/reconcile` invocation's slug is no initiative (SPEC-006 R9, R11). (`5548e10`)
+
 ## 5.147.0 — 2026-11-25
 
 A rendered handoff opens with what needs the person — what it withdraws, the decisions, the body — and the script's state line, quoted untranslated, follows above the report's path; a count of open lines leads apart in the person's words, and a state the session wrote stays first (SPEC-006 R1, R10; SPEC-001 R16). (`990f6c2`)
