@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.152.0 — 2026-11-25
+
+At a scope's end with nothing of the initiative stale, `--prepare --scope-end` hands its closing checked read-only by the grant's close gate; `/deliver-scope` step 6b carries a take as the run's last commit; a grant never takes `/plan-work` over an initiative with no plan outside a routing record (SPEC-006 R9, SPEC-011 R4, R10). (`6fc306b`)
+
 ## 5.151.0 — 2026-11-25
 
 At a scope's end without a stop, under a grant, `/deliver-scope` asks the grant over its own report's skeleton before the measure: `--prepare --scope-end` hands `/reconcile` over the initiative's own stale files alone, a take is carried with its `decided:` line committed first, and the same scope-end take is answered `stop` afterwards (SPEC-006 R9, SPEC-011 R4, R10). (`fa6fb2e`)
