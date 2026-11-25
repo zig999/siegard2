@@ -1018,6 +1018,13 @@ def prepare(home: Path, skill: str, *extra: str) -> dict:
     return json.loads(done.stdout)
 
 
+def prepare_in(home: Path, skill: str, *extra: str) -> dict:
+    """`--prepare` run in this process, so a monkeypatched reading reaches it."""
+    slug = extra[extra.index("--slug") + 1] if "--slug" in extra else None
+    return handoff.prepare(skill, home, slug, None, [], "en", CONTRACT,
+                           scope_end="--scope-end" in extra)
+
+
 def doors_of(prepared: dict) -> dict[str, dict]:
     return {door["entry"]: door["check"] for decision in prepared.get("decisions", [])
             for door in decision["others"]}
@@ -1309,6 +1316,87 @@ def test_a_door_no_script_decides_is_never_marked_accepted(project):
     doors = doors_of(prepare(project, "reconcile", "--slug", SLUG))
     assert doors["/analyse"]["answer"] == "accepts"
     assert doors["/plan-work"]["answer"] == "accepts"
+
+
+def stale_files_of(project: Path, monkeypatch, files: list[str]) -> None:
+    monkeypatch.setattr(handoff, "reconcile_set", lambda project_, root: (files, "reconcile-x"))
+    import door
+    class Accepts:
+        def lines(self, name):
+            return ["accepts"]
+    monkeypatch.setattr(door, "check", lambda name, project_, args: Accepts())
+
+
+def test_the_end_of_a_scope_hands_reconcile_over_the_initiative_s_own_files(project, monkeypatch):
+    """«the reconciliation a scope's end hands reads the files of the reconcile set that the
+    initiative's own records name, and no other» (SPEC-006 R9)."""
+    owned = sorted(handoff.initiative_files(project, SLUG))
+    assert owned, "the fixture's records name files"
+    stale_files_of(project, monkeypatch, [owned[0], "src/elsewhere/other.ts"])
+    prepared = prepare_in(project, "deliver-scope", "--scope-end", "--slug", SLUG)
+    assert prepared["kind"] == "decision" and list(doors_of(prepared)) == ["/reconcile"]
+    why = prepared["decisions"][0]["others"][0]["check"]["why"]
+    assert owned[0] in why and "src/elsewhere/other.ts" not in why
+    stale_files_of(project, monkeypatch, ["src/elsewhere/other.ts"])
+    assert prepare_in(project, "deliver-scope", "--scope-end", "--slug", SLUG)["kind"] == "report"
+
+
+def test_a_grant_takes_the_scope_s_end_once_and_stops_on_it_after(project, monkeypatch):
+    """«a scope's end whose `/reconcile` this grant already took in the initiative is answered
+    `stop`» (SPEC-011 R4)."""
+    owned = sorted(handoff.initiative_files(project, SLUG))
+    stale_files_of(project, monkeypatch, [owned[0]])
+    arm_grant(project)
+    prepared = prepare_in(project, "deliver-scope", "--scope-end", "--slug", SLUG)
+    door = prepared["decisions"][0]["others"][0]
+    door.update(reply_word="a", what_it_does="Reread the initiative's stale files")
+    import grant
+    lines, _ = grant.decide(project, prepared, SLUG)
+    assert "decision 1: take: a /reconcile" in lines, lines
+    taken = next(line for line in lines if line.strip().startswith("decided:")).strip()
+    log = project / "deliveries" / SLUG / "orchestration.md"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    log.write_text(f"- {taken}\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(project), "add", "-A"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(project), "-c", "user.name=t", "-c", "user.email=t@t", "commit",
+                    "-qm", "log"], check=True, capture_output=True)
+    lines, _ = grant.decide(project, prepared, SLUG)
+    assert "decision 1: stop: /reconcile was already taken at this initiative's scope's end under " \
+        "this grant" in lines, lines
+    assert "at the scope's end" in taken
+
+
+def test_a_stop_s_report_hands_no_scope_end_door_and_a_mid_run_reconcile_does_not_count(project, monkeypatch):
+    owned = sorted(handoff.initiative_files(project, SLUG))
+    stale_files_of(project, monkeypatch, [owned[0]])
+    assert prepare_in(project, "deliver-scope", "--slug", SLUG)["kind"] == "report"
+    arm_grant(project)
+    import grant
+    held = grant.standing(project)[0]
+    log = project / "deliveries" / SLUG / "orchestration.md"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    log.write_text(f"- decided: /reconcile — precondition unmet — the writer refused (grant sha256 "
+                   f"{grant.mark_of(held)})\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(project), "add", "-A"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(project), "-c", "user.name=t", "-c", "user.email=t@t", "commit",
+                    "-qm", "log"], check=True, capture_output=True)
+    prepared = prepare_in(project, "deliver-scope", "--scope-end", "--slug", SLUG)
+    prepared["decisions"][0]["others"][0].update(reply_word="a", what_it_does="Reread")
+    lines, _ = grant.decide(project, prepared, SLUG)
+    assert "decision 1: take: a /reconcile" in lines, lines
+
+
+def test_a_scope_end_reconcile_moved_to_recommended_is_rechecked_over_the_initiative(project, monkeypatch):
+    owned = sorted(handoff.initiative_files(project, SLUG))
+    stale_files_of(project, monkeypatch, [owned[0]])
+    prepared = prepare_in(project, "deliver-scope", "--scope-end", "--slug", SLUG)
+    one = prepared["decisions"][0]
+    one["recommended"] = {"reply_word": "a", "door": "Reread", "entry": "/reconcile",
+                          "why": "w", "reverses_if": "r"}
+    one["others"] = []
+    stale_files_of(project, monkeypatch, ["src/elsewhere/other.ts"])
+    done = handoff.completed(prepared)
+    assert done["decisions"][0]["recommended"]["check"]["answer"] == "refuses"
 
 
 def test_a_skill_whose_report_hands_no_door_prepares_a_report(project):

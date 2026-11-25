@@ -146,6 +146,8 @@ COMMAND = re.compile(r"^\s*`?(?:/|[a-z0-9_.-]+/|python3?\s|[a-z0-9_.-]+\s+-)")
 UNNAMED_TASK = "no task named, and the deliverable set does not hold exactly one"
 ROUTE = "route"
 STATUS = "siegard-status"
+DELIVER = "deliver-scope"
+SCOPE_END = "deliver-scope-end"
 UNNAMED_TARGET = "takes a target, and none was named"
 HANDOFF_DIR = ("siegard", "handoff")
 GIT_TIMEOUT_SECONDS = 5
@@ -450,7 +452,45 @@ def reconcile_set(project: Path, root: Path) -> tuple[list[str], str | None] | N
     return files, slug
 
 
-def check_reconcile(project: Path, target: str | None) -> dict:
+def initiative_files(project: Path, slug: str, target: str | None = None) -> set[str]:
+    """The paths the implementation and proof records of one initiative name, as each names them,
+    over the target named where the record names one."""
+    import goal
+    try:
+        declared = json.loads((project / "siegard.json").read_text(encoding="utf-8"))
+        base = project / declared["delivery_root"] / slug
+    except (OSError, ValueError, KeyError, TypeError):
+        return set()
+    named: set[str] = set()
+    for root in ("implementation", "proof"):
+        for record in sorted((base / root).rglob("*.md")) if (base / root).is_dir() else []:
+            front = goal.front_of(record)
+            if target is not None and front.get("target") not in (None, target):
+                continue
+            for entry in (front.get("files") or []) + (front.get("tests") or []):
+                name = (entry.get("path") or entry.get("file")) if isinstance(entry, dict) else None
+                if isinstance(name, str):
+                    named.add(name)
+    return named
+
+
+def scope_end_check(project: Path, slug: str | None, target: str | None) -> dict:
+    """The `/reconcile` door a scope's end hands: «the reconciliation a scope's end hands reads the
+    files of the reconcile set that the initiative's own records name, and no other» (SPEC-006 R9),
+    so it never records as the person's word that a file outside the ask is correct."""
+    if not slug:
+        return {"answer": "not checked", "why": "the scope's end names no initiative"}
+    declared_target = target
+    if declared_target is None:
+        try:
+            targets = json.loads((project / "siegard.json").read_text(encoding="utf-8"))["targets"]
+            declared_target = next(iter(targets)) if len(targets) == 1 else None
+        except (OSError, ValueError, KeyError, TypeError, StopIteration):
+            declared_target = None
+    return check_reconcile(project, target, initiative_files(project, slug, declared_target))
+
+
+def check_reconcile(project: Path, target: str | None, within: set[str] | None = None) -> dict:
     """`/reconcile`'s check over the file set and the free slug its trace prints for the target:
     the target named, else the armed goal's, else the project's one target. A certification and a
     rewrite are the person's to name, so the check is of the reconciliation that reads alone."""
@@ -470,6 +510,12 @@ def check_reconcile(project: Path, target: str | None) -> dict:
         return {"answer": "not checked",
                 "why": f"trace.py --reconcile-set printed no set for target {target}"}
     files, slug = found
+    if within is not None:
+        files = [name for name in files if name in within]
+        if not files:
+            return {"answer": "refuses",
+                    "refused": [f"no file of the reconcile set of target {target} is one the "
+                                f"initiative's own records name"]}
     if not files:
         return {"answer": "refuses",
                 "refused": [f"the reconcile set of target {target} is empty: no drift it holds "
@@ -479,7 +525,8 @@ def check_reconcile(project: Path, target: str | None) -> dict:
     lines = door.check("reconcile", project, args).lines("reconcile")
     return {"answer": lines[0],
             "why": f"over the {len(files)} file(s) `trace.py --reconcile-set` prints for target "
-                   f"{target}, under the free slug {slug}",
+                   f"{target}, under the free slug {slug}"
+                   + (f" — the initiative's own: {' '.join(files)}" if within is not None else ""),
             "refused": [line[len("refused: "):] for line in lines if line.startswith("refused: ")]}
 
 
@@ -560,7 +607,10 @@ def completed(record: dict, check_of=check_door) -> dict:
                 named = named_door(chosen)
                 if named:
                     chosen["entry"] = named
-            if "entry" in chosen:
+            if "entry" in chosen and chosen["entry"] == "/reconcile" and is_scope_end(done):
+                chosen["check"] = scope_end_check(project, record_initiative(project, source),
+                                                  goal_target(project, None))
+            elif "entry" in chosen:
                 chosen["check"] = check_as_it_stands(chosen["entry"], project, source,
                                                      invocation, check_of, infer)
         for door in decision.get("others") or []:
@@ -580,6 +630,12 @@ def routed(name: str, check: dict) -> dict:
             fact.startswith(door.UNNAMED_TARGET) for fact in check.get("refused") or []):
         return {"answer": "not checked", "why": f"/{name} {UNNAMED_TARGET}"}
     return check
+
+
+def is_scope_end(record: dict) -> bool:
+    """Whether a record is a scope's end `--prepare --skill deliver-scope --scope-end` wrote."""
+    found = REPORT_SKILL.search(str(record.get("report") or ""))
+    return bool(found) and found.group(1) == SCOPE_END
 
 
 def is_routing(record: dict) -> bool:
@@ -788,7 +844,8 @@ def goal_initiative(project: Path, source: dict | None) -> str | None:
 
 
 def prepare(skill: str, project: Path, slug: str | None, target: str | None, files: list[str],
-            language: str, contract: dict, ledger: str | None = None) -> dict:
+            language: str, contract: dict, ledger: str | None = None,
+            scope_end: bool = False) -> dict:
     """The record's skeleton: what scripts decide written, what only the model writes empty. A
     ledger leaving lines open hands the skill itself as the first door — «beside a door back to
     the analysis, so an analysis with lines open is never handed as complete» (SPEC-001 R16)."""
@@ -798,7 +855,12 @@ def prepare(skill: str, project: Path, slug: str | None, target: str | None, fil
         names = []
     if open_count(source.get("ledger")):
         names = [skill] + names
-    doors = [{"reply_word": "", "what_it_does": "", "entry": f"/{name}",
+    ends = []
+    if skill == DELIVER and scope_end:
+        end = scope_end_check(project, slug, target or goal_target(project, slug))
+        ends = [{"reply_word": "", "what_it_does": "", "entry": "/reconcile", "check": end}] \
+            if end["answer"] == "accepts" else []
+    doors = ends + [{"reply_word": "", "what_it_does": "", "entry": f"/{name}",
               "check": check_door(name, project, slug or (goal_initiative(project, source)
                                   if name in slug_doors() else None), target, files)}
              for name in names]
@@ -808,7 +870,7 @@ def prepare(skill: str, project: Path, slug: str | None, target: str | None, fil
     if doors:
         record["decisions"] = [{"ask": "", "others": doors, "if_none": ""}
                                | ({"relation": ""} if len(doors) > 1 else {})]
-    path = report_path(project, skill)
+    path = report_path(project, SCOPE_END if skill == DELIVER and scope_end else skill)
     if path is not None:
         path.parent.mkdir(parents=True, exist_ok=True)
         record["report"] = str(path)
@@ -1206,6 +1268,9 @@ def main_prepare(args: list[str], contract: dict) -> int:
         target = take(args, "--target")
         files = take(args, "--file", many=True)
         ledger = take(args, "--ledger")
+        scope_end = "--scope-end" in args
+        if scope_end:
+            args.remove("--scope-end")
         language = take(args, "--language") or "en"
     except CannotRun as refusal:
         print(f"cannot run: {refusal}", file=sys.stderr)
@@ -1233,7 +1298,7 @@ def main_prepare(args: list[str], contract: dict) -> int:
     if ledger and not Path(ledger).is_file():
         print(f"cannot run: {ledger} is no ledger file", file=sys.stderr)
         return CANNOT_RUN
-    record = prepare(skill, root, slug, target, files, language, contract, ledger)
+    record = prepare(skill, root, slug, target, files, language, contract, ledger, scope_end)
     print(json.dumps(record, indent=2, ensure_ascii=False))
     print(limits(contract, language), end="", file=sys.stderr)
     if answered_as_decision(skill, root, record_initiative(root, record.get("state_from"))):

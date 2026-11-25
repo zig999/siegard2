@@ -30,6 +30,8 @@ is reached, before acting on it.
       references/doors.md, references/stops.md; under a goal: references/goal.md
 - [ ] 4 Review: /review-change under the name the rule gives; it commits
 - [ ] 5 Prove what the review left testable, once: references/prove.md
+- [ ] 5b Under a grant, at the scope's end: --prepare, grant.py --decide --record; a take as
+      references/doors.md; never after a stop
 - [ ] 6 Measure: telemetry.py --probe; commit; after a stop too
 - [ ] Log: a line per step in <delivery_root>/<slug>/orchestration.md; the stop line:
       references/stops.md
@@ -203,8 +205,21 @@ Repairing anything a finding names is a new ask.
 
 Where the review refused a certification over a node one of this run's own tasks implements, with
 `remainder: testable`, read `references/prove.md`: a proof-only re-delivery per task, inside the
-ask, then one review again. This step runs once per run. Where no certification was refused, go
-to step 6.
+ask, then one review again, then step 5b. This step runs once per run. Where no certification
+was refused, go to step 5b.
+
+### 5b. The scope's end, under a grant
+
+Only where a grant is armed and no stop ended the run. «Where the run reaches the scope's end
+without a stop, it asks `bin/grant.py --decide` over the skeleton of its own report before the
+measure» (SPEC-011 R10). Run `handoff.py --prepare --skill deliver-scope --scope-end` with the
+project root, the slug and the target. Where it hands no decision, go to step 6. Otherwise give its
+one door a `reply_word` and a `what_it_does`. Save the record under the git directory, beside the
+`report` path it names, never in the tree. Run `bin/grant.py --decide <project-root> --record
+<that file> --slug <slug>`. Carry a `take` as `references/doors.md` carries one: its `decided:`
+line in the log, the log committed alone, then `/reconcile` over the files the door's check names
+as the initiative's own. Its premise's `said` is the ask this log quotes. A `stop`, or a
+`/reconcile` that stops (`references/stops.md`), leaves the door to the report.
 
 ### 6. Measure
 

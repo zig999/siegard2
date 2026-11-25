@@ -415,6 +415,31 @@ CARRY = ("carry: each decision line below is carried out by its kind — a take 
          "handed to the person; a note is carried as it says, and the handoff rendered again")
 
 
+def reconcile_taken(fields: dict, held: dict, slug: str | None) -> bool:
+    """Whether the initiative's log, as committed since the grant armed, holds the scope's end
+    `/reconcile` this grant took: «A scope's end whose `/reconcile` this grant already took in the
+    initiative is answered `stop`» (SPEC-011 R4), so the report's render never takes it again; a
+    `/reconcile` taken mid-run is not that one."""
+    if not slug:
+        return False
+    path = fields["delivery_root"] / slug / "orchestration.md"
+    if not path.is_file():
+        return False
+    at = goal.relative(fields, path)
+    now = subprocess.run(["git", "-C", str(fields["home"]), "show", f"HEAD:{at}"],
+                         capture_output=True, text=True).stdout
+    before = subprocess.run(["git", "-C", str(fields["home"]), "show", f"{held['since']}:{at}"],
+                            capture_output=True, text=True).stdout
+    earlier = [line.strip() for line in before.splitlines()]
+    for line in (line.strip() for line in now.splitlines()):
+        if line in earlier:
+            earlier.remove(line)
+        elif goal.log_line(line).startswith("decided: /reconcile") and "at the scope's end" in line \
+                and f"{goal.GRANT_MARK}{mark_of(held)})" in line:
+            return True
+    return False
+
+
 def uncovered(held: dict, named: list[str | None], decision: dict) -> str | None:
     """The initiative outside a grant naming one that a decision is over, or None where the grant
     covers it: «A decision over an initiative the grant does not cover is `stop`» (SPEC-011 R4) —
@@ -450,14 +475,27 @@ def decide(project_root: Path, record: dict, slug: str | None = None) -> tuple[l
     import handoff
     initiative = None if routing else handoff.record_initiative(project_root,
                                                                 record.get("state_from"))
+    scope_end = handoff.is_scope_end(record)
     for number, decision in enumerate(decisions, 1):
         outside = None if routing else uncovered(held, [slug, initiative], decision)
         if outside is not None:
             lines.append(f"decision {number}: stop: the grant covers {held['slug']}, not "
                          f"{outside}")
             continue
-        lines += decide_one(number, decision, held, fields, None if routing else
-                            held.get("slug") or slug or initiative, routing)
+        if scope_end and any(skill_of(door) == "reconcile" for door in
+                             ([decision.get("recommended")] if decision.get("recommended") else [])
+                             + list(decision.get("others") or []) if isinstance(door, dict)) \
+                and reconcile_taken(fields, held, held.get("slug") or slug or initiative):
+            lines.append(f"decision {number}: stop: /reconcile was already taken at this "
+                         f"initiative's scope's end under this grant")
+            continue
+        answered = decide_one(number, decision, held, fields, None if routing else
+                              held.get("slug") or slug or initiative, routing)
+        if scope_end:
+            answered = [line.replace(" — precondition unmet — ", " — precondition unmet — at the "
+                                     "scope's end, ", 1) if line.strip().startswith("decided: /reconcile")
+                        else line for line in answered]
+        lines += answered
     if record.get("report"):
         lines.append(f"report: {record['report']}")
     return lines, 0
