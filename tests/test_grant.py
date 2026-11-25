@@ -984,31 +984,37 @@ def test_rendering_a_stop_with_no_grant_armed_prints_nothing_on_standard_error(p
     assert done.stderr == ""
 
 
-def test_a_recommended_door_with_no_entry_is_answered_stop_and_the_note_names_the_loss(project):
-    """The recommended door lost its entry in the move: the answer is `stop`, and the note says
-    which door of the skeleton the record no longer holds, so the record is rendered again."""
+def test_a_recommended_door_with_no_entry_nor_invocation_is_refused_under_a_grant(project):
+    """«Where a grant covering the record's initiative stands, `--render` refuses a recommended door
+    that carries no `entry` in a decision that carries no `invocation`» (SPEC-006 R9)."""
     declare_no_standard(project)
     assert arm(project, "--doors", "plan-work,implement-task", "--budget", "2").returncode == 0
     done = render_stop(project, stop_record(project, entry=False))
-    assert done.returncode == 0, done.stdout + done.stderr
-    assert "decision 1: stop: no recommended door is in the grant's doors" in done.stderr
-    assert "note: decision 1: the recommended door carries no entry" in done.stderr
-    assert "(the skeleton hands /implement-task beside the doors left)" in done.stderr
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "carries no `entry`" in done.stdout and "the skill the door invokes" in done.stdout
+    assert "`invocation`" in done.stdout and "the grant holds /plan-work, /implement-task" in done.stdout
 
 
-def test_the_note_names_a_recommended_door_without_entry_though_every_skeleton_door_is_kept(project):
-    """The shape of two stops of the day before: the skeleton's doors stay under `others` and the
-    recommended door is written beside them with no entry, so no door of the skeleton is absent
-    and the note still says the recommended one cannot be answered."""
+def test_a_step_that_is_no_door_carries_its_command_and_the_grant_stops_on_it(project):
     declare_no_standard(project)
     assert arm(project, "--doors", "plan-work,implement-task", "--budget", "2").returncode == 0
     data = stop_record(project, entry=False)
+    data["decisions"][0]["invocation"] = "python3 bin/trace.py --release app src/gone.ts"
     data["decisions"][0]["others"].append({"reply_word": "c", "what_it_does": "Deliver, kept as printed",
                                            "entry": "/implement-task", "check": {"answer": "accepts"}})
     done = render_stop(project, data)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert "note: decision 1: the recommended door carries no entry" in done.stderr
-    assert "skeleton hands" not in done.stderr
+    assert "decision 1: stop: no recommended door is in the grant's doors" in done.stderr
+    assert "note: decision 1: the recommended door carries no entry" not in done.stderr
+
+
+def test_prose_in_the_invocation_does_not_exempt_a_recommendation_with_no_entry(project):
+    declare_no_standard(project)
+    assert arm(project, "--doors", "plan-work,implement-task", "--budget", "2").returncode == 0
+    data = stop_record(project, entry=False)
+    data["decisions"][0]["invocation"] = "Entrega de novo a tarefa"
+    done = render_stop(project, data)
+    assert done.returncode == 1 and "never prose" in done.stdout, done.stdout
 
 
 def test_a_grant_that_ended_at_the_render_adds_no_note(project):

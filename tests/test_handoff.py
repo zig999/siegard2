@@ -502,6 +502,56 @@ def test_under_a_goal_the_skeleton_checks_its_doors_over_the_goal_s_initiative(p
     assert doors_of(prepare(project, "analyse"))["/plan-work"]["answer"] != "not checked"
 
 
+def test_an_implement_task_door_naming_no_task_among_several_is_not_checked(project, monkeypatch):
+    """«An `/implement-task` door whose invocation names no task, while more than one is
+    deliverable, is not checked rather than refused» (SPEC-006 R9): a forced entry never leaves one
+    other door for a grant to take."""
+    import door
+    class Refusal:
+        def lines(self, name):
+            return ["refuses", f"refused: {handoff.UNNAMED_TASK} — name the task",
+                    "  deliverable now: task/e/one, task/e/two"]
+    monkeypatch.setattr(door, "check", lambda name, project_, args: Refusal())
+    assert handoff.check_door("implement-task", project, SLUG, None, [])["answer"] == "refuses"
+    arm_grant(project)
+    check = handoff.check_door("implement-task", project, SLUG, None, [])
+    assert check["answer"] == "not checked" and "name it" in check["why"]
+    class NoneReady(Refusal):
+        def lines(self, name):
+            return ["refuses", f"refused: {handoff.UNNAMED_TASK} — name the task",
+                    "  deliverable now: none"]
+    monkeypatch.setattr(door, "check", lambda name, project_, args: NoneReady())
+    assert handoff.check_door("implement-task", project, SLUG, None, [])["answer"] == "refuses"
+    seen = []
+    monkeypatch.setattr(door, "check", lambda name, project_, args: seen.append(args["task"]) or Refusal())
+    handoff.check_as_it_stands("/implement-task", project, {"script": "progress.py", "project": str(project),
+                               "slug": SLUG}, f"/implement-task /x --target app --slug {SLUG} task/e/one.md")
+    handoff.check_as_it_stands("/implement-task", project, {"script": "progress.py", "project": str(project),
+                               "slug": SLUG}, f"/review-change /x --target app --slug {SLUG} task/e/one")
+    assert seen == [["task/e/one"], []]
+    record = {"decisions": [{"recommended": {"entry": "/implement-task", "check": check}}]}
+    assert handoff.unslugged_recommendations(record) == [
+        "note: decision 1: the recommended door /implement-task was not checked because no task was "
+        "named and more than one is deliverable — carry the task in the decision's `invocation` and "
+        "render again"]
+
+
+def test_two_doors_entered_alike_are_never_taken_alone(project):
+    """An entry written on the recommended door beside a door of the same entry leaves two doors:
+    the grant judges or stops, never takes one as the only door left."""
+    arm_grant(project)
+    prepared = prepare(project, "plan-work", "--slug", SLUG)
+    one = prepared["decisions"][0]
+    one.update(ask="Deliver the unified task?", if_none="Nothing runs.", relation="one-of")
+    one["recommended"] = {"reply_word": "a", "door": "Deliver it", "entry": "/implement-task",
+                          "why": "It is ready", "reverses_if": "you want the facts reread",
+                          "check": {"answer": "accepts", "refused": []}}
+    one["others"] = [{"reply_word": "b", "what_it_does": "Reread the facts first", "entry": "/implement-task",
+                      "check": {"answer": "accepts", "refused": []}}]
+    lines = handoff.grant_answer(prepared)
+    assert not any(": take:" in line for line in lines), lines
+
+
 def test_a_state_over_its_ceiling_is_refused():
     problems = refusal(lambda d: d.update(state="x" * (CONTRACT["x-ceilings"]["state"] + 1)))
     assert any(p.startswith("state:") and "over the ceiling" in p for p in problems)

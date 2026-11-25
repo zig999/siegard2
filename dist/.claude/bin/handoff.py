@@ -59,7 +59,8 @@ that takes a target is checked over the one the armed goal names where none is n
 runs over the goal's own initiative: «A door that takes a target and is checked with none named is
 checked over the target the armed goal names, where the check runs over that goal's own
 initiative» (SPEC-006 R9). A door
-recommended with no entry is noted on standard error where a grant is armed. Where the project holds an armed grant, `--render` also
+recommended with no entry, in a decision carrying no `invocation`, is refused where a grant
+covering the initiative stands, and noted on standard error otherwise. Where the project holds an armed grant, `--render` also
 prints what `grant.py --decide` answers over the record's decisions on standard error, after the
 message on standard output: «`--render` asks the grant over the doors of the decision it rendered
 and prints its answer on standard error» (SPEC-011 R9); a session takes a `take`, sends a `judge` to
@@ -140,6 +141,9 @@ INVOCATION_SLUG = re.compile(r"--slug[ \t]+(\S+)")
 UNNAMED_SLUG = "takes a slug, and none was named"
 NAMED_ENTRY = re.compile(r"(?<![\w/])/(?:siegard:)?([a-z][\w-]*)(?![\w/-])")
 REPORT_SKILL = re.compile(r"Z-([a-z][\w-]*)\.md$")
+INVOCATION_TASK = re.compile(r"(?<![\w/])(task/[\w./-]+)")
+COMMAND = re.compile(r"^\s*`?(?:/|[a-z0-9_.-]+/|python3?\s|[a-z0-9_.-]+\s+-)")
+UNNAMED_TASK = "no task named, and the deliverable set does not hold exactly one"
 ROUTE = "route"
 STATUS = "siegard-status"
 UNNAMED_TARGET = "takes a target, and none was named"
@@ -397,7 +401,7 @@ def goal_target(project: Path, slug: str | None) -> str | None:
 
 
 def check_door(name: str, project: Path, slug: str | None, target: str | None,
-               files: list[str]) -> dict:
+               files: list[str], tasks: list[str] | None = None) -> dict:
     """`door.py --check`'s first line and `refused:` facts for the door, or `not checked` and
     why where no script decides it or an input it takes is not named."""
     import door
@@ -409,11 +413,17 @@ def check_door(name: str, project: Path, slug: str | None, target: str | None,
     if name in door.NAMED_SLUG and not slug:
         return {"answer": "not checked", "why": f"/{name} {UNNAMED_SLUG}"}
     target = target or goal_target(project, slug)
-    args = {"target": target, "slug": slug, "task": [], "name": None, "scope": [], "file": files,
-            "standard": None}
+    args = {"target": target, "slug": slug, "task": list(tasks or []), "name": None, "scope": [],
+            "file": files, "standard": None}
     lines = door.check(name, project, args).lines(name)
-    return {"answer": lines[0],
-            "refused": [line[len("refused: "):] for line in lines if line.startswith("refused: ")]}
+    refused = [line[len("refused: "):] for line in lines if line.startswith("refused: ")]
+    detail = "\n".join(line.strip() for line in lines if line.startswith("  "))
+    if name == "implement-task" and not tasks and refused \
+            and all(fact.startswith(UNNAMED_TASK) for fact in refused) \
+            and len(door.deliverable(detail)) > 1 and grant_covers(project, slug):
+        return {"answer": "not checked", "why": "/implement-task names no task, and more than one "
+                                                "is deliverable: name it in the invocation"}
+    return {"answer": lines[0], "refused": refused}
 
 
 def reconcile_set(project: Path, root: Path) -> tuple[list[str], str | None] | None:
@@ -500,8 +510,12 @@ def check_as_it_stands(entry: str, project: Path, source: dict, invocation: str,
     inferred = None
     if slug is None and name in door.NAMED_SLUG and infer:
         slug = inferred = live_slug(project)
+    opening = INVOCATION_ENTRY.match(invocation)
+    tasks = [task.removesuffix(".md") for task in INVOCATION_TASK.findall(invocation)] \
+        if name == "implement-task" and opening and opening.group(1) == "implement-task" else []
     try:
-        check = check_of(name, project, slug, None, [])
+        check = check_of(name, project, slug, None, [], tasks) if tasks \
+            else check_of(name, project, slug, None, [])
     except Exception as broken:
         return {"answer": "not checked", "why": f"the check of /{name} could not run: {broken}"}
     if not infer:
@@ -586,13 +600,14 @@ def unentered_recommendations(record: dict) -> list[str]:
     lines = []
     for number, decision in enumerate(record.get("decisions") or [], 1):
         chosen = decision.get("recommended") if isinstance(decision, dict) else None
-        if not isinstance(chosen, dict) or chosen.get("entry"):
+        if not isinstance(chosen, dict) or chosen.get("entry") \
+                or COMMAND.match(str(decision.get("invocation") or "")):
             continue
         present = {door.get("entry") for door in decision.get("others") or []}
         absent = [f"/{name}" for name in handed if f"/{name}" not in present]
         lines.append(f"note: decision {number}: the recommended door carries no entry, and the "
                      f"grant answers a door by its entry — if it is a door to a skill, carry the "
-                     f"`entry` its skeleton door holds"
+                     f"`entry` of the skill it invokes"
                      + (f" (the skeleton hands {', '.join(absent)} beside the doors left)"
                         if absent else "") + " and render again")
     return lines
@@ -637,10 +652,44 @@ def recommending_report(record: dict, contract: dict) -> list[str]:
             f"(SPEC-006 R11) — keep "
             f"this record's `report`, `state` and `state_from`, set kind `decision` and carry the "
             f"`decisions` `handoff.py --prepare --skill {found.group(1)}` prints, the door you "
-            f"recommend as `recommended` (a step that is no door carries no `entry`); where the "
+            f"recommend as `recommended` (a step that is no door carries its command in `invocation`); where the "
             f"choice is a contradiction, two readings, a finding's worth or every door excluded, "
             f"carry `settles` and its `settles_by` instead; or drop the recommendation from the "
             f"body"]
+
+
+def unentered_under_grant(record: object) -> list[str]:
+    """A recommended door the grant cannot answer: «Where a grant covering the record's initiative
+    stands, `--render` refuses a recommended door that carries no `entry` in a decision that
+    carries no `invocation`» (SPEC-006 R9). The entry asked for is the skill the door invokes,
+    whatever it is; the grant's doors are said, never required."""
+    source = record.get("state_from") if isinstance(record, dict) else None
+    if not isinstance(record, dict) or record.get("kind") != "decision" or not isinstance(source, dict) \
+            or not isinstance(source.get("project"), str) or not Path(source["project"]).is_dir():
+        return []
+    project = Path(source["project"])
+    if not grant_covers(project, record_initiative(project, source)):
+        return []
+    try:
+        import grant
+        held = grant.standing(project)[0]["doors"]
+    except Exception:
+        held = []
+    if not held:
+        return []
+    doors = ", ".join(f"/{name}" for name in held)
+    problems = []
+    for at, decision in enumerate(record.get("decisions") or []):
+        chosen = decision.get("recommended") if isinstance(decision, dict) else None
+        if not isinstance(chosen, dict) or chosen.get("entry") \
+                or COMMAND.match(str(decision.get("invocation") or "")):
+            continue
+        problems.append(f"decisions/{at}/recommended: carries no `entry`, and a grant stands, which "
+                        f"answers a door by its entry — write the `entry` of the skill the door "
+                        f"invokes, whatever it is (the grant holds {doors}); a step that is no door "
+                        f"carries the command line that runs it in the decision's `invocation`, "
+                        f"never prose")
+    return problems
 
 
 def unslugged_recommendations(record: dict) -> list[str]:
@@ -651,12 +700,17 @@ def unslugged_recommendations(record: dict) -> list[str]:
     for number, decision in enumerate(record.get("decisions") or [], 1):
         chosen = decision.get("recommended") if isinstance(decision, dict) else None
         check = chosen.get("check") if isinstance(chosen, dict) else None
-        if not isinstance(check, dict) or check.get("answer") != "not checked" \
-                or not str(check.get("why", "")).endswith(UNNAMED_SLUG):
+        why = str(check.get("why", "")) if isinstance(check, dict) else ""
+        if not isinstance(check, dict) or check.get("answer") != "not checked":
             continue
-        lines.append(f"note: decision {number}: the recommended door {chosen.get('entry')} was not "
-                     f"checked because it takes a slug and none was named — carry `--slug "
-                     f"<slug>` in the decision's `invocation` and render again")
+        if why.endswith(UNNAMED_SLUG):
+            lines.append(f"note: decision {number}: the recommended door {chosen.get('entry')} was "
+                         f"not checked because it takes a slug and none was named — carry `--slug "
+                         f"<slug>` in the decision's `invocation` and render again")
+        elif why.startswith("/implement-task names no task"):
+            lines.append(f"note: decision {number}: the recommended door /implement-task was not "
+                         f"checked because no task was named and more than one is deliverable — "
+                         f"carry the task in the decision's `invocation` and render again")
     return lines
 
 
@@ -968,7 +1022,7 @@ def render(record: object, contract: dict, base: Path, state_of=state_now
             continue
         problems.append(f"{where}: {error.message}")
     if not problems:
-        problems.extend(unfound_findings(record, base))
+        problems.extend(unfound_findings(record, base) + unentered_under_grant(record))
     if problems:
         return None, problems
     ceilings = contract["x-ceilings"]
@@ -1088,8 +1142,9 @@ def limits(contract: dict, language: str = "en") -> str:
             f"finding, absolute or from the project root, and a choice of cost, order or reading "
             f"the ask is recommended; two "
             f"doors or more carry `relation`: one-of, in-order or independent\n"
-            f"limits: a recommended door carries the `entry` its skeleton door holds, which "
-            f"`--render` checks again as the tree stands\n"
+            f"limits: a recommended door carries the `entry` of the skill it invokes, which "
+            f"`--render` checks again as the tree stands; a step that is no door carries its "
+            f"command in the decision's `invocation`\n"
             f"limits: a body that recommends says the fact that would change it after "
             f"'{reverses}'; the record holds the skeleton's fields and no other\n"
             f"limits: no prose field carries " + ", ".join(words) + "\n")
