@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.149.0 — 2026-11-25
+
+Under a grant holding doors, `--render` refuses a recommended door with no `entry` in a decision whose `invocation` holds no command line, asking for the skill the door invokes; an `/implement-task` door is checked over the task its own invocation names, and one naming none among several deliverable reads not checked under a covering grant (SPEC-006 R9). (`01b6cb5`)
+
 ## 5.148.0 — 2026-11-25
 
 Under a goal, a door taking a slug that the record leaves unnamed is checked over the armed goal's initiative — the project's own, as named — before the one live initiative, at `--prepare` and at `--render`; a skill prepared with `--slug` keeps it in `state_from`, so the initiative it was named wins; a `/reconcile` invocation's slug is no initiative (SPEC-006 R9, R11). (`5548e10`)
