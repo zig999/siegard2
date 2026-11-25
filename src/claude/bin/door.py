@@ -125,6 +125,7 @@ ROOTS = {
 }
 STANDARD_HELD = ("implement-task", "plan-work", "review-change", "deliver-scope")
 NAMED_SLUG = ("plan-work", "deliver-scope", "reconcile")
+UNNAMED_TARGET = "no target named"
 CLOSURE_FILE = "closure.md"
 TRACE_FILE = "siegard-trace.json"
 RECONCILE_DIR = "siegard-reconcile"
@@ -724,7 +725,7 @@ def check(door: str, project_root: Path, args: dict) -> Answer:
     target = args["target"]
     if target is None:
         if len(fields["targets"]) != 1:
-            answer.refuse(f"no target named, and siegard.json declares "
+            answer.refuse(f"{UNNAMED_TARGET}, and siegard.json declares "
                           f"{len(fields['targets'])} ({', '.join(sorted(fields['targets']))}) — "
                           f"name one")
             return answer

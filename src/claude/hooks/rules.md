@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.141.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.141.1. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -63,7 +63,7 @@ the one that applies; never restate it from memory.
   words, never the framework's terms. «A recommendation names the door, the criterion, the
   deciding fact and the reversing fact; without all four, none is named» (SPEC-006 R2). An option
   its own entry point refuses, or that breaks a rule, is said excluded, and the one that remains
-  is recommended: before handing `/implement-task`, `/plan-work`, `/review-change`,
+  is recommended: before handing `/analyse`, `/implement-task`, `/plan-work`, `/review-change`,
   `/deliver-scope` or `/reconcile` as an option, run `bin/door.py --check <skill> --project
   <project-root>` with the inputs the option carries — a first line `refuses` excludes it, its
   `refused:` line the fact named beside it, and a `not decided:` line is never read as accepted.
@@ -94,7 +94,7 @@ the one that applies; never restate it from memory.
 ## Which route a change takes
 
 Five routes. Which one a change takes is the person's, or a grant's they armed holding `routes`
-for a route with an entry point: recommended with its reason and never chosen silently. **Invoke the
+for `/analyse` or `/plan-work`: recommended with its reason and never chosen silently. **Invoke the
 entry point by name rather than doing its work ad hoc**: the entry point is the route, and the
 fifth names none.
 

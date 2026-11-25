@@ -141,7 +141,7 @@ UNNAMED_SLUG = "takes a slug, and none was named"
 NAMED_ENTRY = re.compile(r"(?<![\w/])/(?:siegard:)?([a-z][\w-]*)(?![\w/-])")
 REPORT_SKILL = re.compile(r"Z-([a-z][\w-]*)\.md$")
 ROUTE = "route"
-ROUTE_DOORS = ("analyse", "plan-work")
+UNNAMED_TARGET = "takes a target, and none was named"
 HANDOFF_DIR = ("siegard", "handoff")
 GIT_TIMEOUT_SECONDS = 5
 
@@ -498,6 +498,8 @@ def check_as_it_stands(entry: str, project: Path, source: dict, invocation: str,
         check = check_of(name, project, slug, None, [])
     except Exception as broken:
         return {"answer": "not checked", "why": f"the check of /{name} could not run: {broken}"}
+    if not infer:
+        return routed(name, check)
     if inferred and check["answer"] != "not checked":
         return {**check, "inferred_slug": inferred}
     return check
@@ -546,6 +548,18 @@ def completed(record: dict, check_of=check_door) -> dict:
                 door["check"] = check_as_it_stands(door["entry"], project, source, invocation,
                                                    check_of, infer)
     return done
+
+
+def routed(name: str, check: dict) -> dict:
+    """A routing record's door as its check answered, save a refusal for want of a target, which
+    is not checked instead: the request it routes names none yet, and a refusal the record's own
+    inputs produced is no fact of the tree — «whose doors are never checked over an initiative it
+    does not name, nor refused for want of a target it does not name» (SPEC-006 R9)."""
+    import door
+    if check.get("answer") == "refuses" and any(
+            fact.startswith(door.UNNAMED_TARGET) for fact in check.get("refused") or []):
+        return {"answer": "not checked", "why": f"/{name} {UNNAMED_TARGET}"}
+    return check
 
 
 def is_routing(record: dict) -> bool:
@@ -666,10 +680,11 @@ def prepare_route(project: Path, slug: str, ask: Path, language: str, contract: 
     --record` copied whole, its doors `/analyse` and `/plan-work` each checked as the tree stands:
     «The material `/analyse` reads under a taken route is the recorded request, never the
     session's paraphrase of it.» (SPEC-011 R14) The ask is named in the decision's `ask`."""
+    import grant
     source = state_source(project, slug)
     doors = [{"reply_word": "", "what_it_does": "", "entry": f"/{name}",
-              "check": check_door(name, project, slug, None, [])}
-             for name in ROUTE_DOORS]
+              "check": routed(name, check_door(name, project, slug, None, []))}
+             for name in grant.ROUTE_DOORS]
     record: dict = {"contract_version": contract["properties"]["contract_version"]["const"],
                     "kind": "decision", "language": language,
                     "state": state_now(source, language, contract), "state_from": source,

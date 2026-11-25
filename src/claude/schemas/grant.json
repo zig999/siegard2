@@ -71,7 +71,7 @@
     },
     "routes": {
       "type": "boolean",
-      "description": "Whether the grant holds the choice of route for a request that names none: «A grant may hold one more clause, `routes`, named alone by `--routes`: the choice of route for a request that names none, as CLAUDE.md's recommendation authority allows a grant to hold it.» (SPEC-011 R15) Absent reads as false: only a grant armed with `--routes` holds it, and it never covers one initiative alone."
+      "description": "Whether the grant holds the choice of route for a request that names none: «A grant may hold one more clause, `routes`, named alone by `--routes`: the choice of route for a request that names none» (SPEC-011 R15). Absent reads as false: only a grant armed with `--routes` holds it, and it never covers one initiative alone."
     },
     "words": {
       "type": "object",

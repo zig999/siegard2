@@ -1399,6 +1399,27 @@ def test_a_routing_skeleton_hands_analyse_and_plan_work_each_checked(project):
     assert str(ask) in prepared["decisions"][0]["ask"]
 
 
+def test_a_routing_door_refused_for_want_of_a_target_is_not_checked(project):
+    """«nor refused for want of a target it does not name: such a door is not checked» (SPEC-006
+    R9): in a project of two targets the request names none yet, and a refusal the record's own
+    inputs produced would hand the grant `/analyse` as the one route left."""
+    two_targets(project)
+    prepared = json.loads(route(project, "--slug", "loyalty-discount", "--ask",
+                                str(recorded_ask(project))).stdout)
+    checks = doors_of(prepared)
+    assert checks["/analyse"]["answer"] == "accepts"
+    assert checks["/plan-work"] == {"answer": "not checked",
+                                    "why": f"/plan-work {handoff.UNNAMED_TARGET}"}
+    one = prepared["decisions"][0]
+    one["recommended"] = {"reply_word": "p", "door": "Plan it", "entry": "/plan-work",
+                          "why": "w", "reverses_if": "r"}
+    one["others"] = [door for door in one["others"] if door["entry"] != "/plan-work"]
+    rendered = handoff.completed(prepared)["decisions"][0]["recommended"]["check"]
+    assert rendered["answer"] == "not checked", rendered
+    stop = handoff.completed({**prepared, "report": prepared["report"].replace("-route", "-plan-work")})
+    assert stop["decisions"][0]["recommended"]["check"]["answer"] == "refuses"
+
+
 def test_a_routing_skeleton_refuses_a_slug_an_initiative_holds(project):
     done = route(project, "--slug", SLUG, "--ask", str(recorded_ask(project)))
     assert done.returncode == 1 and "a route opens a new initiative" in done.stdout

@@ -1304,6 +1304,26 @@ def test_the_one_route_left_is_taken_under_routes(project, tmp_path):
     assert "decided: /plan-work — precondition unmet" in out
 
 
+def test_a_route_door_not_checked_is_never_taken_as_the_one_left(project, tmp_path):
+    """A `/plan-work` door left unchecked for want of a target (SPEC-006 R9) is no exclusion: the
+    route left is not derived, and the recommended one accepted goes to the decider."""
+    assert arm(project, "--routes", "--budget", "1", slug=None).returncode == 0
+    record = routing(with_recommended("/analyse", "accepts",
+                                      route_door("p", "/plan-work", "not checked")))
+    out = decide(project, record, tmp_path).stdout
+    assert "decision 1: judge:" in out and "take:" not in out
+    record = routing(with_recommended("/plan-work", "not checked", route_door("a", "/analyse")))
+    assert "decision 1: stop: the recommended door was not accepted" in \
+        decide(project, record, tmp_path).stdout
+
+
+def test_the_carry_line_names_the_recorded_request_as_a_route_s_material():
+    """«The material `/analyse` reads under a taken route is the recorded request, never the
+    session's paraphrase of it» (SPEC-011 R14), said where the route is taken."""
+    assert ("the route invoked over the record's slug with the recorded request's file as its "
+            "material, never a paraphrase") in grant_script.CARRY
+
+
 def test_a_judged_route_draws_on_the_routing_budget_and_stops_once_it_is_spent(project, tmp_path):
     """«The routing budget is the grant's budget less the judged `decided:` lines carrying its
     mark that the delivery root's own `orchestration.md` holds on disk beyond what it held when the

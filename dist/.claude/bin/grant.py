@@ -109,7 +109,6 @@ CREDENTIALS = re.compile(r"(^\.env|\.(pem|key|p12|pfx|jks)$|^id_(rsa|dsa|ecdsa|e
                          r"credential|secret|(^|/)\.ssh/|(^|/)\.aws/)", re.I)
 CLOSED_AFTER = ("records", "review", "criteria", "delivery", "plan", "specification")
 ROUTE_DOORS = ("analyse", "plan-work")
-ROUTE_REPORT = re.compile(r"Z-route\.md$")
 
 
 def grant_path(home: Path) -> Path:
@@ -331,9 +330,10 @@ def routing_budget_left(fields: dict, held: dict) -> int:
 
 
 def is_routing(record: dict) -> bool:
-    """Whether a handoff record is a routing record `handoff.py --prepare --route` wrote: it is
-    told apart by its report's name, which no skill's report carries."""
-    return bool(ROUTE_REPORT.search(str(record.get("report") or "")))
+    """Whether a handoff record is a routing record `handoff.py --prepare --route` wrote, as the
+    script that writes it tells one apart."""
+    import handoff
+    return handoff.is_routing(record)
 
 
 def skill_of(door: dict) -> str | None:
@@ -407,7 +407,8 @@ def decide_one(number: int, decision: dict, held: dict, fields: dict,
 
 CARRY = ("carry: each decision line below is carried out by its kind — a take is taken, its door "
          "invoked and the `decided` line under it written in the run's orchestration log, or for a "
-         "route in the delivery root's own orchestration.md; a judge "
+         "route in the delivery root's own orchestration.md, the route invoked over the record's "
+         "slug with the recorded request's file as its material, never a paraphrase; a judge "
          "goes to `siegard:door-decider` over the doors it prints and nothing else; a stop is "
          "handed to the person; a note is carried as it says, and the handoff rendered again")
 

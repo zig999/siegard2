@@ -144,7 +144,8 @@ bound a script on disk decides.
 - **R14** — A request that names no route is routed by a record `bin/handoff.py --prepare --route`
   writes — over a slug no initiative holds and the request `ask.py --record` copied whole — whose
   doors are `/analyse` and `/plan-work`, each checked by `door.py --check` as the tree stands and
-  never over an initiative the record does not name; the record is kept under a report whose name
+  never over an initiative the record does not name, nor refused for want of a target it does not
+  name (SPEC-006 R9); the record is kept under a report whose name
   no skill's report carries, `<stamp>-route.md`. `--render` asks the grant as it does at a stop
   (R9): a grant that holds no `routes` answers every decision `stop: the grant holds no routes`; one
   that holds it answers as R4 does over those two doors alone, a recommended route outside them
@@ -155,7 +156,7 @@ bound a script on disk decides.
   `orchestration.md`, which `grant.py --commit` admits as a path the route writes where the grant
   holds `routes`; the commit check refuses a judged line in that log under a grant without it. The
   material `/analyse` reads under a taken route is the recorded request, never the session's
-  paraphrase of it. The route a finding deserves, an end-to-end route (`/deliver-scope`,
+  paraphrase of it. The `carry:` line `grant.py --decide` prints says so where the route is taken. The route a finding deserves, an end-to-end route (`/deliver-scope`,
   `/adopt-scope`) and a corrective increment are never a grant's route (R8). A plugin
   `SessionStart` line says, while a grant holding `routes` stands, that a request naming no route
   is routed so.
@@ -238,7 +239,8 @@ bound a script on disk decides.
    `judge` with the routing budget over two, to `stop` once that budget is spent counting a line
    written and not committed, and to `stop` over a recommended route outside the two; `handoff.py
    --prepare --route` to its doors, its report name, a refused taken slug and an unrecorded ask,
-   and `--render` to never inferring a slug for it; `door.py --check analyse` to what `/analyse`
+   a door refused for want of a target to not checked, and `--render` to never inferring a slug
+   for it; `door.py --check analyse` to what `/analyse`
    refuses before its first write; the commit check to refusing a judged root-log line under a
    grant without `routes`; and the start line to appearing only under `routes` —
    `tests/test_grant.py`, `tests/test_handoff.py`, `tests/test_door.py`, `tests/test_hooks.py`.
@@ -494,3 +496,12 @@ bound a script on disk decides.
   for a request that names no route is measured from `handoff-checks.jsonl` in the week after the
   release, and only a measured miss rate reopens a `UserPromptSubmit` hook. Reversal: judged routes
   read as reverted outnumbering those that held, which narrows the grant back (CLAUDE.md).
+- 2026-11-25 — a validation of R14 and R15 across the shipped artifacts. In a project declaring
+  two targets — productorder and productcatalog declare `backend` and `frontend` — the routing
+  skeleton marked `/plan-work` `refuses` for want of a target, and `--decide` took `/analyse` as a
+  derived door, its deciding fact a refusal the record's own inputs produced; such a door is now
+  not checked (SPEC-006 R9), and a choice between the two is judged or the person's. The material
+  rule lived in a docstring alone; the `carry:` line now says it where a route is taken. The
+  session rules said a grant takes "a route with an entry point", which `/deliver-scope` and
+  `/adopt-scope` are; they now name `/analyse` and `/plan-work`. Reversal: a routing record whose
+  request names a target, which would let the skeleton check `/plan-work` over it.
