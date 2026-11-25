@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.146.0 — 2026-11-25
+
+A person's question of what comes next — a phrase like "e agora?", "qual caminho?", "what now?" inside a question — gains, through a `UserPromptSubmit` hook, one line sending the answer to `/siegard-status` and its render, where a grant covering the initiative answers the recommended step; a go-ahead or a slash command gains nothing, and the hook never blocks (SPEC-008 R20). `tools/replay_stops.py --cut ask` replays a turn from the person's own message. (`d15cb96`)
+
 ## 5.145.0 — 2026-11-25
 
 A choice left to the person as `finding-worth` names in `finding` the record that holds the finding, absolute or from the project root, and `--render` refuses one naming none, a path that is no file, or a record holding no finding — naming the other reserved classes first, then the recommendation a choice of cost, order or reading the ask takes; the record is shown beside the choice (SPEC-006 R3). (`0a36711`)
