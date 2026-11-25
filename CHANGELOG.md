@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.145.0 — 2026-11-25
+
+A choice left to the person as `finding-worth` names in `finding` the record that holds the finding, absolute or from the project root, and `--render` refuses one naming none, a path that is no file, or a record holding no finding — naming the other reserved classes first, then the recommendation a choice of cost, order or reading the ask takes; the record is shown beside the choice (SPEC-006 R3). (`0a36711`)
+
 ## 5.144.0 — 2026-11-25
 
 A grant naming one initiative answers no stop over another, nor over a record naming none: the decision is `stop: the grant covers <slug>, not <initiative>`, read from the caller's `--slug`, the record's initiative, a door's invocation or the initiative its check ran over (SPEC-011 R4). The record's initiative has one definition — its `state_from`, else the armed goal's, else the one live initiative — read alike by `--prepare` and `--render` (SPEC-006 R11). (`89b0a11`)
