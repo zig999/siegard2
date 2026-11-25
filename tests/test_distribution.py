@@ -232,8 +232,21 @@ def test_the_route_table_counts_the_routes_it_lists():
             if line.startswith("| ") and not line.startswith("| what changed")]
     words = {5: "Five", 6: "Six", 7: "Seven"}
     assert f"{words[len(rows)]} routes;" in table, f"{len(rows)} rows under the heading"
-    assert any("source no delivery wrote" in row and "`/reconcile` as an adoption" in row
-               for row in rows)
+
+
+def test_the_adoption_route_is_stated_where_every_session_lists_the_skills():
+    """Source no delivery wrote is adopted through `/survey`, `/analyse` and `/reconcile` as an
+    adoption, or `/adopt-scope` carrying the three (SPEC-005). The skill listing every session
+    holds states it, so the rules carry no row of their own for it."""
+    def description(skill: str) -> str:
+        text = (REPO / "src/claude/skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+        front = text.split("---", 2)[1]
+        assert "disable-model-invocation: true" not in front, f"{skill} is not in the listing"
+        return " ".join(front.split("description:", 1)[1].split())
+    adopt = description("adopt-scope")
+    assert "source no delivery wrote" in adopt
+    assert "/survey" in adopt and "/analyse" in adopt and "/reconcile as an adoption" in adopt
+    assert "Reads source no delivery wrote" in description("survey")
 
 
 def test_the_rules_name_no_agent():
@@ -346,14 +359,19 @@ def test_the_index_and_the_node_contract_name_the_same_passes(schemas):
         f"the index accepts {index['enum']} and a record accepts {node['enum']}"
 
 
-def test_the_rules_send_a_state_question_to_disk():
+def test_a_state_question_is_sent_to_disk_by_the_listing_and_the_version_by_the_rules():
     """A question about where the project stands answered from the conversation is the one
-    recall the rules already call non-authoritative, asked in its most common form. The rule
-    names the two skills that read disk for it, and where the version is read: the marker line."""
+    recall the framework calls non-authoritative, asked in its most common form. The skill listing
+    every session holds sends it to the two skills that read disk, and the rules say where the
+    version is read: the marker line."""
+    for skill, said in (("siegard-status", "never from what the conversation remembers"),
+                        ("siegard-progress", "never recalled")):
+        text = (REPO / "src/claude/skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+        front = text.split("---", 2)[1]
+        assert "disable-model-invocation: true" not in front
+        assert said in " ".join(front.split("description:", 1)[1].split())[:400]
     rules = CONSUMER_RULES.read_text(encoding="utf-8")
-    assert "A question about where the project stands is answered from disk" in rules
-    assert "`/siegard-status`" in rules and "`/siegard-progress`" in rules
-    assert "The framework's version is the one the first line of\n  these rules states." in rules
+    assert "The framework's version is the one the first line of these rules states." in rules
 
 
 def test_the_rules_bound_the_session_s_own_commits():

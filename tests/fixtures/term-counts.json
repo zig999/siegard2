@@ -75,9 +75,6 @@
   "the caller": 10,
   "the session": 2
  },
- "src/claude/hooks/rules.md": {
-  "the session": 1
- },
  "src/claude/schemas/certification-return.json": {
   "the caller": 1
  },

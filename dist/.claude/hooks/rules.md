@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.140.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.140.1. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -82,10 +82,7 @@ the one that applies; never restate it from memory.
   (SPEC-006 R8): run `bin/handoff.py --prepare --skill <skill> --project <project-root>`, fill
   only the fields it left empty, save the full report with `--save-report`, and hand the person
   what `--render` prints. A status answer or a design conversation is kind `report`.
-- **A question about where the project stands is answered from disk, never from the
-  conversation:** what is live, delivered, outstanding, blocked, drifted or uncommitted, by
-  `/siegard-status` over the project or `/siegard-progress` over one initiative. The framework's version is the one the first line of
-  these rules states. A state recalled from earlier in the session is a guess that reads as a fact.
+- **The framework's version is the one the first line of these rules states.**
 - **Only the person arms or ends a goal or a grant.** Never run `grant.py --arm` outside
   `/siegard-grant`; never run `goal.py --arm` outside `/siegard-goal --arm`, and never run
   `goal.py --disarm` unasked.
@@ -96,7 +93,7 @@ the one that applies; never restate it from memory.
 
 ## Which route a change takes
 
-Six routes; which one a change takes is stated by a person and never inferred. **Invoke the
+Five routes; which one a change takes is stated by a person and never inferred. **Invoke the
 entry point by name rather than doing its work ad hoc**: the entry point is the route, and the
 fifth names none.
 
@@ -107,10 +104,8 @@ fifth names none.
 | one wrong behavior in code already delivered | `/plan-work`'s corrective increment → `/implement-task` — never a fix typed straight into the file |
 | **the comment alone** — prose in source that breaks the comment rule, with the behavior correct and the fact already held | the source, changed directly (removal, never refresh), then `/reconcile` over that file, never skipped |
 | **the surface alone** — a control's label, a colour, spacing, a column's order, an icon | the source, changed directly, on a target `siegard.json` declares `edits_freely` |
-| **source no delivery wrote** — a project adopting Siegard | `/survey` → `/analyse` → `/reconcile` as an adoption, one context at a time, or `/adopt-scope` carrying the three under one ask; the documentation then through the first route |
 
 **The criterion for the fifth is one sentence: if the change alters what a person using the
 system can learn or do, it is not surface.** A relabelled button that keeps doing the same thing
 is surface; a refusal's wording, a column showing new data, and a screen that starts refusing are
-not. It relaxes no rule about domain facts; the conformance pass reports a fact no node holds
-when a review next reaches that file.
+not. It relaxes no rule about domain facts.
