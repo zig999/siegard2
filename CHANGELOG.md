@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.156.0 — 2026-11-25
+
+The `/reconcile` door `/implement-task`'s skeleton hands is checked over the reconcile-set files the initiative's own records name, carried as `files`, not checked without an initiative, and rechecked over the same set at `--render`, which refuses an invocation naming other files (SPEC-006 R9). (`14ef12e`)
+
 ## 5.155.0 — 2026-11-25
 
 A record's front matter is read from its fence (`spec.FENCE`) by `goal.py`, `progress.py` and `archive.py`, so a value quoting `'---'` no longer cuts it: `--prepare --scope-end` no longer crashes, a review keeps its `tasks`, a record keeps its `target`. (`6893249`)
