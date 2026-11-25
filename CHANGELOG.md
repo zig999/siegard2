@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.150.0 — 2026-11-25
+
+`--render` refuses `settles_by: all-excluded` beside a door that still accepts as the tree stands, asking for the step meant as a recommendation or another reserved class (SPEC-006 R6). (`0ea2ddf`)
+
 ## 5.149.0 — 2026-11-25
 
 Under a grant holding doors, `--render` refuses a recommended door with no `entry` in a decision whose `invocation` holds no command line, asking for the skill the door invokes; an `/implement-task` door is checked over the task its own invocation names, and one naming none among several deliverable reads not checked under a covering grant (SPEC-006 R9). (`01b6cb5`)
