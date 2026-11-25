@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.141.1 — 2026-11-25
+
+A routing record never refuses `/plan-work` for want of a target it does not name: in a project declaring several targets the door reads not checked rather than refused, so `/analyse` is no longer taken as derived on a refusal the record produced (SPEC-006 R9, SPEC-011 R14); the `carry:` line says `/analyse` reads the recorded request; the session rules name `/analyse` and `/plan-work` as the routes a grant takes. (`454510c`)
+
 ## 5.141.0 — 2026-11-25
 
 A grant may hold the choice of route: `/siegard-grant --routes` lets the framework route a request that names none, `/analyse` or `/plan-work` over a new initiative, as a grant answers a stop's doors, through `handoff.py --prepare --route` and a budget counted apart (SPEC-011 R14, R15); `door.py --check analyse` makes the `/analyse` door one a grant can take; the commit check refuses a judged route under a grant without `routes`. (`b33c3dd`)
