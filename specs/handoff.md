@@ -94,7 +94,7 @@ review, a drift count — as one bullet list; that part is decided in the report
 ### What stops
 
 - **R4** — A finding stops nothing. A handoff names a stop only where the skill's own file names one, and names it as a stop. Where a handoff says a step may proceed, it lists the checks it ran and their output verbatim.
-- **R6** — Where every door a handoff hands is excluded, by its entry point's refusal or by a rule this framework states, the opening says no door follows this framework's route, names for each door the refusal or the rule as a fact on disk, and recommends none; it names the route that recovers from work done outside the framework where one exists, and says what the person does then is outside this framework's route.
+- **R6** — Where every door a handoff hands is excluded, by its entry point's refusal or by a rule this framework states, the opening says no door follows this framework's route, names for each door the refusal or the rule as a fact on disk, and recommends none; it names the route that recovers from work done outside the framework where one exists, and says what the person does then is outside this framework's route. A door whose check accepts is not excluded: `--render` refuses `all-excluded` beside one, so the choice is recommended — the step the session means, a door as a judgment or a step that is no door with its command in `invocation` — or carries another of the reserved classes; the rule that excludes a door is one `bin/door.py --check` states, and a door it accepts, rechecked as the tree stands and over an initiative the record names, counts as not excluded.
 
 ### What a goal takes
 
@@ -472,6 +472,14 @@ review, a drift count — as one bullet list; that part is decided in the report
   is checked as named, never marked inferred, and after the invocation, so an invocation naming
   another initiative still stops a grant. Reversal: a goal-state door checked over the goal's
   initiative where the person meant another, read from `grant-checks.jsonl`.
+- 2026-11-25 — grounds for R6's accepted door. Three decisions configurator kept on 2026-11-24
+  (11:08, 11:24, 12:23) left the choice to the person as `all-excluded` while `/reconcile` beside it
+  carried a check that accepted ("Reconciliar os arquivos cujo vínculo ficou desatualizado; pode
+  esperar a revisão"), the step the session meant being to go on delivering; `--render` accepted all
+  three (`temp/goal-melhoria/20261124-2334/c9/measure.py`), and none of the accepted doors cited a
+  rule. Letting the grant pass over the label was weighed and refused (the framework would relabel a
+  choice it marked reserved). Reversal: an `all-excluded` beside an accepted door that the person
+  confirms a rule excluded.
 - 2026-11-25 — grounds for R9's refusal of an unentered recommendation under a grant. Six decisions
   productorder kept under its standing grant (11-23 22:59 to 11-24 14:25) recommended a door only in
   words — "Entrega de novo a tarefa…", "Replaneja juntando as cinco correções…", "Seguir com a

@@ -970,6 +970,40 @@ def unclassed_choices(record: object, contract: dict) -> list[str]:
     return problems
 
 
+def false_exclusions(record: object, check_of=check_door) -> list[str]:
+    """An `all-excluded` choice beside a door that accepts: «A door whose check accepts is not
+    excluded: `--render` refuses `all-excluded` beside one» (SPEC-006 R6). A door the record marks
+    accepted is checked again as the tree stands where the record names a project, and a check run
+    over an initiative the record did not name (`inferred_slug`) refuses nothing."""
+    if not isinstance(record, dict):
+        return []
+    source = record.get("state_from")
+    project = Path(source["project"]) if isinstance(source, dict) \
+        and isinstance(source.get("project"), str) and Path(source["project"]).is_dir() else None
+    problems = []
+    for at, decision in enumerate(record.get("decisions") or []):
+        if not isinstance(decision, dict) or decision.get("settles_by") != "all-excluded":
+            continue
+        accepted = []
+        for door in decision.get("others") or []:
+            check = door.get("check") if isinstance(door, dict) else None
+            if not isinstance(check, dict) or check.get("answer") != "accepts" or "inferred_slug" in check:
+                continue
+            if project is not None and door.get("entry"):
+                check = check_as_it_stands(door["entry"], project, source,
+                                           str(decision.get("invocation") or ""), check_of)
+                if check.get("answer") != "accepts" or "inferred_slug" in check:
+                    continue
+            accepted.append(door.get("entry") or door.get("reply_word"))
+        if accepted:
+            problems.append(f"decisions/{at}/settles_by: `all-excluded`, but {', '.join(map(str, accepted))} "
+                            f"accepts as the tree stands — drop `settles` and recommend, with `why` "
+                            f"saying it is a judgment, the step you mean: a step that is no door with "
+                            f"the command line that runs it in `invocation`, or a door; or carry "
+                            f"another of the reserved classes where the choice is one")
+    return problems
+
+
 def unfound_findings(record: object, base: Path) -> list[str]:
     """A `finding-worth` choice whose `finding` names no record holding a finding: «A choice left
     to the person as `finding-worth` names in `finding` the review record that holds the finding,
@@ -1022,7 +1056,8 @@ def render(record: object, contract: dict, base: Path, state_of=state_now
             continue
         problems.append(f"{where}: {error.message}")
     if not problems:
-        problems.extend(unfound_findings(record, base) + unentered_under_grant(record))
+        problems.extend(unfound_findings(record, base) + unentered_under_grant(record)
+                        + false_exclusions(record))
     if problems:
         return None, problems
     ceilings = contract["x-ceilings"]

@@ -327,6 +327,54 @@ def test_a_choice_left_to_the_person_under_one_of_the_four_renders(value):
     assert message is not None, problems
 
 
+def test_every_door_excluded_is_refused_beside_a_door_its_check_accepts():
+    """«A door whose check accepts is not excluded: `--render` refuses `all-excluded` beside one»
+    (SPEC-006 R6)."""
+    choice = own_choice("all-excluded")
+    choice["decisions"][0]["others"][1]["entry"] = "/reconcile"
+    choice["decisions"][0]["others"][1]["check"] = {"answer": "accepts", "refused": []}
+    message, problems = rendered(choice)
+    assert message is None and any(p.startswith("decisions/0/settles_by:") and "accepts" in p
+                                   for p in problems), problems
+    choice["decisions"][0]["others"][1]["check"] = {"answer": "refuses", "refused": ["x"]}
+    message, problems = rendered(choice)
+    assert message is not None, problems
+
+
+def test_every_door_excluded_renders_beside_doors_refused_or_unchecked_and_other_classes_beside_accepted():
+    for answer in ("refuses", "not checked"):
+        choice = own_choice("all-excluded")
+        choice["decisions"][0]["others"][1]["check"] = {"answer": answer, "refused": ["x"], "why": "y"}
+        message, problems = rendered(choice)
+        assert message is not None, (answer, problems)
+    for value in ("contradiction", "two-readings"):
+        choice = own_choice(value)
+        choice["decisions"][0]["others"][1]["check"] = {"answer": "accepts", "refused": []}
+        message, problems = rendered(choice)
+        assert message is not None, (value, problems)
+    choice = own_choice("all-excluded")
+    choice["decisions"][0]["others"][1]["check"] = {"answer": "accepts", "refused": []}
+    _, problems = rendered(choice)
+    said = [p for p in problems if p.startswith("decisions/0/settles_by:")]
+    assert len(said) == 1, problems
+    assert "`invocation`" in said[0] and "reserved classes" in said[0]
+    assert said[0].index("no door") < said[0].index("or a door")
+    choice["decisions"][0]["others"][1]["check"]["inferred_slug"] = "elsewhere"
+    assert rendered(choice)[0] is not None
+
+
+def test_an_accepted_door_that_refuses_as_the_tree_stands_leaves_every_door_excluded(project):
+    data = record("record-en-two-decisions.json")
+    data["state_from"] = {"script": "progress.py", "project": str(project), "slug": SLUG}
+    decision = own_choice("all-excluded")["decisions"][0]
+    decision["others"][1].update(entry="/review-change", check={"answer": "accepts", "refused": []})
+    stale = {"answer": "refuses", "refused": ["the tree moved"]}
+    assert handoff.false_exclusions({"state_from": data["state_from"], "decisions": [decision]},
+                                    lambda *a: stale) == []
+    assert handoff.false_exclusions({"state_from": data["state_from"], "decisions": [decision]},
+                                    lambda *a: {"answer": "accepts", "refused": []})
+
+
 def review_record(at: Path, findings: list) -> Path:
     path = at / "review" / "first.md"
     path.parent.mkdir(parents=True, exist_ok=True)
