@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.143.0 — 2026-11-25
+
+Under a grant covering the initiative, `--render` refuses a closing report of `/analyse`, `/implement-task`, `/plan-work`, `/reconcile` or `/survey` that recommends a next step, so the step is handed as the decision the grant answers — or as the person's own choice under `settles_by`, or the body recommends nothing; `--prepare` says so on a `limits:` line (SPEC-006 R11). (`15424da`)
+
 ## 5.142.0 — 2026-11-25
 
 Under an armed grant, a `/siegard-status` that recommends a next step is rendered as a decision the grant answers as at a stop — taken where its check decides, judged by the blind door decider within the budget otherwise; without a grant it stays a report. The session rules send status and next-step answers to `/siegard-status` (SPEC-006 R11). (`9feed99`)
