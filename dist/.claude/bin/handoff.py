@@ -404,7 +404,8 @@ def goal_target(project: Path, slug: str | None) -> str | None:
 
 
 def check_door(name: str, project: Path, slug: str | None, target: str | None,
-               files: list[str], tasks: list[str] | None = None) -> dict:
+               files: list[str], tasks: list[str] | None = None,
+               review: str | None = None) -> dict:
     """`door.py --check`'s first line and `refused:` facts for the door, or `not checked` and
     why where no script decides it or an input it takes is not named."""
     import door
@@ -416,7 +417,7 @@ def check_door(name: str, project: Path, slug: str | None, target: str | None,
     if name in door.NAMED_SLUG and not slug:
         return {"answer": "not checked", "why": f"/{name} {UNNAMED_SLUG}"}
     target = target or goal_target(project, slug)
-    args = {"target": target, "slug": slug, "task": list(tasks or []), "name": None, "scope": [],
+    args = {"target": target, "slug": slug, "task": list(tasks or []), "name": review, "scope": [],
             "file": files, "standard": None}
     lines = door.check(name, project, args).lines(name)
     refused = [line[len("refused: "):] for line in lines if line.startswith("refused: ")]
@@ -453,7 +454,8 @@ def reconcile_set(project: Path, root: Path) -> tuple[list[str], str | None] | N
     return files, slug
 
 
-def initiative_files(project: Path, slug: str, target: str | None = None) -> set[str]:
+def initiative_files(project: Path, slug: str, target: str | None = None,
+                     tasks: list[str] | None = None) -> set[str]:
     """The paths the implementation and proof records of one initiative name, as each names them,
     over the target named where the record names one."""
     import goal
@@ -465,6 +467,9 @@ def initiative_files(project: Path, slug: str, target: str | None = None) -> set
     named: set[str] = set()
     for root in ("implementation", "proof"):
         for record in sorted((base / root).rglob("*.md")) if (base / root).is_dir() else []:
+            name = record.relative_to(base / root).with_suffix("").as_posix()
+            if tasks and name not in {task.removeprefix("task/") for task in tasks}:
+                continue
             front = goal.front_of(record)
             if target is not None and front.get("target") not in (None, target):
                 continue
@@ -489,6 +494,79 @@ def scope_end_check(project: Path, slug: str | None, target: str | None) -> dict
         except (OSError, ValueError, KeyError, TypeError, StopIteration):
             declared_target = None
     return check_reconcile(project, target, initiative_files(project, slug, declared_target))
+
+
+def certified_beside(project: Path, slug: str, target: str | None,
+                     tasks: list[str] | None = None) -> set[str] | None:
+    """The files the trace binds to a node a proof record of the tasks under review claims under
+    `demonstrates` and the trace binds to no file those records name — the staging's refusal —
+    spelled from the target's source root as the records spell paths. None where no target is
+    named in a project of several."""
+    import goal
+    try:
+        declared = json.loads((project / "siegard.json").read_text(encoding="utf-8"))
+        targets = declared["targets"]
+        target = target if target in targets else (next(iter(targets)) if len(targets) == 1 else None)
+        if target is None:
+            return None
+        source = (project / targets[target]).resolve()
+        home = Path(subprocess.run(["git", "-C", str(source), "rev-parse", "--show-toplevel"],
+                                   capture_output=True, text=True, timeout=GIT_TIMEOUT_SECONDS)
+                    .stdout.strip() or source).resolve()
+        offset = source.relative_to(home).as_posix() if source != home else ""
+        trace = json.loads((home / "siegard-trace.json").read_text(encoding="utf-8"))
+        proofs = project / declared["delivery_root"] / slug / "proof"
+    except (OSError, ValueError, KeyError, TypeError, StopIteration, subprocess.TimeoutExpired):
+        return None
+    wanted = {task.removeprefix("task/") for task in tasks or []}
+    claimed = set()
+    for record in sorted(proofs.rglob("*.md")) if proofs.is_dir() else []:
+        if wanted and record.relative_to(proofs).with_suffix("").as_posix() not in wanted:
+            continue
+        for entry in goal.front_of(record).get("tests") or []:
+            claims = entry.get("demonstrates") if isinstance(entry, dict) else None
+            claims = [claims] if isinstance(claims, str) else claims or []
+            claimed.update(n for n in claims if isinstance(n, str))
+    prefix = f"{offset}/" if offset else ""
+    own = initiative_files(project, slug, target, tasks)
+    bound: dict = {}
+    for b in trace.get("bindings") or []:
+        if isinstance(b, dict) and b.get("node") in claimed:
+            bound[b["node"]] = [str(f.get("path", "")).removeprefix(prefix) for f in b.get("files") or []
+                                if isinstance(f, dict) and str(f.get("path", "")).startswith(prefix)]
+    return {path for paths in bound.values() if not set(paths) & own for path in paths}
+
+
+def review_resume_check(project: Path, slug: str | None, target: str | None,
+                        files: list[str], tasks: list[str] | None = None,
+                        name: str | None = None) -> dict | None:
+    """The review's own re-invocation over a widened set, as a door: «A review that stopped because
+    a certification's node is bound to none of the named files hands its own re-invocation over the
+    set and the files the trace binds to the nodes its proofs claim that no file of the set holds,
+    and no other» (SPEC-006 R9). None where nothing widens the set the records name."""
+    if not slug or not files:
+        return None
+    own = initiative_files(project, slug, target, tasks)
+    extra = [path for path in files if path not in own]
+    if not extra:
+        return None
+    missing = sorted(own - set(files))
+    if missing:
+        return {"answer": "refuses", "refused": [
+            f"the set leaves out {', '.join(missing)}, which the records name: a review is over "
+            f"their whole set"]}
+    beside = certified_beside(project, slug, target, tasks)
+    if beside is None:
+        return {"answer": "not checked", "why": "no target is named in a project of several"}
+    stray = [path for path in extra if path not in beside]
+    if stray:
+        return {"answer": "refuses", "refused": [
+            f"{', '.join(stray)} is named by no record of the tasks under review and bound by the "
+            f"trace to no node their proofs claim that their files do not hold: a review never "
+            f"widens its set beyond them"]}
+    check = check_door("review-change", project, slug, target, files, tasks, name)
+    return {**check, "why": f"over the records' set and {' '.join(extra)}, which the trace binds "
+                            f"to a node a proof of the tasks claims"}
 
 
 def closing_check(project: Path, slug: str | None) -> dict | None:
@@ -638,6 +716,18 @@ def completed(record: dict, check_of=check_door) -> dict:
             elif "entry" in chosen:
                 chosen["check"] = check_as_it_stands(chosen["entry"], project, source,
                                                      invocation, check_of, infer)
+        opening = INVOCATION_ENTRY.match(invocation)
+        if opening and opening.group(1) == "review-change" and "--file" in invocation:
+            def flag(name: str) -> list[str]:
+                return re.findall(rf"--{name}[ \t]+(\S+)", invocation)
+            slug_named = (flag("slug") or [None])[0] or record_initiative(project, source)
+            again = review_resume_check(project, slug_named, (flag("target") or [None])[0]
+                                        or goal_target(project, slug_named), flag("file"),
+                                        flag("task"), (flag("name") or [None])[0]) \
+                or {"answer": "refuses", "refused": ["the invocation widens nothing the records name"]}
+            for door in ([chosen] if isinstance(chosen, dict) else []) + list(decision.get("others") or []):
+                if isinstance(door, dict) and door.get("entry") == "/review-change":
+                    door["check"] = again
         for door in decision.get("others") or []:
             if isinstance(door, dict) and door.get("entry") and "check" not in door:
                 door["check"] = check_as_it_stands(door["entry"], project, source, invocation,
@@ -870,7 +960,8 @@ def goal_initiative(project: Path, source: dict | None) -> str | None:
 
 def prepare(skill: str, project: Path, slug: str | None, target: str | None, files: list[str],
             language: str, contract: dict, ledger: str | None = None,
-            scope_end: bool = False) -> dict:
+            scope_end: bool = False, tasks: list[str] | None = None,
+            review: str | None = None) -> dict:
     """The record's skeleton: what scripts decide written, what only the model writes empty. A
     ledger leaving lines open hands the skill itself as the first door — «beside a door back to
     the analysis, so an analysis with lines open is never handed as complete» (SPEC-001 R16)."""
@@ -881,6 +972,17 @@ def prepare(skill: str, project: Path, slug: str | None, target: str | None, fil
     if open_count(source.get("ledger")):
         names = [skill] + names
     ends = []
+    resume_invocation = None
+    if skill == "review-change" and files:
+        resolved = target or goal_target(project, slug)
+        resume = review_resume_check(project, slug, resolved, files, tasks, review)
+        if resume is not None:
+            ends = [{"reply_word": "", "what_it_does": "", "entry": "/review-change", "check": resume}]
+            resume_invocation = " ".join([f"/review-change {project}", *(["--target", resolved]
+                                          if resolved else []), "--slug", str(slug),
+                                          *(["--name", review] if review else []),
+                                          *[part for task in tasks or [] for part in ("--task", task)],
+                                          *[part for path in files for part in ("--file", path)]])
     if skill == DELIVER and scope_end:
         end = scope_end_check(project, slug, target or goal_target(project, slug))
         ends = [{"reply_word": "", "what_it_does": "", "entry": "/reconcile", "check": end}] \
@@ -899,7 +1001,8 @@ def prepare(skill: str, project: Path, slug: str | None, target: str | None, fil
                     "state": state_now(source, language, contract), "state_from": source}
     if doors:
         record["decisions"] = [{"ask": "", "others": doors, "if_none": ""}
-                               | ({"relation": ""} if len(doors) > 1 else {})]
+                               | ({"relation": ""} if len(doors) > 1 else {})
+                               | ({"invocation": resume_invocation} if resume_invocation else {})]
     path = report_path(project, SCOPE_END if skill == DELIVER and scope_end else skill)
     if path is not None:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -1298,6 +1401,8 @@ def main_prepare(args: list[str], contract: dict) -> int:
         target = take(args, "--target")
         files = take(args, "--file", many=True)
         ledger = take(args, "--ledger")
+        tasks = take(args, "--task", many=True)
+        review = take(args, "--name")
         scope_end = "--scope-end" in args
         if scope_end:
             args.remove("--scope-end")
@@ -1328,7 +1433,8 @@ def main_prepare(args: list[str], contract: dict) -> int:
     if ledger and not Path(ledger).is_file():
         print(f"cannot run: {ledger} is no ledger file", file=sys.stderr)
         return CANNOT_RUN
-    record = prepare(skill, root, slug, target, files, language, contract, ledger, scope_end)
+    record = prepare(skill, root, slug, target, files, language, contract, ledger, scope_end,
+                     tasks, review)
     print(json.dumps(record, indent=2, ensure_ascii=False))
     print(limits(contract, language), end="", file=sys.stderr)
     if answered_as_decision(skill, root, record_initiative(root, record.get("state_from"))):

@@ -1501,6 +1501,40 @@ def test_decide_rechecks_the_close_gate_before_taking_a_scope_end_closing(projec
     assert "decision 1: stop: the closing is not one this grant's close gate accepts" in " ".join(lines)
 
 
+def test_a_review_stopped_for_a_bound_file_hands_itself_over_the_widened_set(project, monkeypatch):
+    """«A review that stopped because a certification's node is bound to none of the named files
+    hands its own re-invocation over the set and the files the trace binds to the nodes its proofs
+    claim that no file of the set holds, and no other» (SPEC-006 R9)."""
+    monkeypatch.setattr(handoff, "initiative_files", lambda *a: {"src/a.ts"})
+    monkeypatch.setattr(handoff, "certified_beside", lambda *a: {"src/service.ts"})
+    monkeypatch.setattr(handoff, "check_door", lambda *a, **k: {"answer": "accepts", "refused": []})
+    prepared = handoff.prepare("review-change", project, SLUG, None, ["src/a.ts", "src/service.ts"],
+                               "en", CONTRACT, tasks=["task/e/one"], review="r-2")
+    assert "--name r-2 --task task/e/one" in prepared["decisions"][0]["invocation"]
+    short = handoff.prepare("review-change", project, SLUG, None, ["src/service.ts"], "en", CONTRACT)
+    assert doors_of(short)["/review-change"]["answer"] == "refuses"
+    other = {"kind": "decision", "state_from": prepared["state_from"], "report": "x-implement-task.md",
+             "decisions": [{"invocation": f"/review-change {project} --slug {SLUG} --file src/a.ts --file src/x.ts",
+                            "recommended": {"entry": "/review-change"}, "others": []}]}
+    assert handoff.completed(other)["decisions"][0]["recommended"]["check"]["answer"] == "refuses"
+    assert doors_of(prepared)["/review-change"]["answer"] == "accepts"
+    stray = handoff.prepare("review-change", project, SLUG, None, ["src/a.ts", "src/other.ts"],
+                            "en", CONTRACT)
+    assert doors_of(stray)["/review-change"]["answer"] == "refuses"
+    plain = handoff.prepare("review-change", project, SLUG, None, ["src/a.ts"], "en", CONTRACT)
+    assert "/review-change" not in doors_of(plain)
+    assert prepared["decisions"][0]["invocation"].endswith("--file src/a.ts --file src/service.ts")
+    prepared["decisions"][0]["invocation"] = prepared["decisions"][0]["invocation"].replace(
+        "src/service.ts", "src/other.ts")
+    assert handoff.completed(prepared)["decisions"][0]["others"][0]["check"]["answer"] == "refuses"
+
+
+@pytest.mark.parametrize("skill", sorted(p.name for p in handoff.SKILLS.iterdir() if (p / "SKILL.md").is_file()))
+def test_no_skill_offers_itself_as_a_door_without_files(project, skill):
+    prepared = handoff.prepare(skill, project, SLUG, None, [], "en", CONTRACT)
+    assert f"/{skill}" not in doors_of(prepared), skill
+
+
 def test_a_skill_whose_report_hands_no_door_prepares_a_report(project):
     prepared = prepare(project, "siegard-goal")
     assert prepared["kind"] == "report" and "decisions" not in prepared

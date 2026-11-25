@@ -60,9 +60,8 @@ A missing input is a stop, not a default:
    Named by the person, or by the invocation that delivered them; a review that chose its own
    subject reviews something nobody asked about.
 2. **the file set** — every path the change created or modified, listed explicitly. Read it from
-   those tasks' implementation and proof records; where the change reached further, the person
-   says so. **Never discovered**: a clean result over a set the review chose would not say what
-   it was clean over.
+   those tasks' records; where the change reached further, the person or a staging refusal's
+   re-invocation says so. **Never discovered**: a clean set the review chose says nothing.
    - Each path is relative to the target source root, spelled exactly as the records spell it.
      Resolve it against that root to open the file, and state every finding with the same
      spelling; a scope's `under` is stated against the same anchor.

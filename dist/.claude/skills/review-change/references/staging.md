@@ -31,6 +31,12 @@ carries the claim to the judgment that settles it.**
 - `--certify` may still ride beside it, for a claim no proof carries and a person states. A node
   under both is refused.
 - Where no proof carries a claim, the staging stages no certification, and the report says so.
+- Where the staging refuses a certification because its node `is bound to none of the named
+  files` and names the files the trace binds it to, stop before any pass. The report hands this
+  review's own re-invocation over the set and exactly those files, through `handoff.py --prepare
+  --skill review-change --project <root> --slug <slug> --target <target> --name <review-name>
+  --task <id>`, one `--task` per task and one `--file` per path, the set and those files, which
+  marks the door. Never widen by hand.
 
 Either way the report lists every node the tasks implement that no test demonstrates, with what
 the proof's `untested` says of each: «a node the task implements that no test claims is named in
