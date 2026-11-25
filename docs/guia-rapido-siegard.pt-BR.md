@@ -454,7 +454,7 @@ Sem grant, uma decisão *judged* sempre volta para você.
 | *(nenhum argumento)* | **Não arma nada**: só mostra o grant armado | — |
 | `<project-root>` | Raiz do projeto | Raiz git da sessão (a linha `project_root:` do `project.py --here`), avisada |
 | `--clear` (sozinho, ao lado do root) | Desarma | — |
-| `--slug` | Vale só para uma iniciativa viva | Todas as iniciativas vivas |
+| `--slug` | Vale só para uma iniciativa viva: uma parada sobre outra iniciativa, ou que não diz qual é, volta para você | Todas as iniciativas vivas |
 | `--target` | Target | O primeiro declarado, avisado |
 | `--doors a,b` | Portas que podem ser tomadas: `plan-work`, `implement-task`, `review-change`, `reconcile`, `deliver-scope`, `analyse` — ou `none` | As seis |
 | `--budget <n>` | Quantas decisões **judged** por iniciativa | **0** (sem orçamento, decisão de custo para) |

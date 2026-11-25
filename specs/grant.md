@@ -110,7 +110,7 @@ bound a script on disk decides.
 
 - **R4** — `bin/grant.py --decide`, over the record a stop's handoff was rendered from, answers
   each decision with one of three lines: `stop`, `take` or `judge`. A decision that carries
-  `settles` is `stop`: the choice is the person's. Of the doors a decision hands, the ones whose
+  `settles` is `stop`: the choice is the person's. A decision over an initiative the grant does not cover is `stop`: under a grant naming one initiative, a record naming another — by `--slug`, by the initiative SPEC-006 R11 reads from the record, or by the `--slug` of a door's invocation or the initiative its check ran over — or naming none is answered `stop`, saying which initiative the grant covers. Of the doors a decision hands, the ones whose
   check answered `refuses` are excluded; where exactly one door remains — the only door a decision hands, with none excluded,
   included — and its entry point is in the grant's `doors` the answer is `take`, the criterion
   `precondition unmet`; where the
@@ -197,7 +197,10 @@ bound a script on disk decides.
    ends it under R3; an arming over a grant so ended ends it in the log, says so and arms, an
    arming over a grant that still stands ends it in the log as `replaced`, says what it held and
    arms with a mark of its own, and an arming refused on another ground leaves either in place.
-2. Tests hold `grant.py --decide` to R4 and R5 over handoff records: a `settles` decision is
+2. Tests hold `grant.py --decide` to R4 and R5 over handoff records: under a grant naming one
+   initiative, a decision over another — by `--slug`, by an armed goal's, by a door's invocation or
+   its check — or over a record naming none is `stop`, and a goal on the covered initiative with
+   two live is answered; a `settles` decision is
    `stop`; one door left after a refusal, and the only door a decision hands, are `take`; a recommended door that is accepted beside an
    open door is `judge` with the budget left, counted over the stopped initiative's log alone; a
    spent budget, a door outside the list and an unchecked door are `stop`; and a report whose
@@ -528,3 +531,15 @@ bound a script on disk decides.
   too many to read by hand, which justifies a script; or under two a week after `routes` is armed,
   which makes `routes` a candidate for withdrawal, its session-rules sentence being paid in every
   context.
+- 2026-11-25 (cycle 2 of the improvement goal) — grounds for R4's stop over an initiative the grant
+  does not cover. An independent review of 5.143.0 read that `decide` handed `decide_one` the
+  grant's slug in the record's place, so a grant naming one initiative took or judged a door of
+  another, spending its own budget; `--render` under a goal read no slug from a `goal.py` state
+  and fell back to the grant's. Reproduced on a fixture with two live initiatives
+  (`temp/goal-melhoria/20261124-2334/c2/measure.sh`, 3 runs at 1320dd0): a take over the other
+  initiative, a judge over it, and a take through `--render` under a goal armed on it — answered 3
+  of 3. No sales grant names an initiative, so no consumer stop is known to have met it. A blind
+  decider chose, over a smaller form and one keeping a record that names no initiative answered
+  by the grant's, the form that stops there too: in doubt over which initiative, it stops. Reversal: a stop under a grant
+  naming an initiative, seen in a consumer, over the initiative it covers that no source of
+  SPEC-006 R11's record initiative named — answered by the source, never by loosening the stop.

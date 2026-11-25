@@ -33,7 +33,9 @@ without it answers every routing decision `stop`.
 **`--decide` answers a stop's handoff record, one line per decision.** `stop: <why>`, `take: <door>
 — precondition unmet — <fact>`, or `judge:` followed by the doors, the budget left and the
 record's report, which the door decider reads. «A decision that carries `settles` is `stop`: the
-choice is the person's.» (SPEC-011 R4) A door whose check answered `refuses` is excluded, and where
+choice is the person's.» (SPEC-011 R4) «A decision over an initiative the grant does not cover is
+`stop`» (SPEC-011 R4): under a grant naming one initiative, a record over another, or naming
+none, is answered `stop: the grant covers <slug>, not <initiative>`. A door whose check answered `refuses` is excluded, and where
 exactly one door remains, the only one a handoff hands included, its entry point is in the grant's
 `doors` and its check accepted, it is taken; where the recommended door's check accepted beside an open door, the decider chooses, within
 the budget of the stopped initiative: «The budget left is the grant's budget less the judged
@@ -413,6 +415,29 @@ CARRY = ("carry: each decision line below is carried out by its kind — a take 
          "handed to the person; a note is carried as it says, and the handoff rendered again")
 
 
+def uncovered(held: dict, named: list[str | None], decision: dict) -> str | None:
+    """The initiative outside a grant naming one that a decision is over, or None where the grant
+    covers it: «A decision over an initiative the grant does not cover is `stop`» (SPEC-011 R4) —
+    the caller's `--slug`, the record's initiative, the `--slug` of the decision's invocation, or
+    the initiative a door's check ran over, any one outside; a record naming none is outside too.
+    A `/reconcile` door's slug names a reconciliation, never an initiative, and is not read."""
+    import handoff
+    if not held.get("slug"):
+        return None
+    named = [name for name in named if name]
+    if not named:
+        return "an initiative the record does not name"
+    invocation = str(decision.get("invocation") or "")
+    if not invocation.lstrip().startswith(("/reconcile", "/siegard:reconcile")):
+        named += handoff.INVOCATION_SLUG.findall(invocation)
+    for door in ([decision.get("recommended")] if decision.get("recommended") else []) \
+            + list(decision.get("others") or []):
+        inferred = (door.get("check") or {}).get("inferred_slug") if isinstance(door, dict) else None
+        if isinstance(inferred, str) and skill_of(door) != "reconcile":
+            named.append(inferred)
+    return next((name for name in named if name != held["slug"]), None)
+
+
 def decide(project_root: Path, record: dict, slug: str | None = None) -> tuple[list[str], int]:
     held, fields, path, ended = standing(project_root)
     if ended:
@@ -422,9 +447,17 @@ def decide(project_root: Path, record: dict, slug: str | None = None) -> tuple[l
     lines = [f"grant: {held.get('slug') or 'every live initiative'} (sha256 {mark_of(held)})",
              CARRY]
     routing = is_routing(record)
+    import handoff
+    initiative = None if routing else handoff.record_initiative(project_root,
+                                                                record.get("state_from"))
     for number, decision in enumerate(decisions, 1):
+        outside = None if routing else uncovered(held, [slug, initiative], decision)
+        if outside is not None:
+            lines.append(f"decision {number}: stop: the grant covers {held['slug']}, not "
+                         f"{outside}")
+            continue
         lines += decide_one(number, decision, held, fields, None if routing else
-                            held.get("slug") or slug, routing)
+                            held.get("slug") or slug or initiative, routing)
     if record.get("report"):
         lines.append(f"report: {record['report']}")
     return lines, 0

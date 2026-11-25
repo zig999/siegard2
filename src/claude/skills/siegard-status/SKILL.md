@@ -235,9 +235,9 @@ handoff opens with what needs the person, and explains after» (SPEC-006 R1) sta
 form; every block, door and quotation the sections
 above call for is the full status on disk, which the short form points at and never repeats.
 
-**Where a grant stands, a recommended close is a decision.** «Where a grant stands in the
-project and the close recommends an invocation, the status is rendered kind `decision`, so the
-grant answers it as it answers a stop» (SPEC-006 R11). `--prepare` hands the skeleton's doors only
+**Where a grant covers the initiative, a recommended close is a decision.** «Where a grant
+covering the record's initiative stands and the close recommends an invocation, the status is
+rendered kind `decision`, so the grant answers it as it answers a stop» (SPEC-006 R11). `--prepare` hands the skeleton's doors only
 where such a grant stands, and prints kind `report` where none does. Under it, run `--prepare`
 with `--slug` where the close names an initiative, so the check and the grant's budget read that
 one; the record is one decision whose `recommended` door is the close's invocation — its `entry`

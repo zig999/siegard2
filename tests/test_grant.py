@@ -1387,3 +1387,118 @@ def test_the_commit_gate_admits_the_routing_log_only_under_routes(project):
     assert "deliveries/orchestration.md" in grant_module.route_roots(fields, held)
     assert "deliveries/orchestration.md" not in grant_module.route_roots(fields,
                                                                          {**held, "routes": False})
+
+
+def second_initiative(project: dict) -> str:
+    other = "other-run"
+    shutil.copytree(project["home"] / "plans" / SLUG, project["home"] / "plans" / other)
+    commit(project["home"], "a second live initiative", "plans")
+    return other
+
+
+def test_a_stop_over_an_initiative_the_grant_does_not_name_is_a_stop(project, tmp_path):
+    """«A decision over an initiative the grant does not cover is `stop`» (SPEC-011 R4): a grant
+    naming one initiative neither takes nor judges a door of another."""
+    other = second_initiative(project)
+    assert arm(project, "--doors", "plan-work,reconcile", "--budget", "2").returncode == 0
+    only = handoff(with_recommended("/plan-work", "accepts"))
+    judged = handoff(with_recommended("/plan-work", "accepts", door("b", "/reconcile", "accepts")))
+    for record in (only, judged):
+        out = decide(project, record, tmp_path, other).stdout
+        assert "decision 1: stop:" in out and f"covers {SLUG}, not {other}" in out, out
+        assert "take:" not in out and "judge:" not in out, out
+
+
+def test_the_initiative_the_grant_names_is_still_answered(project, tmp_path):
+    second_initiative(project)
+    assert arm(project, "--doors", "plan-work,reconcile", "--budget", "2").returncode == 0
+    out = decide(project, handoff(with_recommended("/plan-work", "accepts")), tmp_path, SLUG).stdout
+    assert "decision 1: take: a /plan-work" in out, out
+
+
+def test_a_project_grant_answers_a_stop_over_any_live_initiative(project, tmp_path):
+    other = second_initiative(project)
+    assert arm(project, "--doors", "plan-work", slug=None).returncode == 0
+    out = decide(project, handoff(with_recommended("/plan-work", "accepts")), tmp_path, other).stdout
+    assert "decision 1: take: a /plan-work" in out, out
+
+
+def arm_goal_on(project: dict, slug: str) -> None:
+    record = {"contract": goal.ARMED_CONTRACT, "project_root": str(project["home"]), "slug": slug,
+              "target": "app", "scope": [], "since": git(project["home"], "rev-parse", "HEAD"),
+              "version": goal.plugin_version(), "untouched": [], "objective": None,
+              "objective_sha256": None, "condition": "c", "armed_at": "2026-10-31T00:00:00Z",
+              "session_id": None, "blocks": 0, "last_state": None}
+    goal.write_armed(goal.armed_path(project["home"]), record)
+
+
+def goal_record(project: dict, decision: dict) -> dict:
+    return dict(handoff(decision), state_from={"script": "goal.py", "project": str(project["home"])})
+
+
+def test_a_goal_on_the_initiative_the_grant_names_is_answered_with_two_live(project, tmp_path):
+    """The record's initiative is «the armed goal's where the state is the goal's» (SPEC-006 R11),
+    so a stop under a goal on the covered initiative is answered though two are live."""
+    second_initiative(project)
+    assert arm(project, "--doors", "plan-work").returncode == 0
+    arm_goal_on(project, SLUG)
+    out = decide(project, goal_record(project, with_recommended("/plan-work", "accepts")), tmp_path).stdout
+    assert "decision 1: take: a /plan-work" in out, out
+
+
+def test_a_goal_on_another_initiative_is_a_stop_under_a_grant_naming_one(project, tmp_path):
+    other = second_initiative(project)
+    assert arm(project, "--doors", "plan-work").returncode == 0
+    arm_goal_on(project, other)
+    out = decide(project, goal_record(project, with_recommended("/plan-work", "accepts")), tmp_path).stdout
+    assert f"decision 1: stop: the grant covers {SLUG}, not {other}" in out, out
+
+
+def test_a_record_naming_no_initiative_is_a_stop_under_a_grant_naming_one(project, tmp_path):
+    second_initiative(project)
+    assert arm(project, "--doors", "plan-work").returncode == 0
+    out = decide(project, handoff(with_recommended("/plan-work", "accepts")), tmp_path).stdout
+    assert f"decision 1: stop: the grant covers {SLUG}, not an initiative the record does not name" \
+        in out, out
+
+
+def test_a_door_invoked_over_another_initiative_is_a_stop(project, tmp_path):
+    other = second_initiative(project)
+    assert arm(project, "--doors", "plan-work,implement-task", "--budget", "2").returncode == 0
+    invoked = dict(with_recommended("/plan-work", "accepts"),
+                   invocation=f"/plan-work /x --target app --slug {other}")
+    inferred = with_recommended("/plan-work", "accepts", door("b", "/implement-task", "accepts"))
+    inferred["others"][0]["check"]["inferred_slug"] = other
+    for decision in (invoked, inferred):
+        out = decide(project, handoff(decision), tmp_path, SLUG).stdout
+        assert f"decision 1: stop: the grant covers {SLUG}, not {other}" in out, out
+
+
+def test_a_record_over_another_initiative_is_a_stop_whatever_slug_the_caller_names(project, tmp_path):
+    other = second_initiative(project)
+    assert arm(project, "--doors", "plan-work").returncode == 0
+    record = dict(handoff(with_recommended("/plan-work", "accepts")),
+                  state_from={"script": "progress.py", "project": str(project["home"]), "slug": other})
+    out = decide(project, record, tmp_path, SLUG).stdout
+    assert f"decision 1: stop: the grant covers {SLUG}, not {other}" in out, out
+
+
+def test_a_reconcile_door_s_own_slug_is_no_initiative(project, tmp_path):
+    second_initiative(project)
+    assert arm(project, "--doors", "reconcile").returncode == 0
+    decision = dict(with_recommended("/reconcile", "accepts"),
+                    invocation=f"/reconcile /x --target app --slug {SLUG}-t-stands")
+    decision["recommended"]["check"]["inferred_slug"] = f"{SLUG}-t-stands"
+    out = decide(project, handoff(decision), tmp_path, SLUG).stdout
+    assert "decision 1: take: a /reconcile" in out, out
+
+
+def test_a_project_grant_judges_a_stop_under_a_goal_within_that_initiative_s_budget(project, tmp_path):
+    """Under a goal the record's initiative is the goal's (SPEC-006 R11), so a project grant
+    judges a stop that names no `--slug` within that initiative's budget rather than none."""
+    second_initiative(project)
+    assert arm(project, "--doors", "plan-work,reconcile", "--budget", "1", slug=None).returncode == 0
+    arm_goal_on(project, SLUG)
+    decision = with_recommended("/plan-work", "accepts", door("b", "/reconcile", "accepts"))
+    out = decide(project, goal_record(project, decision), tmp_path).stdout
+    assert "decision 1: judge: spawn the door decider over these doors, budget left 1" in out, out

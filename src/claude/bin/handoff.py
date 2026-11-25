@@ -625,7 +625,7 @@ def recommending_report(record: dict, contract: dict) -> list[str]:
             or decision_word_at(str(record.get("body") or ""), contract, ("recommendation",)) is None:
         return []
     project = Path(source["project"])
-    if not answered_as_decision(found.group(1), project, source.get("slug") or live_slug(project)):
+    if not answered_as_decision(found.group(1), project, record_initiative(project, source)):
         return []
     return [f"kind: a report of /{found.group(1)} that recommends, where a grant covers the "
             f"initiative, is refused «so the step is handed as a decision the grant answers» "
@@ -671,7 +671,7 @@ def grant_answer(record: dict) -> list[str]:
     except ImportError as broken:
         return [f"grant: not asked — {broken}"]
     try:
-        lines, _ = grant.decide(project, record, source.get("slug") or live_slug(project))
+        lines, _ = grant.decide(project, record, record_initiative(project, source))
     except goal.Refused as refusal:
         return [] if "no grant is armed" in str(refusal) else [f"grant: not asked — {refusal}"]
     except Exception as broken:
@@ -696,17 +696,18 @@ def report_path(project: Path, skill: str) -> Path | None:
     return Path(done.stdout.strip()).joinpath(*HANDOFF_DIR) / f"{stamp}-{skill}.md"
 
 
-def grant_stands(project: Path) -> bool:
-    """Whether the project holds a grant that stands, for the status the grant answers: «Where a
-    grant stands in the project and the close recommends an invocation, the status is rendered
-    kind `decision`, so the grant answers it as it answers a stop» (SPEC-006 R11). A grant that
-    cannot be read stands for nothing here."""
-    try:
-        import grant
-        _, _, _, ended = grant.standing(project)
-    except Exception:
-        return False
-    return ended is None
+def record_initiative(project: Path, source: dict | None) -> str | None:
+    """The initiative a record is over: «The record's initiative is the one its `state_from`
+    names, else the armed goal's where the state is the goal's, else the one live initiative»
+    (SPEC-006 R11). `--prepare` and `--render` read it from the same `state_from`, so the two
+    never disagree on which initiative a grant covers."""
+    source = source if isinstance(source, dict) else {}
+    if isinstance(source.get("slug"), str):
+        return source["slug"]
+    held = armed_goal(project) if source.get("script") == "goal.py" else None
+    if held is not None and isinstance(held.get("slug"), str):
+        return held["slug"]
+    return live_slug(project)
 
 
 def prepare(skill: str, project: Path, slug: str | None, target: str | None, files: list[str],
@@ -716,7 +717,7 @@ def prepare(skill: str, project: Path, slug: str | None, target: str | None, fil
     the analysis, so an analysis with lines open is never handed as complete» (SPEC-001 R16)."""
     source = state_source(project, slug, ledger)
     names = next_doors(skill)
-    if skill == STATUS and not grant_stands(project):
+    if skill == STATUS and not grant_covers(project, record_initiative(project, source)):
         names = []
     if open_count(source.get("ledger")):
         names = [skill] + names
@@ -1067,7 +1068,7 @@ def main_prepare(args: list[str], contract: dict) -> int:
     record = prepare(skill, root, slug, target, files, language, contract, ledger)
     print(json.dumps(record, indent=2, ensure_ascii=False))
     print(limits(contract, language), end="", file=sys.stderr)
-    if answered_as_decision(skill, root, slug or live_slug(root)):
+    if answered_as_decision(skill, root, record_initiative(root, record.get("state_from"))):
         print("limits: a grant covers this initiative: a close that recommends a next step is "
               "kind `decision`, never `report`", file=sys.stderr)
     print(next_steps(record), end="", file=sys.stderr)

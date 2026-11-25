@@ -1595,3 +1595,43 @@ def test_a_routing_record_never_checks_a_door_over_the_live_initiative(project):
     assert check["answer"] == "not checked" and "inferred_slug" not in check
     stop = handoff.completed({**prepared, "report": prepared["report"].replace("-route", "-plan-work")})
     assert stop["decisions"][0]["recommended"]["check"].get("inferred_slug") == SLUG
+
+
+def test_a_status_over_an_initiative_the_grant_does_not_name_prepares_a_report(project):
+    """«`--prepare --skill siegard-status` hands its doors only where such a grant stands»
+    (SPEC-006 R11): a grant naming another initiative covers none of this one."""
+    arm_grant(project)
+    import grant
+    path = grant.grant_path(project)
+    held = json.loads(path.read_text(encoding="utf-8"))
+    held["slug"] = "another-initiative"
+    path.write_text(json.dumps(held), encoding="utf-8")
+    prepared = prepare(project, "siegard-status", "--slug", SLUG)
+    assert prepared["kind"] == "report" and "decisions" not in prepared
+
+
+def test_prepare_and_render_read_one_initiative_under_a_goal(project):
+    """`--prepare` and `--render` read the record's initiative from the same `state_from`: under a
+    goal on the initiative the grant covers, a skeleton prepared naming another initiative still
+    hands its doors, and the grant answers the other initiative's invocation with its stop."""
+    arm_grant(project)
+    import grant
+    held = json.loads(grant.grant_path(project).read_text(encoding="utf-8"))
+    held["slug"] = SLUG
+    grant.grant_path(project).write_text(json.dumps(held), encoding="utf-8")
+    arm(project)
+    done = run("--prepare", "--skill", "plan-work", "--project", str(project), "--slug", "elsewhere")
+    assert done.returncode == 0, done.stderr
+    prepared = json.loads(done.stdout)
+    assert prepared["state_from"] == {"script": "goal.py", "project": str(project)}
+    assert prepared["kind"] == "decision"
+    assert "limits: a grant covers this initiative" in done.stderr, done.stderr
+    one = prepared["decisions"][0]
+    one.update(ask="Deliver the next task?", if_none="Nothing runs.",
+               invocation="/implement-task /x --target app --slug elsewhere")
+    one["recommended"] = {"reply_word": "a", "door": "Deliver it", "entry": "/implement-task",
+                          "why": "It is the one task ready", "reverses_if": "you want a review first",
+                          "check": {"answer": "accepts", "refused": []}}
+    one["others"] = []
+    lines = handoff.grant_answer(prepared)
+    assert f"decision 1: stop: the grant covers {SLUG}, not elsewhere" in lines, lines
