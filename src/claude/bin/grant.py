@@ -390,11 +390,16 @@ def decide_one(number: int, decision: dict, held: dict, fields: dict,
         return [f"{head} stop: no recommended door is in the grant's doors"]
     if (recommended.get("check") or {}).get("answer") != "accepts":
         return [f"{head} stop: the recommended door was not accepted by `door.py --check`"]
+    if not routing and (slug is None or slug not in covered(fields, held)):
+        return [f"{head} stop: "
+                + (f"{slug} is no initiative the grant covers" if slug else
+                   "the stop names no initiative, and a judged door draws on one initiative's "
+                   "budget; `--slug` names it")
+                + " — no budget is drawn on, none is spent"]
     left = routing_budget_left(fields, held) if routing else budget_left(fields, held, slug)
     if left <= 0:
         return [f"{head} stop: the grant's budget of judged "
-                + ("routes is spent" if routing else
-                   f"doors for {slug or 'an initiative no --slug names'} is spent")]
+                + ("routes is spent" if routing else f"doors for {slug} is spent")]
     lines = [f"{head} judge: spawn the door decider over these doors, budget left {left}; end the "
              f"deciding fact of the `decided:` line with `(grant sha256 {mark_of(held)})`"]
     for door in remaining:

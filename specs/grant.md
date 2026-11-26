@@ -123,7 +123,7 @@ bound a script on disk decides.
   and within the budget; the door it names is taken, one `decided:` line carrying the rung it named
   and the grant's mark among its deciding facts. The budget left is the grant's budget less the
   judged `decided:` lines the stopped initiative's log gained since the grant armed, each covered
-  initiative counted apart, and a judged choice met with it spent is `stop`. «Each door taken is one line of the
+  initiative counted apart, and a judged choice met with it spent is `stop`. A stop that names no initiative the grant covers draws on no budget, and its `stop` says that it names none, never that a budget is spent. «Each door taken is one line of the
   run's orchestration log, `decided: <door> — <criterion> — <deciding fact>`, and a door R3
   reserves is never taken.» (SPEC-006 R7)
 - **R6** — The plugin's `PreToolUse` commit check reads an armed grant for a judged `decided:`

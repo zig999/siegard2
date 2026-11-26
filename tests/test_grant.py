@@ -780,7 +780,8 @@ def test_the_budget_of_a_project_grant_counts_each_initiative_apart(project, tmp
     """«The budget left is the grant's budget less the judged `decided:` lines the stopped
     initiative's log gained since the grant armed, each covered initiative counted apart»
     (SPEC-011 R5): a door taken in one initiative leaves another's budget whole, and a stop no
-    `--slug` names draws on none."""
+    `--slug` names draws on none. «A stop that names no initiative the grant covers draws on no
+    budget, and its `stop` says that it names none, never that a budget is spent.» (SPEC-011 R5)"""
     other = "other-run"
     shutil.copytree(project["home"] / "plans" / SLUG, project["home"] / "plans" / other)
     commit(project["home"], "a second live initiative", "plans")
@@ -795,7 +796,13 @@ def test_the_budget_of_a_project_grant_counts_each_initiative_apart(project, tmp
     assert f"budget of judged doors for {SLUG} is spent" in decide(
         project, decision, tmp_path, SLUG).stdout
     assert "budget left 1" in decide(project, decision, tmp_path, other).stdout
-    assert "for an initiative no --slug names is spent" in decide(project, decision, tmp_path).stdout
+    unnamed = decide(project, decision, tmp_path).stdout
+    assert ("stop: the stop names no initiative, and a judged door draws on one initiative's "
+            "budget; `--slug` names it — no budget is drawn on, none is spent") in unnamed
+    assert "is spent" not in unnamed.replace("none is spent", "")
+    stray = decide(project, decision, tmp_path, "no-such-initiative").stdout
+    assert "stop: no-such-initiative is no initiative the grant covers" in stray
+    assert "is spent" not in stray.replace("none is spent", "")
 
 def test_the_skill_states_the_defaults_the_script_applies_and_clears_through_the_script():
     text = " ".join((REPO / "src/claude/skills/siegard-grant/SKILL.md").read_text(
