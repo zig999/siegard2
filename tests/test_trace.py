@@ -1575,6 +1575,28 @@ def test_the_reconcile_set_is_the_code_and_moved_files_of_this_target_spelled_fr
     assert "retained" not in done.stdout and "left to a delivery" not in done.stdout
 
 
+def test_a_file_of_a_moved_node_gone_from_the_tree_is_named_for_release_never_read(consumer):
+    """«A bound file the tree no longer holds is in no set: it is named apart, with its node, as
+    `trace.py --release`'s to answer.» (SPEC-004 R34) — `/reconcile`'s staging refuses a path that
+    does not exist, so a set naming one hands a door its own entry refuses."""
+    bind(consumer)
+    bind(consumer, node="domain/monitoring/alert", file="src/alerts.ts")
+    (consumer / "backend/src/alerts.ts").write_text("export const a = 1;\n", encoding="utf-8")
+    bind(consumer, node="domain/monitoring/alert", file="src/alerts.ts")
+    committed(consumer)
+    moved_node(consumer, "domain/monitoring/alert")
+    (consumer / "backend/src/alerts.ts").unlink()
+    committed(consumer)
+    done = run("--check", consumer / "backend", "--reconcile-set")
+    head, _, rest = done.stdout.partition("reconcile set over backend")
+    reading = rest.split("\n\n")[0].split("\ngone from the tree")[0]
+    assert "src/alerts.ts" not in reading, done.stdout
+    assert "  nothing: no drift this target holds is a reconciliation's to read" in reading
+    assert ("gone from the tree — `trace.py --release <target-root> <file> ...` answers it, "
+            "never a reading:") in done.stdout
+    assert "  src/alerts.ts  (domain/monitoring/alert)" in done.stdout
+
+
 def test_the_reconcile_set_names_a_slug_no_reconciliation_holds(consumer):
     """«A door a report hands is handed whole: where its entry point requires a name the tree
     decides is free, the script that composes the door prints one» (SPEC-006 R11) — by the test
@@ -1707,6 +1729,26 @@ def test_a_records_frontmatter_is_parsed_once_per_process_and_again_once_it_chan
     record.write_text("---\ncontract_version: siegard-reconcile/4\nslug: r2\n---\n", encoding="utf-8")
     third, _ = trace.frontmatter_of(record)
     assert third["slug"] == "r2" and len(parses) == 2
+
+
+def test_a_gone_file_under_no_declared_target_is_still_named_for_release(consumer):
+    """The files under no declared target are a block of their own; where that block reads
+    nothing and holds only a file gone from the tree, the file is still named with its release."""
+    (consumer / "frontend/src").mkdir(parents=True)
+    (consumer / "scripts").mkdir()
+    (consumer / "scripts/x.sh").write_text("echo x\n", encoding="utf-8")
+    bind(consumer)
+    done = run("--bind", consumer, consumer / "specs", "domain/monitoring/alert", "scripts/x.sh")
+    assert done.returncode == 0, done.stdout + done.stderr
+    (consumer / "siegard.json").write_text(json.dumps(
+        {"specification_root": "specs", "targets": {"backend": "backend", "frontend": "frontend"}})
+        + "\n", encoding="utf-8")
+    committed(consumer)
+    moved_node(consumer, "domain/monitoring/alert")
+    (consumer / "scripts/x.sh").unlink()
+    committed(consumer)
+    out = run("--check", consumer, "--reconcile-set").stdout
+    assert "  scripts/x.sh  (domain/monitoring/alert)" in out, out
 
 
 def test_over_a_toplevel_holding_several_targets_the_set_is_printed_per_target(consumer):

@@ -1417,7 +1417,9 @@ def reconcile_set_report(declared: dict, home: Path, target: Path,
     rebinds the node, and a reconciliation first pays the reading twice, unless the task carries
     `stands`, whose delivery binds nothing; and a certified test that changed, which a certification the person offers
     answers, never a reading owed. Any of the three the person still wants read is named to
-    `/reconcile` by hand, which is why each is listed by path."""
+    `/reconcile` by hand, which is why each is listed by path. A file gone from the tree is no reading at all: the
+    staging refuses a path that does not exist, and `--release` is what answers it, so it is
+    named apart with its node."""
     spec_relative = declared["specification"]
     spec_root = home / spec_relative
     offset = offset_of(target, home)
@@ -1447,15 +1449,21 @@ def reconcile_set_report(declared: dict, home: Path, target: Path,
         retained: dict[str, set[str]] = {}
         planned: dict[str, set[str]] = {}
         proofs: dict[str, set[str]] = {}
+        gone: dict[str, set[str]] = {}
         for cls, node_id, where, _ in listed:
             if cls == CODE:
-                if where and within(where) and (home / where).is_file():
-                    reasons.setdefault(where, set()).add("code")
+                if where and within(where):
+                    if (home / where).is_file():
+                        reasons.setdefault(where, set()).add("code")
+                    else:
+                        gone.setdefault(where, set()).add(node_id)
             elif cls == MOVED:
                 for path in ([where] if where else files_of.get(node_id, [])):
                     if not within(path):
                         continue
-                    if node_pending(node_id):
+                    if not (home / path).is_file():
+                        gone.setdefault(path, set()).add(node_id)
+                    elif node_pending(node_id):
                         retained.setdefault(path, set()).add(node_id)
                     elif where is None and node_id in implementers:
                         # Only a node whose entry moved is a delivery's to answer: a file the
@@ -1501,6 +1509,11 @@ def reconcile_set_report(declared: dict, home: Path, target: Path,
                 tasks = sorted({t for n in planned[path] for t in implementers.get(n, [])})
                 lines.append(f"  {spelled(path)}  ({', '.join(sorted(planned[path]))}; "
                              f"{', '.join(tasks)})")
+        if gone:
+            lines.append("gone from the tree — `trace.py --release <target-root> <file> ...` "
+                         "answers it, never a reading:")
+            for path in sorted(gone):
+                lines.append(f"  {spelled(path)}  ({', '.join(sorted(gone[path]))})")
         if proofs:
             lines.append("decided by a certified test whose text changed — a certification of "
                          "the test as it now stands is what answers it, offered by the person and "
@@ -1515,7 +1528,7 @@ def reconcile_set_report(declared: dict, home: Path, target: Path,
     if len(blocks) > 1 or (blocks and blocks[0][1] != offset):
         # Whatever sits under the invoked root and under none of the declared targets.
         stray = block(None, offset, [root for _, root in blocks])
-        if "nothing:" not in stray[1]:
+        if "nothing:" not in stray[1] or len(stray) > 2:
             out += stray
     if held:
         held_files = {f[2] for f in held if under(f[2] or "", [offset])}

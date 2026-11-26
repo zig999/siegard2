@@ -200,7 +200,7 @@ left out — so the file set the review that followed was handed never held them
   of its scope delivered — while the full suite of its last review ran that task's 9 test files
   green.
 
-- **R34** — A task carrying `stands` binds nothing at its delivery, so it leaves no file to a delivery. The file set a reconciliation is offered over a target leaves out a file bound to a node whose binding moved while a live task not yet delivered implements the node, because that task's delivery rebinds it; a task carrying `stands` is never such a task, and a file only such tasks would leave out is in the set — the reconciliation R20 names as their door.
+- **R34** — A task carrying `stands` binds nothing at its delivery, so it leaves no file to a delivery. The file set a reconciliation is offered over a target leaves out a file bound to a node whose binding moved while a live task not yet delivered implements the node, because that task's delivery rebinds it; a task carrying `stands` is never such a task, and a file only such tasks would leave out is in the set — the reconciliation R20 names as their door. A bound file the tree no longer holds is in no set: it is named apart, with its node, as `trace.py --release`'s to answer.
 
   Grounds: `trace.py --check --reconcile-set` counted every undelivered task of a live plan as
   one whose delivery rebinds its nodes, and a delivery whose implementation stands binds nothing
