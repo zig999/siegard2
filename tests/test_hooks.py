@@ -831,7 +831,9 @@ def asked(prompt: object, cwd: Path) -> subprocess.CompletedProcess:
 @pytest.mark.parametrize("prompt", ["E agora?", "e agora", "qual o próximo passo?",
                                     "Qual a recomendação?", "What now?", "which way do we go?",
                                     "E qual caminho?", "Acho q mudar é melhor. Qual a recomendação?",
-                                    "What are the next steps?", "o que você recomenda?"])
+                                    "What are the next steps?", "o que você recomenda?",
+                                    "Oq é recomendado para destravar?",
+                                    "o que fazer para destravar e concluir as 3 tarefas restantes?"])
 def test_a_question_of_what_comes_next_gains_one_line_of_context(prompt, siegard_project):
     """«Where a person's message in a project that declares `siegard.json` asks what comes next,
     the plugin's `UserPromptSubmit` hook places one line of context beside it» (SPEC-008 R20)."""
@@ -847,7 +849,11 @@ def test_a_question_of_what_comes_next_gains_one_line_of_context(prompt, siegard
                                     "Siga o próximo passo", "pode seguir com os próximos passos",
                                     "go with the next step", "rodei e agora deu erro 500",
                                     "/siegard:analyse o próximo passo do pedido é aprovar o crédito",
-                                    "Next step: run the build", ["E agora?"]])
+                                    "Next step: run the build", ["E agora?"],
+                                    "qual o status do ./backlog?", "qual status?",
+                                    "Oq falta para acabar o escopo do ./backlog?",
+                                    "as proximas são de qual iniciativa?",
+                                    "posso rodar o pnpm conformance agora?"])
 def test_any_other_message_gains_nothing(prompt, siegard_project):
     done = asked(prompt, siegard_project)
     assert done.returncode == 0 and done.stdout == "", done.stdout

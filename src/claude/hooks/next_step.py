@@ -31,7 +31,8 @@ PHRASES = {
     "pt-BR": ("e agora", "e ai", "e depois", "qual caminho", "qual o caminho", "proximo passo",
               "proximos passos", "qual a proxima", "qual o proximo", "qual recomenda",
               "qual voce recomenda", "qual vc recomenda", "o que voce recomenda",
-              "o que recomenda", "qual a recomendacao", "o que fazer agora", "oq fazer"),
+              "o que recomenda", "qual a recomendacao", "o que fazer agora", "oq fazer",
+              "o que e recomendado", "oq e recomendado", "para destravar", "como destravar"),
     "en": ("what now", "what next", "whats next", "next step", "next steps", "which way",
            "what do you recommend"),
 }
