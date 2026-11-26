@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.158.0 — 2026-11-25
+
+A judged stop that names no initiative, or one the grant does not cover, answers `stop` saying so, never that the budget is spent (SPEC-011 R5). (`508fcfa`)
+
 ## 5.157.0 — 2026-11-25
 
 A bound file the tree no longer holds leaves the reconcile set and is listed apart, with its node, as `trace.py --release`'s to answer, under a declared target or none (SPEC-004 R34). (`851556d`)
