@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.161.0 — 2026-11-26
+
+`/enrich-request` rewrites a draft as the prompt a specialist would send, labels what it added beyond the ask, and leaves a bracketed field where a fact is missing, held by `bin/enrich.py` to `schemas/enriched-prompt.json`. (`02d2583`)
+
 ## 5.160.0 — 2026-11-25
 
 The `UserPromptSubmit` hook reads four more pt-BR forms of asking what comes next (SPEC-008 R20); questions of status or of a backlog stay outside it. (`272131b`)
