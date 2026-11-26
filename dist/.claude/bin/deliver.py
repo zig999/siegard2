@@ -1582,6 +1582,25 @@ def unproven_dependency_problems(nid: str, tfront: dict, delivered: set[str],
             if isinstance(target, str) and target in delivered and target not in settled]
 
 
+def criteria_problems(tfront: dict, front: dict) -> list[str]:
+    """Each criterion the task states answered by the record, and none the task does not state —
+    read by `implementation_problems` over a record on disk and by the writer before it writes."""
+    problems: list[str] = []
+    stated = [c for c in listed(tfront, "criteria") if isinstance(c, str)]
+    answered = texts(listed(front, "criteria"), "criterion")
+    for criterion in stated:
+        if criterion not in answered:
+            problems.append(f"the task states the criterion `{criterion}`, and this record "
+                            f"answers for no such criterion; a record answering only some of "
+                            f"them cannot be read as complete")
+    for criterion in answered:
+        if criterion not in stated:
+            problems.append(f"criteria answers for `{criterion}`, which the task does not state; "
+                            f"the criterion is quoted as the task states it, or it is a "
+                            f"criterion nobody wrote")
+    return problems
+
+
 def implementation_problems(nid: str, front: dict, task: dict, work: Path,
                             delivered: set[str], anchor: Path | None) -> list[str]:
     """One implementation against the task it answers: the task is not blocked, the criteria and
@@ -1612,18 +1631,7 @@ def implementation_problems(nid: str, front: dict, task: dict, work: Path,
                         f"task re-runs the implement-against step and the note is gone; the "
                         f"record is written then, against the task as it then stands")
 
-    stated = [c for c in listed(tfront, "criteria") if isinstance(c, str)]
-    answered = texts(listed(front, "criteria"), "criterion")
-    for criterion in stated:
-        if criterion not in answered:
-            problems.append(f"{nid}: the task states the criterion `{criterion}`, and this "
-                            f"record answers for no such criterion; a record answering only "
-                            f"some of them cannot be read as complete")
-    for criterion in answered:
-        if criterion not in stated:
-            problems.append(f"{nid}: criteria answers for `{criterion}`, which the task does "
-                            f"not state; the criterion is quoted as the task states it, or it "
-                            f"is a criterion nobody wrote")
+    problems += [f"{nid}: {found}" for found in criteria_problems(tfront, front)]
 
     written, _ = wrote(front)
     for path in listed(tfront, "produces"):
@@ -2701,6 +2709,10 @@ def write_record(kind: str, args: list[str]) -> int:
     problems = node_problems(front, kind, validator, names)
     problems += body_problems(body)
     problems += record_run_problems(nid, front, root)
+    if kind == "implementation":
+        tfront, _, _ = spec.parse_node(pinned_from)
+        if isinstance(tfront, dict):
+            problems += criteria_problems(tfront, front)
     door = None
     if kind == "proof":
         problems += red_run_problems(nid, body, root, front.get("run"))

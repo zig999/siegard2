@@ -3120,6 +3120,26 @@ def test_the_implementation_writer_stamps_the_target_and_the_task_pin(
     assert writer("--node", written, delivery).returncode == 0
 
 
+def test_the_implementation_writer_refuses_a_criterion_the_task_does_not_state(
+        tmp_path, planned, delivery, work, root, target):
+    """The writer holds a record to the task it pins before it writes, as `--outstanding` does
+    after: a criterion cut short in the return — a `#` the YAML read as a comment — is a record the
+    next check refuses, so it is never written."""
+    text = yaml.safe_dump(IMPLEMENTATION_RETURN, sort_keys=False).replace(
+        "criterion: Submitting a valid order returns its order_number.",
+        "criterion: Submitting a valid order returns its #order_number.")
+    reply = transcript_of(tmp_path / "a.jsonl", [{"type": "tool_use", "name": "Read", "input": {}}],
+                          [{"type": "text", "text": text}])
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from", reply)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert ("criteria answers for `Submitting a valid order returns its`, which the task does not "
+            "state") in done.stdout
+    assert ("the task states the criterion `Submitting a valid order returns its order_number.`, "
+            "and this record answers for no such criterion") in done.stdout
+    assert not (delivery / "implementation/checkout/record-order.md").exists()
+
+
 def test_the_pair_written_by_the_writers_holds_together_whole(tmp_path, planned, delivery, work,
                                                               root, target):
     assert writer("--write-implementation", delivery, TASK, "--target", "app",
