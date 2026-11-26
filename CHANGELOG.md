@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.159.0 — 2026-11-25
+
+`deliver.py --write-implementation` holds a record's criteria to the task it pins before writing, as `--outstanding` does after. (`234ecb9`)
+
 ## 5.158.0 — 2026-11-25
 
 A judged stop that names no initiative, or one the grant does not cover, answers `stop` saying so, never that the budget is spent (SPEC-011 R5). (`508fcfa`)
