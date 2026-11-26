@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.160.0 — 2026-11-25
+
+The `UserPromptSubmit` hook reads four more pt-BR forms of asking what comes next (SPEC-008 R20); questions of status or of a backlog stay outside it. (`272131b`)
+
 ## 5.159.0 — 2026-11-25
 
 `deliver.py --write-implementation` holds a record's criteria to the task it pins before writing, as `--outstanding` does after. (`234ecb9`)
