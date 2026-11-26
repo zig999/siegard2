@@ -461,8 +461,9 @@ bound a script on disk decides.
   person's choice — so none became a door taken; a block that converts nothing is a turn spent,
   and R13 logs instead. Estimator: the first `Skill` or `Agent` call after the render, read from
   the benchmark hook's log; two runs per stop and arm. Reversal: `grant-checks.jsonl` showing
-  `released` on more than one in three of its blocks over a week of consumers narrows R12 back to
-  logging; R13 logging lines that a later render of the same stop answers `take` or `judge` on
+  `released` on more than one in three of its blocks over a week of consumers, not counting a
+  release after the session declined on a choice the person reserved in their own words, narrows
+  R12 back to logging; R13 logging lines that a later render of the same stop answers `take` or `judge` on
   more than half of them makes R13 block.
 - 2026-11-21 (last) — grounds for R9's note on a slug, read from the replay of 48 stops under a
   live grant recorded in SPEC-006's readings of the same day. Four answered `stop` because the
@@ -543,3 +544,11 @@ bound a script on disk decides.
   by the grant's, the form that stops there too: in doubt over which initiative, it stops. Reversal: a stop under a grant
   naming an initiative, seen in a consumer, over the initiative it covers that no source of
   SPEC-006 R11's record initiative named — answered by the source, never by loosening the stop.
+- 2026-11-25 — the R12 reversal no longer counts a release that follows a decline on the
+  person's own reservation. Over 2026-11-18..25 the seven sales consumers logged 12 blocks and 7
+  releases (58%); 5 of the 7 were configurator's session declining, five times, a door the grant
+  obliged because the person's pasted ask said to resume each phase only after their explicit
+  "ok" — a reservation this specification keeps theirs under any grant (above). Counted without
+  them, 2 of 12. Narrowing R12 to logging would drop the carry-out it bought (13 of 14 against 2
+  of 14). Decided by the maintainer in session; reversal: a week where releases outside such
+  declines exceed one in three.
