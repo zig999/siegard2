@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/enriched-prompt.json",
+  "title": "Enriched prompt",
+  "description": "The prompt /enrich-request hands the person: one prompt, written as sections, that a specialist would send in place of the draft. Each section opens with its name in capitals and a colon at the start of a line; its content is the lines after it, bullets or plain, up to the next section. bin/enrich.py parses a prompt into one array of lines per section and holds it to this schema; the canonical order is the order `properties` declares, and a section out of that order is refused. A section with no content is refused: an empty section says nothing was decided, and absence says that. The provenance of a line is its section: what the person asked for lives in the sections other than ADDITIONS, what a specialist adds beyond the ask lives only in ADDITIONS, and what was read as true without asking lives only in ASSUMPTIONS. A fact the draft and the project leave open is a bracketed field, `[like this]`, for the person to fill; the prompt asks the person nothing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ROLE",
+    "OBJECTIVE",
+    "CONTEXT",
+    "CONSTRAINTS",
+    "TOOLS",
+    "STEPS",
+    "EXTERNAL_VALIDATION",
+    "RESPONSE_FORMAT"
+  ],
+  "properties": {
+    "ROLE": {
+      "$ref": "#/$defs/lines",
+      "description": "The role the executor takes, and the standing it speaks from."
+    },
+    "OBJECTIVE": {
+      "$ref": "#/$defs/lines",
+      "description": "What the executor must achieve, as an end state, and how it fits the project the draft belongs to."
+    },
+    "CONTEXT": {
+      "$ref": "#/$defs/lines",
+      "description": "The facts the executor needs and cannot be assumed to have: the project, the audience, what was already decided. Facts read from the project are cited by path."
+    },
+    "CONSTRAINTS": {
+      "$ref": "#/$defs/lines",
+      "description": "What must hold or must not happen, one per line, each stated by the person or required by a project rule that applies by path."
+    },
+    "TOOLS": {
+      "$ref": "#/$defs/lines",
+      "description": "The tools and methods the work uses, each named explicitly: a command, a standard, a technique, a data source."
+    },
+    "STEPS": {
+      "$ref": "#/$defs/lines",
+      "description": "The order of work the draft asks for, one step per line."
+    },
+    "ADDITIONS": {
+      "$ref": "#/$defs/justified",
+      "description": "Steps, risks, questions or deliverables a specialist in the area would include that the draft did not ask for, one per line, each followed by the separator and the reason it belongs. Nothing the person asked for appears here, and nothing here is presented as the person's decision."
+    },
+    "EXTERNAL_VALIDATION": {
+      "$ref": "#/$defs/lines",
+      "description": "What, beyond the executor and the person, would show the result is right: a verifiable source or dataset, a test, a metric, a market reference, a review by a named specialty, a trial with real users. One per line, each naming the evidence and who or what supplies it."
+    },
+    "RESPONSE_FORMAT": {
+      "$ref": "#/$defs/lines",
+      "description": "The exact shape of what the executor returns: its parts, their order, and what is left out."
+    },
+    "ASSUMPTIONS": {
+      "$ref": "#/$defs/justified",
+      "description": "A reading taken without asking because the project or a conservative reading settled it, one per line, each followed by the separator and its basis: a path with a line, or the person's own words. The person reads this section to audit the prompt; a reading absent from it was not taken."
+    }
+  },
+  "$defs": {
+    "lines": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "justified": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "x-justified-sections": {
+    "values": [
+      "ADDITIONS",
+      "ASSUMPTIONS"
+    ],
+    "separator": " — ",
+    "description": "A line of one of these sections carries a statement, the separator, and its reason or basis, each non-empty. The reason is what lets the person keep or cut the line."
+  },
+  "x-field": {
+    "pattern": "\\[[^\\[\\]]+\\]",
+    "description": "A fact the draft and the project leave open is written as one bracketed field naming what is missing. Brackets that are empty, nested or unclosed are refused: a field nobody can read is not one the person can fill."
+  }
+}

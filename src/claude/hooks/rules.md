@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.160.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.161.0. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification

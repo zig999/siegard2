@@ -70,6 +70,8 @@ SKILLS = {
                     "delegates": []},
     "clarify-request": {"contract": "schemas/clarified-request.json",
                         "validator": "bin/clarify.py", "delegates": []},
+    "enrich-request": {"contract": "schemas/enriched-prompt.json",
+                       "validator": "bin/enrich.py", "delegates": []},
 }
 
 
@@ -160,6 +162,10 @@ MODEL_MAY_REACH = {
     # session that rewrote requests unasked would be deciding an input that was never its to
     # assert, and would put its reading between the person and what they said.
     "clarify-request": False,
+    # Closed for the same reason: the draft is the person's own, and only they can say it needs
+    # strengthening. A session that enriched drafts unasked would put its additions between the
+    # person and what they said.
+    "enrich-request": False,
 }
 
 
