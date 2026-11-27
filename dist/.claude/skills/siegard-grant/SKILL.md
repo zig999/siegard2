@@ -100,7 +100,7 @@ ends the grant: `/siegard:siegard-grant <project-root> --clear`.
 - a door the door decider chooses, within the budget, counted for each initiative apart — none
   where the budget is zero, which the report says; this is the one place a judged door is armed,
   under a goal or outside one;
-- the commits of what the route wrote;
+- the commits, short of the paths the commit gate keeps (the project file, standards, `CLAUDE.md`, credentials);
 - the closing of an initiative, once everything in it is delivered, proven and reviewed;
 - with `--routes`, the route of a request that names none — `/analyse` or `/plan-work` over a new
   initiative, the same way it answers a stop's doors, the budget counted apart for the routes.

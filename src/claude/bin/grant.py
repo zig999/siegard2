@@ -20,7 +20,7 @@ grant. «A grant holds at least one clause: `doors`, a list from `plan-work`, `i
 `review-change`, `reconcile`, `deliver-scope` and `analyse`, which is all six where the person names
 none, with a budget of judged doors for each initiative it covers, a whole number, which is
 zero where the person names none;
-`commits`, which lets a session commit what the route wrote; `close`, which lets a session
+`commits`, which lets a session commit, short of the paths R7 keeps; `close`, which lets a session
 close an initiative where R7 holds, the grant's words being the reason it is closed under.»
 (SPEC-011 R2) The recorded invocation is the closing reason: it is recorded verbatim and no
 other text is. `routes`, named alone by `--routes`, lets the grant hold the choice of route for a
@@ -43,8 +43,10 @@ the budget of the stopped initiative: «The budget left is the grant's budget le
 initiative counted apart, and a judged choice met with it spent is `stop`.» (SPEC-011 R5)
 
 **`--commit` and `--close` are the gates.** «`bin/grant.py --commit`, over the paths a commit
-names, answers `accepts` only where the grant holds `commits` and every path is one the route
-writes» (SPEC-011 R7). The first line of each answer is `accepts` or `refuses`, a `refused:` line
+names, answers `accepts` where the grant holds `commits` and no path is outside the project, a path
+of `siegard.json`, a declared standard, `CLAUDE.md`, a file that holds credentials (an `.env` example, sample or template file holds none), a
+`closure.md` while the close clause does not hold, or the routing log while the grant holds no `routes` clause»
+(SPEC-011 R7). The first line of each answer is `accepts` or `refuses`, a `refused:` line
 follows for every refusal and a `checked:` line for every check that passed.
 
 Declared dependencies: PyYAML and jsonschema (through goal.py and spec.py, its siblings, which this
@@ -109,6 +111,7 @@ ENDED_FILE = "grants-ended.jsonl"
 ASK_LINE = re.compile(r"^ask: (\S+) \(sha256 ([0-9a-f]{16})\)")
 CREDENTIALS = re.compile(r"(^\.env|\.(pem|key|p12|pfx|jks)$|^id_(rsa|dsa|ecdsa|ed25519)|"
                          r"credential|secret|(^|/)\.ssh/|(^|/)\.aws/)", re.I)
+EXAMPLE_ENV = re.compile(r"^\.env(\.[\w-]+)*\.(example|sample|template)$", re.I)
 CLOSED_AFTER = ("records", "review", "criteria", "delivery", "plan", "specification")
 ROUTE_DOORS = ("analyse", "plan-work")
 
@@ -539,39 +542,6 @@ def decide(project_root: Path, record: dict, slug: str | None = None) -> tuple[l
     return lines, 0
 
 
-def owned_paths(fields: dict, held: dict) -> set[str]:
-    owned: set[str] = set()
-    home = fields["home"].resolve()
-    for slug in covered(fields, held):
-        for root in ("implementation", "proof"):
-            base = fields["delivery_root"] / slug / root
-            for record in sorted(base.rglob("*.md")) if base.is_dir() else []:
-                front = goal.front_of(record)
-                target = fields["targets"].get(front.get("target") or held["target"])
-                if target is None:
-                    continue
-                named = [entry.get("path") for entry in front.get("files") or []
-                         if isinstance(entry, dict)]
-                named += [entry.get("file") for entry in front.get("tests") or []
-                          if isinstance(entry, dict)]
-                for name in named:
-                    if isinstance(name, str):
-                        full = (target / name).resolve()
-                        if full.is_relative_to(home):
-                            owned.add(full.relative_to(home).as_posix())
-    return owned
-
-
-def route_roots(fields: dict, held: dict) -> list[str]:
-    home = fields["home"].resolve()
-    chosen = [fields["telemetry_root"], home / "siegard-reconcile", home / "siegard-trace.json"]
-    for slug in covered(fields, held):
-        chosen += [fields["delivery_root"] / slug, fields["work_root"] / slug]
-    if held.get("routes"):
-        chosen.append(routing_log(fields))
-    return [goal.relative(fields, item).rstrip("/") for item in chosen]
-
-
 def commit_gate(project_root: Path, files: list[str]) -> tuple[list[str], bool]:
     held, fields, path, ended = standing(project_root)
     if ended:
@@ -584,9 +554,7 @@ def commit_gate(project_root: Path, files: list[str]) -> tuple[list[str], bool]:
         found.append("refused: no path is named; a commit is held to the paths it names")
     home = fields["home"].resolve()
     standards = {goal.relative(fields, item) for item in fields["standards"]}
-    roots_ = route_roots(fields, held)
-    owned = owned_paths(fields, held)
-    specification = goal.relative(fields, fields["specification_root"]).rstrip("/")
+    routing = goal.relative(fields, routing_log(fields)).rstrip("/")
     for raw in files:
         spelled = (home / raw).resolve()
         if not spelled.is_relative_to(home):
@@ -599,31 +567,20 @@ def commit_gate(project_root: Path, files: list[str]) -> tuple[list[str], bool]:
                          f"standard it declares")
         elif base == "CLAUDE.md":
             found.append(f"refused: {name} is CLAUDE.md, which only the person changes")
-        elif CREDENTIALS.search(base) or CREDENTIALS.search(name):
+        elif (CREDENTIALS.search(name[:-len(base)]) if EXAMPLE_ENV.match(base)
+              else CREDENTIALS.search(base) or CREDENTIALS.search(name)):
             found.append(f"refused: {name} names a file that holds credentials")
         elif base == "closure.md" and not held["close"]:
             found.append(f"refused: {name} closes the initiative, and the grant holds no `close` "
                          f"clause")
-        elif name == specification or name.startswith(specification + "/"):
-            node = name[:-len(".log.md")] + ".md" if name.endswith(".log.md") else name
-            held_at_head = subprocess.run(["git", "-C", str(home), "cat-file", "-e",
-                                           f"HEAD:{node}"], capture_output=True).returncode == 0
-            if name.endswith(".log.md") and held_at_head:
-                continue
-            if held_at_head and name not in owned:
-                found.append(f"refused: {name} is a specification file HEAD already holds, and "
-                             f"the commit modifies it")
-            elif not held_at_head and name not in owned and not any(
-                    name == root or name.startswith(root + "/") for root in roots_):
-                found.append(f"refused: {name} is no path the route writes")
-        elif not (name in owned or any(name == root or name.startswith(root + "/")
-                                       for root in roots_)):
-            found.append(f"refused: {name} is no path the route writes: no record of a covered "
-                         f"initiative names it, and it is under none of their roots")
+        elif name == routing and not held.get("routes"):
+            found.append(f"refused: {name} is the routing log, and the grant holds no `routes` "
+                         f"clause")
     if not found:
         found = [f"checked: the grant holds `commits` for {held.get('slug') or 'every live initiative'}",
-                 f"checked: {len(files)} path(s), each one the route writes, none a standard, "
-                 f"CLAUDE.md, a credential, a closure or a modified specification file"]
+                 f"checked: {len(files)} path(s), none outside the project, a standard, "
+                 f"CLAUDE.md, a credential, a closure without `close` or the routing log "
+                 f"without `routes`"]
     return found, not any(line.startswith("refused:") for line in found)
 
 

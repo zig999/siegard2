@@ -486,7 +486,6 @@ def test_a_commit_of_paths_the_route_writes_is_accepted(project):
     ("telemetry/.env", "names a file that holds credentials"),
     ("telemetry/id_rsa", "names a file that holds credentials"),
     ("../outside.txt", "is outside the project"),
-    ("target/src/other.ts", "is no path the route writes"),
     (f"plans/{SLUG}/closure.md", "closes the initiative, and the grant holds no `close` clause"),
 ])
 def test_a_commit_naming_a_bound_path_is_refused(project, name, why):
@@ -497,14 +496,42 @@ def test_a_commit_naming_a_bound_path_is_refused(project, name, why):
     assert why in result.stdout and result.returncode == 1
 
 
-def test_a_commit_that_modifies_a_specification_file_head_holds_is_refused(project):
+def test_a_commit_that_modifies_a_specification_file_head_holds_is_accepted(project):
     deliver(project)
     assert arm(project, "--commits").returncode == 0
     held = next(path for path in (project["home"] / "specification").rglob("*.md")
                 if not path.name.endswith(".log.md"))
     result = commit_check(project, held.relative_to(project["home"]).as_posix())
-    assert result.stdout.splitlines()[0] == "refuses", result.stdout
-    assert "a specification file HEAD already holds" in result.stdout
+    assert result.stdout.splitlines()[0] == "accepts", result.stdout
+    assert result.returncode == 0
+
+
+def test_a_commit_of_a_path_no_record_names_is_accepted_under_commits(project):
+    deliver(project)
+    assert arm(project, "--commits").returncode == 0
+    for name in ("target/src/other.ts", "specification/a-new-node.md", "backend/.env.example",
+                 "tests/new-proof.test.ts"):
+        result = commit_check(project, name)
+        assert result.stdout.splitlines()[0] == "accepts", (name, result.stdout)
+
+
+def test_an_env_example_is_accepted_and_an_env_file_is_not(project):
+    deliver(project)
+    assert arm(project, "--commits").returncode == 0
+    for name in ("backend/.env.example", ".env.sample", "app/.env.production.template"):
+        assert commit_check(project, name).stdout.splitlines()[0] == "accepts", name
+    for name in ("backend/.env", ".env.local", "secrets/.env.example", "app/.env.example.bak"):
+        assert commit_check(project, name).stdout.splitlines()[0] == "refuses", name
+
+
+def test_a_grant_without_a_slug_accepts_the_same_paths(project):
+    deliver(project)
+    assert arm(project, "--commits", slug=None).returncode == 0
+    held = next(path for path in (project["home"] / "specification").rglob("*.md")
+                if not path.name.endswith(".log.md"))
+    result = commit_check(project, held.relative_to(project["home"]).as_posix(),
+                          "target/src/other.ts")
+    assert result.stdout.splitlines()[0] == "accepts", result.stdout
 
 
 def test_a_commit_without_the_commits_clause_or_a_path_is_refused(project):
@@ -591,7 +618,7 @@ def test_the_closings_own_commit_is_accepted_and_the_closure_lands_with_it(proje
     assert armed(project).exists()
     commit(project["home"], "the closing", *paths[:2])
     after = commit_check(project, f"plans/{SLUG}/closure.md")
-    assert after.stdout.splitlines()[0] == "refuses", after.stdout
+    assert after.stdout.splitlines()[0] == ("accepts" if slug is None else "refuses"), after.stdout
     assert armed(project).exists() is (slug is None)
 
 
@@ -606,19 +633,6 @@ def test_a_path_spelled_around_a_bound_is_refused_by_what_it_resolves_to(project
     assert arm(project, "--commits").returncode == 0
     result = commit_check(project, name)
     assert result.stdout.splitlines()[0] == "refuses", result.stdout
-
-
-def test_a_new_specification_file_no_record_names_is_refused_and_a_decision_log_is_not(project):
-    deliver(project)
-    assert arm(project, "--commits").returncode == 0
-    fresh = commit_check(project, "specification/a-new-node.md")
-    assert fresh.stdout.splitlines()[0] == "refuses" and "no path the route writes" in fresh.stdout
-    held = next(path for path in (project["home"] / "specification").rglob("*.md")
-                if not path.name.endswith(".log.md"))
-    sidecar = held.with_name(held.stem + ".log.md").relative_to(project["home"]).as_posix()
-    assert commit_check(project, sidecar).stdout.splitlines()[0] == "accepts"
-    orphan = held.with_name("never-held.log.md").relative_to(project["home"]).as_posix()
-    assert commit_check(project, orphan).stdout.splitlines()[0] == "refuses"
 
 
 def test_one_refused_path_among_owned_ones_refuses_the_whole_commit(project):
@@ -1392,14 +1406,13 @@ def test_a_stop_record_is_never_read_as_a_routing_record(project, tmp_path):
 
 
 def test_the_commit_gate_admits_the_routing_log_only_under_routes(project):
+    assert arm(project, "--commits", slug=None).returncode == 0
+    refused = commit_check(project, "deliveries/orchestration.md")
+    assert refused.stdout.splitlines()[0] == "refuses", refused.stdout
+    assert "routing log" in refused.stdout and "`routes`" in refused.stdout
     assert arm(project, "--routes", "--commits", slug=None).returncode == 0
-    held = record_of(project)
-    fields = goal.resolve(project["home"], None)
-    fields["home"] = project["home"]
-    import grant as grant_module
-    assert "deliveries/orchestration.md" in grant_module.route_roots(fields, held)
-    assert "deliveries/orchestration.md" not in grant_module.route_roots(fields,
-                                                                         {**held, "routes": False})
+    admitted = commit_check(project, "deliveries/orchestration.md")
+    assert admitted.stdout.splitlines()[0] == "accepts", admitted.stdout
 
 
 def second_initiative(project: dict) -> str:

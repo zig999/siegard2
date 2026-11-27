@@ -76,7 +76,7 @@ bound a script on disk decides.
 - **R2** — A grant holds at least one clause: `doors`, a list from `plan-work`, `implement-task`,
   `review-change`, `reconcile`, `deliver-scope` and `analyse`, which is all six where the person
   names none, with a budget of judged doors for each initiative it covers, a whole number, which is
-  zero where the person names none; `commits`, which lets a session commit what the route wrote; `close`, which lets a session
+  zero where the person names none; `commits`, which lets a session commit, short of the paths R7 keeps; `close`, which lets a session
   close an initiative where R7 holds, the grant's words being the reason it is closed under. The
   person narrows `doors` by naming them, and `none` leaves it empty for a grant of commits or of a
   closing alone; no other entry point is ever in it. A grant names no initiative unless the person
@@ -153,7 +153,7 @@ bound a script on disk decides.
   grant's budget less the judged `decided:` lines carrying its mark that the delivery root's own
   `orchestration.md` holds on disk beyond what it held when the grant armed». A route taken is
   carried out as R12 says, its `decided:` line written in the delivery root's own
-  `orchestration.md`, which `grant.py --commit` admits as a path the route writes where the grant
+  `orchestration.md`, which `grant.py --commit` admits where the grant
   holds `routes`; the commit check refuses a judged line in that log under a grant without it. The
   material `/analyse` reads under a taken route is the recorded request, never the session's
   paraphrase of it. The `carry:` line `grant.py --decide` prints says so where the route is taken. The route a finding deserves, an end-to-end route (`/deliver-scope`,
@@ -163,18 +163,18 @@ bound a script on disk decides.
 
 ### The gates
 
-- **R7** — `bin/grant.py --commit`, over the paths a commit names, answers `accepts` only where the
-  grant holds `commits` and every path is one the route writes — under the delivery root or the work
-  root of an initiative the grant covers, the telemetry root, `siegard-reconcile/`, the trace, or
-  named by a record of such an initiative — and none is outside the project, a path of `siegard.json`,
-  a declared standard, `CLAUDE.md`, a file that holds credentials, a `closure.md` while the close
-  clause does not hold, or a specification file the commit modifies where `HEAD` already holds it,
-  beyond its decision log. A path that holds a change no record of a covered initiative accounts for
-  is `refuses`. A first line `refuses` stops the commit unless the person's own words in the
-  session name that commit: a commit they name is not a taking. Where the grant holds `commits`,
-  the gate reaches the session where it commits, not through the session rules: `grant.py --arm`
-  prints it as the last line of its summary, and the plugin's `SessionStart` hook places the same
-  line in the session's context at every start while that grant is armed. `bin/grant.py --close`, over one initiative the grant covers, answers `accepts` only
+- **R7** — `bin/grant.py --commit`, over the paths a commit names, answers `accepts` where the
+  grant holds `commits` and no path is outside the project, a path of `siegard.json`, a declared
+  standard, `CLAUDE.md`, a file that holds credentials (an `.env` example, sample or template file
+  holds none), a `closure.md` while the close clause does not hold, or the routing log while the
+  grant holds no `routes` clause. A grant holding `commits` lets a session commit any other path,
+  a specification file `HEAD` already holds included; the gate cannot tell a path the session wrote
+  from one it found pending, and the session rules' stop on a root holding a change a route skill
+  did not make is what keeps that. A first line `refuses` stops the commit unless the person's own
+  words in the session name that commit: a commit they name is not a taking. Where the grant holds
+  `commits`, the gate reaches the session where it commits, not through the session rules:
+  `grant.py --arm` prints it as the last line of its summary, and the plugin's `SessionStart` hook
+  places the same line in the session's context at every start while that grant is armed. `bin/grant.py --close`, over one initiative the grant covers, answers `accepts` only
   where the grant holds `close` and the goal computation over the initiative, read from the grant's
   `HEAD`, finds every task delivered, proven and reviewed, no criterion unmet that no covered review
   answers, and a sound specification; the closure's reason is the grant's words, never the
@@ -208,8 +208,8 @@ bound a script on disk decides.
 3. A test holds the commit check to R6 over a fixture log: a judged line with a grant armed is
    taken, and with a goal armed and no grant, or with neither, it is refused.
 4. Tests hold `grant.py --commit` and `--close` to R7 and R8 over fixture repositories, one refusal
-   per bound the requirement names, one acceptance of a commit that names only paths a record
-   of a covered initiative writes, and a grant without a slug accepting the paths of any live
+   per bound the requirement names, one acceptance of a commit naming a specification file
+   `HEAD` holds and a path no record names, and a grant without a slug accepting the paths of any live
    initiative and answering `--close` only over the initiative it is asked about; under a grant
    holding `commits` and `close`, with or without a slug, `--commit` accepts the closing's own
    paths — `closure.md`, its `intake/` ask and the derived `plan.json` — written and not yet
@@ -552,3 +552,16 @@ bound a script on disk decides.
   them, 2 of 12. Narrowing R12 to logging would drop the carry-out it bought (13 of 14 against 2
   of 14). Decided by the maintainer in session; reversal: a week where releases outside such
   declines exceed one in three.
+- 2026-11-27 — R7 no longer limits `commits` to the paths the route writes, nor refuses a
+  specification file `HEAD` already holds. The maintainer's words: a grant armed with `commits`
+  authorizes the commit in any situation; without a grant the session rules stand. Over
+  2026-11-26..27, in three sales consumers on 5.156.0, five stops waited on the person's commit
+  word that the gate's refusals produced (a specification node `HEAD` held, three times; a new test
+  file no record named; an environment example file), and a route skill's own commit of a node
+  edit ran after `grant.py --commit` answered `refuses`, the two answers never reconciled. What stays
+  refused is what the maintainer's own file or safety keeps: a path outside the project, the project
+  file and standards, `CLAUDE.md`, credentials, a closure without `close`, and the routing log
+  without `routes`, whose judged lines the clause alone admits. The gate never saw who wrote a
+  path; the allow-list it used was a proxy for it, and the session rules' stop on a foreign change
+  is the bound that remains. Reversal: a commit taken under a grant holding `commits` that carried a
+  change its session did not make, read from a consumer's history.

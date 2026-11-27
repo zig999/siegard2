@@ -700,7 +700,7 @@ def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
 
 
 GRANT_COMMITS_LINE = ("Siegard: the grant armed in this project holds `commits`: run `grant.py --commit "
-                      "<project-root> --file <path>...` before a commit the grant covers; a first "
+                      "<project-root> --file <path>...` before a commit; a first "
                       "line `refuses` stops it unless the person's own words in this session name "
                       "that commit.")
 

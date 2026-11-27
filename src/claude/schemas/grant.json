@@ -63,7 +63,7 @@
     },
     "commits": {
       "type": "boolean",
-      "description": "Whether a session may commit what the route wrote."
+      "description": "Whether a session may commit, short of the paths the commit gate keeps."
     },
     "close": {
       "type": "boolean",
